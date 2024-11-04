@@ -123,6 +123,15 @@ fact seven_players {
     }
 }
 
+fact no_duplicate_roles {
+    always {
+        all disj p1, p2: Player {
+            // There can be multiple Imps due to starpass and Scarlet Woman
+            (p1.role = Imp) or p1.role != p2.role
+        }
+    }
+}
+
 enum Person { You, Matthew, Dan, Tom, Sula, Fraser, Josh }
 
 fact no_duplicate_people {
@@ -141,7 +150,9 @@ fact players_sit_in_a_circle {
 }
 
 fact people_are_written_in_clockwise_order {
-    all p: Player | p.left.person = next[p.person]
+    all p: Player, next_person: next[p.person] {
+        p.left.person = next_person
+    }
 }
 
 /**
@@ -158,18 +169,20 @@ pred fortune_teller_yes(fortune_teller: Player, checked_players: set Player) {
     CurrentTime.waking = FortuneTeller
     ability_works[fortune_teller, FortuneTeller]
 
-    some pinged_player: checked_players {
-        registers_as_demon[pinged_player] or pinged_player = RedHerring.player
-    }
+    some pinged_player: checked_players | (
+        registers_as_demon[pinged_player] or
+        pinged_player = RedHerring.player
+    )
 }
 
 pred fortune_teller_no(fortune_teller: Player, checked_players: set Player) {
     CurrentTime.waking = FortuneTeller
     ability_works[fortune_teller, FortuneTeller]
 
-    no pinged_player: checked_players {
-        registers_as_demon[pinged_player] or pinged_player = RedHerring.player
-    }
+    no pinged_player: checked_players | (
+        registers_as_demon[pinged_player] or
+        pinged_player = RedHerring.player
+    )
 }
 
 // Poisoner
@@ -305,6 +318,10 @@ pred sunrise {
     Player.shroud' = Player.shroud
 }
 
+fun sunrise_happens: set Event {
+    { e: Sunrise | sunrise }
+}
+
 pred sunset[executed_player: lone Player] {
     // The player on the block is executed
     executed_player.shroud' = Dead
@@ -325,6 +342,10 @@ pred sunset[executed_player: lone Player] {
     executed_player.role != Imp => same[Player.role]
 }
 
+fun sunset_happens: set Event {
+    { e: Sunset | lone p: Player | sunset[p] }
+}
+
 pred wake[woken_role: one Role] {
     // We must not be at this role's place in the night order yet
     no CurrentTime.waking or CurrentTime.waking in woken_role.prevs
@@ -338,6 +359,10 @@ pred wake[woken_role: one Role] {
     same[CurrentTime.which]
 }
 
+fun wake_happens: set Event {
+    { e: Wake | some r: Role | wake[r] }
+}
+
 pred decision_time {
     some p: Player | p.shroud = none and p.role = Imp
 
@@ -349,18 +374,22 @@ pred decision_time {
     PoisonedPlayer.player' = PoisonedPlayer.player
 }
 
+fun decision_time_happens: set Event {
+    { e: DecisionTime | decision_time }
+}
+
 fact possible_events {
-    always {
+    always (
         sunrise or
         (lone executed_player: Player | sunset[executed_player]) or
-        (some role: Role | wake[role])
+        (some role: Role | wake[role]) or
         (some disj poisoner, poisoned: Player {
             poisons_player[poisoner, poisoned]
         }) or
         (some imp, killed_player: Player {
             imp_kills[imp, killed_player]
         }) or decision_time
-    }
+    )
 }
 
 /**
@@ -411,21 +440,21 @@ fact you_are_good {
     }
 }
 
-// fact josh_executed_day_one {
-//     eventually {
-//         CurrentTime.time = Day
-//         CurrentTime.which = One
-//         sunset[get_person[Josh]]
-//     }
-// }
+fact josh_executed_day_one {
+    eventually {
+        CurrentTime.time = Day
+        CurrentTime.which = One
+        sunset[get_person[Josh]]
+    }
+}
 
-// fact matthew_killed_night_two {
-//     eventually {
-//         CurrentTime.time = Night
-//         CurrentTime.which = Two
-//         get_person[Matthew].shroud = Dead
-//     }
-// }
+fact matthew_killed_night_two {
+    eventually {
+        CurrentTime.time = Night
+        CurrentTime.which = Two
+        get_person[Matthew].shroud = Dead
+    }
+}
 
 fact claims_you {
     always {
@@ -441,43 +470,43 @@ fact claims_you {
     }
 }
 
-// fact claims_matthew {
-//     always {
-//         claims_role[Matthew, Ravenkeeper]
-//     }
+fact claims_matthew {
+    always {
+        claims_role[Matthew, Ravenkeeper]
+    }
 
-//     eventually {
-//         CurrentTime.time = Night
-//         CurrentTime.which = Two
-//         claims_ravenkeeper_sees_as[get_person[Matthew], Josh, Imp]
-//     }
-// }
+    eventually {
+        CurrentTime.time = Night
+        CurrentTime.which = Two
+        claims_ravenkeeper_sees_as[get_person[Matthew], Josh, Imp]
+    }
+}
 
-// fact claims_dan {
-//     always {
-//         claims_role[Dan, Undertaker]
-//     }
+fact claims_dan {
+    always {
+        claims_role[Dan, Undertaker]
+    }
 
-//     eventually {
-//         CurrentTime.which = Two
-//         claims_undertaker_saw_as[get_person[Dan], Josh, Poisoner]
-//     }
-// }
+    eventually {
+        CurrentTime.which = Two
+        claims_undertaker_saw_as[get_person[Dan], Josh, Poisoner]
+    }
+}
 
-// fact claims_tom {
-//     always {
-//         claims_role[Tom, FortuneTeller]
+fact claims_tom {
+    always {
+        claims_role[Tom, FortuneTeller]
 
-//         one tom: get_person[Tom] {
-//             CurrentTime.which = One => {
-//                 fortune_teller_no[tom, tom + get_person[Sula]]
-//             }
-//             CurrentTime.which = Two => {
-//                 fortune_teller_yes[tom, tom + get_person[Josh]]
-//             }
-//         }
-//     }
-// }
+        one tom: get_person[Tom] {
+            CurrentTime.which = One => {
+                fortune_teller_no[tom, tom + get_person[Sula]]
+            }
+            // CurrentTime.which = Two => {
+            //     fortune_teller_yes[tom, tom + get_person[Josh]]
+            // }
+        }
+    }
+}
 
 // fact claims_sula {
 //     always {
@@ -507,4 +536,4 @@ fact claims_you {
 //     }
 // }
 
-run {} for exactly 7 Player, 10 steps
+run {} for exactly 7 Player, 12 steps
