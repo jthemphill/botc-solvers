@@ -1,0 +1,15 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.analysis.extraPaths": [
+    "./src"
+  ],
+  "python.analysis.useLibraryCodeForTypes": true,
+  "python.analysis.indexing": true,
+  "python.analysis.packageIndexDepths": [
+    {
+      "name": "ortools",
+      "depth": 4,
+      "includeAllSymbols": true
+    }
+  ]
+}
