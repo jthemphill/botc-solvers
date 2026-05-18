@@ -1,8 +1,4 @@
-from importlib import import_module
-
-
-puzzle = import_module("puzzles.03b_not_throwing_away_my_shot")
-solve = puzzle.solve
+from puzzles.puzzle_03b_not_throwing_away_my_shot import solve
 
 
 def test_not_throwing_away_my_shot_3b_has_one_solution():

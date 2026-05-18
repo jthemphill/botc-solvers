@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from botc_solver import Alignment, BOTCModel, Character, CharacterType, RoleClaim, forced_role_holders
+from botc_solver import Alignment, BOTCModel, Character, CharacterType, RoleClaim, print_solution
 from botc_solver.predicates import (
     different_character_types,
     same_alignment,
@@ -141,21 +141,12 @@ def solve():
 
 
 def main() -> None:
-    worlds = solve()
-    print(f"{len(worlds)} satisfying world(s)")
-    for index, world in enumerate(worlds, start=1):
-        print(f"\nWorld {index}")
-        for player in PLAYERS:
-            actual = world.actual_role(player)
-            apparent = world.apparent.get(player)
-            if apparent and apparent != actual:
-                print(f"  {player}: {actual} (appears as {apparent})")
-            else:
-                print(f"  {player}: {actual}")
-
-    print("\nForced facts")
-    for role, holder in forced_role_holders(worlds, ["Goblin", "Leviathan", "Drunk"]).items():
-        print(f"  {role}: {holder or 'not in every world'}")
+    print_solution(
+        solve(),
+        PLAYERS,
+        forced_roles=["Goblin", "Leviathan", "Drunk"],
+        forced_missing="not in every world",
+    )
 
 
 if __name__ == "__main__":

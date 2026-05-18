@@ -1,6 +1,14 @@
 from __future__ import annotations
 
-from botc_solver import Alignment, BOTCModel, Character, CharacterType, RoleClaim, World, forced_role_holders
+from botc_solver import (
+    Alignment,
+    BOTCModel,
+    Character,
+    CharacterType,
+    RoleClaim,
+    forced_role,
+    print_solution,
+)
 from botc_solver.predicates import chef_count_registers_as
 
 
@@ -21,7 +29,9 @@ CHARACTERS = (
     Character("Slayer", Alignment.GOOD, CharacterType.TOWNSFOLK),
     Character("Washerwoman", Alignment.GOOD, CharacterType.TOWNSFOLK),
 )
-MINION_ROLES = (character.name for character in CHARACTERS if character.character_type == CharacterType.MINION)
+MINION_ROLES = tuple(
+    character.name for character in CHARACTERS if character.character_type == CharacterType.MINION
+)
 EVIL_ROLES = [character.name for character in CHARACTERS if character.alignment == Alignment.EVIL]
 CLAIMS = {
     "Dan": "Chef",
@@ -127,44 +137,18 @@ def solve():
     return build_model().solve_all()
 
 
-def _forced_minion(worlds: list[World]):
-    minions = {
-        (holder, role)
-        for world in worlds
-        for role in MINION_ROLES
-        for holder in [world.holder(role)]
-        if holder is not None
-    }
-    if len(minions) == 1:
-        return next(iter(minions))
-    return None
-
-
 def main() -> None:
-    worlds = solve()
-    print(f"{len(worlds)} satisfying world(s)")
-    for index, world in enumerate(worlds, start=1):
-        print(f"\nWorld {index}")
-        for player in PLAYERS:
-            actual = world.actual_role(player)
-            apparent = world.apparent.get(player)
-            poison_suffix = " poisoned" if world.is_poisoned(player, POISON_CONTEXT) else ""
-            if apparent and apparent != actual:
-                print(f"  {player}: {actual} (appears as {apparent}){poison_suffix}")
-            else:
-                print(f"  {player}: {actual}{poison_suffix}")
-
-    print("\nForced facts")
-    forced = forced_role_holders(worlds, ["Imp", "Drunk", "Recluse"])
-    minion = _forced_minion(worlds)
-    print(f"  Demon: {forced['Imp'] or 'not forced'} (Imp)")
-    if minion is None:
-        print("  Minion: not forced")
-    else:
-        holder, role = minion
-        print(f"  Minion: {holder} ({role})")
-    print(f"  Drunk: {forced['Drunk'] or 'not in play'}")
-    print(f"  Recluse: {forced['Recluse'] or 'not in play'}")
+    print_solution(
+        solve(),
+        PLAYERS,
+        poison_context=POISON_CONTEXT,
+        forced_roles=[
+            forced_role("Demon", "Imp", include_role=True),
+            forced_role("Minion", MINION_ROLES, include_role=True),
+            forced_role("Drunk", missing="not in play"),
+            forced_role("Recluse", missing="not in play"),
+        ],
+    )
 
 
 if __name__ == "__main__":

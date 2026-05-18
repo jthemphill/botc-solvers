@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from botc_solver import Alignment, BOTCModel, Character, CharacterType, RoleClaim, forced_role_holders
+from botc_solver import Alignment, BOTCModel, Character, CharacterType, RoleClaim, print_solution
 from botc_solver.predicates import (
     chef_count_is,
     different_alignments,
@@ -99,22 +99,7 @@ def solve():
 
 
 def main() -> None:
-    worlds = solve()
-    print(f"{len(worlds)} satisfying world(s)")
-    for index, world in enumerate(worlds, start=1):
-        print(f"\nWorld {index}")
-        for player in PLAYERS:
-            actual = world.actual_role(player)
-            apparent = world.apparent.get(player)
-            poison_suffix = " poisoned" if world.is_poisoned(player) else ""
-            if apparent and apparent != actual:
-                print(f"  {player}: {actual} (appears as {apparent}){poison_suffix}")
-            else:
-                print(f"  {player}: {actual}{poison_suffix}")
-
-    print("\nForced facts")
-    for role, holder in forced_role_holders(worlds, ["Demon", "Minion", "Drunk"]).items():
-        print(f"  {role}: {holder or 'not forced'}")
+    print_solution(solve(), PLAYERS, forced_roles=["Demon", "Minion", "Drunk"])
 
 
 if __name__ == "__main__":

@@ -1,7 +1,4 @@
-from importlib import import_module
-
-
-solve = import_module("puzzles.01_sober_savant").solve
+from puzzles.puzzle_01_sober_savant import solve
 
 
 def test_savant_puzzle_has_unique_solution():

@@ -1,7 +1,4 @@
-from importlib import import_module
-
-
-solve = import_module("puzzles.02_come_fly_with_me").solve
+from puzzles.puzzle_02_come_fly_with_me import solve
 
 
 def test_come_fly_with_me_has_unique_solution():

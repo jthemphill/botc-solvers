@@ -1,7 +1,4 @@
-from importlib import import_module
-
-
-solve = import_module("puzzles.03a_not_throwing_away_my_shot").solve
+from puzzles.puzzle_03a_not_throwing_away_my_shot import solve
 
 
 def test_not_throwing_away_my_shot_has_unique_solution():
