@@ -9,7 +9,7 @@ from botc_solver import (
     forced_role,
     print_solution,
 )
-from botc_solver.predicates import chef_count_registers_as
+from botc_solver.predicates import chef_count_registers_as, registers_as_role_among
 
 
 PLAYERS = ["Dan", "Anna", "Matt", "Fraser", "You", "Tim", "Sarah", "Hannah"]
@@ -72,13 +72,7 @@ def build_model() -> BOTCModel:
     game.add_poisoner_effect(POISON_CONTEXT)
 
     dan_claim = chef_count_registers_as(game, 0, "dan_chef")
-    matt_claim = game.any_of(
-        [
-            game.registers_as_role("Tim", "Librarian", "matt_washerwoman"),
-            game.registers_as_role("Dan", "Librarian", "matt_washerwoman"),
-        ],
-        "matt_claim_tim_or_dan_librarian",
-    )
+    matt_claim = registers_as_role_among(game, ["Tim", "Dan"], "Librarian", "matt_washerwoman")
     fraser_claim = game.not_(
         game.any_of(
             [
@@ -89,19 +83,12 @@ def build_model() -> BOTCModel:
         ),
         "neither_you_nor_matt_evil",
     )
-    tim_claim = game.any_of(
-        [
-            game.registers_as_role("You", "Drunk", "tim_librarian"),
-            game.registers_as_role("Hannah", "Drunk", "tim_librarian"),
-        ],
-        "tim_claim_you_or_hannah_drunk",
-    )
-    sarah_claim = game.any_of(
-        [
-            game.registers_as_role("Tim", "Scarlet Woman", "sarah_investigator"),
-            game.registers_as_role("Fraser", "Scarlet Woman", "sarah_investigator"),
-        ],
-        "sarah_claim_tim_or_fraser_scarlet_woman",
+    tim_claim = registers_as_role_among(game, ["You", "Hannah"], "Drunk", "tim_librarian")
+    sarah_claim = registers_as_role_among(
+        game,
+        ["Tim", "Fraser"],
+        "Scarlet Woman",
+        "sarah_investigator",
     )
 
     game.add_truthful_info_claim("Dan", "Chef", dan_claim, poison_context=POISON_CONTEXT)

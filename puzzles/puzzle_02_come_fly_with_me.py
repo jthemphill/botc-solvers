@@ -3,6 +3,7 @@ from __future__ import annotations
 from botc_solver import Alignment, BOTCModel, Character, CharacterType, RoleClaim, print_solution
 from botc_solver.predicates import (
     different_character_types,
+    registers_as_role_among,
     same_alignment,
 )
 
@@ -60,9 +61,11 @@ def build_model() -> BOTCModel:
     game.add_enforced(outsider_count >= 1, balloonist_in_play)
     game.add_enforced(outsider_count <= 2, balloonist_in_play)
 
-    sarah_claim = game.any_of(
-        [game.actual_is("Matthew", "Goblin"), game.actual_is("Fraser", "Goblin")],
-        "sarah_claim_matthew_or_fraser_goblin",
+    sarah_claim = registers_as_role_among(
+        game,
+        ["Matthew", "Fraser"],
+        "Goblin",
+        "sarah_investigator",
     )
     matthew_claim = game.bool_sum_equals(
         [

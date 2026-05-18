@@ -67,6 +67,18 @@ def chef_count_registers_as(game: BOTCModel, count: int, name: str) -> cp_model.
     return game.bool_sum_equals(evil_pairs, count, f"{name}_chef_count_is_{count}")
 
 
+def registers_as_role_among(
+    game: BOTCModel,
+    players: Sequence[str],
+    role: str,
+    name: str,
+) -> cp_model.IntVar:
+    return game.any_of(
+        [game.registers_as_role(player, role, name) for player in players],
+        f"{name}_{'_'.join(players)}_registers_as_{role}",
+    )
+
+
 def sits_next_to_evil(game: BOTCModel, player: str) -> cp_model.IntVar:
     left, right = game.neighbors(player)
     return game.any_of(

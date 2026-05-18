@@ -9,7 +9,7 @@ from botc_solver import (
     forced_role,
     print_solution,
 )
-from botc_solver.predicates import chef_count_registers_as
+from botc_solver.predicates import chef_count_registers_as, registers_as_role_among
 
 
 PLAYERS = ["Sula", "Matthew", "Oscar", "Josh", "You", "Aoife", "Tom"]
@@ -67,19 +67,12 @@ def build_model() -> BOTCModel:
 
     game.add_poisoner_effect(POISON_CONTEXT)
 
-    sula_claim = game.any_of(
-        [
-            game.registers_as_role("You", "Baron", "sula_investigator"),
-            game.registers_as_role("Aoife", "Baron", "sula_investigator"),
-        ],
-        "sula_claim_you_or_aoife_baron",
-    )
-    matthew_claim = game.any_of(
-        [
-            game.registers_as_role("Aoife", "Librarian", "matthew_washerwoman"),
-            game.registers_as_role("Oscar", "Librarian", "matthew_washerwoman"),
-        ],
-        "matthew_claim_aoife_or_oscar_librarian",
+    sula_claim = registers_as_role_among(game, ["You", "Aoife"], "Baron", "sula_investigator")
+    matthew_claim = registers_as_role_among(
+        game,
+        ["Aoife", "Oscar"],
+        "Librarian",
+        "matthew_washerwoman",
     )
     oscar_claim = game.bool_sum_equals(
         [

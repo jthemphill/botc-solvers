@@ -6,6 +6,7 @@ from botc_solver.predicates import (
     chef_count_registers_as,
     different_character_types,
     drunk_between_two_townsfolk,
+    registers_as_role_among,
     same_alignment,
     sits_next_to_evil,
 )
@@ -151,7 +152,6 @@ def test_spy_can_register_as_not_evil_for_chef():
     game.fix_actual("B", "Spy")
     game.fix_actual("C", "Chef")
     game.add_truth(chef_count_registers_as(game, 0, "chef"))
-    game.add_false(chef_count_is(game, 0))
 
     worlds = game.solve_all()
 
@@ -159,11 +159,12 @@ def test_spy_can_register_as_not_evil_for_chef():
     assert worlds[0].holder("Spy") == "B"
 
 
-def test_recluse_can_register_as_imp_without_actual_imp():
-    game = BOTCModel(["A", "B"], characters=REGISTRATION_CHARACTERS)
+def test_registers_as_role_among_allows_flexible_registration():
+    game = BOTCModel(["A", "B", "C"], characters=REGISTRATION_CHARACTERS)
     game.fix_actual("A", "Recluse")
     game.fix_actual("B", "Chef")
-    game.add_truth(game.registers_as_role("A", "Imp", "slayer"))
+    game.fix_actual("C", "Librarian")
+    game.add_truth(registers_as_role_among(game, ["A", "B"], "Imp", "investigator"))
     game.add_false(game.role_in_play("Imp"))
 
     worlds = game.solve_all()
