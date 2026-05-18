@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol, cast
 
 from ortools.sat.python import cp_model
 
 from botc_solver.core import Alignment, Character, CharacterType, RoleClaim
+
+
+DEFAULT_POISON_CONTEXT = "default"
 
 
 def _slug(value: str) -> str:
@@ -30,6 +33,7 @@ class World:
     apparent: Mapping[str, str]
     poisoned: frozenset[str]
     seating: tuple[str, ...]
+    poisoned_by_context: Mapping[str, frozenset[str]] = field(default_factory=dict[str, frozenset[str]])
 
     def holder(self, role: str) -> str | None:
         holders = [player for player, actual_role in self.actual.items() if actual_role == role]
@@ -40,8 +44,10 @@ class World:
     def actual_role(self, player: str) -> str:
         return self.actual[player]
 
-    def is_poisoned(self, player: str) -> bool:
-        return player in self.poisoned
+    def is_poisoned(self, player: str, context: str | None = None) -> bool:
+        if context is None:
+            return player in self.poisoned
+        return player in self.poisoned_by_context.get(context, frozenset())
 
 
 def forced_role_holders(worlds: Sequence[World], roles: Iterable[str]) -> dict[str, str | None]:
@@ -58,6 +64,14 @@ class _WorldCollector(cp_model.CpSolverSolutionCallback):
         self._game = game
         self._limit = limit
         self.worlds: list[World] = []
+        self._seen: set[
+            tuple[
+                tuple[tuple[str, str], ...],
+                tuple[tuple[str, str], ...],
+                tuple[tuple[str, tuple[str, ...]], ...],
+                tuple[str, ...],
+            ]
+        ] = set()
 
     def on_solution_callback(self) -> None:
         actual: dict[str, str] = {}
@@ -71,15 +85,34 @@ class _WorldCollector(cp_model.CpSolverSolutionCallback):
                 raise RuntimeError(f"Expected exactly one actual character for {player}.")
             actual[player] = matching[0]
 
-        poisoned = frozenset(
-            player for player in self._game.players if self.value(self._game.poisoned(player))
+        poisoned_by_context = {
+            context: frozenset(
+                player
+                for player, poison_var in self._game.poisoned_literals(context)
+                if self.value(poison_var)
+            )
+            for context in sorted(self._game.poison_contexts)
+        }
+        poisoned = poisoned_by_context.get(DEFAULT_POISON_CONTEXT, frozenset())
+        key = (
+            tuple(sorted(actual.items())),
+            tuple(sorted(self._game.apparent_roles.items())),
+            tuple(
+                (context, tuple(sorted(poisoned_players)))
+                for context, poisoned_players in sorted(poisoned_by_context.items())
+            ),
+            tuple(self._game.seating),
         )
+        if key in self._seen:
+            return
+        self._seen.add(key)
         self.worlds.append(
             World(
                 actual=actual,
                 apparent=dict(self._game.apparent_roles),
                 poisoned=poisoned,
                 seating=tuple(self._game.seating),
+                poisoned_by_context=poisoned_by_context,
             )
         )
         if self._limit is not None and len(self.worlds) >= self._limit:
@@ -118,10 +151,8 @@ class BOTCModel:
             for player in self.players
             for role in self.characters
         }
-        self._poisoned = {
-            player: self.model.new_bool_var(f"{_slug(player)}__poisoned")
-            for player in self.players
-        }
+        self._poisoned: dict[tuple[str, str], cp_model.IntVar] = {}
+        self.poison_contexts: set[str] = set()
         self._predicate_cache: dict[tuple[str, str], cp_model.IntVar] = {}
 
         for player in self.players:
@@ -156,9 +187,32 @@ class BOTCModel:
         self._check_role(role)
         return self._actual[(player, role)]
 
-    def poisoned(self, player: str) -> cp_model.IntVar:
+    def _poison_context(self, context: str | None) -> str:
+        if context is None:
+            return DEFAULT_POISON_CONTEXT
+        if not context:
+            raise ValueError("Poison context must not be empty.")
+        return context
+
+    def poisoned(self, player: str, context: str | None = None) -> cp_model.IntVar:
         self._check_player(player)
-        return self._poisoned[player]
+        poison_context = self._poison_context(context)
+        key = (poison_context, player)
+        if key not in self._poisoned:
+            self._poisoned[key] = self.model.new_bool_var(
+                f"{_slug(player)}__poisoned__{_slug(poison_context)}"
+            )
+        self.poison_contexts.add(poison_context)
+        return self._poisoned[key]
+
+    def poisoned_literals(self, context: str) -> list[tuple[str, cp_model.IntVar]]:
+        poison_context = self._poison_context(context)
+        result: list[tuple[str, cp_model.IntVar]] = []
+        for player in self.players:
+            poison_var = self._poisoned.get((poison_context, player))
+            if poison_var is not None:
+                result.append((player, poison_var))
+        return result
 
     def set_apparent_role(self, player: str, role: str) -> None:
         self._check_player(player)
@@ -173,9 +227,12 @@ class BOTCModel:
         drunk_role: str = "Drunk",
     ) -> None:
         self.set_apparent_role(claim.player, claim.apparent_role)
+        possible_roles = [claim.apparent_role, *evil_roles]
+        if self.characters[claim.apparent_role].character_type == CharacterType.TOWNSFOLK:
+            possible_roles.append(drunk_role)
         self.set_possible_actual_roles(
             claim.player,
-            [claim.apparent_role, *evil_roles, drunk_role],
+            possible_roles,
         )
 
     def set_possible_actual_roles(self, player: str, roles: Iterable[str]) -> None:
@@ -193,23 +250,50 @@ class BOTCModel:
     def fix_not_actual(self, player: str, role: str) -> None:
         self.add_false(self.actual_is(player, role))
 
-    def fix_poisoned(self, player: str, value: bool) -> None:
-        self.model.add(self.poisoned(player) == int(value))
+    def fix_poisoned(self, player: str, value: bool, context: str | None = None) -> None:
+        self.model.add(self.poisoned(player, context) == int(value))
+
+    def add_poisoner_effect(
+        self,
+        context: str,
+        *,
+        poisoner_role: str = "Poisoner",
+        active_if: cp_model.IntVar | bool | None = None,
+    ) -> None:
+        poisoned_count = sum(self.poisoned(player, context) for player in self.players)
+        poisoner_in_play = self.role_in_play(poisoner_role)
+        if active_if is None:
+            poisoner_active = poisoner_in_play
+        elif isinstance(active_if, bool):
+            poisoner_active = self.all_of(
+                [
+                    poisoner_in_play,
+                    self.constant_bool(active_if, f"{context}_{poisoner_role}_active_if"),
+                ],
+                f"{context}_{poisoner_role}_active",
+            )
+        else:
+            poisoner_active = self.all_of(
+                [poisoner_in_play, active_if],
+                f"{context}_{poisoner_role}_active",
+            )
+        self.add_enforced(poisoned_count == 1, poisoner_active)
+        self.add_enforced(poisoned_count == 0, poisoner_active.Not())
 
     def set_character_count(self, role: str, count: int) -> None:
         self._check_role(role)
         self.model.add(sum(self.actual_is(player, role) for player in self.players) == count)
 
-    def add_truth(self, literal: cp_model.IntVar) -> None:
+    def add_truth(self, literal: cp_model.BoolVarT) -> None:
         self.model.add_bool_or([literal])
 
-    def add_false(self, literal: cp_model.IntVar) -> None:
+    def add_false(self, literal: cp_model.BoolVarT) -> None:
         self.model.add_bool_or([literal.Not()])
 
-    def add_implication(self, condition: cp_model.IntVar, conclusion: cp_model.IntVar) -> None:
+    def add_implication(self, condition: cp_model.BoolVarT, conclusion: cp_model.BoolVarT) -> None:
         self.model.add_implication(condition, conclusion)
 
-    def add_exactly_one(self, literals: Iterable[cp_model.IntVar]) -> None:
+    def add_exactly_one(self, literals: Iterable[cp_model.BoolVarT]) -> None:
         self.model.add_exactly_one(list(literals))
 
     def add_exactly_n(self, literals: Iterable[cp_model.IntVar], count: int) -> None:
@@ -235,7 +319,7 @@ class BOTCModel:
         self.add_enforced(total != count, result.Not())
         return result
 
-    def all_of(self, literals: Iterable[cp_model.IntVar], name: str) -> cp_model.IntVar:
+    def all_of(self, literals: Iterable[cp_model.BoolVarT], name: str) -> cp_model.IntVar:
         literals = list(literals)
         if not literals:
             return self.constant_bool(True, name)
@@ -244,7 +328,7 @@ class BOTCModel:
         _only_enforce_if(self.model.add_bool_or([literal.Not() for literal in literals]), result.Not())
         return result
 
-    def any_of(self, literals: Iterable[cp_model.IntVar], name: str) -> cp_model.IntVar:
+    def any_of(self, literals: Iterable[cp_model.BoolVarT], name: str) -> cp_model.IntVar:
         literals = list(literals)
         if not literals:
             return self.constant_bool(False, name)
@@ -333,16 +417,56 @@ class BOTCModel:
             )
         return self._predicate_cache[key]
 
+    def registers_as_evil(self, player: str, name: str) -> cp_model.IntVar:
+        return self._registers_as_alignment(player, Alignment.EVIL, name)
+
+    def registers_as_good(self, player: str, name: str) -> cp_model.IntVar:
+        return self._registers_as_alignment(player, Alignment.GOOD, name)
+
+    def registers_as_character_type(
+        self,
+        player: str,
+        character_type: CharacterType,
+        name: str,
+    ) -> cp_model.IntVar:
+        self._check_player(player)
+        result = self.new_bool(f"{name}_{player}_registers_as_{character_type.value}")
+        for role, character in self.characters.items():
+            actual = self.actual_is(player, role)
+            if self._role_can_flexibly_register_as_type(role, character_type):
+                continue
+            if character.character_type == character_type:
+                self.add_implication(actual, result)
+            else:
+                self.add_implication(actual, result.Not())
+        return result
+
+    def registers_as_role(self, player: str, role: str, name: str) -> cp_model.IntVar:
+        self._check_player(player)
+        self._check_role(role)
+        result = self.new_bool(f"{name}_{player}_registers_as_{role}")
+        for actual_role in self.characters:
+            actual = self.actual_is(player, actual_role)
+            if self._role_can_flexibly_register_as_role(actual_role, role):
+                continue
+            if actual_role == role:
+                self.add_implication(actual, result)
+            else:
+                self.add_implication(actual, result.Not())
+        return result
+
     def add_truthful_info_claim(
         self,
         player: str,
         apparent_role: str,
         claim_truth: cp_model.IntVar,
+        *,
+        poison_context: str | None = None,
     ) -> None:
         active_claimed_role = self.all_of(
             [
                 self.actual_is(player, apparent_role),
-                self.poisoned(player).Not(),
+                self.poisoned(player, poison_context).Not(),
             ],
             f"{player}_{apparent_role}_sober_healthy_claim",
         )
@@ -388,3 +512,59 @@ class BOTCModel:
                 f"{predicate}_{player}",
             )
         return self._predicate_cache[key]
+
+    def _registers_as_alignment(
+        self,
+        player: str,
+        alignment: Alignment,
+        name: str,
+    ) -> cp_model.IntVar:
+        self._check_player(player)
+        result = self.new_bool(f"{name}_{player}_registers_as_{alignment.value}")
+        for role, character in self.characters.items():
+            actual = self.actual_is(player, role)
+            if self._role_can_flexibly_register_as_alignment(role):
+                continue
+            if character.alignment == alignment:
+                self.add_implication(actual, result)
+            else:
+                self.add_implication(actual, result.Not())
+        return result
+
+    def _role_can_flexibly_register_as_alignment(self, actual_role: str) -> bool:
+        return actual_role in {"Spy", "Recluse"} and actual_role in self.characters
+
+    def _role_can_flexibly_register_as_type(
+        self,
+        actual_role: str,
+        character_type: CharacterType,
+    ) -> bool:
+        if actual_role == "Spy" and actual_role in self.characters:
+            return character_type in {
+                CharacterType.MINION,
+                CharacterType.OUTSIDER,
+                CharacterType.TOWNSFOLK,
+            }
+        if actual_role == "Recluse" and actual_role in self.characters:
+            return character_type in {
+                CharacterType.DEMON,
+                CharacterType.MINION,
+                CharacterType.OUTSIDER,
+            }
+        return False
+
+    def _role_can_flexibly_register_as_role(self, actual_role: str, observed_role: str) -> bool:
+        observed_character = self.characters[observed_role]
+        if actual_role == "Spy" and actual_role in self.characters:
+            return observed_role == "Spy" or (
+                observed_character.alignment == Alignment.GOOD
+                and observed_character.character_type
+                in {CharacterType.OUTSIDER, CharacterType.TOWNSFOLK}
+            )
+        if actual_role == "Recluse" and actual_role in self.characters:
+            return observed_role == "Recluse" or (
+                observed_character.alignment == Alignment.EVIL
+                and observed_character.character_type
+                in {CharacterType.DEMON, CharacterType.MINION}
+            )
+        return False

@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 from botc_solver import Alignment, BOTCModel, Character, CharacterType, RoleClaim, World, forced_role_holders
-from botc_solver.predicates import chef_count_is
+from botc_solver.predicates import chef_count_registers_as
 
 
 PLAYERS = ["Dan", "Anna", "Matt", "Fraser", "You", "Tim", "Sarah", "Hannah"]
-MINION_ROLES = ("Baron", "Spy", "Poisoner", "Scarlet Woman")
-EVIL_ROLES = ("Imp", *MINION_ROLES)
 CHARACTERS = (
     Character("Imp", Alignment.EVIL, CharacterType.DEMON),
     Character("Baron", Alignment.EVIL, CharacterType.MINION),
@@ -23,6 +21,8 @@ CHARACTERS = (
     Character("Slayer", Alignment.GOOD, CharacterType.TOWNSFOLK),
     Character("Washerwoman", Alignment.GOOD, CharacterType.TOWNSFOLK),
 )
+MINION_ROLES = (character.name for character in CHARACTERS if character.character_type == CharacterType.MINION)
+EVIL_ROLES = [character.name for character in CHARACTERS if character.alignment == Alignment.EVIL]
 CLAIMS = {
     "Dan": "Chef",
     "Anna": "Recluse",
@@ -33,6 +33,7 @@ CLAIMS = {
     "Sarah": "Investigator",
     "Hannah": "Saint",
 }
+POISON_CONTEXT = "day_1"
 
 
 def _outsider_count(game: BOTCModel):
@@ -58,47 +59,63 @@ def build_model() -> BOTCModel:
     game.add_enforced(outsider_count == 3, baron_in_play)
     game.add_enforced(outsider_count == 1, baron_in_play.Not())
 
-    poisoned_count = sum(game.poisoned(player) for player in PLAYERS)
-    poisoner_in_play = game.role_in_play("Poisoner")
-    game.add_enforced(poisoned_count == 1, poisoner_in_play)
-    game.add_enforced(poisoned_count == 0, poisoner_in_play.Not())
+    game.add_poisoner_effect(POISON_CONTEXT)
 
-    dan_claim = chef_count_is(game, 0)
+    dan_claim = chef_count_registers_as(game, 0, "dan_chef")
     matt_claim = game.any_of(
-        [game.actual_is("Tim", "Librarian"), game.actual_is("Dan", "Librarian")],
+        [
+            game.registers_as_role("Tim", "Librarian", "matt_washerwoman"),
+            game.registers_as_role("Dan", "Librarian", "matt_washerwoman"),
+        ],
         "matt_claim_tim_or_dan_librarian",
     )
     fraser_claim = game.not_(
-        game.any_of([game.is_evil("You"), game.is_evil("Matt")], "you_or_matt_evil"),
+        game.any_of(
+            [
+                game.registers_as_evil("You", "fraser_empath"),
+                game.registers_as_evil("Matt", "fraser_empath"),
+            ],
+            "you_or_matt_evil",
+        ),
         "neither_you_nor_matt_evil",
     )
     tim_claim = game.any_of(
-        [game.actual_is("You", "Drunk"), game.actual_is("Hannah", "Drunk")],
+        [
+            game.registers_as_role("You", "Drunk", "tim_librarian"),
+            game.registers_as_role("Hannah", "Drunk", "tim_librarian"),
+        ],
         "tim_claim_you_or_hannah_drunk",
     )
     sarah_claim = game.any_of(
         [
-            game.actual_is("Tim", "Scarlet Woman"),
-            game.actual_is("Fraser", "Scarlet Woman"),
+            game.registers_as_role("Tim", "Scarlet Woman", "sarah_investigator"),
+            game.registers_as_role("Fraser", "Scarlet Woman", "sarah_investigator"),
         ],
         "sarah_claim_tim_or_fraser_scarlet_woman",
     )
 
-    game.add_truthful_info_claim("Dan", "Chef", dan_claim)
-    game.add_truthful_info_claim("Matt", "Washerwoman", matt_claim)
-    game.add_truthful_info_claim("Fraser", "Empath", fraser_claim)
-    game.add_truthful_info_claim("Tim", "Librarian", tim_claim)
-    game.add_truthful_info_claim("Sarah", "Investigator", sarah_claim)
+    game.add_truthful_info_claim("Dan", "Chef", dan_claim, poison_context=POISON_CONTEXT)
+    game.add_truthful_info_claim("Matt", "Washerwoman", matt_claim, poison_context=POISON_CONTEXT)
+    game.add_truthful_info_claim("Fraser", "Empath", fraser_claim, poison_context=POISON_CONTEXT)
+    game.add_truthful_info_claim("Tim", "Librarian", tim_claim, poison_context=POISON_CONTEXT)
+    game.add_truthful_info_claim("Sarah", "Investigator", sarah_claim, poison_context=POISON_CONTEXT)
 
     game.add_truth(game.actual_is("You", "Slayer"))
-    game.add_false(game.poisoned("You"))
+    game.add_false(game.poisoned("You", POISON_CONTEXT))
     anna_imp_with_scarlet_woman = game.all_of(
         [game.actual_is("Anna", "Imp"), game.role_in_play("Scarlet Woman")],
         "anna_imp_with_scarlet_woman",
     )
+    anna_recluse_registers_as_imp = game.all_of(
+        [
+            game.actual_is("Anna", "Recluse"),
+            game.registers_as_role("Anna", "Imp", "you_slayer"),
+        ],
+        "anna_recluse_registers_as_imp",
+    )
     game.add_truth(
         game.any_of(
-            [game.actual_is("Anna", "Recluse"), anna_imp_with_scarlet_woman],
+            [anna_recluse_registers_as_imp, anna_imp_with_scarlet_woman],
             "slayer_shot_anna_died_without_game_ending",
         )
     )
@@ -131,7 +148,7 @@ def main() -> None:
         for player in PLAYERS:
             actual = world.actual_role(player)
             apparent = world.apparent.get(player)
-            poison_suffix = " poisoned" if world.is_poisoned(player) else ""
+            poison_suffix = " poisoned" if world.is_poisoned(player, POISON_CONTEXT) else ""
             if apparent and apparent != actual:
                 print(f"  {player}: {actual} (appears as {apparent}){poison_suffix}")
             else:

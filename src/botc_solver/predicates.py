@@ -27,7 +27,7 @@ def same_alignment(game: BOTCModel, left: str, right: str) -> cp_model.IntVar:
 
 
 def different_character_types(game: BOTCModel, left: str, right: str) -> cp_model.IntVar:
-    same_type_options = []
+    same_type_options: list[cp_model.IntVar] = []
     for character_type in {character.character_type for character in game.characters.values()}:
         same_type_options.append(
             game.all_of(
@@ -52,6 +52,21 @@ def chef_count_is(game: BOTCModel, count: int) -> cp_model.IntVar:
     return game.bool_sum_equals(evil_pairs, count, f"chef_count_is_{count}")
 
 
+def chef_count_registers_as(game: BOTCModel, count: int, name: str) -> cp_model.IntVar:
+    registers_as_evil = {
+        player: game.registers_as_evil(player, name)
+        for player in game.players
+    }
+    evil_pairs = [
+        game.all_of(
+            [registers_as_evil[left], registers_as_evil[right]],
+            f"{name}_{left}_{right}_evil_pair",
+        )
+        for left, right in game.adjacent_pairs()
+    ]
+    return game.bool_sum_equals(evil_pairs, count, f"{name}_chef_count_is_{count}")
+
+
 def sits_next_to_evil(game: BOTCModel, player: str) -> cp_model.IntVar:
     left, right = game.neighbors(player)
     return game.any_of(
@@ -61,7 +76,7 @@ def sits_next_to_evil(game: BOTCModel, player: str) -> cp_model.IntVar:
 
 
 def drunk_between_two_townsfolk(game: BOTCModel) -> cp_model.IntVar:
-    possibilities = []
+    possibilities: list[cp_model.IntVar] = []
     for player in game.players:
         left, right = game.neighbors(player)
         possibilities.append(
