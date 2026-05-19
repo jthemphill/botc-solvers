@@ -84,9 +84,6 @@ def build_model() -> BOTCModel:
     game.fix_not_actual("You", Leviathan)
     game.fix_not_actual("You", Goblin)
 
-    for player in PLAYER_NAMES:
-        game.fix_poisoned(player, False)
-
     outsider_count = sum(
         game.actual_is(player, role)
         for player in PLAYER_NAMES

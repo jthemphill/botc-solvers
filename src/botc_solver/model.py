@@ -175,6 +175,9 @@ class BOTCModel:
         }
         self._poisoned: dict[tuple[str, str], cp_model.IntVar] = {}
         self.poison_contexts: set[str] = set()
+        self._poison_source_contexts: set[str] = set()
+        self._explicit_poisoned_true: set[tuple[str, str]] = set()
+        self._default_sober_constraints: set[tuple[str, str]] = set()
         self._predicate_cache: dict[tuple[str, str], cp_model.IntVar] = {}
 
         for player in self.players:
@@ -294,7 +297,10 @@ class BOTCModel:
     def fix_poisoned(
         self, player: str, value: bool, context: str | None = None
     ) -> None:
-        self.model.add(self.poisoned(player, context) == int(value))
+        poison_context = self._poison_context(context)
+        self.model.add(self.poisoned(player, poison_context) == int(value))
+        if value:
+            self._explicit_poisoned_true.add((poison_context, player))
 
     def add_poisoner_effect(
         self,
@@ -303,7 +309,11 @@ class BOTCModel:
         poisoner_role: object = "Poisoner",
         active_if: cp_model.IntVar | bool | None = None,
     ) -> None:
-        poisoned_count = sum(self.poisoned(player, context) for player in self.players)
+        poison_context = self._poison_context(context)
+        self._poison_source_contexts.add(poison_context)
+        poisoned_count = sum(
+            self.poisoned(player, poison_context) for player in self.players
+        )
         poisoner_in_play = self.role_in_play(poisoner_role)
         poisoner_name = role_name(poisoner_role)
         if active_if is None:
@@ -313,15 +323,15 @@ class BOTCModel:
                 [
                     poisoner_in_play,
                     self.constant_bool(
-                        active_if, f"{context}_{poisoner_name}_active_if"
+                        active_if, f"{poison_context}_{poisoner_name}_active_if"
                     ),
                 ],
-                f"{context}_{poisoner_name}_active",
+                f"{poison_context}_{poisoner_name}_active",
             )
         else:
             poisoner_active = self.all_of(
                 [poisoner_in_play, active_if],
-                f"{context}_{poisoner_name}_active",
+                f"{poison_context}_{poisoner_name}_active",
             )
         self.add_enforced(poisoned_count == 1, poisoner_active)
         self.add_enforced(poisoned_count == 0, poisoner_active.Not())
@@ -567,6 +577,7 @@ class BOTCModel:
         limit: int | None = None,
         max_time_seconds: float | None = None,
     ) -> list[World]:
+        self._apply_default_sober_constraints()
         solver = cp_model.CpSolver()
         solver.parameters.enumerate_all_solutions = True
         if max_time_seconds is not None:
@@ -574,6 +585,18 @@ class BOTCModel:
         collector = _WorldCollector(self, limit)
         solver.solve(self.model, collector)
         return collector.worlds
+
+    def _apply_default_sober_constraints(self) -> None:
+        for key, poisoned in self._poisoned.items():
+            context, _player = key
+            if context in self._poison_source_contexts:
+                continue
+            if key in self._explicit_poisoned_true:
+                continue
+            if key in self._default_sober_constraints:
+                continue
+            self.model.add(poisoned == 0)
+            self._default_sober_constraints.add(key)
 
     def _cached_player_predicate(
         self,

@@ -55,7 +55,6 @@ def test_title_case_claim_objects_apply_claims():
     apply_claims(game, claims)
     game.fix_actual("A", "Investigator")
     game.fix_actual("B", "Scarlet Woman")
-    game.fix_poisoned("A", False)
 
     assert len(game.solve_all()) == 1
 
@@ -68,7 +67,6 @@ def test_character_claim_with_learned_info_applies_when_sober_healthy():
     game.fix_actual("A", Investigator)
     game.fix_actual("B", Imp)
     game.fix_actual("C", ScarletWoman)
-    game.fix_poisoned("A", False)
 
     assert game.solve_all(limit=1) == []
 
@@ -182,6 +180,5 @@ def test_savant_claim_statement_tuple_means_exactly_one():
     game.fix_actual("A", Savant)
     game.fix_actual("B", Imp)
     game.fix_actual("C", Imp)
-    game.fix_poisoned("A", False)
 
     assert game.solve_all(limit=1) == []
