@@ -6,42 +6,9 @@ on:
   pull_request:
 
 jobs:
-  python:
-    name: pytest, black, pyright
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: python
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-        with:
-          enable-cache: true
-          cache-dependency-glob: python/uv.lock
-          python-version: "3.14"
-
-      - name: Install dependencies
-        run: uv sync --locked --all-extras --dev
-
-      - name: Check formatting
-        run: uv run black --check src puzzles tests
-
-      - name: Type check
-        run: uv run pyright
-
-      - name: Run tests
-        run: uv run pytest
-
-  typescript:
+  checks:
     name: bun test, tsc, prettier
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: typescript
 
     steps:
       - name: Check out repository
