@@ -2,16 +2,16 @@ from collections import abc
 
 from botc_solver import BOTCModel, CharacterType, RoleClaim
 from botc_solver.characters import (
-    CHEF,
-    DRUNK,
-    IMP,
-    INVESTIGATOR,
-    LIBRARIAN,
-    NOBLE,
-    POISONER,
-    RECLUSE,
-    SCARLET_WOMAN,
-    SPY,
+    Chef,
+    Drunk,
+    Imp,
+    Investigator,
+    Librarian,
+    Noble,
+    Poisoner,
+    Recluse,
+    ScarletWoman,
+    Spy,
     script,
 )
 from botc_solver.predicates import (
@@ -26,26 +26,26 @@ from botc_solver.predicates import (
 
 
 TEST_CHARACTERS = script(
-    IMP,
-    SCARLET_WOMAN,
-    DRUNK,
-    RECLUSE,
-    INVESTIGATOR,
-    NOBLE,
+    Imp,
+    ScarletWoman,
+    Drunk,
+    Recluse,
+    Investigator,
+    Noble,
 )
 POISON_CHARACTERS = script(
-    IMP,
-    POISONER,
-    INVESTIGATOR,
+    Imp,
+    Poisoner,
+    Investigator,
 )
 REGISTRATION_CHARACTERS = script(
-    IMP,
-    SPY,
-    POISONER,
-    DRUNK,
-    RECLUSE,
-    CHEF,
-    LIBRARIAN,
+    Imp,
+    Spy,
+    Poisoner,
+    Drunk,
+    Recluse,
+    Chef,
+    Librarian,
 )
 
 
@@ -89,9 +89,9 @@ def test_drunk_can_think_they_are_a_townsfolk():
 
 def test_role_claim_defaults_to_model_evil_roles():
     game = BOTCModel(["A", "B"], characters=TEST_CHARACTERS)
-    game.add_role_claim(RoleClaim("A", "Investigator"))
-    game.fix_actual("A", "Scarlet Woman")
-    game.fix_actual("B", "Imp")
+    game.add_role_claim(RoleClaim("A", Investigator))
+    game.fix_actual("A", ScarletWoman)
+    game.fix_actual("B", Imp)
 
     assert len(game.solve_all(limit=1)) == 1
 
