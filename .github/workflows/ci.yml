@@ -9,6 +9,9 @@ jobs:
   checks:
     name: pytest, black, pyright
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python
 
     steps:
       - name: Check out repository
@@ -18,6 +21,7 @@ jobs:
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           enable-cache: true
+          cache-dependency-glob: python/uv.lock
           python-version: "3.14"
 
       - name: Install dependencies
