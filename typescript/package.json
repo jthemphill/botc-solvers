@@ -1,0 +1,22 @@
+{
+  "name": "botc-solver-typescript",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "bun test",
+    "typecheck": "bunx tsc --build tsconfig.json --pretty false",
+    "puzzle:01": "bun run src/puzzles/puzzle-01-sober-savant.ts",
+    "puzzle:02": "bun run src/puzzles/puzzle-02-come-fly-with-me.ts",
+    "puzzle:03a": "bun run src/puzzles/puzzle-03a-not-throwing-away-my-shot.ts",
+    "puzzle:03b": "bun run src/puzzles/puzzle-03b-not-throwing-away-my-shot.ts",
+    "puzzle:04": "bun run src/puzzles/puzzle-04-the-many-headed-monster.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.15",
+    "prettier": "^3.8.3",
+    "typescript": "^5.8.3"
+  }
+}

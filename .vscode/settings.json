@@ -11,5 +11,6 @@
       "depth": 4,
       "includeAllSymbols": true
     }
-  ]
+  ],
+  "typescript.tsdk": "typescript/node_modules/typescript/lib"
 }
