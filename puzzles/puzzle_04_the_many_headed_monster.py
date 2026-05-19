@@ -1,9 +1,9 @@
-'''
+"""
 "The Many-Headed Monster"
 by Not Quite Tangible
 
 https://www.reddit.com/r/BloodOnTheClocktower/comments/1f823s4/weekly_puzzle_4_the_manyheaded_monster/
-'''
+"""
 
 from __future__ import annotations
 
@@ -33,7 +33,6 @@ from botc_solver.characters import (
     role_names,
     script,
 )
-
 
 NIGHT_1 = "night_1"
 NIGHT_2 = "night_2"
@@ -131,16 +130,23 @@ def build_model() -> BOTCModel:
     for player in PLAYER_NAMES:
         left, right = game.neighbors(player)
         game.add_implication(game.actual_is(player, LordOfTyphon), game.is_minion(left))
-        game.add_implication(game.actual_is(player, LordOfTyphon), game.is_minion(right))
+        game.add_implication(
+            game.actual_is(player, LordOfTyphon), game.is_minion(right)
+        )
 
     for dead_or_executed in ["Anna", "Hannah", "Dan", "Tim"]:
         game.fix_not_actual(dead_or_executed, LordOfTyphon)
 
     game.add_poisoner_effect(NIGHT_1)
-    anna_is_not_poisoner = game.not_(game.actual_is("Anna", Poisoner), "anna_is_not_poisoner")
+    anna_is_not_poisoner = game.not_(
+        game.actual_is("Anna", Poisoner), "anna_is_not_poisoner"
+    )
     game.add_poisoner_effect(NIGHT_2, active_if=anna_is_not_poisoner)
     poisoner_alive_night_3 = game.all_of(
-        [game.actual_is(player, Poisoner).Not() for player in ["Anna", "Hannah", "Dan"]],
+        [
+            game.actual_is(player, Poisoner).Not()
+            for player in ["Anna", "Hannah", "Dan"]
+        ],
         "poisoner_alive_night_3",
     )
     game.add_poisoner_effect(NIGHT_3, active_if=poisoner_alive_night_3)

@@ -24,7 +24,6 @@ from botc_solver.predicates import (
     sits_next_to_evil,
 )
 
-
 TEST_CHARACTERS = script(
     Imp,
     ScarletWoman,
@@ -145,7 +144,9 @@ def test_truthful_claim_uses_matching_poison_context():
     false_claim = game.actual_is("B", "Investigator")
     game.fix_poisoned("A", True, "day_1")
     game.fix_poisoned("A", False, "day_2")
-    game.add_truthful_info_claim("A", "Investigator", false_claim, poison_context="day_2")
+    game.add_truthful_info_claim(
+        "A", "Investigator", false_claim, poison_context="day_2"
+    )
 
     assert game.solve_all(limit=1) == []
 

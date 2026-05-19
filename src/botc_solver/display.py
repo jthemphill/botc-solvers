@@ -29,7 +29,9 @@ def forced_role(
     label_name = role_name(label)
     if roles is None:
         role_names = (label_name,)
-    elif isinstance(roles, str) or hasattr(roles, "role_name") or hasattr(roles, "name"):
+    elif (
+        isinstance(roles, str) or hasattr(roles, "role_name") or hasattr(roles, "name")
+    ):
         role_names = (role_name(roles),)
     else:
         role_names = tuple(role_name(role) for role in cast(Iterable[object], roles))
@@ -60,7 +62,9 @@ def format_solution(
     for index, world in enumerate(worlds, start=1):
         lines.append("")
         lines.append(f"World {index}")
-        lines.extend(_format_world_lines(world, player_order, poison_context=poison_context))
+        lines.extend(
+            _format_world_lines(world, player_order, poison_context=poison_context)
+        )
 
     if facts:
         lines.append("")

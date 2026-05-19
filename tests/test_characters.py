@@ -14,7 +14,6 @@ from botc_solver.characters import (
     script,
 )
 
-
 CLAIM_CHARACTERS = script(Imp, ScarletWoman, Drunk, Recluse, Investigator)
 
 
@@ -109,7 +108,9 @@ def test_character_claim_uses_matching_poison_context():
 
 
 def test_role_among_helper_uses_registration_by_default():
-    game = BOTCModel(["A", "B", "C"], characters=script(Imp, Drunk, Recluse, Investigator))
+    game = BOTCModel(
+        ["A", "B", "C"], characters=script(Imp, Drunk, Recluse, Investigator)
+    )
 
     game.fix_actual("A", Recluse)
     game.fix_actual("B", Investigator)

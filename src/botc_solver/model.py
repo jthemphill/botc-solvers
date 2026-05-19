@@ -15,7 +15,6 @@ from botc_solver.core import (
     role_name,
 )
 
-
 DEFAULT_POISON_CONTEXT = "default"
 
 
@@ -40,11 +39,17 @@ class World:
     apparent: Mapping[str, str]
     poisoned: frozenset[str]
     seating: tuple[str, ...]
-    poisoned_by_context: Mapping[str, frozenset[str]] = field(default_factory=dict[str, frozenset[str]])
+    poisoned_by_context: Mapping[str, frozenset[str]] = field(
+        default_factory=dict[str, frozenset[str]]
+    )
 
     def holder(self, role: object) -> str | None:
         role_ref = role_name(role)
-        holders = [player for player, actual_role in self.actual.items() if actual_role == role_ref]
+        holders = [
+            player
+            for player, actual_role in self.actual.items()
+            if actual_role == role_ref
+        ]
         if len(holders) == 1:
             return holders[0]
         return None
@@ -58,7 +63,9 @@ class World:
         return player in self.poisoned_by_context.get(context, frozenset())
 
 
-def forced_role_holders(worlds: Sequence[World], roles: Iterable[object]) -> dict[str, str | None]:
+def forced_role_holders(
+    worlds: Sequence[World], roles: Iterable[object]
+) -> dict[str, str | None]:
     summary: dict[str, str | None] = {}
     for role in roles:
         role_ref = role_name(role)
@@ -91,7 +98,9 @@ class _WorldCollector(cp_model.CpSolverSolutionCallback):
                 if self.value(self._game.actual_is(player, role))
             ]
             if len(matching) != 1:
-                raise RuntimeError(f"Expected exactly one actual character for {player}.")
+                raise RuntimeError(
+                    f"Expected exactly one actual character for {player}."
+                )
             actual[player] = matching[0]
 
         poisoned_by_context = {
@@ -145,7 +154,9 @@ class BOTCModel:
             raise ValueError("Player names must be unique.")
 
         self.seating = list(seating or players)
-        if len(self.seating) != len(self.players) or set(self.players) != set(self.seating):
+        if len(self.seating) != len(self.players) or set(self.players) != set(
+            self.seating
+        ):
             raise ValueError("Seating must contain exactly the model players.")
 
         self.characters = {role_name(character): character for character in characters}
@@ -156,7 +167,9 @@ class BOTCModel:
         self.apparent_roles: dict[str, str] = {}
         self._counter = 0
         self._actual = {
-            (player, role): self.model.new_bool_var(f"{_slug(player)}__actual__{_slug(role)}")
+            (player, role): self.model.new_bool_var(
+                f"{_slug(player)}__actual__{_slug(role)}"
+            )
             for player in self.players
             for role in self.characters
         }
@@ -165,11 +178,15 @@ class BOTCModel:
         self._predicate_cache: dict[tuple[str, str], cp_model.IntVar] = {}
 
         for player in self.players:
-            self.model.add_exactly_one(self.actual_is(player, role) for role in self.characters)
+            self.model.add_exactly_one(
+                self.actual_is(player, role) for role in self.characters
+            )
 
         if unique_characters:
             for role in self.characters:
-                self.model.add_at_most_one(self.actual_is(player, role) for player in self.players)
+                self.model.add_at_most_one(
+                    self.actual_is(player, role) for player in self.players
+                )
 
     def _check_player(self, player: str) -> None:
         if player not in self.players:
@@ -245,8 +262,14 @@ class BOTCModel:
                 for role, character in self.characters.items()
                 if role_alignment(character) == Alignment.EVIL
             )
-        possible_roles: list[object] = [apparent_role, *(role_name(role) for role in evil_roles)]
-        if role_character_type(self.characters[apparent_role]) == CharacterType.TOWNSFOLK:
+        possible_roles: list[object] = [
+            apparent_role,
+            *(role_name(role) for role in evil_roles),
+        ]
+        if (
+            role_character_type(self.characters[apparent_role])
+            == CharacterType.TOWNSFOLK
+        ):
             possible_roles.append(drunk_role)
         self.set_possible_actual_roles(
             claim.player,
@@ -268,7 +291,9 @@ class BOTCModel:
     def fix_not_actual(self, player: str, role: object) -> None:
         self.add_false(self.actual_is(player, role))
 
-    def fix_poisoned(self, player: str, value: bool, context: str | None = None) -> None:
+    def fix_poisoned(
+        self, player: str, value: bool, context: str | None = None
+    ) -> None:
         self.model.add(self.poisoned(player, context) == int(value))
 
     def add_poisoner_effect(
@@ -287,7 +312,9 @@ class BOTCModel:
             poisoner_active = self.all_of(
                 [
                     poisoner_in_play,
-                    self.constant_bool(active_if, f"{context}_{poisoner_name}_active_if"),
+                    self.constant_bool(
+                        active_if, f"{context}_{poisoner_name}_active_if"
+                    ),
                 ],
                 f"{context}_{poisoner_name}_active",
             )
@@ -302,7 +329,9 @@ class BOTCModel:
     def set_character_count(self, role: object, count: int) -> None:
         role_ref = role_name(role)
         self._check_role(role_ref)
-        self.model.add(sum(self.actual_is(player, role_ref) for player in self.players) == count)
+        self.model.add(
+            sum(self.actual_is(player, role_ref) for player in self.players) == count
+        )
 
     def add_truth(self, literal: cp_model.BoolVarT) -> None:
         self.model.add_bool_or([literal])
@@ -310,7 +339,9 @@ class BOTCModel:
     def add_false(self, literal: cp_model.BoolVarT) -> None:
         self.model.add_bool_or([literal.Not()])
 
-    def add_implication(self, condition: cp_model.BoolVarT, conclusion: cp_model.BoolVarT) -> None:
+    def add_implication(
+        self, condition: cp_model.BoolVarT, conclusion: cp_model.BoolVarT
+    ) -> None:
         self.model.add_implication(condition, conclusion)
 
     def add_exactly_one(self, literals: Iterable[cp_model.BoolVarT]) -> None:
@@ -339,22 +370,32 @@ class BOTCModel:
         self.add_enforced(total != count, result.Not())
         return result
 
-    def all_of(self, literals: Iterable[cp_model.BoolVarT], name: str) -> cp_model.IntVar:
+    def all_of(
+        self, literals: Iterable[cp_model.BoolVarT], name: str
+    ) -> cp_model.IntVar:
         literals = list(literals)
         if not literals:
             return self.constant_bool(True, name)
         result = self.new_bool(name)
         _only_enforce_if(self.model.add_bool_and(literals), result)
-        _only_enforce_if(self.model.add_bool_or([literal.Not() for literal in literals]), result.Not())
+        _only_enforce_if(
+            self.model.add_bool_or([literal.Not() for literal in literals]),
+            result.Not(),
+        )
         return result
 
-    def any_of(self, literals: Iterable[cp_model.BoolVarT], name: str) -> cp_model.IntVar:
+    def any_of(
+        self, literals: Iterable[cp_model.BoolVarT], name: str
+    ) -> cp_model.IntVar:
         literals = list(literals)
         if not literals:
             return self.constant_bool(False, name)
         result = self.new_bool(name)
         _only_enforce_if(self.model.add_bool_or(literals), result)
-        _only_enforce_if(self.model.add_bool_and([literal.Not() for literal in literals]), result.Not())
+        _only_enforce_if(
+            self.model.add_bool_and([literal.Not() for literal in literals]),
+            result.Not(),
+        )
         return result
 
     def not_(self, literal: cp_model.IntVar, name: str) -> cp_model.IntVar:
@@ -362,7 +403,9 @@ class BOTCModel:
         self.model.add(result + literal == 1)
         return result
 
-    def xor(self, left: cp_model.IntVar, right: cp_model.IntVar, name: str) -> cp_model.IntVar:
+    def xor(
+        self, left: cp_model.IntVar, right: cp_model.IntVar, name: str
+    ) -> cp_model.IntVar:
         return self.bool_sum_equals([left, right], 1, name)
 
     def is_evil(self, player: str) -> cp_model.IntVar:
@@ -462,7 +505,9 @@ class BOTCModel:
                 self.add_implication(actual, result.Not())
         return result
 
-    def registers_as_role(self, player: str, role: object, name: str) -> cp_model.IntVar:
+    def registers_as_role(
+        self, player: str, role: object, name: str
+    ) -> cp_model.IntVar:
         self._check_player(player)
         role_ref = role_name(role)
         self._check_role(role_ref)
@@ -498,7 +543,10 @@ class BOTCModel:
     def neighbors(self, player: str) -> tuple[str, str]:
         self._check_player(player)
         index = self.seating.index(player)
-        return self.seating[(index - 1) % len(self.seating)], self.seating[(index + 1) % len(self.seating)]
+        return (
+            self.seating[(index - 1) % len(self.seating)],
+            self.seating[(index + 1) % len(self.seating)],
+        )
 
     def adjacent_pairs(self) -> list[tuple[str, str]]:
         return [
@@ -583,7 +631,9 @@ class BOTCModel:
             }
         return False
 
-    def _role_can_flexibly_register_as_role(self, actual_role: str, observed_role: str) -> bool:
+    def _role_can_flexibly_register_as_role(
+        self, actual_role: str, observed_role: str
+    ) -> bool:
         observed_character = self.characters[observed_role]
         if actual_role == "Spy" and actual_role in self.characters:
             return observed_role == "Spy" or (

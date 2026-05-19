@@ -66,8 +66,5 @@ def test_grouped_forced_role_must_match_holder_and_role_in_every_world():
     )
 
     assert result.endswith(
-        "\n"
-        "Forced facts\n"
-        "  Demon: Bob (Imp)\n"
-        "  Minion: not settled"
+        "\n" "Forced facts\n" "  Demon: Bob (Imp)\n" "  Minion: not settled"
     )

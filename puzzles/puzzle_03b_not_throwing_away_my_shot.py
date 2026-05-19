@@ -1,9 +1,9 @@
-'''
+"""
 "Not Throwing Away My Shot" (part b)
 by Not Quite Tangible
 
 https://www.reddit.com/r/BloodOnTheClocktower/comments/1f2jht3/weekly_puzzle_3a_3b_not_throwing_away_my_shot/
-'''
+"""
 
 from __future__ import annotations
 
@@ -28,7 +28,6 @@ from botc_solver.characters import (
     role_names,
     script,
 )
-
 
 PLAYERS = [
     Chef(name="Dan", count=0),
@@ -62,7 +61,10 @@ POISON_CONTEXT = "day_1"
 
 
 def _outsider_count(game: BOTCModel):
-    return sum(game.has_character_type(player, CharacterType.OUTSIDER) for player in PLAYER_NAMES)
+    return sum(
+        game.has_character_type(player, CharacterType.OUTSIDER)
+        for player in PLAYER_NAMES
+    )
 
 
 def build_model() -> BOTCModel:

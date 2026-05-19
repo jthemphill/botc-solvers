@@ -1,9 +1,9 @@
-'''
+"""
 "Come Fly With Me"
 by Not Quite Tangible
 
 https://www.reddit.com/r/BloodOnTheClocktower/comments/1ewxu0r/weekly_puzzle_2_come_fly_with_me/
-'''
+"""
 
 from __future__ import annotations
 
@@ -26,7 +26,6 @@ from botc_solver.characters import (
     script,
 )
 from botc_solver.core import role_character_type
-
 
 PLAYERS = [
     Investigator(name="Sarah", role=Goblin, among=["Matthew", "Fraser"]),

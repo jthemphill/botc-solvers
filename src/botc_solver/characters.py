@@ -87,8 +87,12 @@ def _learns_character_type_among(
             for player in players
         ]
     else:
-        options = [game.has_character_type(player, character_type) for player in players]
-    return game.any_of(options, f"{name}_{'_'.join(players)}_has_{character_type.value}")
+        options = [
+            game.has_character_type(player, character_type) for player in players
+        ]
+    return game.any_of(
+        options, f"{name}_{'_'.join(players)}_has_{character_type.value}"
+    )
 
 
 def _learns_character_type_count(
@@ -106,7 +110,9 @@ def _learns_character_type_count(
             for player in players
         ]
     else:
-        options = [game.has_character_type(player, character_type) for player in players]
+        options = [
+            game.has_character_type(player, character_type) for player in players
+        ]
     return game.bool_sum_equals(
         options,
         count,
@@ -156,7 +162,11 @@ class Role:
             game,
             self.name,
             learned=self.learned_info(game),
-            poison_context=self.poison_context if self.poison_context is not None else poison_context,
+            poison_context=(
+                self.poison_context
+                if self.poison_context is not None
+                else poison_context
+            ),
             drunk_role=drunk_role,
         )
 
@@ -249,7 +259,10 @@ class Balloonist(Role):
         name: str,
     ) -> cp_model.IntVar:
         return game.all_of(
-            [predicates.different_character_types(game, left, right) for left, right in pairs],
+            [
+                predicates.different_character_types(game, left, right)
+                for left, right in pairs
+            ],
             name,
         )
 
@@ -333,7 +346,9 @@ class Clockmaker(Role):
         )
         if self.demon_next_to_minion:
             return claim
-        return game.not_(claim, _claim_name(self.name, type(self), "demon_not_next_to_minion"))
+        return game.not_(
+            claim, _claim_name(self.name, type(self), "demon_not_next_to_minion")
+        )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -447,7 +462,10 @@ class FortuneTeller(Role):
                 game.registers_as_role(right, demon_role, name),
             ]
         else:
-            options = [game.actual_is(left, demon_role), game.actual_is(right, demon_role)]
+            options = [
+                game.actual_is(left, demon_role),
+                game.actual_is(right, demon_role),
+            ]
 
         either_is_demon = game.any_of(options, f"{name}_{left}_{right}_either_demon")
         if yes:
@@ -482,7 +500,11 @@ class FortuneTeller(Role):
                 poison_context=(
                     check.poison_context
                     if check.poison_context is not None
-                    else self.poison_context if self.poison_context is not None else poison_context
+                    else (
+                        self.poison_context
+                        if self.poison_context is not None
+                        else poison_context
+                    )
                 ),
                 drunk_role=drunk_role,
             )

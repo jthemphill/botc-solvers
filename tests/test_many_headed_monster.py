@@ -21,8 +21,7 @@ def test_many_headed_monster_leaves_minion_roles_ambiguous():
     worlds = solve()
 
     assert {
-        (world.holder("Marionette"), world.holder("Poisoner"))
-        for world in worlds
+        (world.holder("Marionette"), world.holder("Poisoner")) for world in worlds
     } == {
         ("Sarah", "Dan"),
         ("Dan", "Sarah"),

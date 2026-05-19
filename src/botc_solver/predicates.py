@@ -8,7 +8,9 @@ from botc_solver.core import role_character_type, role_name
 from botc_solver.model import BOTCModel
 
 
-def exactly_n_evil(game: BOTCModel, players: Sequence[str], count: int) -> cp_model.IntVar:
+def exactly_n_evil(
+    game: BOTCModel, players: Sequence[str], count: int
+) -> cp_model.IntVar:
     return game.bool_sum_equals(
         [game.is_evil(player) for player in players],
         count,
@@ -17,7 +19,9 @@ def exactly_n_evil(game: BOTCModel, players: Sequence[str], count: int) -> cp_mo
 
 
 def different_alignments(game: BOTCModel, left: str, right: str) -> cp_model.IntVar:
-    return game.xor(game.is_evil(left), game.is_evil(right), f"{left}_{right}_different_alignments")
+    return game.xor(
+        game.is_evil(left), game.is_evil(right), f"{left}_{right}_different_alignments"
+    )
 
 
 def same_alignment(game: BOTCModel, left: str, right: str) -> cp_model.IntVar:
@@ -27,9 +31,13 @@ def same_alignment(game: BOTCModel, left: str, right: str) -> cp_model.IntVar:
     )
 
 
-def different_character_types(game: BOTCModel, left: str, right: str) -> cp_model.IntVar:
+def different_character_types(
+    game: BOTCModel, left: str, right: str
+) -> cp_model.IntVar:
     same_type_options: list[cp_model.IntVar] = []
-    for character_type in {role_character_type(character) for character in game.characters.values()}:
+    for character_type in {
+        role_character_type(character) for character in game.characters.values()
+    }:
         same_type_options.append(
             game.all_of(
                 [
@@ -47,7 +55,9 @@ def different_character_types(game: BOTCModel, left: str, right: str) -> cp_mode
 
 def chef_count_is(game: BOTCModel, count: int) -> cp_model.IntVar:
     evil_pairs = [
-        game.all_of([game.is_evil(left), game.is_evil(right)], f"{left}_{right}_evil_pair")
+        game.all_of(
+            [game.is_evil(left), game.is_evil(right)], f"{left}_{right}_evil_pair"
+        )
         for left, right in game.adjacent_pairs()
     ]
     return game.bool_sum_equals(evil_pairs, count, f"chef_count_is_{count}")
@@ -55,8 +65,7 @@ def chef_count_is(game: BOTCModel, count: int) -> cp_model.IntVar:
 
 def chef_count_registers_as(game: BOTCModel, count: int, name: str) -> cp_model.IntVar:
     registers_as_evil = {
-        player: game.registers_as_evil(player, name)
-        for player in game.players
+        player: game.registers_as_evil(player, name) for player in game.players
     }
     evil_pairs = [
         game.all_of(
