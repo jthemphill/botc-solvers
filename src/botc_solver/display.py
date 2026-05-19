@@ -102,7 +102,7 @@ def _format_world_lines(
     *,
     poison_context: str | None,
 ) -> list[str]:
-    lines = []
+    lines: list[str] = []
     for player in players:
         actual = world.actual_role(player)
         apparent = world.apparent.get(player)
