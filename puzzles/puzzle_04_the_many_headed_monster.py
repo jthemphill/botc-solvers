@@ -1,3 +1,10 @@
+'''
+"The Many-Headed Monster"
+by Not Quite Tangible
+
+https://www.reddit.com/r/BloodOnTheClocktower/comments/1f823s4/weekly_puzzle_4_the_manyheaded_monster/
+'''
+
 from __future__ import annotations
 
 from botc_solver import (

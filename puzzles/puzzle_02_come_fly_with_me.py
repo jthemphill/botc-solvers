@@ -1,3 +1,10 @@
+'''
+"Come Fly With Me"
+by Not Quite Tangible
+
+https://www.reddit.com/r/BloodOnTheClocktower/comments/1ewxu0r/weekly_puzzle_2_come_fly_with_me/
+'''
+
 from __future__ import annotations
 
 from botc_solver import Alignment, BOTCModel, Character, CharacterType, RoleClaim, print_solution

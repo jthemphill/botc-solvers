@@ -1,3 +1,10 @@
+'''
+"Can the sober Savant solve the puzzle?"
+by Not Quite Tangible
+
+https://www.reddit.com/r/BloodOnTheClocktower/comments/1erb5e2/can_the_sober_savant_solve_the_puzzle/
+'''
+
 from __future__ import annotations
 
 from botc_solver import Alignment, BOTCModel, Character, CharacterType, RoleClaim, print_solution

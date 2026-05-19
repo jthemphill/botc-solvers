@@ -1,3 +1,10 @@
+'''
+"Not Throwing Away My Shot" (part b)
+by Not Quite Tangible
+
+https://www.reddit.com/r/BloodOnTheClocktower/comments/1f2jht3/weekly_puzzle_3a_3b_not_throwing_away_my_shot/
+'''
+
 from __future__ import annotations
 
 from botc_solver import (
