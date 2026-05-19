@@ -63,6 +63,20 @@ function learnsCharacterTypeCount(
   return game.boolSumEquals(options, count, `${name}_${characterType}_count_is_${count}`);
 }
 
+function directionalPlayers(game: BOTCModel, player: string, direction: "clockwise" | "anticlockwise"): string[] {
+  const index = game.seating.indexOf(player);
+  if (index === -1) throw new Error(`Unknown player: ${player}`);
+  const result: string[] = [];
+  for (let offset = 1; offset < game.seating.length; offset += 1) {
+    const seat =
+      direction === "clockwise"
+        ? game.seating[(index + offset) % game.seating.length]
+        : game.seating[(index - offset + game.seating.length) % game.seating.length];
+    result.push(seat as string);
+  }
+  return result;
+}
+
 export abstract class Role {
   static readonly roleName: string;
   static readonly alignment: Alignment;
@@ -119,6 +133,11 @@ export class Imp extends Role {
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Demon;
 }
+export class NoDashii extends Role {
+  static readonly roleName = "No Dashii";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
 export class Leviathan extends Role {
   static readonly roleName = "Leviathan";
   static readonly alignment = Alignment.Evil;
@@ -126,6 +145,21 @@ export class Leviathan extends Role {
 }
 export class LordOfTyphon extends Role {
   static readonly roleName = "Lord of Typhon";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
+export class Pukka extends Role {
+  static readonly roleName = "Pukka";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
+export class Po extends Role {
+  static readonly roleName = "Po";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
+export class Vortox extends Role {
+  static readonly roleName = "Vortox";
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Demon;
 }
@@ -164,6 +198,11 @@ export class Drunk extends Role {
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Outsider;
 }
+export class Mutant extends Role {
+  static readonly roleName = "Mutant";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
 export class Recluse extends Role {
   static readonly roleName = "Recluse";
   static readonly alignment = Alignment.Good;
@@ -176,6 +215,36 @@ export class Saint extends Role {
 }
 export class Slayer extends Role {
   static readonly roleName = "Slayer";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Alsaahir extends Role {
+  static readonly roleName = "Alsaahir";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Acrobat extends Role {
+  static readonly roleName = "Acrobat";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Gambler extends Role {
+  static readonly roleName = "Gambler";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Gossip extends Role {
+  static readonly roleName = "Gossip";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Ravenkeeper extends Role {
+  static readonly roleName = "Ravenkeeper";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
 }
@@ -496,6 +565,49 @@ export class Juggler extends Role {
   }
 }
 
+export class Shugenja extends Role {
+  static readonly roleName = "Shugenja";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+  readonly evilDirection?: "clockwise" | "anticlockwise";
+  constructor(options: {
+    readonly name: string;
+    readonly evilDirection?: "clockwise" | "anticlockwise";
+    readonly poisonContext?: string;
+  }) {
+    super(options.name, options);
+    this.evilDirection = options.evilDirection;
+  }
+  static learnsNearestEvilDirection(
+    game: BOTCModel,
+    player: string,
+    direction: "clockwise" | "anticlockwise",
+    name: string,
+  ): BoolVar {
+    const toward = directionalPlayers(game, player, direction);
+    const away = directionalPlayers(game, player, direction === "clockwise" ? "anticlockwise" : "clockwise");
+    const possibilities = toward.map((towardPlayer, index) => {
+      const noCloserToward = toward.slice(0, index).map((closer) => game.isEvil(closer).not());
+      const noCloserAway = away.slice(0, index).map((closer) => game.isEvil(closer).not());
+      return game.allOf(
+        [game.isEvil(towardPlayer), ...noCloserToward, ...noCloserAway],
+        `${name}_${towardPlayer}_nearest_${direction}`,
+      );
+    });
+    return game.anyOf(possibilities, name);
+  }
+  override learnedInfo(game: BOTCModel): BoolLike | undefined {
+    return this.evilDirection === undefined
+      ? undefined
+      : Shugenja.learnsNearestEvilDirection(
+          game,
+          this.name,
+          this.evilDirection,
+          claimName(this.name, Shugenja, "nearest_evil_direction"),
+        );
+  }
+}
+
 export class Knight extends Role {
   static readonly roleName = "Knight";
   static readonly alignment = Alignment.Good;
@@ -522,6 +634,45 @@ export class Knight extends Role {
     return this.noDemonAmong.length === 0
       ? undefined
       : Knight.learnsNoDemonAmong(game, this.noDemonAmong, claimName(this.name, Knight, "no_demon"));
+  }
+}
+
+export interface VillageIdiotCheck {
+  readonly player: string;
+  readonly good: boolean;
+  readonly name?: string;
+}
+
+export class VillageIdiot extends Role {
+  static readonly roleName = "Village Idiot";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+  readonly checks: readonly VillageIdiotCheck[];
+  constructor(options: {
+    readonly name: string;
+    readonly checks?: readonly VillageIdiotCheck[];
+    readonly poisonContext?: string;
+  }) {
+    super(options.name, options);
+    this.checks = options.checks ?? [];
+  }
+  static learnsCheck(game: BOTCModel, player: string, good: boolean, name: string): BoolVar {
+    return good ? game.registersAsGood(player, name) : game.registersAsEvil(player, name);
+  }
+  override learnedInfo(game: BOTCModel): BoolLike | undefined {
+    return this.checks.length === 0
+      ? undefined
+      : game.allOf(
+          this.checks.map((check, index) =>
+            VillageIdiot.learnsCheck(
+              game,
+              check.player,
+              check.good,
+              check.name ?? claimName(this.name, VillageIdiot, `check_${index + 1}`),
+            ),
+          ),
+          claimName(this.name, VillageIdiot, "checks"),
+        );
   }
 }
 

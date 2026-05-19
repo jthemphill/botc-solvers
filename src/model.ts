@@ -179,7 +179,11 @@ export class BOTCModel {
 
   addRoleClaim(
     claim: RoleClaim,
-    options: { readonly evilRoles?: readonly RoleRef[]; readonly drunkRole?: RoleRef } = {},
+    options: {
+      readonly evilRoles?: readonly RoleRef[];
+      readonly drunkRole?: RoleRef;
+      readonly extraPossibleActualRoles?: readonly RoleRef[];
+    } = {},
   ): void {
     const apparentRole = roleName(claim.apparentRole);
     this.setApparentRole(claim.player, apparentRole);
@@ -188,7 +192,11 @@ export class BOTCModel {
       [...this.characters.entries()]
         .filter(([, character]) => roleAlignment(character) === Alignment.Evil)
         .map(([role]) => role);
-    const possibleRoles = [apparentRole, ...evilRoles.map(roleName)];
+    const possibleRoles = [
+      apparentRole,
+      ...evilRoles.map(roleName),
+      ...(options.extraPossibleActualRoles ?? []).map(roleName),
+    ];
     if (roleCharacterType(this.characters.get(apparentRole) as RoleRef) === CharacterType.Townsfolk)
       possibleRoles.push(roleName(options.drunkRole ?? "Drunk"));
     this.setPossibleActualRoles(claim.player, possibleRoles);
@@ -240,6 +248,12 @@ export class BOTCModel {
     }
     this.addEnforcedExactlyN(poisoned, 1, poisonerActive);
     this.addEnforcedExactlyN(poisoned, 0, poisonerActive.not());
+  }
+
+  allowPoisonInContext(context?: string): void {
+    const poisonContext = this.poisonContext(context);
+    this.poisonSourceContexts.add(poisonContext);
+    this.poisonContexts.add(poisonContext);
   }
 
   setCharacterCount(role: RoleRef, count: number): void {

@@ -12,7 +12,14 @@
     "puzzle:02": "bun run src/puzzles/puzzle-02-come-fly-with-me.ts",
     "puzzle:03a": "bun run src/puzzles/puzzle-03a-not-throwing-away-my-shot.ts",
     "puzzle:03b": "bun run src/puzzles/puzzle-03b-not-throwing-away-my-shot.ts",
-    "puzzle:04": "bun run src/puzzles/puzzle-04-the-many-headed-monster.ts"
+    "puzzle:04": "bun run src/puzzles/puzzle-04-the-many-headed-monster.ts",
+    "puzzle:05a": "bun run src/puzzles/puzzle-05a-you-only-guess-twice.ts",
+    "puzzle:05b": "bun run src/puzzles/puzzle-05b-you-only-guess-twice.ts",
+    "puzzle:06": "bun run src/puzzles/puzzle-06-super-marionette-bros.ts",
+    "puzzle:07": "bun run src/puzzles/puzzle-07-the-savant-strikes-back.ts",
+    "puzzle:08": "bun run src/puzzles/puzzle-08-the-stitch-up.ts",
+    "puzzle:09": "bun run src/puzzles/puzzle-09-the-new-acrobat.ts",
+    "puzzle:10": "bun run src/puzzles/puzzle-10-dont-overcook-it.ts"
   },
   "devDependencies": {
     "@types/bun": "^1.2.15",

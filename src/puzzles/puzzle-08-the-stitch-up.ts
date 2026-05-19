@@ -1,0 +1,47 @@
+import { forcedRole, printSolution } from "../display";
+import { BOTCModel } from "../model";
+import { KissatBackend, type SatBackend } from "../sat";
+import { Drunk, Imp, Poisoner, Seamstress, applyClaims, playerNames, script } from "../characters";
+
+export const NIGHT_1 = "night_1";
+
+export const PLAYERS = [
+  new Seamstress({ name: "Anna", aligned: false, among: ["Josh", "Matthew"], poisonContext: NIGHT_1 }),
+  new Seamstress({ name: "Tim", aligned: false, among: ["You", "Josh"], poisonContext: NIGHT_1 }),
+  new Seamstress({ name: "Matthew", aligned: false, among: ["Steph", "Fraser"], poisonContext: NIGHT_1 }),
+  new Seamstress({ name: "Fraser", aligned: false, among: ["Steph", "Anna"], poisonContext: NIGHT_1 }),
+  new Seamstress({ name: "You", aligned: false, among: ["Anna", "Matthew"], poisonContext: NIGHT_1 }),
+  new Seamstress({ name: "Josh", aligned: false, among: ["Anna", "Tim"], poisonContext: NIGHT_1 }),
+  new Seamstress({ name: "Steph", aligned: false, among: ["Tim", "Matthew"], poisonContext: NIGHT_1 }),
+];
+
+export const PLAYER_NAMES = playerNames(PLAYERS);
+export const CHARACTERS = script(Imp, Poisoner, Drunk, Seamstress);
+
+export function buildModel(backend: SatBackend): BOTCModel {
+  const game = new BOTCModel(PLAYER_NAMES, {
+    characters: CHARACTERS,
+    seating: PLAYER_NAMES,
+    uniqueCharacters: false,
+    backend,
+  });
+  game.setCharacterCount(Imp, 1);
+  game.setCharacterCount(Poisoner, 1);
+  game.setCharacterCount(Drunk, 0);
+  game.addPoisonerEffect(NIGHT_1);
+  applyClaims(game, PLAYERS);
+  return game;
+}
+
+export async function solve() {
+  return buildModel(await KissatBackend.create()).solveAll();
+}
+
+if (import.meta.main && process.argv[1]?.endsWith("puzzle-08-the-stitch-up.ts"))
+  printSolution(await solve(), PLAYER_NAMES, {
+    poisonContext: NIGHT_1,
+    forcedRoles: [
+      forcedRole("Demon", Imp, { includeRole: true }),
+      forcedRole("Minion", Poisoner, { includeRole: true }),
+    ],
+  });

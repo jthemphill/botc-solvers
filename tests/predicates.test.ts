@@ -153,5 +153,21 @@ describe("predicates and helpers", () => {
     ).toBe(
       "1 satisfying world(s)\n\nWorld 1\n  Alice: Imp (appears as Fortune Teller)\n  Bob: Drunk poisoned\n\nForced facts\n  Demon: Alice (Imp)\n  Drunk: Bob",
     );
+    const alternateDemon = new World(
+      new Map([
+        ["Alice", "Po"],
+        ["Bob", "Drunk"],
+      ]),
+      new Map(),
+      new Set(),
+      ["Alice", "Bob"],
+    );
+    expect(
+      formatSolution([world, alternateDemon], ["Alice", "Bob"], {
+        forcedRoles: [forcedRole("Demon", ["Imp", "Po"])],
+      })
+        .split("\n")
+        .at(-1),
+    ).toBe("  Demon: Alice");
   });
 });
