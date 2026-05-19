@@ -1,5 +1,6 @@
 import { BOTCModel } from "../model";
 import { printSolution } from "../display";
+import { KissatBackend, type SatBackend } from "../sat";
 import {
   Chef,
   Drunk,
@@ -39,8 +40,8 @@ export const PLAYERS = [
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(Imp, ScarletWoman, Drunk, Investigator, Knight, Noble, Savant, Seamstress, Steward);
 
-export function buildModel(): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES });
+export function buildModel(backend: SatBackend): BOTCModel {
+  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
   game.setCharacterCount(Imp, 1);
   game.setCharacterCount(ScarletWoman, 1);
   game.setCharacterCount(Drunk, 1);
@@ -50,7 +51,7 @@ export function buildModel(): BOTCModel {
 }
 
 export async function solve() {
-  return buildModel().solveAll();
+  return buildModel(await KissatBackend.create()).solveAll();
 }
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-01-sober-savant.ts"))

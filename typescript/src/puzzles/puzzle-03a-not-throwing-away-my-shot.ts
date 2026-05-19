@@ -1,6 +1,7 @@
 import { Alignment, CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { BOTCModel } from "../model";
+import { KissatBackend, type SatBackend } from "../sat";
 import {
   Baron,
   Chef,
@@ -49,8 +50,8 @@ export const CHARACTERS = script(
 export const MINION_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Minion });
 export const POISON_CONTEXT = "day_1";
 
-export function buildModel(): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES });
+export function buildModel(backend: SatBackend): BOTCModel {
+  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
   game.setCharacterCount(Imp, 1);
   game.addExactlyN(
     PLAYER_NAMES.map((player) => game.isMinion(player)),
@@ -80,7 +81,7 @@ export function buildModel(): BOTCModel {
 }
 
 export async function solve() {
-  return buildModel().solveAll();
+  return buildModel(await KissatBackend.create()).solveAll();
 }
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-03a-not-throwing-away-my-shot.ts"))

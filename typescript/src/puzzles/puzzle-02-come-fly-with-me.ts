@@ -1,6 +1,7 @@
 import { BOTCModel } from "../model";
 import { printSolution } from "../display";
 import { CharacterType } from "../core";
+import { KissatBackend, type SatBackend } from "../sat";
 import {
   Balloonist,
   Clockmaker,
@@ -62,8 +63,8 @@ export const CHARACTERS = script(
   Seamstress,
 );
 
-export function buildModel(): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES });
+export function buildModel(backend: SatBackend): BOTCModel {
+  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
   game.setCharacterCount(Leviathan, 1);
   game.setCharacterCount(Goblin, 1);
   game.fixNotActual("You", Leviathan);
@@ -82,7 +83,7 @@ export function buildModel(): BOTCModel {
 }
 
 export async function solve() {
-  return buildModel().solveAll();
+  return buildModel(await KissatBackend.create()).solveAll();
 }
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-02-come-fly-with-me.ts"))

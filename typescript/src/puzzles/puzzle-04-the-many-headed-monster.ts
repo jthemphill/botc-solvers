@@ -1,6 +1,7 @@
 import { Alignment, CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { BOTCModel } from "../model";
+import { KissatBackend, type SatBackend } from "../sat";
 import {
   Dreamer,
   Drunk,
@@ -69,8 +70,8 @@ export const CHARACTERS = script(
 export const MINION_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Minion });
 export const EVIL_ROLES = roleNames(CHARACTERS, { alignment: Alignment.Evil });
 
-export function buildModel(): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES });
+export function buildModel(backend: SatBackend): BOTCModel {
+  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
   for (const role of EVIL_ROLES) game.setCharacterCount(role, 1);
   for (const player of PLAYER_NAMES) {
     const [left, right] = game.neighbors(player);
@@ -92,7 +93,7 @@ export function buildModel(): BOTCModel {
 }
 
 export async function solve() {
-  return buildModel().solveAll();
+  return buildModel(await KissatBackend.create()).solveAll();
 }
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-04-the-many-headed-monster.ts"))
