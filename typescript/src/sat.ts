@@ -15,72 +15,81 @@ export interface SatBackend {
   solve(problem: SatProblem): Promise<SatResult>;
 }
 
-function litValue(lit: Literal, assignment: Int8Array): boolean | undefined {
-  const value = assignment[Math.abs(lit)];
-  if (value === 0) return undefined;
-  return lit > 0 ? value === 1 : value === -1;
+interface KissatEmscriptenModule {
+  calledRun?: boolean;
+  ccall(ident: string, returnType: "number", argTypes: readonly string[], args: readonly (number | string)[]): number;
+  ccall(ident: string, returnType: null, argTypes: readonly string[], args: readonly (number | string)[]): null;
 }
 
-function chooseVariable(variableCount: number, assignment: Int8Array): number | undefined {
-  for (let variable = 1; variable <= variableCount; variable += 1) {
-    if (assignment[variable] === 0) return variable;
+class KissatSolver {
+  private readonly solverPtr: number;
+
+  constructor(private readonly runtime: KissatEmscriptenModule) {
+    this.solverPtr = runtime.ccall("kissat_init", "number", [], []);
+    this.setOption("quiet", 1);
   }
-  return undefined;
-}
 
-function propagate(clauses: readonly Clause[], assignment: Int8Array): boolean {
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const clause of clauses) {
-      let unassigned: Literal | undefined;
-      let unassignedCount = 0;
-      let satisfied = false;
-      for (const lit of clause) {
-        const value = litValue(lit, assignment);
-        if (value === true) {
-          satisfied = true;
-          break;
-        }
-        if (value === undefined) {
-          unassigned = lit;
-          unassignedCount += 1;
-        }
-      }
-      if (satisfied) continue;
-      if (unassignedCount === 0) return false;
-      if (unassignedCount === 1 && unassigned !== undefined) {
-        assignment[Math.abs(unassigned)] = unassigned > 0 ? 1 : -1;
-        changed = true;
-      }
-    }
+  addClause(clause: readonly number[]): void {
+    for (const literal of clause) this.add(literal);
+    this.add(0);
   }
-  return true;
-}
 
-function search(variableCount: number, clauses: readonly Clause[], assignment: Int8Array): Int8Array | undefined {
-  if (!propagate(clauses, assignment)) return undefined;
-  const variable = chooseVariable(variableCount, assignment);
-  if (variable === undefined) return assignment;
-
-  for (const value of [1, -1] as const) {
-    const next = new Int8Array(assignment);
-    next[variable] = value;
-    const result = search(variableCount, clauses, next);
-    if (result !== undefined) return result;
+  solve(): boolean | undefined {
+    const result = this.runtime.ccall("kissat_solve", "number", ["number"], [this.solverPtr]);
+    if (result === 10) return true;
+    if (result === 20) return false;
+    return undefined;
   }
-  return undefined;
+
+  model(vars: readonly number[]): readonly number[] {
+    return vars.map((variable) =>
+      this.runtime.ccall("kissat_value", "number", ["number", "number"], [this.solverPtr, variable]),
+    );
+  }
+
+  release(): void {
+    this.runtime.ccall("kissat_release", null, ["number"], [this.solverPtr]);
+  }
+
+  private add(literalOrZero: number): void {
+    this.runtime.ccall("kissat_add", null, ["number", "number"], [this.solverPtr, literalOrZero]);
+  }
+
+  private setOption(name: string, value: number): void {
+    this.runtime.ccall("kissat_set_option", null, ["number", "string", "number"], [this.solverPtr, name, value]);
+  }
 }
 
-export class DpllBackend implements SatBackend {
+async function waitForRuntime(runtime: KissatEmscriptenModule): Promise<void> {
+  while (runtime.calledRun !== true) {
+    await new Promise((resolve) => setTimeout(resolve, 1));
+  }
+}
+
+export class KissatBackend implements SatBackend {
+  private constructor(private readonly runtime: KissatEmscriptenModule) {}
+
+  static async create(): Promise<KissatBackend> {
+    const runtime = (await import("../vendor/kissat-js/kissat-emscripten.js")).default as KissatEmscriptenModule;
+    await waitForRuntime(runtime);
+    return new KissatBackend(runtime);
+  }
+
   async solve(problem: SatProblem): Promise<SatResult> {
-    const assignment = search(problem.variableCount, problem.clauses, new Int8Array(problem.variableCount + 1));
-    if (assignment === undefined) return { sat: false };
-    const model = new Set<number>();
-    for (let variable = 1; variable <= problem.variableCount; variable += 1) {
-      if (assignment[variable] === 1) model.add(variable);
+    const solver = new KissatSolver(this.runtime);
+    try {
+      for (const clause of problem.clauses) solver.addClause(clause);
+      const sat = solver.solve();
+      if (sat !== true) return { sat: false };
+      const vars = Array.from({ length: problem.variableCount }, (_, index) => index + 1);
+      const model = new Set<number>();
+      for (const value of solver.model(vars)) {
+        if (value > 0) model.add(value);
+      }
+      return { sat: true, model };
+    } finally {
+      solver.release();
     }
-    return { sat: true, model };
   }
 }
 

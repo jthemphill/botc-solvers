@@ -7,7 +7,7 @@ import {
   roleCharacterType,
   roleName,
 } from "./core";
-import { type Clause, DpllBackend, type Literal, type SatBackend, combinations, negate } from "./sat";
+import { type Clause, type Literal, type SatBackend, combinations, negate } from "./sat";
 
 export const DEFAULT_POISON_CONTEXT = "default";
 
@@ -98,7 +98,7 @@ export class BOTCModel {
       readonly characters: readonly RoleRef[];
       readonly seating?: readonly string[];
       readonly uniqueCharacters?: boolean;
-      readonly backend?: SatBackend;
+      readonly backend: SatBackend;
     },
   ) {
     if (players.length === 0) throw new Error("At least one player is required.");
@@ -112,7 +112,7 @@ export class BOTCModel {
     for (const character of options.characters) chars.set(roleName(character), character);
     if (chars.size !== options.characters.length) throw new Error("Character names must be unique.");
     this.characters = chars;
-    this.backend = options.backend ?? new DpllBackend();
+    this.backend = options.backend;
 
     for (const player of this.players) {
       for (const role of this.characters.keys()) {
