@@ -14,6 +14,7 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    "black>=26.5.1",
     "pyright>=1.1.409",
     "pytest>=8,<9",
 ]
@@ -24,6 +25,9 @@ packages = ["src/botc_solver"]
 [tool.pytest.ini_options]
 pythonpath = ["src", "."]
 testpaths = ["tests"]
+
+[tool.black]
+target-version = ["py314"]
 
 [tool.pyright]
 include = ["src", "puzzles", "tests"]
