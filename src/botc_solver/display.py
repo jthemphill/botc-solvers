@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import TextIO
+from typing import TextIO, cast
 
+from botc_solver.core import role_name
 from botc_solver.model import World
 
 
@@ -15,28 +16,29 @@ class ForcedRole:
     include_role: bool = False
 
 
-ForcedRoleSpec = str | ForcedRole
+ForcedRoleSpec = object
 
 
 def forced_role(
-    label: str,
-    roles: str | Iterable[str] | None = None,
+    label: object,
+    roles: object | Iterable[object] | None = None,
     *,
     missing: str = "not forced",
     include_role: bool = False,
 ) -> ForcedRole:
+    label_name = role_name(label)
     if roles is None:
-        role_names = (label,)
-    elif isinstance(roles, str):
-        role_names = (roles,)
+        role_names = (label_name,)
+    elif isinstance(roles, str) or hasattr(roles, "role_name") or hasattr(roles, "name"):
+        role_names = (role_name(roles),)
     else:
-        role_names = tuple(roles)
+        role_names = tuple(role_name(role) for role in cast(Iterable[object], roles))
 
     if not role_names:
         raise ValueError("At least one role is required.")
 
     return ForcedRole(
-        label=label,
+        label=label_name,
         roles=role_names,
         missing=missing,
         include_role=include_role,
@@ -102,7 +104,7 @@ def _format_world_lines(
     *,
     poison_context: str | None,
 ) -> list[str]:
-    lines = []
+    lines: list[str] = []
     for player in players:
         actual = world.actual_role(player)
         apparent = world.apparent.get(player)

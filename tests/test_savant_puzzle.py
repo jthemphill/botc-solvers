@@ -6,6 +6,6 @@ def test_savant_puzzle_has_unique_solution():
 
     assert len(worlds) == 1
     world = worlds[0]
-    assert world.holder("Demon") == "Anna"
-    assert world.holder("Minion") == "Tim"
+    assert world.holder("Imp") == "Anna"
+    assert world.holder("Scarlet Woman") == "Tim"
     assert world.holder("Drunk") == "Oscar"

@@ -4,6 +4,7 @@ from collections.abc import Sequence
 
 from ortools.sat.python import cp_model
 
+from botc_solver.core import role_character_type, role_name
 from botc_solver.model import BOTCModel
 
 
@@ -28,7 +29,7 @@ def same_alignment(game: BOTCModel, left: str, right: str) -> cp_model.IntVar:
 
 def different_character_types(game: BOTCModel, left: str, right: str) -> cp_model.IntVar:
     same_type_options: list[cp_model.IntVar] = []
-    for character_type in {character.character_type for character in game.characters.values()}:
+    for character_type in {role_character_type(character) for character in game.characters.values()}:
         same_type_options.append(
             game.all_of(
                 [
@@ -70,21 +71,18 @@ def chef_count_registers_as(game: BOTCModel, count: int, name: str) -> cp_model.
 def registers_as_role_among(
     game: BOTCModel,
     players: Sequence[str],
-    role: str,
+    role: object,
     name: str,
 ) -> cp_model.IntVar:
+    role_ref = role_name(role)
     return game.any_of(
-        [game.registers_as_role(player, role, name) for player in players],
-        f"{name}_{'_'.join(players)}_registers_as_{role}",
+        [game.registers_as_role(player, role_ref, name) for player in players],
+        f"{name}_{'_'.join(players)}_registers_as_{role_ref}",
     )
 
 
 def sits_next_to_evil(game: BOTCModel, player: str) -> cp_model.IntVar:
-    left, right = game.neighbors(player)
-    return game.any_of(
-        [game.is_evil(left), game.is_evil(right)],
-        f"{player}_sits_next_to_evil",
-    )
+    return game.sits_next_to_evil(player)
 
 
 def drunk_between_two_townsfolk(game: BOTCModel) -> cp_model.IntVar:
