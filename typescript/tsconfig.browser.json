@@ -5,6 +5,6 @@
     "lib": ["ES2022", "DOM", "WebWorker"],
     "types": []
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "vendor/**/*.ts"],
   "exclude": ["src/puzzles/**/*.ts"]
 }

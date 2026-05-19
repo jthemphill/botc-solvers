@@ -1,3 +1,4 @@
+// @ts-nocheck
 // include: shell.js
 // The Module object: Our interface to the outside world. We import
 // and export values on it. There are various ways Module can be used:
@@ -153,7 +154,7 @@ if (ENVIRONMENT_IS_NODE) {
         xhr.open("GET", url, false);
         xhr.responseType = "arraybuffer";
         xhr.send(null);
-        return new Uint8Array(/** @type{!ArrayBuffer} */ (xhr.response));
+        return new Uint8Array(/** @type{!ArrayBuffer} */ xhr.response);
       };
     }
 
@@ -479,7 +480,7 @@ function getBinaryPromise(binaryFile) {
     } else if (readAsync) {
       // fetch is not available or url is file => try XHR (readAsync uses XHR internally)
       return new Promise((resolve, reject) => {
-        readAsync(binaryFile, (response) => resolve(new Uint8Array(/** @type{!ArrayBuffer} */ (response))), reject);
+        readAsync(binaryFile, (response) => resolve(new Uint8Array(/** @type{!ArrayBuffer} */ response)), reject);
       });
     }
   }
@@ -3087,7 +3088,7 @@ var FS = {
           if (!((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304))
             throw new Error("Couldn't load " + url + ". Status: " + xhr.status);
           if (xhr.response !== undefined) {
-            return new Uint8Array(/** @type{Array<number>} */ (xhr.response || []));
+            return new Uint8Array(/** @type{Array<number>} */ xhr.response || []);
           }
           return intArrayFromString(xhr.responseText || "", true);
         };
@@ -3924,3 +3925,5 @@ if (Module["preInit"]) {
 run();
 
 // end include: postamble.js
+
+export default Module;
