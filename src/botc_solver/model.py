@@ -223,10 +223,16 @@ class BOTCModel:
         self,
         claim: RoleClaim,
         *,
-        evil_roles: Sequence[str] = ("Demon", "Minion"),
+        evil_roles: Sequence[str] | None = None,
         drunk_role: str = "Drunk",
     ) -> None:
         self.set_apparent_role(claim.player, claim.apparent_role)
+        if evil_roles is None:
+            evil_roles = tuple(
+                role
+                for role, character in self.characters.items()
+                if character.alignment == Alignment.EVIL
+            )
         possible_roles = [claim.apparent_role, *evil_roles]
         if self.characters[claim.apparent_role].character_type == CharacterType.TOWNSFOLK:
             possible_roles.append(drunk_role)

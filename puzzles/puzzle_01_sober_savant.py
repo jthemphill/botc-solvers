@@ -7,7 +7,19 @@ https://www.reddit.com/r/BloodOnTheClocktower/comments/1erb5e2/can_the_sober_sav
 
 from __future__ import annotations
 
-from botc_solver import Alignment, BOTCModel, Character, CharacterType, RoleClaim, print_solution
+from botc_solver import BOTCModel, RoleClaim, print_solution
+from botc_solver.characters import (
+    DRUNK,
+    IMP,
+    INVESTIGATOR,
+    KNIGHT,
+    NOBLE,
+    SAVANT,
+    SCARLET_WOMAN,
+    SEAMSTRESS,
+    STEWARD,
+    script,
+)
 from botc_solver.predicates import (
     chef_count_is,
     different_alignments,
@@ -18,16 +30,16 @@ from botc_solver.predicates import (
 
 
 PLAYERS = ["Oscar", "Matt", "Anna", "You", "Tim", "Sula"]
-CHARACTERS = (
-    Character("Demon", Alignment.EVIL, CharacterType.DEMON),
-    Character("Minion", Alignment.EVIL, CharacterType.MINION),
-    Character("Drunk", Alignment.GOOD, CharacterType.OUTSIDER),
-    Character("Investigator", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Knight", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Noble", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Savant", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Seamstress", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Steward", Alignment.GOOD, CharacterType.TOWNSFOLK),
+CHARACTERS = script(
+    IMP,
+    SCARLET_WOMAN,
+    DRUNK,
+    INVESTIGATOR,
+    KNIGHT,
+    NOBLE,
+    SAVANT,
+    SEAMSTRESS,
+    STEWARD,
 )
 CLAIMS = {
     "Oscar": "Investigator",
@@ -42,8 +54,8 @@ CLAIMS = {
 def build_model() -> BOTCModel:
     game = BOTCModel(PLAYERS, characters=CHARACTERS, seating=PLAYERS)
 
-    game.set_character_count("Demon", 1)
-    game.set_character_count("Minion", 1)
+    game.set_character_count("Imp", 1)
+    game.set_character_count("Scarlet Woman", 1)
     game.set_character_count("Drunk", 1)
 
     game.fix_actual("You", "Savant")
@@ -106,7 +118,7 @@ def solve():
 
 
 def main() -> None:
-    print_solution(solve(), PLAYERS, forced_roles=["Demon", "Minion", "Drunk"])
+    print_solution(solve(), PLAYERS, forced_roles=["Imp", "Scarlet Woman", "Drunk"])
 
 
 if __name__ == "__main__":

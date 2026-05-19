@@ -1,6 +1,19 @@
 from collections import abc
 
-from botc_solver import Alignment, BOTCModel, Character, CharacterType, RoleClaim
+from botc_solver import BOTCModel, CharacterType, RoleClaim
+from botc_solver.characters import (
+    CHEF,
+    DRUNK,
+    IMP,
+    INVESTIGATOR,
+    LIBRARIAN,
+    NOBLE,
+    POISONER,
+    RECLUSE,
+    SCARLET_WOMAN,
+    SPY,
+    script,
+)
 from botc_solver.predicates import (
     chef_count_is,
     chef_count_registers_as,
@@ -12,27 +25,27 @@ from botc_solver.predicates import (
 )
 
 
-TEST_CHARACTERS = (
-    Character("Demon", Alignment.EVIL, CharacterType.DEMON),
-    Character("Minion", Alignment.EVIL, CharacterType.MINION),
-    Character("Drunk", Alignment.GOOD, CharacterType.OUTSIDER),
-    Character("Recluse", Alignment.GOOD, CharacterType.OUTSIDER),
-    Character("Investigator", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Noble", Alignment.GOOD, CharacterType.TOWNSFOLK),
+TEST_CHARACTERS = script(
+    IMP,
+    SCARLET_WOMAN,
+    DRUNK,
+    RECLUSE,
+    INVESTIGATOR,
+    NOBLE,
 )
-POISON_CHARACTERS = (
-    Character("Demon", Alignment.EVIL, CharacterType.DEMON),
-    Character("Poisoner", Alignment.EVIL, CharacterType.MINION),
-    Character("Investigator", Alignment.GOOD, CharacterType.TOWNSFOLK),
+POISON_CHARACTERS = script(
+    IMP,
+    POISONER,
+    INVESTIGATOR,
 )
-REGISTRATION_CHARACTERS = (
-    Character("Imp", Alignment.EVIL, CharacterType.DEMON),
-    Character("Spy", Alignment.EVIL, CharacterType.MINION),
-    Character("Poisoner", Alignment.EVIL, CharacterType.MINION),
-    Character("Drunk", Alignment.GOOD, CharacterType.OUTSIDER),
-    Character("Recluse", Alignment.GOOD, CharacterType.OUTSIDER),
-    Character("Chef", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Librarian", Alignment.GOOD, CharacterType.TOWNSFOLK),
+REGISTRATION_CHARACTERS = script(
+    IMP,
+    SPY,
+    POISONER,
+    DRUNK,
+    RECLUSE,
+    CHEF,
+    LIBRARIAN,
 )
 
 
@@ -46,7 +59,7 @@ def test_drunk_apparent_role_is_not_in_play():
         game = BOTCModel(["A", "B"], characters=TEST_CHARACTERS)
         game.fix_actual("A", "Drunk")
         game.set_apparent_role("A", "Investigator")
-        game.fix_actual("B", "Demon")
+        game.fix_actual("B", "Imp")
         game.add_false(game.role_in_play("Investigator"))
         return game
 
@@ -58,7 +71,7 @@ def test_poisoned_actual_role_remains_in_play():
         game = BOTCModel(["A", "B"], characters=TEST_CHARACTERS)
         game.fix_actual("A", "Investigator")
         game.fix_poisoned("A", True)
-        game.fix_actual("B", "Demon")
+        game.fix_actual("B", "Imp")
         game.add_truth(game.role_in_play("Investigator"))
         return game
 
@@ -69,7 +82,16 @@ def test_drunk_can_think_they_are_a_townsfolk():
     game = BOTCModel(["A", "B"], characters=TEST_CHARACTERS)
     game.add_role_claim(RoleClaim("A", "Investigator"))
     game.fix_actual("A", "Drunk")
-    game.fix_actual("B", "Demon")
+    game.fix_actual("B", "Imp")
+
+    assert len(game.solve_all(limit=1)) == 1
+
+
+def test_role_claim_defaults_to_model_evil_roles():
+    game = BOTCModel(["A", "B"], characters=TEST_CHARACTERS)
+    game.add_role_claim(RoleClaim("A", "Investigator"))
+    game.fix_actual("A", "Scarlet Woman")
+    game.fix_actual("B", "Imp")
 
     assert len(game.solve_all(limit=1)) == 1
 
@@ -78,7 +100,7 @@ def test_drunk_cannot_think_they_are_an_outsider():
     game = BOTCModel(["A", "B"], characters=TEST_CHARACTERS)
     game.add_role_claim(RoleClaim("A", "Recluse"))
     game.fix_actual("A", "Drunk")
-    game.fix_actual("B", "Demon")
+    game.fix_actual("B", "Imp")
 
     assert game.solve_all(limit=1) == []
 
@@ -86,7 +108,7 @@ def test_drunk_cannot_think_they_are_an_outsider():
 def test_poisoning_is_scoped_to_a_context():
     game = BOTCModel(["A", "B", "C"], characters=POISON_CHARACTERS)
     game.fix_actual("A", "Poisoner")
-    game.fix_actual("B", "Demon")
+    game.fix_actual("B", "Imp")
     game.fix_actual("C", "Investigator")
     game.add_poisoner_effect("day_1")
     game.add_poisoner_effect("day_2")
@@ -107,7 +129,7 @@ def test_poisoning_is_scoped_to_a_context():
 def test_poisoner_effect_can_be_disabled_when_poisoner_is_inactive():
     game = BOTCModel(["A", "B", "C"], characters=POISON_CHARACTERS)
     game.fix_actual("A", "Poisoner")
-    game.fix_actual("B", "Demon")
+    game.fix_actual("B", "Imp")
     game.fix_actual("C", "Investigator")
     game.add_poisoner_effect("day_2", active_if=False)
     game.add_truth(game.poisoned("B", "day_2"))
@@ -118,7 +140,7 @@ def test_poisoner_effect_can_be_disabled_when_poisoner_is_inactive():
 def test_truthful_claim_uses_matching_poison_context():
     game = BOTCModel(["A", "B", "C"], characters=POISON_CHARACTERS)
     game.fix_actual("A", "Investigator")
-    game.fix_actual("B", "Demon")
+    game.fix_actual("B", "Imp")
     game.fix_actual("C", "Poisoner")
     false_claim = game.actual_is("B", "Investigator")
     game.fix_poisoned("A", True, "day_1")
@@ -213,8 +235,8 @@ def test_seating_predicates():
             characters=TEST_CHARACTERS,
             seating=["A", "B", "C", "D"],
         )
-        game.fix_actual("A", "Demon")
-        game.fix_actual("B", "Minion")
+        game.fix_actual("A", "Imp")
+        game.fix_actual("B", "Scarlet Woman")
         game.fix_actual("C", "Drunk")
         game.fix_actual("D", "Investigator")
         game.add_truth(chef_count_is(game, 1))
@@ -235,7 +257,7 @@ def test_drunk_between_two_townsfolk():
         game.fix_actual("A", "Investigator")
         game.fix_actual("B", "Drunk")
         game.fix_actual("C", "Noble")
-        game.fix_actual("D", "Demon")
+        game.fix_actual("D", "Imp")
         game.add_truth(drunk_between_two_townsfolk(game))
         return game
 
@@ -249,8 +271,8 @@ def test_alignment_and_character_type_predicates():
             characters=TEST_CHARACTERS,
             seating=["A", "B", "C"],
         )
-        game.fix_actual("A", "Demon")
-        game.fix_actual("B", "Minion")
+        game.fix_actual("A", "Imp")
+        game.fix_actual("B", "Scarlet Woman")
         game.fix_actual("C", "Drunk")
         game.add_truth(same_alignment(game, "A", "B"))
         game.add_truth(different_character_types(game, "A", "B"))

@@ -10,31 +10,46 @@ from __future__ import annotations
 from botc_solver import (
     Alignment,
     BOTCModel,
-    Character,
     CharacterType,
     RoleClaim,
     forced_role,
     print_solution,
 )
+from botc_solver.characters import (
+    DREAMER,
+    DRUNK,
+    EMPATH,
+    FORTUNE_TELLER,
+    INVESTIGATOR,
+    JUGGLER,
+    LIBRARIAN,
+    LORD_OF_TYPHON,
+    MARIONETTE,
+    POISONER,
+    RECLUSE,
+    UNDERTAKER,
+    role_names,
+    script,
+)
 
 
 PLAYERS = ["Sarah", "Tim", "Matt", "Hannah", "You", "Anna", "Dan", "Fraser"]
-MINION_ROLES = ("Marionette", "Poisoner")
-EVIL_ROLES = ("Lord of Typhon", *MINION_ROLES)
-CHARACTERS = (
-    Character("Lord of Typhon", Alignment.EVIL, CharacterType.DEMON),
-    Character("Marionette", Alignment.EVIL, CharacterType.MINION),
-    Character("Poisoner", Alignment.EVIL, CharacterType.MINION),
-    Character("Drunk", Alignment.GOOD, CharacterType.OUTSIDER),
-    Character("Recluse", Alignment.GOOD, CharacterType.OUTSIDER),
-    Character("Investigator", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Librarian", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Fortune Teller", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Juggler", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Dreamer", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Empath", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Undertaker", Alignment.GOOD, CharacterType.TOWNSFOLK),
+CHARACTERS = script(
+    LORD_OF_TYPHON,
+    MARIONETTE,
+    POISONER,
+    DRUNK,
+    RECLUSE,
+    INVESTIGATOR,
+    LIBRARIAN,
+    FORTUNE_TELLER,
+    JUGGLER,
+    DREAMER,
+    EMPATH,
+    UNDERTAKER,
 )
+MINION_ROLES = role_names(CHARACTERS, character_type=CharacterType.MINION)
+EVIL_ROLES = role_names(CHARACTERS, alignment=Alignment.EVIL)
 CLAIMS = {
     "Sarah": "Librarian",
     "Tim": "Recluse",
@@ -81,11 +96,7 @@ def build_model() -> BOTCModel:
         game.set_character_count(role, 1)
 
     for player in PLAYERS:
-        game.add_role_claim(
-            RoleClaim(player, CLAIMS[player]),
-            evil_roles=EVIL_ROLES,
-            drunk_role="Drunk",
-        )
+        game.add_role_claim(RoleClaim(player, CLAIMS[player]), drunk_role="Drunk")
 
     # You were shown Investigator, but the puzzle only allows Drunk or Marionette as alternatives.
     game.set_possible_actual_roles("You", ["Investigator", "Drunk", "Marionette"])

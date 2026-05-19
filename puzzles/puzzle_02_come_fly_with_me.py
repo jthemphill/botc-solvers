@@ -7,7 +7,21 @@ https://www.reddit.com/r/BloodOnTheClocktower/comments/1ewxu0r/weekly_puzzle_2_c
 
 from __future__ import annotations
 
-from botc_solver import Alignment, BOTCModel, Character, CharacterType, RoleClaim, print_solution
+from botc_solver import BOTCModel, CharacterType, RoleClaim, print_solution
+from botc_solver.characters import (
+    BALLOONIST,
+    CLOCKMAKER,
+    DRUNK,
+    FORTUNE_TELLER,
+    GOBLIN,
+    INVESTIGATOR,
+    JUGGLER,
+    KNIGHT,
+    LEVIATHAN,
+    SAINT,
+    SEAMSTRESS,
+    script,
+)
 from botc_solver.predicates import (
     different_character_types,
     registers_as_role_among,
@@ -16,18 +30,18 @@ from botc_solver.predicates import (
 
 
 PLAYERS = ["Sarah", "Matthew", "Anna", "Sula", "You", "Steph", "Fraser", "Tim"]
-CHARACTERS = (
-    Character("Leviathan", Alignment.EVIL, CharacterType.DEMON),
-    Character("Goblin", Alignment.EVIL, CharacterType.MINION),
-    Character("Drunk", Alignment.GOOD, CharacterType.OUTSIDER),
-    Character("Saint", Alignment.GOOD, CharacterType.OUTSIDER),
-    Character("Balloonist", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Clockmaker", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Fortune Teller", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Investigator", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Juggler", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Knight", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Seamstress", Alignment.GOOD, CharacterType.TOWNSFOLK),
+CHARACTERS = script(
+    LEVIATHAN,
+    GOBLIN,
+    DRUNK,
+    SAINT,
+    BALLOONIST,
+    CLOCKMAKER,
+    FORTUNE_TELLER,
+    INVESTIGATOR,
+    JUGGLER,
+    KNIGHT,
+    SEAMSTRESS,
 )
 CLAIMS = {
     "Sarah": "Investigator",
@@ -51,11 +65,7 @@ def build_model() -> BOTCModel:
 
     for player in PLAYERS:
         game.fix_poisoned(player, False)
-        game.add_role_claim(
-            RoleClaim(player, CLAIMS[player]),
-            evil_roles=("Leviathan", "Goblin"),
-            drunk_role="Drunk",
-        )
+        game.add_role_claim(RoleClaim(player, CLAIMS[player]), drunk_role="Drunk")
 
     outsider_count = sum(
         game.actual_is(player, role)

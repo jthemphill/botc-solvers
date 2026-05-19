@@ -7,39 +7,46 @@ https://www.reddit.com/r/BloodOnTheClocktower/comments/1f2jht3/weekly_puzzle_3a_
 
 from __future__ import annotations
 
-from botc_solver import (
-    Alignment,
-    BOTCModel,
-    Character,
-    CharacterType,
-    RoleClaim,
-    forced_role,
-    print_solution,
+from botc_solver import BOTCModel, CharacterType, RoleClaim, forced_role, print_solution
+from botc_solver.characters import (
+    BARON,
+    CHEF,
+    DRUNK,
+    EMPATH,
+    IMP,
+    INVESTIGATOR,
+    LIBRARIAN,
+    POISONER,
+    RECLUSE,
+    SAINT,
+    SCARLET_WOMAN,
+    SLAYER,
+    SPY,
+    WASHERWOMAN,
+    role_names,
+    script,
 )
 from botc_solver.predicates import chef_count_registers_as, registers_as_role_among
 
 
 PLAYERS = ["Dan", "Anna", "Matt", "Fraser", "You", "Tim", "Sarah", "Hannah"]
-CHARACTERS = (
-    Character("Imp", Alignment.EVIL, CharacterType.DEMON),
-    Character("Baron", Alignment.EVIL, CharacterType.MINION),
-    Character("Spy", Alignment.EVIL, CharacterType.MINION),
-    Character("Poisoner", Alignment.EVIL, CharacterType.MINION),
-    Character("Scarlet Woman", Alignment.EVIL, CharacterType.MINION),
-    Character("Drunk", Alignment.GOOD, CharacterType.OUTSIDER),
-    Character("Recluse", Alignment.GOOD, CharacterType.OUTSIDER),
-    Character("Saint", Alignment.GOOD, CharacterType.OUTSIDER),
-    Character("Chef", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Empath", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Investigator", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Librarian", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Slayer", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    Character("Washerwoman", Alignment.GOOD, CharacterType.TOWNSFOLK),
+CHARACTERS = script(
+    IMP,
+    BARON,
+    SPY,
+    POISONER,
+    SCARLET_WOMAN,
+    DRUNK,
+    RECLUSE,
+    SAINT,
+    CHEF,
+    EMPATH,
+    INVESTIGATOR,
+    LIBRARIAN,
+    SLAYER,
+    WASHERWOMAN,
 )
-MINION_ROLES = tuple(
-    character.name for character in CHARACTERS if character.character_type == CharacterType.MINION
-)
-EVIL_ROLES = [character.name for character in CHARACTERS if character.alignment == Alignment.EVIL]
+MINION_ROLES = role_names(CHARACTERS, character_type=CharacterType.MINION)
 CLAIMS = {
     "Dan": "Chef",
     "Anna": "Recluse",
@@ -65,11 +72,7 @@ def build_model() -> BOTCModel:
     game.add_false(game.is_evil("You"))
 
     for player in PLAYERS:
-        game.add_role_claim(
-            RoleClaim(player, CLAIMS[player]),
-            evil_roles=EVIL_ROLES,
-            drunk_role="Drunk",
-        )
+        game.add_role_claim(RoleClaim(player, CLAIMS[player]), drunk_role="Drunk")
 
     outsider_count = _outsider_count(game)
     baron_in_play = game.role_in_play("Baron")
