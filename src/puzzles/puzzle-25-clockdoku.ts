@@ -1,3 +1,5 @@
+import { KissatBackend, type SatBackend, type Clause } from "../sat";
+
 export const ROLES = [
   "Imp",
   "Baron",
@@ -13,6 +15,7 @@ export const ROLES = [
 
 export type ClockdokuRole = (typeof ROLES)[number];
 export type ClockdokuGrid = ClockdokuRole[][];
+type Cell = readonly [row: number, column: number];
 
 export const GIVEN_GRID: Array<Array<ClockdokuRole | undefined>> = [
   [undefined, undefined, "Recluse", "Saint", undefined, undefined, "Chef"],
@@ -24,73 +27,118 @@ export const GIVEN_GRID: Array<Array<ClockdokuRole | undefined>> = [
   ["Poisoner", undefined, undefined, "Fortune Teller", "Investigator", undefined, undefined],
 ];
 
-export function solve(): ClockdokuGrid[] {
-  const grid = GIVEN_GRID.map((row) => [...row]);
+const GRID_SIZE = 7;
+const VARIABLE_COUNT = GRID_SIZE * GRID_SIZE * ROLES.length;
+
+export async function solve(backend?: SatBackend): Promise<ClockdokuGrid[]> {
+  const satBackend = backend ?? (await KissatBackend.create());
+  const problem = buildProblem();
+  const clauses = [...problem.clauses];
   const solutions: ClockdokuGrid[] = [];
-  search(grid, solutions);
+
+  while (true) {
+    const result = await satBackend.solve({ variableCount: problem.variableCount, clauses });
+    if (!result.sat) break;
+    if (result.model === undefined) throw new Error("Kissat returned SAT without a model.");
+
+    const solution = decodeModel(result.model);
+    solutions.push(solution);
+    clauses.push(
+      solution.flatMap((row, rowIndex) => row.map((role, columnIndex) => -variableFor(rowIndex, columnIndex, role))),
+    );
+  }
+
   return solutions;
 }
 
-function search(grid: Array<Array<ClockdokuRole | undefined>>, solutions: ClockdokuGrid[]): void {
-  const next = nextCell(grid);
-  if (next === undefined) {
-    if (isCompleteGrid(grid)) solutions.push(grid.map((row) => [...row] as ClockdokuRole[]));
-    return;
-  }
+function buildProblem(): { readonly variableCount: number; readonly clauses: Clause[] } {
+  const clauses: Clause[] = [];
 
-  const [row, column, domain] = next;
-  for (const role of domain) {
-    grid[row]![column] = role;
-    search(grid, solutions);
-    grid[row]![column] = undefined;
-  }
-}
-
-function nextCell(grid: Array<Array<ClockdokuRole | undefined>>): [number, number, ClockdokuRole[]] | undefined {
-  let best: [number, number, ClockdokuRole[]] | undefined;
-  for (let row = 0; row < 7; row += 1) {
-    for (let column = 0; column < 7; column += 1) {
-      if (grid[row]?.[column] !== undefined) continue;
-      const domain = ROLES.filter((role) => {
-        grid[row]![column] = role;
-        const valid = isValidLine(grid[row]!) && isValidLine(grid.map((candidateRow) => candidateRow[column]));
-        grid[row]![column] = undefined;
-        return valid;
-      });
-      if (domain.length === 0) return [row, column, []];
-      if (best === undefined || domain.length < best[2].length) best = [row, column, domain];
+  for (let row = 0; row < GRID_SIZE; row += 1) {
+    for (let column = 0; column < GRID_SIZE; column += 1) {
+      addExactlyOne(
+        clauses,
+        ROLES.map((role) => variableFor(row, column, role)),
+      );
+      const given = GIVEN_GRID[row]?.[column];
+      if (given !== undefined) clauses.push([variableFor(row, column, given)]);
     }
   }
-  return best;
+
+  for (let index = 0; index < GRID_SIZE; index += 1) {
+    addLineConstraints(
+      clauses,
+      Array.from({ length: GRID_SIZE }, (_ignored, column) => [index, column] as const),
+    );
+    addLineConstraints(
+      clauses,
+      Array.from({ length: GRID_SIZE }, (_ignored, row) => [row, index] as const),
+    );
+  }
+
+  return { variableCount: VARIABLE_COUNT, clauses };
 }
 
-function isCompleteGrid(grid: Array<Array<ClockdokuRole | undefined>>): boolean {
-  return (
-    grid.every((row) => isValidLine(row, true)) &&
-    Array.from({ length: 7 }, (_ignored, column) => grid.map((row) => row[column])).every((column) =>
-      isValidLine(column, true),
-    )
+function addLineConstraints(clauses: Clause[], cells: readonly Cell[]): void {
+  for (const role of ROLES)
+    addAtMostOne(
+      clauses,
+      cells.map(([row, column]) => variableFor(row, column, role)),
+    );
+
+  clauses.push(cells.map(([row, column]) => variableFor(row, column, "Imp")));
+
+  const barons = cells.map(([row, column]) => variableFor(row, column, "Baron"));
+  const poisoners = cells.map(([row, column]) => variableFor(row, column, "Poisoner"));
+  const saints = cells.map(([row, column]) => variableFor(row, column, "Saint"));
+  const recluses = cells.map(([row, column]) => variableFor(row, column, "Recluse"));
+
+  clauses.push([...barons, ...poisoners]);
+  for (const baron of barons) {
+    for (const poisoner of poisoners) clauses.push([-baron, -poisoner]);
+    clauses.push([-baron, ...saints]);
+    clauses.push([-baron, ...recluses]);
+  }
+
+  for (const poisoner of poisoners) {
+    for (const saint of saints) clauses.push([-poisoner, -saint]);
+    for (const recluse of recluses) clauses.push([-poisoner, -recluse]);
+  }
+}
+
+function addExactlyOne(clauses: Clause[], variables: readonly number[]): void {
+  clauses.push([...variables]);
+  addAtMostOne(clauses, variables);
+}
+
+function addAtMostOne(clauses: Clause[], variables: readonly number[]): void {
+  for (let left = 0; left < variables.length; left += 1) {
+    for (let right = left + 1; right < variables.length; right += 1) {
+      clauses.push([-(variables[left] as number), -(variables[right] as number)]);
+    }
+  }
+}
+
+function decodeModel(model: ReadonlySet<number>): ClockdokuGrid {
+  return Array.from({ length: GRID_SIZE }, (_ignored, row) =>
+    Array.from({ length: GRID_SIZE }, (_alsoIgnored, column) => {
+      const matching = ROLES.filter((role) => model.has(variableFor(row, column, role)));
+      if (matching.length !== 1) throw new Error(`Expected exactly one role at ${row}, ${column}.`);
+      return matching[0] as ClockdokuRole;
+    }),
   );
 }
 
-function isValidLine(line: Array<ClockdokuRole | undefined>, complete = false): boolean {
-  const counts = new Map<ClockdokuRole, number>(ROLES.map((role) => [role, 0]));
-  for (const role of line) if (role !== undefined) counts.set(role, (counts.get(role) ?? 0) + 1);
-  if ([...counts.values()].some((count) => count > 1)) return false;
-  if ((counts.get("Imp") ?? 0) > 1) return false;
-  if ((counts.get("Baron") ?? 0) + (counts.get("Poisoner") ?? 0) > 1) return false;
-  if ((counts.get("Baron") ?? 0) > 0 && (counts.get("Poisoner") ?? 0) > 0) return false;
-  if ((counts.get("Baron") ?? 0) > 0 && ((counts.get("Saint") ?? 0) > 1 || (counts.get("Recluse") ?? 0) > 1))
-    return false;
-  if ((counts.get("Poisoner") ?? 0) > 0 && ((counts.get("Saint") ?? 0) > 0 || (counts.get("Recluse") ?? 0) > 0))
-    return false;
-  if (!complete) return true;
-  if ((counts.get("Imp") ?? 0) !== 1) return false;
-  if ((counts.get("Baron") ?? 0) + (counts.get("Poisoner") ?? 0) !== 1) return false;
-  if ((counts.get("Baron") ?? 0) > 0) return (counts.get("Saint") ?? 0) === 1 && (counts.get("Recluse") ?? 0) === 1;
-  return (counts.get("Saint") ?? 0) === 0 && (counts.get("Recluse") ?? 0) === 0;
+function variableFor(row: number, column: number, role: ClockdokuRole): number {
+  return (row * GRID_SIZE + column) * ROLES.length + roleIndex(role) + 1;
+}
+
+function roleIndex(role: ClockdokuRole): number {
+  const index = ROLES.indexOf(role);
+  if (index === -1) throw new Error(`Unknown role: ${role}`);
+  return index;
 }
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-25-clockdoku.ts")) {
-  for (const solution of solve()) console.log(solution.map((row) => row.join(" | ")).join("\n"));
+  for (const solution of await solve()) console.log(solution.map((row) => row.join(" | ")).join("\n"));
 }
