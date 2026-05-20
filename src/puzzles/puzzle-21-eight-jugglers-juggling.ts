@@ -1,7 +1,7 @@
-import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { BOTCModel } from "../model";
+import type { BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import { Drunk, Goblin, Juggler, Leviathan, applyClaims, playerNames, script } from "../characters";
 
 export const PLAYERS = [
@@ -48,21 +48,15 @@ export const PLAYERS = [
 ];
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(Leviathan, Goblin, Drunk, Juggler);
+export const PUZZLE = {
+  players: PLAYER_NAMES,
+  characters: CHARACTERS,
+  seating: PLAYER_NAMES,
+  uniqueCharacters: false,
+} satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, {
-    characters: CHARACTERS,
-    seating: PLAYER_NAMES,
-    uniqueCharacters: false,
-    backend,
-  });
-  game.setCharacterCount(Leviathan, 1);
-  game.setCharacterCount(Goblin, 1);
-  game.setCharacterCount(Drunk, 1);
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Townsfolk)),
-    5,
-  );
+  const game = buildPuzzleModel(PUZZLE, backend);
 
   applyClaims(game, PLAYERS);
 

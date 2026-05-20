@@ -1,6 +1,7 @@
 import { forcedRole, printSolution } from "../display";
-import { type BoolVar, BOTCModel } from "../model";
+import { type BoolVar, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   Baron,
   Drunk,
@@ -107,15 +108,10 @@ export const CHARACTERS = script(
   Ravenkeeper,
   SnakeCharmer,
 );
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.setCharacterCount(Imp, 1);
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.isMinion(player)),
-    1,
-  );
-  game.addBaronOutsiderCounts({ withoutBaron: 1, withBaron: 3 });
+  const game = buildPuzzleModel(PUZZLE, backend);
   game.fixNotActual("You", Imp);
   for (const minion of MINION_ROLES) game.fixNotActual("You", minion);
   game.fixNotActual("You", Drunk);

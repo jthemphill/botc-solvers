@@ -1,7 +1,8 @@
 import { forcedRole, printSolution } from "../display";
-import { type BoolLike, BOTCModel } from "../model";
+import { type BoolLike, type BOTCModel } from "../model";
 import { differentAlignments } from "../predicates";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   type AppliedInfoClaim,
   Artist,
@@ -114,12 +115,10 @@ export const CHARACTERS = script(
   Sage,
   Seamstress,
 );
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.setCharacterCount(NoDashii, 1);
-  game.setCharacterCount(Witch, 1);
-  game.forceOutsiderCount(1);
+  const game = buildPuzzleModel(PUZZLE, backend);
   game.fixNotActual("You", NoDashii);
   game.fixNotActual("You", Witch);
   game.fixNotActual("You", Mutant);

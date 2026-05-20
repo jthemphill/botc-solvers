@@ -1,7 +1,8 @@
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolVar, BOTCModel } from "../model";
+import { type BoolVar, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   Baron,
   Chef,
@@ -79,23 +80,14 @@ export const CHARACTERS = script(
   Washerwoman,
 );
 export const MINION_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Minion });
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.setCharacterCount(Imp, 1);
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.isMinion(player)),
-    1,
-  );
+  const game = buildPuzzleModel(PUZZLE, backend);
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2, { activeIf: game.actualIs("Josh", Poisoner).not() });
 
   for (const deadPlayer of ["Josh", "Matthew"]) game.fixNotActual(deadPlayer, Imp);
-
-  const outsiderCount = PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider));
-  const baronInPlay = game.roleInPlay(Baron);
-  game.addEnforcedExactlyN(outsiderCount, 2, baronInPlay);
-  game.addEnforcedExactlyN(outsiderCount, 0, baronInPlay.not());
 
   const redHerrings = addFortuneTellerRedHerring(game);
   applyClaims(game, PLAYERS, { context: redHerrings });

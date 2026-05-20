@@ -1,7 +1,8 @@
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolLike, type BoolVar, BOTCModel } from "../model";
+import { type BoolLike, type BoolVar, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   type InfoClaim,
   Empath,
@@ -74,21 +75,16 @@ export const PLAYERS = [
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(Imp, Poisoner, Empath, FortuneTeller, Investigator, Legionary, Washerwoman);
 export const LEGIONARY_CLAIMANTS = ["Sarah", "Hannah", "Fraser"];
+export const PUZZLE = {
+  players: PLAYER_NAMES,
+  characters: CHARACTERS,
+  seating: PLAYER_NAMES,
+  uniqueCharacters: false,
+} satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, {
-    characters: CHARACTERS,
-    seating: PLAYER_NAMES,
-    uniqueCharacters: false,
-    backend,
-  });
+  const game = buildPuzzleModel(PUZZLE, backend);
   enforceUniqueRolesExceptLegionary(game);
-  game.setCharacterCount(Imp, 1);
-  game.setCharacterCount(Poisoner, 1);
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider)),
-    0,
-  );
 
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2, { activeIf: game.actualIs("Tom", Poisoner).not() });

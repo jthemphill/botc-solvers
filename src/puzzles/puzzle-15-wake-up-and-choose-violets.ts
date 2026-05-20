@@ -1,7 +1,8 @@
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolVar, BOTCModel } from "../model";
+import { type BoolVar, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   type AppliedInfoClaim,
   Artist,
@@ -91,14 +92,15 @@ export const CHARACTERS = script(
   SnakeCharmer,
 );
 export const DEMON_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Demon });
+export const PUZZLE = {
+  players: PLAYER_NAMES,
+  characters: CHARACTERS,
+  seating: PLAYER_NAMES,
+  uniqueCharacters: false,
+} satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, {
-    characters: CHARACTERS,
-    seating: PLAYER_NAMES,
-    uniqueCharacters: false,
-    backend,
-  });
+  const game = buildPuzzleModel(PUZZLE, backend);
   enforceRoleCounts(game);
   game.fixActual("You", Savant);
 
@@ -115,15 +117,6 @@ export async function solve() {
 
 function enforceRoleCounts(game: BOTCModel): void {
   const always = game.constantBool(true, "role_count_constraints");
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.isDemon(player)),
-    1,
-  );
-  game.setCharacterCount(EvilTwin, 1);
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider)),
-    1,
-  );
   for (const role of [NoDashii, Vortox, EvilTwin, Mutant, Klutz, Artist, Clockmaker, Juggler, Savant, Seamstress]) {
     game.addEnforcedAtMostN(
       PLAYER_NAMES.map((player) => game.actualIs(player, role)),

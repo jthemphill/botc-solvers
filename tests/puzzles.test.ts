@@ -128,12 +128,12 @@ describe("ported puzzles", () => {
     expect(worlds[0]?.holder("Drunk")).toBe("Steph");
   });
 
-  test("the savant strikes back has unique solution", async () => {
+  test("the savant strikes back has two worlds that differ only by Steph's outsider role", async () => {
     const worlds = await solve07();
-    expect(worlds).toHaveLength(1);
-    expect(worlds[0]?.holder("Leviathan")).toBe("Anna");
-    expect(worlds[0]?.holder("Goblin")).toBe("Oscar");
-    expect(worlds[0]?.holder("Mutant")).toBe("Steph");
+    expect(worlds).toHaveLength(2);
+    expect(new Set(worlds.map((world) => world.holder("Leviathan")))).toEqual(new Set(["Anna"]));
+    expect(new Set(worlds.map((world) => world.holder("Goblin")))).toEqual(new Set(["Oscar"]));
+    expect(new Set(worlds.map((world) => world.actualRole("Steph")))).toEqual(new Set(["Drunk", "Mutant"]));
   });
 
   test("the stitch up forces the evil team", async () => {

@@ -1,7 +1,8 @@
 import { forcedRole, printSolution } from "../display";
-import { BOTCModel } from "../model";
+import type { BOTCModel } from "../model";
 import { type InfoClaim, Dreamer, Drunk, Imp, Poisoner, applyClaims, playerNames, script } from "../characters";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import type { RoleRef } from "../core";
 
 export const NIGHT_1 = "night_1";
@@ -61,22 +62,15 @@ export const PLAYERS = [
 ];
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(Imp, Poisoner, Drunk, Dreamer);
+export const PUZZLE = {
+  players: PLAYER_NAMES,
+  characters: CHARACTERS,
+  seating: PLAYER_NAMES,
+  uniqueCharacters: false,
+} satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, {
-    characters: CHARACTERS,
-    seating: PLAYER_NAMES,
-    uniqueCharacters: false,
-    backend,
-  });
-  game.setCharacterCount(Imp, 1);
-  game.setCharacterCount(Poisoner, 1);
-  game.setCharacterCount(Drunk, 1);
-  game.addEnforcedExactlyN(
-    PLAYER_NAMES.map((player) => game.actualIs(player, Dreamer)),
-    5,
-    game.constantBool(true, "five_dreamers"),
-  );
+  const game = buildPuzzleModel(PUZZLE, backend);
 
   game.fixNotActual("Jasmine", Imp);
   game.addPoisonerEffect(NIGHT_1);

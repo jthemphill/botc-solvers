@@ -5,6 +5,7 @@ import {
   type RoleRef,
   roleAlignment,
   roleCharacterType,
+  roleMaxCopies,
   roleName,
 } from "./core";
 import { type Clause, type Literal, type SatBackend, combinations, negate } from "./sat";
@@ -129,7 +130,7 @@ export class BOTCModel {
       for (const role of this.characters.keys())
         this.addAtMostN(
           this.players.map((player) => this.actualIs(player, role)),
-          1,
+          roleMaxCopies(this.characters.get(role) as RoleRef),
         );
     }
   }

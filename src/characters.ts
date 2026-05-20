@@ -147,6 +147,7 @@ export abstract class Role {
   readonly roleName: string;
   readonly alignment: Alignment;
   readonly characterType: CharacterType;
+  readonly maxCopies?: number;
   readonly name: string;
   readonly poisonContext?: string;
   readonly infoClaims: readonly InfoClaim[];
@@ -160,6 +161,7 @@ export abstract class Role {
     this.roleName = cls.roleName;
     this.alignment = cls.alignment;
     this.characterType = cls.characterType;
+    this.maxCopies = cls.maxCopies;
     this.poisonContext = resolvedPoisonContext;
     this.infoClaims = typeof nameOrOptions === "string" ? [] : (nameOrOptions.infoClaims ?? []).map(normalizeInfoClaim);
   }
@@ -855,6 +857,7 @@ export class VillageIdiot extends Role {
   static readonly roleName = "Village Idiot";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  static readonly maxCopies = 3;
   readonly checks: readonly VillageIdiotCheck[];
   constructor(
     options: RoleBaseOptions & {

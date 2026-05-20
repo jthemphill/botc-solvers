@@ -1,7 +1,8 @@
 import { CharacterType, type RoleRef, roleName } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolLike, BOTCModel } from "../model";
+import { type BoolLike, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   Drunk,
   Empath,
@@ -57,16 +58,10 @@ export const CHARACTERS = script(
 );
 export const DEMON_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Demon });
 export const NIGHT_1 = "night_1";
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.isDemon(player)),
-    1,
-  );
-  game.setCharacterCount(Marionette, 1);
-  game.setCharacterCount(Drunk, 1);
-  game.setCharacterCount(Saint, 1);
+  const game = buildPuzzleModel(PUZZLE, backend);
   game.allowPoisonInContext(NIGHT_1);
 
   for (const claim of PLAYERS) game.addRoleClaim({ player: claim.name, apparentRole: claim });

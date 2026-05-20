@@ -1,6 +1,7 @@
 import { forcedRole, printSolution } from "../display";
-import { BOTCModel, type World } from "../model";
+import { type BOTCModel, type World } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   Alsaahir,
   Drunk,
@@ -47,12 +48,10 @@ export const CHARACTERS = script(
   Seamstress,
   Steward,
 );
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.setCharacterCount(Leviathan, 1);
-  game.setCharacterCount(Goblin, 1);
-  game.setCharacterCount(Drunk, 0);
+  const game = buildPuzzleModel(PUZZLE, backend);
   game.fixActual("You", Alsaahir);
   applyClaims(game, PLAYERS);
   return game;

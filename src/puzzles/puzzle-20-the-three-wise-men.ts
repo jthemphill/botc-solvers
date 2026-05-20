@@ -1,7 +1,8 @@
-import { CharacterType, roleName } from "../core";
+import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolVar, BOTCModel } from "../model";
+import { type BoolVar, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   type AppliedInfoClaim,
   type InfoClaim,
@@ -92,24 +93,14 @@ export const CHARACTERS = script(
   Virgin,
 );
 export const MINION_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Minion });
+export const PUZZLE = {
+  players: PLAYER_NAMES,
+  characters: CHARACTERS,
+  seating: PLAYER_NAMES,
+} satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, {
-    characters: CHARACTERS,
-    seating: PLAYER_NAMES,
-    uniqueCharacters: false,
-    backend,
-  });
-  enforceUniqueRolesExceptVillageIdiot(game);
-  game.setCharacterCount(Imp, 1);
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.isMinion(player)),
-    1,
-  );
-
-  const outsiderCount = PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider));
-  game.addEnforcedExactlyN(outsiderCount, 2, game.roleInPlay(Baron));
-  game.addEnforcedExactlyN(outsiderCount, 0, game.roleInPlay(Baron).not());
+  const game = buildPuzzleModel(PUZZLE, backend);
 
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2);
@@ -121,18 +112,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
 
 export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
-}
-
-function enforceUniqueRolesExceptVillageIdiot(game: BOTCModel): void {
-  const always = game.constantBool(true, "unique_non_village_idiot_roles");
-  for (const role of CHARACTERS) {
-    if (roleName(role) === VillageIdiot.roleName) continue;
-    game.addEnforcedAtMostN(
-      PLAYER_NAMES.map((player) => game.actualIs(player, role)),
-      1,
-      always,
-    );
-  }
 }
 
 function addVillageIdiotDrunkenness(game: BOTCModel): ReadonlyMap<string, BoolVar> {

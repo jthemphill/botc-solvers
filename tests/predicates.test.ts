@@ -16,6 +16,7 @@ import {
   Savant,
   ScarletWoman,
   Spy,
+  VillageIdiot,
   applyClaims,
   script,
 } from "../src/characters";
@@ -129,6 +130,25 @@ describe("predicates and helpers", () => {
     savant.fixActual("B", Imp);
     savant.fixActual("C", Imp);
     expect(await savant.solveAll({ limit: 1 })).toEqual([]);
+  });
+
+  test("village idiot can have up to three copies under default uniqueness", async () => {
+    const threeVillageIdiots = new BOTCModel(["A", "B", "C", "D"], {
+      characters: script(Imp, VillageIdiot, Chef, Empath),
+      backend,
+    });
+    threeVillageIdiots.fixActual("A", VillageIdiot);
+    threeVillageIdiots.fixActual("B", VillageIdiot);
+    threeVillageIdiots.fixActual("C", VillageIdiot);
+    threeVillageIdiots.fixActual("D", Imp);
+    expect(await threeVillageIdiots.solveAll({ limit: 1 })).toHaveLength(1);
+
+    const fourVillageIdiots = new BOTCModel(["A", "B", "C", "D"], {
+      characters: script(Imp, VillageIdiot, Chef, Empath),
+      backend,
+    });
+    for (const player of fourVillageIdiots.players) fourVillageIdiots.fixActual(player, VillageIdiot);
+    expect(await fourVillageIdiots.solveAll({ limit: 1 })).toEqual([]);
   });
 
   test("display formatting", () => {

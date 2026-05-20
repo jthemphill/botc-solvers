@@ -1,7 +1,8 @@
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolVar, BOTCModel } from "../model";
+import { type BoolVar, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   Baron,
   Drunk,
@@ -98,16 +99,10 @@ export const CHARACTERS = script(
 );
 
 type RedHerring = ReadonlyMap<string, BoolVar>;
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.setCharacterCount(Imp, 1);
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.isMinion(player)),
-    1,
-  );
-  game.addImplication(game.roleInPlay(Baron), outsiderCount(game, 3));
-  game.addImplication(game.roleInPlay(Baron).not(), outsiderCount(game, 1));
+  const game = buildPuzzleModel(PUZZLE, backend);
   game.fixNotActual("You", Imp);
   for (const minion of [Baron, Poisoner, Spy, ScarletWoman]) game.fixNotActual("You", minion);
 
@@ -133,14 +128,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
 
 export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
-}
-
-function outsiderCount(game: BOTCModel, count: number): BoolVar {
-  return game.boolSumEquals(
-    PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider)),
-    count,
-    `outsider_count_${count}`,
-  );
 }
 
 function addDeathTimelineConstraints(game: BOTCModel): void {

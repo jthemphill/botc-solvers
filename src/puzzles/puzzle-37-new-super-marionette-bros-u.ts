@@ -1,7 +1,8 @@
 import { forcedRole, printSolution } from "../display";
-import { type BoolVar, BOTCModel } from "../model";
+import { type BoolVar, type BOTCModel } from "../model";
 import { chefCountRegistersAs } from "../predicates";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   Chef,
   Drunk,
@@ -116,15 +117,10 @@ export const CHARACTERS = script(
   Undertaker,
   Washerwoman,
 );
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.setCharacterCount(Imp, 1);
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.isMinion(player)),
-    1,
-  );
-  game.setCharacterCount(Drunk, 1);
+  const game = buildPuzzleModel(PUZZLE, backend);
   game.addImplication(game.roleInPlay(Marionette), marionetteNeighborsDemon(game));
   for (const evilRole of [Imp, Poisoner, Spy, ScarletWoman]) game.fixNotActual("You", evilRole);
 

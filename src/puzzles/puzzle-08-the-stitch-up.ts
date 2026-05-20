@@ -1,6 +1,7 @@
 import { forcedRole, printSolution } from "../display";
-import { BOTCModel } from "../model";
+import type { BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import { Drunk, Imp, Poisoner, Seamstress, applyClaims, playerNames, script } from "../characters";
 
 export const NIGHT_1 = "night_1";
@@ -17,17 +18,15 @@ export const PLAYERS = [
 
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(Imp, Poisoner, Drunk, Seamstress);
+export const PUZZLE = {
+  players: PLAYER_NAMES,
+  characters: CHARACTERS,
+  seating: PLAYER_NAMES,
+  uniqueCharacters: false,
+} satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, {
-    characters: CHARACTERS,
-    seating: PLAYER_NAMES,
-    uniqueCharacters: false,
-    backend,
-  });
-  game.setCharacterCount(Imp, 1);
-  game.setCharacterCount(Poisoner, 1);
-  game.setCharacterCount(Drunk, 0);
+  const game = buildPuzzleModel(PUZZLE, backend);
   game.addPoisonerEffect(NIGHT_1);
   applyClaims(game, PLAYERS);
   return game;

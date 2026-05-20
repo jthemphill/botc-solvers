@@ -1,7 +1,8 @@
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolVar, BOTCModel } from "../model";
+import { type BoolVar, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   Chef,
   Drunk,
@@ -91,15 +92,10 @@ export const CHARACTERS = script(
 );
 
 type RedHerring = ReadonlyMap<string, BoolVar>;
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.setCharacterCount(Imp, 1);
-  game.setCharacterCount(Poisoner, 1);
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider)),
-    1,
-  );
+  const game = buildPuzzleModel(PUZZLE, backend);
   for (const evilRole of [Imp, Poisoner]) game.fixNotActual("You", evilRole);
 
   game.addPoisonerEffect(NIGHT_1);

@@ -1,7 +1,8 @@
 import { CharacterType, roleName } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolVar, BOTCModel } from "../model";
+import { type BoolVar, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   type AppliedInfoClaim,
   Artist,
@@ -102,6 +103,7 @@ export const CHARACTERS = script(
   Seamstress,
   SnakeCharmer,
 );
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 type MathPeriod = "night_1" | "night_2";
 interface ClaimContext {
@@ -109,12 +111,7 @@ interface ClaimContext {
 }
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.isDemon(player)),
-    1,
-  );
-  game.setCharacterCount(Witch, 1);
+  const game = buildPuzzleModel(PUZZLE, backend);
   game.fixActual("You", Mathematician);
 
   for (const deadBeforeNightTwo of ["Steph", "Aoife", "Fraser", "You"]) {

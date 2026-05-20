@@ -1,7 +1,8 @@
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolLike, type BoolVar, BOTCModel } from "../model";
+import { type BoolLike, type BoolVar, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   type AppliedInfoClaim,
   Chambermaid,
@@ -123,17 +124,12 @@ export const CHARACTERS = script(
 );
 export const DEMON_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Demon });
 export const MINION_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Minion });
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 type RedHerring = ReadonlyMap<string, BoolVar>;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.isDemon(player)),
-    1,
-  );
-  game.setCharacterCount(ScarletWoman, 1);
-  game.setCharacterCount(Drunk, 1);
+  const game = buildPuzzleModel(PUZZLE, backend);
 
   game.allowPoisonInContext(NIGHT_1);
   game.allowPoisonInContext(NIGHT_2);

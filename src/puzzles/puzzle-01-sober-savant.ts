@@ -1,6 +1,7 @@
-import { BOTCModel } from "../model";
+import type { BOTCModel } from "../model";
 import { printSolution } from "../display";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   Chef,
   Drunk,
@@ -39,12 +40,10 @@ export const PLAYERS = [
 
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(Imp, ScarletWoman, Drunk, Investigator, Knight, Noble, Savant, Seamstress, Steward);
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.setCharacterCount(Imp, 1);
-  game.setCharacterCount(ScarletWoman, 1);
-  game.setCharacterCount(Drunk, 1);
+  const game = buildPuzzleModel(PUZZLE, backend);
   game.fixActual("You", Savant);
   applyClaims(game, PLAYERS);
   return game;

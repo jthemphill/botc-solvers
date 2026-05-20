@@ -1,7 +1,8 @@
 import { CharacterType, roleName } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolVar, BOTCModel } from "../model";
+import { type BoolVar, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   type AppliedInfoClaim,
   Dreamer,
@@ -117,19 +118,14 @@ export const CHARACTERS = script(
 
 export const RED_HERRING = "red_herring";
 export const DRUNK_VILLAGE_IDIOT = "drunk_village_idiot";
+export const PUZZLE = {
+  players: PLAYER_NAMES,
+  characters: CHARACTERS,
+  seating: PLAYER_NAMES,
+} satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, {
-    characters: CHARACTERS,
-    seating: PLAYER_NAMES,
-    uniqueCharacters: false,
-    backend,
-  });
-  enforceUniqueRolesExceptVillageIdiot(game);
-  game.setCharacterCount(Leviathan, 1);
-  game.setCharacterCount(Goblin, 1);
-  game.setCharacterCount(Mutant, 1);
-  game.setCharacterCount(Drunk, 0);
+  const game = buildPuzzleModel(PUZZLE, backend);
   game.fixActual("You", Savant);
 
   const redHerrings = addFortuneTellerRedHerring(game);
@@ -145,18 +141,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
 
 export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
-}
-
-function enforceUniqueRolesExceptVillageIdiot(game: BOTCModel): void {
-  const always = game.constantBool(true, "unique_non_village_idiot_roles");
-  for (const role of CHARACTERS) {
-    if (roleName(role) === VillageIdiot.roleName) continue;
-    game.addEnforcedAtMostN(
-      PLAYER_NAMES.map((player) => game.actualIs(player, role)),
-      1,
-      always,
-    );
-  }
 }
 
 function addFortuneTellerRedHerring(game: BOTCModel): ReadonlyMap<string, BoolVar> {

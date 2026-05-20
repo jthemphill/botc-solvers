@@ -18,6 +18,7 @@ export interface RoleClass {
   readonly roleName: string;
   readonly alignment: Alignment;
   readonly characterType: CharacterType;
+  readonly maxCopies?: number;
 }
 
 export interface RoleInstance {
@@ -25,6 +26,7 @@ export interface RoleInstance {
   readonly roleName: string;
   readonly alignment: Alignment;
   readonly characterType: CharacterType;
+  readonly maxCopies?: number;
 }
 
 export type RoleRef = string | RoleClass | RoleInstance;
@@ -80,4 +82,11 @@ export function roleCharacterType(role: RoleRef): CharacterType {
     return characterType;
   }
   throw new TypeError(`Role does not expose CharacterType metadata.`);
+}
+
+export function roleMaxCopies(role: RoleRef): number {
+  const maxCopies = (role as { maxCopies?: unknown }).maxCopies;
+  if (Number.isInteger(maxCopies) && (maxCopies as number) > 0) return maxCopies as number;
+  if (roleName(role) === "Village Idiot") return 3;
+  return 1;
 }

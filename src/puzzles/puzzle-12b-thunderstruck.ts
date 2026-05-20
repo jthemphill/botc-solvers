@@ -1,7 +1,8 @@
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolLike, type BoolVar, BOTCModel } from "../model";
+import { type BoolLike, type BoolVar, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   type AppliedInfoClaim,
   Clockmaker,
@@ -85,15 +86,10 @@ export const CHARACTERS = script(
   Slayer,
 );
 export const MINION_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Minion });
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.setCharacterCount(Vortox, 1);
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.isMinion(player)),
-    1,
-  );
-  game.setCharacterCount(Lunatic, 1);
+  const game = buildPuzzleModel(PUZZLE, backend);
 
   game.fixActual("You", Librarian);
   const vortoxDrunk = game.actualIs("Steph", Courtier);

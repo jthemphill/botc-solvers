@@ -1,7 +1,8 @@
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { BOTCModel } from "../model";
+import type { BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   Acrobat,
   Balloonist,
@@ -51,15 +52,10 @@ export const CHARACTERS = script(
   Steward,
 );
 export const DEMON_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Demon });
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.isDemon(player)),
-    1,
-  );
-  game.setCharacterCount(Goblin, 1);
-  game.addImplication(game.roleInPlay(Drunk), game.roleInPlay(Balloonist));
+  const game = buildPuzzleModel(PUZZLE, backend);
 
   applyClaims(game, PLAYERS);
   game.setPossibleActualRoles("You", [Acrobat, Drunk]);

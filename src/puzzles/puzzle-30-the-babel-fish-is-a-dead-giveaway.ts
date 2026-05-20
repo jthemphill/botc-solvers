@@ -1,7 +1,8 @@
 import { CharacterType, roleName } from "../core";
 import { printSolution } from "../display";
-import { type BoolVar, BOTCModel, type World } from "../model";
+import { type BoolVar, type BOTCModel, type World } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel } from "../setup";
 import {
   Artist,
   Atheist,
@@ -85,10 +86,7 @@ export async function solve(): Promise<Puzzle30Solution[]> {
 
 export function buildNonAtheistModel(side: GameSide, backend: SatBackend): BOTCModel {
   const players = playerNames(side === "left" ? LEFT_PLAYERS : RIGHT_PLAYERS);
-  const game = new BOTCModel(players, { characters: CHARACTERS, seating: players, backend });
-  game.setCharacterCount(Imp, 1);
-  game.setCharacterCount(Spy, 1);
-  game.setCharacterCount(Drunk, 1);
+  const game = buildPuzzleModel({ players, characters: CHARACTERS, seating: players }, backend);
   game.setCharacterCount(Atheist, 0);
 
   for (const role of [Artist, Clockmaker, Knight, Noble, Seamstress]) {

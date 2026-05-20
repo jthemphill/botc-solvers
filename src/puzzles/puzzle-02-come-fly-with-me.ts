@@ -1,7 +1,7 @@
-import { BOTCModel } from "../model";
+import type { BOTCModel } from "../model";
 import { printSolution } from "../display";
-import { CharacterType } from "../core";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   Balloonist,
   Clockmaker,
@@ -18,7 +18,6 @@ import {
   playerNames,
   script,
 } from "../characters";
-import { roleCharacterType } from "../core";
 
 export const PLAYERS = [
   new Investigator({ name: "Sarah", role: Goblin, among: ["Matthew", "Fraser"] }),
@@ -62,22 +61,12 @@ export const CHARACTERS = script(
   Knight,
   Seamstress,
 );
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.setCharacterCount(Leviathan, 1);
-  game.setCharacterCount(Goblin, 1);
+  const game = buildPuzzleModel(PUZZLE, backend);
   game.fixNotActual("You", Leviathan);
   game.fixNotActual("You", Goblin);
-  const outsiderVars = PLAYER_NAMES.flatMap((player) =>
-    [...game.characters.entries()]
-      .filter(([, character]) => roleCharacterType(character) === CharacterType.Outsider)
-      .map(([role]) => game.actualIs(player, role)),
-  );
-  const balloonistInPlay = game.roleInPlay(Balloonist);
-  game.addEnforcedExactlyN(outsiderVars, 1, balloonistInPlay.not());
-  game.addEnforcedAtLeastN(outsiderVars, 1, balloonistInPlay);
-  game.addEnforcedAtMostN(outsiderVars, 2, balloonistInPlay);
   applyClaims(game, PLAYERS);
   return game;
 }
