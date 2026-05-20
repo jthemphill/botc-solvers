@@ -26,7 +26,12 @@ export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 
 export const PLAYERS = [
-  new Ravenkeeper({ name: "Tim" }),
+  new Ravenkeeper({
+    name: "Tim",
+    infoClaims: [
+      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Oscar", Librarian, "tim_ravenkeeper") },
+    ],
+  }),
   new FortuneTeller({
     name: "Sarah",
     checks: [
@@ -34,10 +39,23 @@ export const PLAYERS = [
       { left: "You", right: "Jasmine", yes: false, demonRole: Imp, registers: true, poisonContext: NIGHT_2 },
     ],
   }),
-  new Slayer({ name: "Fraser" }),
+  new Slayer({
+    name: "Fraser",
+    infoClaims: [
+      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Oscar", Imp, "fraser_slayer").not() },
+    ],
+  }),
   new Recluse({ name: "Aoife" }),
-  new Investigator({ name: "You", role: ScarletWoman, among: ["Sarah", "Aoife"], poisonContext: NIGHT_1 }),
-  new Clockmaker({ name: "Jasmine" }),
+  new Investigator({
+    name: "You",
+    role: ScarletWoman,
+    among: ["Sarah", "Aoife"],
+    poisonContext: NIGHT_1,
+  }),
+  new Clockmaker({
+    name: "Jasmine",
+    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => demonSitsStepsFromMinion(game, 3) }],
+  }),
   new Librarian({ name: "Oscar", outsiderCount: 0, poisonContext: NIGHT_1 }),
 ];
 
@@ -76,19 +94,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2, { activeIf: game.actualIs("Aoife", Poisoner).not() });
   applyClaims(game, PLAYERS);
-  game.setPossibleActualRoles("You", [Investigator, Drunk]);
-  game.addTruthfulInfoClaim("Jasmine", Clockmaker, demonSitsStepsFromMinion(game, 3), {
-    poisonContext: NIGHT_1,
-  });
-  game.addTruthfulInfoClaim("Tim", Ravenkeeper, game.registersAsRole("Oscar", Librarian, "tim_ravenkeeper"), {
-    poisonContext: NIGHT_2,
-  });
-
-  const activeSlayer = game.allOf(
-    [game.actualIs("Fraser", Slayer), game.poisoned("Fraser", NIGHT_2).not()],
-    "fraser_active_slayer",
-  );
-  game.addImplication(activeSlayer, game.registersAsRole("Oscar", Imp, "fraser_slayer").not());
 
   return game;
 }

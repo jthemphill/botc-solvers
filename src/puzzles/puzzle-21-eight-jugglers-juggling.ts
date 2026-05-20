@@ -2,9 +2,50 @@ import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
-import { Drunk, Goblin, Juggler, Leviathan, playerNames, script } from "../characters";
+import { Drunk, Goblin, Juggler, Leviathan, applyClaims, playerNames, script } from "../characters";
 
-export const PLAYERS = ["Tim", "Matt", "Olivia", "Oscar", "You", "Fraser", "Aoife", "Josh"];
+export const PLAYERS = [
+  new Juggler({
+    name: "Tim",
+    guesses: { You: Leviathan, Josh: Juggler },
+    correctCount: 0,
+  }),
+  new Juggler({
+    name: "Matt",
+    guesses: { Josh: Goblin, Tim: Juggler },
+    correctCount: 0,
+  }),
+  new Juggler({
+    name: "Olivia",
+    guesses: { You: Juggler, Aoife: Drunk },
+    correctCount: 2,
+  }),
+  new Juggler({
+    name: "Oscar",
+    guesses: { Josh: Goblin, Matt: Juggler },
+    correctCount: 0,
+  }),
+  new Juggler({
+    name: "You",
+    guesses: { Matt: Goblin, Oscar: Goblin },
+    correctCount: 0,
+  }),
+  new Juggler({
+    name: "Fraser",
+    guesses: { Olivia: Juggler, Oscar: Drunk },
+    correctCount: 1,
+  }),
+  new Juggler({
+    name: "Aoife",
+    guesses: { Olivia: Leviathan, Oscar: Leviathan },
+    correctCount: 0,
+  }),
+  new Juggler({
+    name: "Josh",
+    guesses: { Tim: Goblin, Oscar: Juggler },
+    correctCount: 1,
+  }),
+];
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(Leviathan, Goblin, Drunk, Juggler);
 
@@ -23,34 +64,13 @@ export function buildModel(backend: SatBackend): BOTCModel {
     5,
   );
 
-  for (const player of PLAYER_NAMES) {
-    game.setApparentRole(player, Juggler);
-    game.setPossibleActualRoles(player, player === "You" ? [Juggler, Drunk] : [Juggler, Drunk, Leviathan, Goblin]);
-  }
-
-  addJugglerInfo(game, "Tim", { You: Leviathan, Josh: Juggler }, 0);
-  addJugglerInfo(game, "Matt", { Josh: Goblin, Tim: Juggler }, 0);
-  addJugglerInfo(game, "Olivia", { You: Juggler, Aoife: Drunk }, 2);
-  addJugglerInfo(game, "Oscar", { Josh: Goblin, Matt: Juggler }, 0);
-  addJugglerInfo(game, "You", { Matt: Goblin, Oscar: Goblin }, 0);
-  addJugglerInfo(game, "Fraser", { Olivia: Juggler, Oscar: Drunk }, 1);
-  addJugglerInfo(game, "Aoife", { Olivia: Leviathan, Oscar: Leviathan }, 0);
-  addJugglerInfo(game, "Josh", { Tim: Goblin, Oscar: Juggler }, 1);
+  applyClaims(game, PLAYERS);
 
   return game;
 }
 
 export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
-}
-
-function addJugglerInfo(
-  game: BOTCModel,
-  player: string,
-  guesses: Parameters<typeof Juggler.learnsCorrectCount>[1],
-  count: number,
-): void {
-  game.addTruthfulInfoClaim(player, Juggler, Juggler.learnsCorrectCount(game, guesses, count, `${player}_juggler`));
 }
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-21-eight-jugglers-juggling.ts"))

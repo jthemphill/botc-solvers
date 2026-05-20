@@ -1,6 +1,6 @@
-import { CharacterType, type RoleRef, roleName } from "../core";
+import { CharacterType, roleName } from "../core";
 import { printSolution } from "../display";
-import { type BoolLike, type BoolVar, BOTCModel, type World } from "../model";
+import { type BoolVar, BOTCModel, type World } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
 import {
   Artist,
@@ -12,6 +12,7 @@ import {
   Noble,
   Seamstress,
   Spy,
+  applyClaims,
   playerNames,
   script,
 } from "../characters";
@@ -24,8 +25,52 @@ export interface Puzzle30Solution {
   readonly world: World;
 }
 
-export const LEFT_PLAYERS = ["Sarah", "Max", "Erika", "Lav", "Oli", "Callum"];
-export const RIGHT_PLAYERS = ["Ben", "Owen", "Lydia", "Finn", "Louisa", "Shan"];
+export const LEFT_PLAYERS = [
+  new Seamstress({
+    name: "Sarah",
+    infoClaims: [(game) => sameAlignment(game, "Oli", "Callum", "sarah_seamstress")],
+  }),
+  new Artist({
+    name: "Max",
+    infoClaims: [(game) => game.registersAsRole("Erika", Drunk, "max_artist")],
+  }),
+  new Noble({
+    name: "Erika",
+    infoClaims: [(game) => evilRegisterCount(game, ["Lav", "Callum", "Sarah"], 1, "erika_noble")],
+  }),
+  new Clockmaker({
+    name: "Lav",
+    infoClaims: [(game) => demonOppositeMinion(game, "lav_clockmaker")],
+  }),
+  new Atheist({ name: "Oli" }),
+  new Knight({
+    name: "Callum",
+    infoClaims: [(game) => noDemonAmong(game, ["Lav", "Max"], "callum_knight")],
+  }),
+];
+export const RIGHT_PLAYERS = [
+  new Clockmaker({
+    name: "Ben",
+    infoClaims: [(game) => demonOppositeMinion(game, "ben_clockmaker")],
+  }),
+  new Noble({
+    name: "Owen",
+    infoClaims: [(game) => evilRegisterCount(game, ["Lydia", "Louisa", "Shan"], 1, "owen_noble")],
+  }),
+  new Seamstress({
+    name: "Lydia",
+    infoClaims: [(game) => sameAlignment(game, "Finn", "Ben", "lydia_seamstress")],
+  }),
+  new Atheist({ name: "Finn" }),
+  new Knight({
+    name: "Louisa",
+    infoClaims: [(game) => noDemonAmong(game, ["Lydia", "Shan"], "louisa_knight")],
+  }),
+  new Artist({
+    name: "Shan",
+    infoClaims: [(game) => game.registersAsRole("Louisa", Drunk, "shan_artist")],
+  }),
+];
 export const CHARACTERS = script(Imp, Spy, Drunk, Artist, Atheist, Clockmaker, Knight, Noble, Seamstress);
 
 export async function solve(): Promise<Puzzle30Solution[]> {
@@ -54,53 +99,8 @@ export function buildNonAtheistModel(side: GameSide, backend: SatBackend): BOTCM
     );
   }
 
-  if (side === "left") addLeftGame(game);
-  else addRightGame(game);
+  applyClaims(game, side === "left" ? LEFT_PLAYERS : RIGHT_PLAYERS);
   return game;
-}
-
-function addLeftGame(game: BOTCModel): void {
-  addClaim(game, "Sarah", Seamstress);
-  addClaim(game, "Callum", Knight);
-  addAtheistClaim(game, "Oli");
-  addClaim(game, "Lav", Clockmaker);
-  addClaim(game, "Erika", Noble);
-  addClaim(game, "Max", Artist);
-
-  addInfo(game, "Sarah", Seamstress, sameAlignment(game, "Oli", "Callum", "sarah_seamstress"));
-  addInfo(game, "Callum", Knight, noDemonAmong(game, ["Lav", "Max"], "callum_knight"));
-  addInfo(game, "Lav", Clockmaker, demonOppositeMinion(game, "lav_clockmaker"));
-  addInfo(game, "Erika", Noble, evilRegisterCount(game, ["Lav", "Callum", "Sarah"], 1, "erika_noble"));
-  addInfo(game, "Max", Artist, game.registersAsRole("Erika", Drunk, "max_artist"));
-}
-
-function addRightGame(game: BOTCModel): void {
-  addClaim(game, "Ben", Clockmaker);
-  addClaim(game, "Owen", Noble);
-  addClaim(game, "Lydia", Seamstress);
-  addAtheistClaim(game, "Finn");
-  addClaim(game, "Louisa", Knight);
-  addClaim(game, "Shan", Artist);
-
-  addInfo(game, "Ben", Clockmaker, demonOppositeMinion(game, "ben_clockmaker"));
-  addInfo(game, "Owen", Noble, evilRegisterCount(game, ["Lydia", "Louisa", "Shan"], 1, "owen_noble"));
-  addInfo(game, "Lydia", Seamstress, sameAlignment(game, "Finn", "Ben", "lydia_seamstress"));
-  addInfo(game, "Louisa", Knight, noDemonAmong(game, ["Lydia", "Shan"], "louisa_knight"));
-  addInfo(game, "Shan", Artist, game.registersAsRole("Louisa", Drunk, "shan_artist"));
-}
-
-function addClaim(game: BOTCModel, player: string, apparentRole: RoleRef): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(player, [apparentRole, Drunk, Imp, Spy]);
-}
-
-function addAtheistClaim(game: BOTCModel, player: string): void {
-  game.setApparentRole(player, Atheist);
-  game.setPossibleActualRoles(player, [Drunk, Imp, Spy]);
-}
-
-function addInfo(game: BOTCModel, player: string, role: RoleRef, info: BoolLike): void {
-  game.addTruthfulInfoClaim(player, role, info);
 }
 
 function sameAlignment(game: BOTCModel, left: string, right: string, name: string): BoolVar {
@@ -151,6 +151,6 @@ if (import.meta.main && process.argv[1]?.endsWith("puzzle-30-the-babel-fish-is-a
   console.log(`${solutions.length} satisfying paired solution(s)`);
   for (const [index, solution] of solutions.entries()) {
     console.log(`\nSolution ${index + 1}: ${solution.atheistGame} game is the Atheist game`);
-    printSolution([solution.world], solution.nonAtheistGame === "left" ? LEFT_PLAYERS : RIGHT_PLAYERS);
+    printSolution([solution.world], playerNames(solution.nonAtheistGame === "left" ? LEFT_PLAYERS : RIGHT_PLAYERS));
   }
 }

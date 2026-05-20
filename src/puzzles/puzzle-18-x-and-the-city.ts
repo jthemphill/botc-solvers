@@ -1,9 +1,10 @@
-import { CharacterType, type RoleRef } from "../core";
+import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolLike, type BoolVar, BOTCModel, type World } from "../model";
 import { differentCharacterTypes } from "../predicates";
 import { KissatBackend, type SatBackend } from "../sat";
 import {
+  type InfoClaim,
   Balloonist,
   Drunk,
   FortuneTeller,
@@ -15,12 +16,78 @@ import {
   Saint,
   SnakeCharmer,
   Xaan,
+  applyClaims,
   playerNames,
   roleNames,
   script,
 } from "../characters";
 
-export const PLAYERS = ["Aoife", "Tim", "Olivia", "Sarah", "You", "Steph", "Fraser", "Dan"];
+export const PLAYERS = [
+  new Balloonist({
+    name: "Aoife",
+    infoClaims: [
+      nightInfo(2, "aoife_balloonist_n2", (game) => differentCharacterTypes(game, "Olivia", "Aoife")),
+      nightInfo(3, "aoife_balloonist_n3", (game) => differentCharacterTypes(game, "You", "Aoife")),
+    ],
+  }),
+  new Saint({ name: "Tim" }),
+  new Investigator({
+    name: "Olivia",
+    infoClaims: [
+      nightInfo(1, "olivia_investigator_n1", (game) =>
+        Investigator.learnsRoleAmong(game, ["Fraser", "Aoife"], Xaan, "olivia_investigator"),
+      ),
+    ],
+  }),
+  new Recluse({ name: "Sarah" }),
+  new Librarian({
+    name: "You",
+    infoClaims: [
+      nightInfo(1, "you_librarian_n1", (game) =>
+        Librarian.learnsRoleAmong(game, ["Aoife", "Tim"], Drunk, "you_librarian"),
+      ),
+    ],
+  }),
+  new Juggler({
+    name: "Steph",
+    infoClaims: [
+      nightInfo(2, "steph_juggler_n2", (game) =>
+        Juggler.learnsCorrectCount(
+          game,
+          {
+            Fraser: Leviathan,
+            Aoife: Balloonist,
+            Tim: Xaan,
+          },
+          2,
+          "steph_juggler",
+        ),
+      ),
+    ],
+  }),
+  new SnakeCharmer({
+    name: "Fraser",
+    infoClaims: [
+      nightInfo(1, "fraser_snake_charmer_n1", (game) => game.actualIs("Olivia", Leviathan).not()),
+      nightInfo(2, "fraser_snake_charmer_n2", (game) => game.actualIs("Steph", Leviathan).not()),
+      nightInfo(3, "fraser_snake_charmer_n3", (game) => game.actualIs("Aoife", Leviathan).not()),
+    ],
+  }),
+  new FortuneTeller({
+    name: "Dan",
+    infoClaims: [
+      nightInfo(1, "dan_ft_n1_info", (game, context) =>
+        fortuneTellerCheck(game, (context as ClaimContext).redHerrings, ["Tim", "Sarah"], false, "dan_ft_n1"),
+      ),
+      nightInfo(2, "dan_ft_n2_info", (game, context) =>
+        fortuneTellerCheck(game, (context as ClaimContext).redHerrings, ["Steph", "Aoife"], false, "dan_ft_n2"),
+      ),
+      nightInfo(3, "dan_ft_n3_info", (game, context) =>
+        fortuneTellerCheck(game, (context as ClaimContext).redHerrings, ["Fraser", "Olivia"], false, "dan_ft_n3"),
+      ),
+    ],
+  }),
+];
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(
   Leviathan,
@@ -42,90 +109,26 @@ export const OUTSIDER_ROLES = roleNames(CHARACTERS, { characterType: CharacterTy
 type Night = 1 | 2 | 3;
 type XVars = Readonly<Record<Night, BoolVar>>;
 type RedHerring = ReadonlyMap<string, BoolVar>;
+interface ClaimContext {
+  readonly x: XVars;
+  readonly redHerrings: RedHerring;
+}
 
 export function buildModel(backend: SatBackend): BOTCModel {
   const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
   game.setCharacterCount(Leviathan, 1);
   game.setCharacterCount(Xaan, 1);
-
-  addClaim(game, "Aoife", [Balloonist, Drunk, Leviathan, Xaan], Balloonist);
-  addClaim(game, "Tim", [Saint, Leviathan, Xaan], Saint);
-  addClaim(game, "Olivia", [Investigator, Drunk, Leviathan, Xaan], Investigator);
-  addClaim(game, "Sarah", [Recluse, Leviathan, Xaan], Recluse);
-  addClaim(game, "You", [Librarian, Drunk], Librarian);
-  addClaim(game, "Steph", [Juggler, Drunk, Leviathan, Xaan], Juggler);
-  addClaim(game, "Fraser", [SnakeCharmer, Drunk, Leviathan, Xaan], SnakeCharmer);
-  addClaim(game, "Dan", [FortuneTeller, Drunk, Leviathan, Xaan], FortuneTeller);
+  for (const evilRole of [Leviathan, Xaan]) game.fixNotActual("You", evilRole);
 
   const x = addXBranches(game);
   const redHerrings = addFortuneTellerRedHerring(game);
-
-  addNightInfo(game, x, "Aoife", Balloonist, 2, differentCharacterTypes(game, "Olivia", "Aoife"));
-  addNightInfo(game, x, "Aoife", Balloonist, 3, differentCharacterTypes(game, "You", "Aoife"));
-  addNightInfo(
-    game,
-    x,
-    "Olivia",
-    Investigator,
-    1,
-    Investigator.learnsRoleAmong(game, ["Fraser", "Aoife"], Xaan, "olivia_investigator"),
-  );
-  addNightInfo(game, x, "You", Librarian, 1, Librarian.learnsRoleAmong(game, ["Aoife", "Tim"], Drunk, "you_librarian"));
-  addNightInfo(
-    game,
-    x,
-    "Steph",
-    Juggler,
-    2,
-    Juggler.learnsCorrectCount(
-      game,
-      {
-        Fraser: Leviathan,
-        Aoife: Balloonist,
-        Tim: Xaan,
-      },
-      2,
-      "steph_juggler",
-    ),
-  );
-  addSnakeCharmerChoice(game, x, 1, "Olivia");
-  addSnakeCharmerChoice(game, x, 2, "Steph");
-  addSnakeCharmerChoice(game, x, 3, "Aoife");
-  addNightInfo(
-    game,
-    x,
-    "Dan",
-    FortuneTeller,
-    1,
-    fortuneTellerCheck(game, redHerrings, ["Tim", "Sarah"], false, "dan_ft_n1"),
-  );
-  addNightInfo(
-    game,
-    x,
-    "Dan",
-    FortuneTeller,
-    2,
-    fortuneTellerCheck(game, redHerrings, ["Steph", "Aoife"], false, "dan_ft_n2"),
-  );
-  addNightInfo(
-    game,
-    x,
-    "Dan",
-    FortuneTeller,
-    3,
-    fortuneTellerCheck(game, redHerrings, ["Fraser", "Olivia"], false, "dan_ft_n3"),
-  );
+  applyClaims(game, PLAYERS, { context: { x, redHerrings } });
 
   return game;
 }
 
 export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
-}
-
-function addClaim(game: BOTCModel, player: string, possibleRoles: readonly RoleRef[], apparentRole: RoleRef): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(player, possibleRoles);
 }
 
 function addXBranches(game: BOTCModel): XVars {
@@ -142,13 +145,13 @@ function addXBranches(game: BOTCModel): XVars {
   return x;
 }
 
-function addNightInfo(game: BOTCModel, x: XVars, player: string, role: RoleRef, night: Night, info: BoolLike): void {
-  const active = game.allOf([game.actualIs(player, role), x[night].not()], `${player}_${night}_active_info`);
-  game.addImplication(active, info);
-}
-
-function addSnakeCharmerChoice(game: BOTCModel, x: XVars, night: Night, chosen: string): void {
-  addNightInfo(game, x, "Fraser", SnakeCharmer, night, game.actualIs(chosen, Leviathan).not());
+function nightInfo(night: Night, name: string, info: (game: BOTCModel, context: unknown) => BoolLike): InfoClaim {
+  return {
+    learned: (game, context) => {
+      const { x } = context as ClaimContext;
+      return game.anyOf([x[night], info(game, context)], name);
+    },
+  };
 }
 
 function addFortuneTellerRedHerring(game: BOTCModel): RedHerring {

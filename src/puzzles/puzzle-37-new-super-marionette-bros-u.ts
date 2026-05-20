@@ -16,6 +16,7 @@ import {
   Spy,
   Undertaker,
   Washerwoman,
+  applyClaims,
   playerNames,
   script,
 } from "../characters";
@@ -24,9 +25,82 @@ export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 export const NIGHT_3 = "night_3";
 
-export const PLAYERS = ["Sula", "Aoife", "Fraser", "Jasmine", "You", "Matt", "Steph", "Adam"];
-export const PLAYER_NAMES = playerNames(PLAYERS);
 export const MINION_ROLES = [Poisoner, Spy, ScarletWoman, Marionette];
+export const PLAYERS = [
+  new Librarian({
+    name: "Sula",
+    role: Drunk,
+    among: ["Jasmine", "Steph"],
+    poisonContext: NIGHT_1,
+  }),
+  new FortuneTeller({
+    name: "Aoife",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game, context) =>
+          game.fortuneTellerYes(
+            context as ReadonlyMap<string, BoolVar>,
+            ["You", "Jasmine"],
+            "aoife_ft_you_jasmine_yes",
+            (player) => isDemonAtContext(game, player, NIGHT_1),
+          ),
+      },
+      {
+        poisonContext: NIGHT_2,
+        learned: (game, context) =>
+          game.fortuneTellerNo(
+            context as ReadonlyMap<string, BoolVar>,
+            ["Jasmine", "Sula"],
+            "aoife_ft_jasmine_sula_no",
+            (player) => isDemonAtContext(game, player, NIGHT_2),
+          ),
+      },
+    ],
+  }),
+  new Empath({
+    name: "Fraser",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game) => game.registeredEvilCount(["Jasmine", "Aoife"], 1, "fraser_empath_n1"),
+      },
+      {
+        poisonContext: NIGHT_2,
+        learned: (game) => game.registeredEvilCount(["Jasmine", "Aoife"], 1, "fraser_empath_n2"),
+      },
+      {
+        poisonContext: NIGHT_3,
+        learned: (game) => game.registeredEvilCount(["Jasmine", "Steph"], 1, "fraser_empath_n3"),
+      },
+    ],
+  }),
+  new Imp({ name: "Jasmine" }),
+  new Undertaker({
+    name: "You",
+    infoClaims: [
+      { poisonContext: NIGHT_2, learned: (game) => game.actualIs("Matt", Spy) },
+      { poisonContext: NIGHT_3, learned: (game) => game.actualIs("Aoife", Marionette) },
+    ],
+  }),
+  new Washerwoman({
+    name: "Matt",
+    role: Undertaker,
+    among: ["You", "Fraser"],
+    poisonContext: NIGHT_1,
+  }),
+  new Chef({
+    name: "Steph",
+    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => chefCountRegistersAs(game, 1, "steph_chef") }],
+  }),
+  new Ravenkeeper({
+    name: "Adam",
+    infoClaims: [
+      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Fraser", Empath, "adam_ravenkeeper") },
+    ],
+  }),
+];
+export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(
   Imp,
   Poisoner,
@@ -52,15 +126,7 @@ export function buildModel(backend: SatBackend): BOTCModel {
   );
   game.setCharacterCount(Drunk, 1);
   game.addImplication(game.roleInPlay(Marionette), marionetteNeighborsDemon(game));
-
-  game.addClaim("Sula", Librarian, [Librarian, Drunk, Imp, ...MINION_ROLES]);
-  game.addClaim("Aoife", FortuneTeller, [FortuneTeller, Drunk, Imp, ...MINION_ROLES]);
-  game.addClaim("Fraser", Empath, [Empath, Drunk, Imp, ...MINION_ROLES]);
-  game.addClaim("Jasmine", Imp, [Imp, ...MINION_ROLES]);
-  game.addClaim("You", Undertaker, [Undertaker, Drunk, Marionette]);
-  game.addClaim("Matt", Washerwoman, [Washerwoman, Drunk, Imp, ...MINION_ROLES]);
-  game.addClaim("Steph", Chef, [Chef, Drunk, Imp, ...MINION_ROLES]);
-  game.addClaim("Adam", Ravenkeeper, [Ravenkeeper, Drunk, Imp, ...MINION_ROLES]);
+  for (const evilRole of [Imp, Poisoner, Spy, ScarletWoman]) game.fixNotActual("You", evilRole);
 
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2, {
@@ -84,50 +150,7 @@ export function buildModel(backend: SatBackend): BOTCModel {
   });
 
   const redHerrings = game.addFortuneTellerRedHerring("Aoife");
-
-  game.addTruthfulInfoClaim(
-    "Sula",
-    Librarian,
-    Librarian.learnsRoleAmong(game, ["Jasmine", "Steph"], Drunk, "sula_librarian"),
-    { poisonContext: NIGHT_1 },
-  );
-  game.addTruthfulInfoClaim(
-    "Aoife",
-    FortuneTeller,
-    game.fortuneTellerYes(redHerrings, ["You", "Jasmine"], "aoife_ft_you_jasmine_yes", (player) =>
-      isDemonAtContext(game, player, NIGHT_1),
-    ),
-    { poisonContext: NIGHT_1 },
-  );
-  game.addTruthfulInfoClaim(
-    "Aoife",
-    FortuneTeller,
-    game.fortuneTellerNo(redHerrings, ["Jasmine", "Sula"], "aoife_ft_jasmine_sula_no", (player) =>
-      isDemonAtContext(game, player, NIGHT_2),
-    ),
-    { poisonContext: NIGHT_2 },
-  );
-  game.addTruthfulInfoClaim("Fraser", Empath, game.registeredEvilCount(["Jasmine", "Aoife"], 1, "fraser_empath_n1"), {
-    poisonContext: NIGHT_1,
-  });
-  game.addTruthfulInfoClaim("Fraser", Empath, game.registeredEvilCount(["Jasmine", "Aoife"], 1, "fraser_empath_n2"), {
-    poisonContext: NIGHT_2,
-  });
-  game.addTruthfulInfoClaim("Fraser", Empath, game.registeredEvilCount(["Jasmine", "Steph"], 1, "fraser_empath_n3"), {
-    poisonContext: NIGHT_3,
-  });
-  game.addTruthfulInfoClaim("You", Undertaker, game.actualIs("Matt", Spy), { poisonContext: NIGHT_2 });
-  game.addTruthfulInfoClaim("You", Undertaker, game.actualIs("Aoife", Marionette), { poisonContext: NIGHT_3 });
-  game.addTruthfulInfoClaim(
-    "Matt",
-    Washerwoman,
-    Washerwoman.learnsRoleAmong(game, ["You", "Fraser"], Undertaker, "matt_washerwoman"),
-    { poisonContext: NIGHT_1 },
-  );
-  game.addTruthfulInfoClaim("Steph", Chef, chefCountRegistersAs(game, 1, "steph_chef"), { poisonContext: NIGHT_1 });
-  game.addTruthfulInfoClaim("Adam", Ravenkeeper, game.registersAsRole("Fraser", Empath, "adam_ravenkeeper"), {
-    poisonContext: NIGHT_2,
-  });
+  applyClaims(game, PLAYERS, { drunkThinksOutOfPlayRole: true, context: redHerrings });
 
   game.addTruth(
     game.anyOf(

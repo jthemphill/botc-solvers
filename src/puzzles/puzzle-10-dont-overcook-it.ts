@@ -16,6 +16,7 @@ import {
   Spy,
   Undertaker,
   Washerwoman,
+  applyClaims,
   playerNames,
   roleNames,
   script,
@@ -25,12 +26,39 @@ export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 
 export const PLAYERS = [
-  new FortuneTeller({ name: "Tom" }),
+  new FortuneTeller({
+    name: "Tom",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game, context) => {
+          const redHerrings = context as ReadonlyMap<string, BoolVar>;
+          return game.allOf(
+            [
+              fortuneTellerLearnsCheck(game, redHerrings, "Tom", "Sula", false, "tom_ft_tom_sula"),
+              fortuneTellerLearnsCheck(game, redHerrings, "Tom", "Josh", true, "tom_ft_tom_josh"),
+            ],
+            "tom_fortune_teller_checks",
+          );
+        },
+      },
+    ],
+  }),
   new Chef({ name: "Sula", count: 0, poisonContext: NIGHT_1 }),
   new Recluse({ name: "Fraser" }),
   new Washerwoman({ name: "Josh", role: Undertaker, among: ["Dan", "Sula"], poisonContext: NIGHT_1 }),
-  new Slayer({ name: "You" }),
-  new Ravenkeeper({ name: "Matthew" }),
+  new Slayer({
+    name: "You",
+    infoClaims: [
+      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Fraser", Imp, "you_slayer").not() },
+    ],
+  }),
+  new Ravenkeeper({
+    name: "Matthew",
+    infoClaims: [
+      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Josh", Imp, "matthew_ravenkeeper") },
+    ],
+  }),
   new Undertaker({ name: "Dan", player: "Josh", role: Poisoner, poisonContext: NIGHT_2 }),
 ];
 
@@ -62,8 +90,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2, { activeIf: game.actualIs("Josh", Poisoner).not() });
 
-  for (const claim of PLAYERS) game.addRoleClaim({ player: claim.name, apparentRole: claim });
-  game.setPossibleActualRoles("You", [Slayer, Drunk]);
   for (const deadPlayer of ["Josh", "Matthew"]) game.fixNotActual(deadPlayer, Imp);
 
   const outsiderCount = PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider));
@@ -72,37 +98,7 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.addEnforcedExactlyN(outsiderCount, 0, baronInPlay.not());
 
   const redHerrings = addFortuneTellerRedHerring(game);
-  game.addTruthfulInfoClaim(
-    "Tom",
-    FortuneTeller,
-    game.allOf(
-      [
-        fortuneTellerLearnsCheck(game, redHerrings, "Tom", "Sula", false, "tom_ft_tom_sula"),
-        fortuneTellerLearnsCheck(game, redHerrings, "Tom", "Josh", true, "tom_ft_tom_josh"),
-      ],
-      "tom_fortune_teller_checks",
-    ),
-    { poisonContext: NIGHT_1 },
-  );
-  game.addTruthfulInfoClaim("Sula", Chef, Chef.learnsCount(game, 0, "sula_chef"), { poisonContext: NIGHT_1 });
-  game.addTruthfulInfoClaim(
-    "Josh",
-    Washerwoman,
-    Washerwoman.learnsRoleAmong(game, ["Dan", "Sula"], Undertaker, "josh_washerwoman"),
-    { poisonContext: NIGHT_1 },
-  );
-  game.addTruthfulInfoClaim("Dan", Undertaker, Undertaker.learnsRole(game, "Josh", Poisoner), {
-    poisonContext: NIGHT_2,
-  });
-  game.addTruthfulInfoClaim("Matthew", Ravenkeeper, game.registersAsRole("Josh", Imp, "matthew_ravenkeeper"), {
-    poisonContext: NIGHT_2,
-  });
-
-  const soberSlayerShot = game.allOf(
-    [game.actualIs("You", Slayer), game.poisoned("You", NIGHT_2).not()],
-    "you_sober_slayer_shot",
-  );
-  game.addImplication(soberSlayerShot, game.registersAsRole("Fraser", Imp, "you_slayer").not());
+  applyClaims(game, PLAYERS, { context: redHerrings });
 
   return game;
 }

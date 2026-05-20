@@ -27,11 +27,36 @@ export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 
 export const PLAYERS = [
-  new Undertaker({ name: "Olivia" }),
-  new Ravenkeeper({ name: "Matt" }),
+  new Undertaker({
+    name: "Olivia",
+    infoClaims: [{ poisonContext: NIGHT_2, learned: (game) => game.actualIs("You", Baron) }],
+  }),
+  new Ravenkeeper({
+    name: "Matt",
+    infoClaims: [
+      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Fraser", Saint, "matt_ravenkeeper") },
+    ],
+  }),
   new Washerwoman({ name: "Sula", role: Undertaker, among: ["Fraser", "Olivia"], poisonContext: NIGHT_1 }),
-  new Empath({ name: "Aoife" }),
-  new Librarian({ name: "You", role: Drunk, among: ["Fraser", "Matt"], poisonContext: NIGHT_1 }),
+  new Empath({
+    name: "Aoife",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game) => empathAliveNeighborCount(game, ["You", "Sula"], 0, "aoife_empath_night_1"),
+      },
+      {
+        poisonContext: NIGHT_2,
+        learned: (game) => empathAliveNeighborCount(game, ["Fraser", "Sula"], 1, "aoife_empath_night_2"),
+      },
+    ],
+  }),
+  new Librarian({
+    name: "You",
+    role: Drunk,
+    among: ["Fraser", "Matt"],
+    poisonContext: NIGHT_1,
+  }),
   new Saint({ name: "Fraser" }),
   new Recluse({ name: "Oscar" }),
   new Slayer({ name: "Jasmine" }),
@@ -67,33 +92,12 @@ export function buildModel(backend: SatBackend): BOTCModel {
   const outsiderCount = PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider));
   game.addEnforcedExactlyN(outsiderCount, 3, game.roleInPlay(Baron));
   game.addEnforcedExactlyN(outsiderCount, 1, game.roleInPlay(Baron).not());
+  for (const evilRole of [Imp, Baron, Poisoner, ScarletWoman, Spy]) game.fixNotActual("You", evilRole);
 
   game.addPoisonerEffect(NIGHT_1);
   addNightTwoPoisonerEffect(game);
 
   applyClaims(game, PLAYERS);
-  game.setPossibleActualRoles("You", [Librarian, Drunk]);
-
-  game.addTruthfulInfoClaim("Olivia", Undertaker, game.actualIs("You", Baron), { poisonContext: NIGHT_2 });
-  game.addTruthfulInfoClaim("Matt", Ravenkeeper, game.registersAsRole("Fraser", Saint, "matt_ravenkeeper"), {
-    poisonContext: NIGHT_2,
-  });
-  game.addTruthfulInfoClaim(
-    "Aoife",
-    Empath,
-    empathAliveNeighborCount(game, ["You", "Sula"], 0, "aoife_empath_night_1"),
-    {
-      poisonContext: NIGHT_1,
-    },
-  );
-  game.addTruthfulInfoClaim(
-    "Aoife",
-    Empath,
-    empathAliveNeighborCount(game, ["Fraser", "Sula"], 1, "aoife_empath_night_2"),
-    {
-      poisonContext: NIGHT_2,
-    },
-  );
 
   const soberSlayer = game.allOf(
     [game.actualIs("Jasmine", Slayer), game.poisoned("Jasmine", NIGHT_2).not()],

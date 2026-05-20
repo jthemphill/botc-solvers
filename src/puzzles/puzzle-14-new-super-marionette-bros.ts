@@ -26,11 +26,33 @@ export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 
 export const PLAYERS = [
-  new FortuneTeller({ name: "Brett" }),
-  new Empath({ name: "Rob" }),
+  new FortuneTeller({
+    name: "Brett",
+    checks: [
+      {
+        left: "Danielle",
+        right: "Gwilym",
+        yes: false,
+        name: "brett_fortune_teller",
+        demonRole: Imp,
+        registers: true,
+        poisonContext: NIGHT_1,
+      },
+    ],
+  }),
+  new Empath({
+    name: "Rob",
+    infoClaims: [
+      { poisonContext: NIGHT_1, learned: (game) => Empath.learnsCount(game, "Rob", 0, "rob_empath_night_1") },
+      { poisonContext: NIGHT_2, learned: (game) => Empath.learnsCount(game, "Rob", 0, "rob_empath_night_2") },
+    ],
+  }),
   new Chef({ name: "Lav", count: 1, poisonContext: NIGHT_1 }),
   new Investigator({ name: "Lydia", role: Marionette, among: ["You", "Danielle"], poisonContext: NIGHT_1 }),
-  new Slayer({ name: "You" }),
+  new Slayer({
+    name: "You",
+    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => game.registersAsRole("Lydia", Imp, "you_slayer").not() }],
+  }),
   new Washerwoman({ name: "Danielle", role: Empath, among: ["Rob", "Lav"], poisonContext: NIGHT_1 }),
   new Undertaker({ name: "Gwilym", player: "You", role: Slayer, poisonContext: NIGHT_2 }),
 ];
@@ -68,24 +90,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.addPoisonerEffect(NIGHT_2);
   applyClaims(game, PLAYERS);
   game.setPossibleActualRoles("You", [Slayer, Marionette]);
-
-  game.addTruthfulInfoClaim(
-    "Brett",
-    FortuneTeller,
-    FortuneTeller.learnsCheck(game, "Danielle", "Gwilym", {
-      yes: false,
-      name: "brett_fortune_teller",
-      demonRole: Imp,
-      registers: true,
-    }),
-    { poisonContext: NIGHT_1 },
-  );
-  game.addTruthfulInfoClaim("Rob", Empath, Empath.learnsCount(game, "Rob", 0, "rob_empath_night_1"), {
-    poisonContext: NIGHT_1,
-  });
-  game.addTruthfulInfoClaim("Rob", Empath, Empath.learnsCount(game, "Rob", 0, "rob_empath_night_2"), {
-    poisonContext: NIGHT_2,
-  });
   for (const player of PLAYER_NAMES) {
     const [left, right] = game.neighbors(player);
     game.addImplication(
@@ -93,12 +97,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
       game.anyOf([game.actualIs(left, Imp), game.actualIs(right, Imp)], `${player}_marionette_neighbors_imp`),
     );
   }
-
-  const activeSlayer = game.allOf(
-    [game.actualIs("You", Slayer), game.poisoned("You", NIGHT_1).not()],
-    "you_active_slayer",
-  );
-  game.addImplication(activeSlayer, game.registersAsRole("Lydia", Imp, "you_slayer").not());
 
   return game;
 }

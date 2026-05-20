@@ -185,6 +185,7 @@ export class BOTCModel {
       readonly evilRoles?: readonly RoleRef[];
       readonly drunkRole?: RoleRef;
       readonly extraPossibleActualRoles?: readonly RoleRef[];
+      readonly drunkThinksOutOfPlayRole?: boolean;
     } = {},
   ): void {
     const apparentRole = roleName(claim.apparentRole);
@@ -199,9 +200,13 @@ export class BOTCModel {
       ...evilRoles.map(roleName),
       ...(options.extraPossibleActualRoles ?? []).map(roleName),
     ];
-    if (roleCharacterType(this.characters.get(apparentRole) as RoleRef) === CharacterType.Townsfolk)
-      possibleRoles.push(roleName(options.drunkRole ?? "Drunk"));
+    const drunkRole = roleName(options.drunkRole ?? "Drunk");
+    const claimedTownsfolk =
+      roleCharacterType(this.characters.get(apparentRole) as RoleRef) === CharacterType.Townsfolk;
+    if (claimedTownsfolk && this.characters.has(drunkRole)) possibleRoles.push(drunkRole);
     this.setPossibleActualRoles(claim.player, possibleRoles);
+    if (claimedTownsfolk && this.characters.has(drunkRole) && (options.drunkThinksOutOfPlayRole ?? false))
+      this.addDrunkThinksOutOfPlayRole(claim.player, apparentRole, drunkRole);
   }
 
   addClaim(

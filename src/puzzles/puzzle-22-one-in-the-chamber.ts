@@ -32,10 +32,25 @@ export const PLAYERS = [
   new Recluse({ name: "Fraser" }),
   new Librarian({ name: "Oscar", role: Drunk, among: ["You", "Sarah"], poisonContext: NIGHT_1 }),
   new Washerwoman({ name: "Steph", role: Chambermaid, among: ["You", "Aoife"], poisonContext: NIGHT_1 }),
-  new Chambermaid({ name: "You" }),
+  new Chambermaid({
+    name: "You",
+    infoClaims: [
+      { poisonContext: NIGHT_1, learned: (game) => chambermaidInfo(game, NIGHT_1, ["Anna", "Steph"], 2) },
+      { poisonContext: NIGHT_2, learned: (game) => chambermaidInfo(game, NIGHT_2, ["Tim", "Steph"], 0) },
+      { poisonContext: NIGHT_3, learned: (game) => chambermaidInfo(game, NIGHT_3, ["Tim", "Steph"], 1) },
+    ],
+  }),
   new Investigator({ name: "Anna", role: Baron, among: ["Aoife", "Steph"], poisonContext: NIGHT_1 }),
-  new Slayer({ name: "Aoife" }),
-  new Ravenkeeper({ name: "Sarah" }),
+  new Slayer({
+    name: "Aoife",
+    infoClaims: [{ poisonContext: NIGHT_3, learned: (game) => isDemonOnDayThree(game, "Tim").not() }],
+  }),
+  new Ravenkeeper({
+    name: "Sarah",
+    infoClaims: [
+      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Steph", Washerwoman, "sarah_ravenkeeper") },
+    ],
+  }),
 ];
 
 export const PLAYER_NAMES = playerNames(PLAYERS);
@@ -68,6 +83,7 @@ export function buildModel(backend: SatBackend): BOTCModel {
   const outsiderCount = PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider));
   game.addEnforcedExactlyN(outsiderCount, 3, game.roleInPlay(Baron));
   game.addEnforcedExactlyN(outsiderCount, 1, game.roleInPlay(Baron).not());
+  for (const evilRole of [Imp, Baron, Poisoner, ScarletWoman, Spy]) game.fixNotActual("You", evilRole);
 
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2, {
@@ -95,22 +111,8 @@ export function buildModel(backend: SatBackend): BOTCModel {
   });
 
   applyClaims(game, PLAYERS);
-  game.setPossibleActualRoles("You", [Chambermaid, Drunk]);
   game.addTruth(demonExistsAtNight(game, 2));
   game.addTruth(demonExistsAtNight(game, 3));
-
-  game.addTruthfulInfoClaim("Sarah", Ravenkeeper, game.registersAsRole("Steph", Washerwoman, "sarah_ravenkeeper"), {
-    poisonContext: NIGHT_2,
-  });
-  addChambermaidInfo(game, NIGHT_1, ["Anna", "Steph"], 2);
-  addChambermaidInfo(game, NIGHT_2, ["Tim", "Steph"], 0);
-  addChambermaidInfo(game, NIGHT_3, ["Tim", "Steph"], 1);
-
-  const activeSlayer = game.allOf(
-    [game.actualIs("Aoife", Slayer), game.poisoned("Aoife", NIGHT_3).not()],
-    "aoife_active_slayer_day_3",
-  );
-  game.addImplication(activeSlayer, isDemonOnDayThree(game, "Tim").not());
 
   return game;
 }
@@ -119,21 +121,16 @@ export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
 }
 
-function addChambermaidInfo(
+function chambermaidInfo(
   game: BOTCModel,
   poisonContext: string,
   players: readonly [string, string],
   count: number,
-): void {
-  game.addTruthfulInfoClaim(
-    "You",
-    Chambermaid,
-    game.boolSumEquals(
-      players.map((player) => wokeDueToAbility(game, player, poisonContext)),
-      count,
-      `you_chambermaid_${poisonContext}`,
-    ),
-    { poisonContext },
+): BoolVar {
+  return game.boolSumEquals(
+    players.map((player) => wokeDueToAbility(game, player, poisonContext)),
+    count,
+    `you_chambermaid_${poisonContext}`,
   );
 }
 

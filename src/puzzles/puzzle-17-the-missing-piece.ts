@@ -3,6 +3,7 @@ import { forcedRole, printSolution } from "../display";
 import { type BoolVar, BOTCModel, type World } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
 import {
+  type AppliedInfoClaim,
   Chef,
   Empath,
   FortuneTeller,
@@ -13,13 +14,62 @@ import {
   Slayer,
   Undertaker,
   Washerwoman,
+  applyClaims,
   playerNames,
   script,
 } from "../characters";
 
 export const PUZZLEMASTER_DRUNK = "puzzlemaster_drunk";
 
-export const PLAYERS = ["Sarah", "Sula", "Hannah", "Tom", "You", "Adam", "Steph", "Fraser"];
+export const PLAYERS = [
+  new Undertaker({
+    name: "Sarah",
+    infoClaims: [
+      (game) =>
+        game.allOf([game.actualIs("Steph", Empath), game.actualIs("Sula", Washerwoman)], "sarah_undertaker_info"),
+    ],
+  }),
+  new Washerwoman({
+    name: "Sula",
+    role: Undertaker,
+    among: ["Sarah", "Hannah"],
+  }),
+  new Investigator({
+    name: "Hannah",
+    role: ScarletWoman,
+    among: ["Fraser", "Sarah"],
+  }),
+  new Slayer({
+    name: "Tom",
+    infoClaims: [(game) => game.not(isDemonOnDayThree(game, "Sarah"), "tom_slayer_shot_does_not_kill_sarah")],
+  }),
+  new Puzzlemaster({ name: "You" }),
+  new Chef({
+    name: "Adam",
+    count: 0,
+    registers: false,
+  }),
+  new Empath({
+    name: "Steph",
+    infoClaims: [(game) => game.allOf([game.isGood("Adam"), game.isGood("Fraser")], "steph_empath_zero")],
+  }),
+  new FortuneTeller({
+    name: "Fraser",
+    infoClaims: [
+      (game, context) => {
+        const redHerrings = context as RedHerring;
+        return game.allOf(
+          [
+            fortuneTellerCheck(game, redHerrings, ["Hannah", "Tom"], 1, false, "fraser_ft_night_1"),
+            fortuneTellerCheck(game, redHerrings, ["Tom", "Fraser"], 2, true, "fraser_ft_night_2"),
+            fortuneTellerCheck(game, redHerrings, ["You", "Sarah"], 3, true, "fraser_ft_night_3"),
+          ],
+          "fraser_fortune_teller_info",
+        );
+      },
+    ],
+  }),
+];
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(
   Imp,
@@ -46,16 +96,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
     1,
   );
 
-  addClaim(game, "Sarah", Undertaker);
-  addClaim(game, "Sula", Washerwoman);
-  addClaim(game, "Hannah", Investigator);
-  addClaim(game, "Tom", Slayer);
-  addClaim(game, "You", Puzzlemaster);
-  addClaim(game, "Adam", Chef);
-  addClaim(game, "Steph", Empath);
-  addClaim(game, "Fraser", FortuneTeller);
-  game.fixActual("You", Puzzlemaster);
-
   game.allowPoisonInContext(PUZZLEMASTER_DRUNK);
   game.addExactlyN(
     PLAYER_NAMES.filter((player) => player !== "You").map((player) => game.poisoned(player, PUZZLEMASTER_DRUNK)),
@@ -67,50 +107,8 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.addTruth(demonExistsOnNightThree(game));
 
   const redHerrings = addFortuneTellerRedHerring(game);
-  addPuzzlemasterInfo(
-    game,
-    "Sarah",
-    Undertaker,
-    game.allOf([game.actualIs("Steph", Empath), game.actualIs("Sula", Washerwoman)], "sarah_undertaker_info"),
-  );
-  addPuzzlemasterInfo(
-    game,
-    "Sula",
-    Washerwoman,
-    Washerwoman.learnsRoleAmong(game, ["Sarah", "Hannah"], Undertaker, "sula_washerwoman"),
-  );
-  addPuzzlemasterInfo(
-    game,
-    "Hannah",
-    Investigator,
-    Investigator.learnsRoleAmong(game, ["Fraser", "Sarah"], ScarletWoman, "hannah_investigator"),
-  );
-  addPuzzlemasterInfo(
-    game,
-    "Tom",
-    Slayer,
-    game.not(isDemonOnDayThree(game, "Sarah"), "tom_slayer_shot_does_not_kill_sarah"),
-  );
-  addPuzzlemasterInfo(game, "Adam", Chef, Chef.learnsCount(game, 0, "adam_chef", { registers: false }));
-  addPuzzlemasterInfo(
-    game,
-    "Steph",
-    Empath,
-    game.allOf([game.isGood("Adam"), game.isGood("Fraser")], "steph_empath_zero"),
-  );
-  addPuzzlemasterInfo(
-    game,
-    "Fraser",
-    FortuneTeller,
-    game.allOf(
-      [
-        fortuneTellerCheck(game, redHerrings, ["Hannah", "Tom"], 1, false, "fraser_ft_night_1"),
-        fortuneTellerCheck(game, redHerrings, ["Tom", "Fraser"], 2, true, "fraser_ft_night_2"),
-        fortuneTellerCheck(game, redHerrings, ["You", "Sarah"], 3, true, "fraser_ft_night_3"),
-      ],
-      "fraser_fortune_teller_info",
-    ),
-  );
+  applyClaims(game, PLAYERS, { info: addPuzzlemasterInfo, poisonContext: PUZZLEMASTER_DRUNK, context: redHerrings });
+  game.fixActual("You", Puzzlemaster);
 
   return game;
 }
@@ -119,50 +117,12 @@ export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
 }
 
-function addClaim(game: BOTCModel, player: string, apparentRole: typeof Puzzlemaster): void;
-function addClaim(
-  game: BOTCModel,
-  player: string,
-  apparentRole:
-    | typeof Chef
-    | typeof Empath
-    | typeof FortuneTeller
-    | typeof Investigator
-    | typeof Slayer
-    | typeof Undertaker
-    | typeof Washerwoman,
-): void;
-function addClaim(
-  game: BOTCModel,
-  player: string,
-  apparentRole:
-    | typeof Chef
-    | typeof Empath
-    | typeof FortuneTeller
-    | typeof Investigator
-    | typeof Puzzlemaster
-    | typeof Slayer
-    | typeof Undertaker
-    | typeof Washerwoman,
-): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(
-    player,
-    apparentRole === Puzzlemaster ? [Puzzlemaster] : [apparentRole, Imp, ScarletWoman],
-  );
-}
-
-function addPuzzlemasterInfo(
-  game: BOTCModel,
-  player: string,
-  role: Parameters<BOTCModel["actualIs"]>[1],
-  info: BoolVar,
-): void {
+function addPuzzlemasterInfo(game: BOTCModel, claim: AppliedInfoClaim): void {
   const active = game.allOf(
-    [game.actualIs(player, role), game.poisoned(player, PUZZLEMASTER_DRUNK).not()],
-    `${player}_${String(role)}_active_puzzlemaster_info`,
+    [game.actualIs(claim.player, claim.role), game.poisoned(claim.player, PUZZLEMASTER_DRUNK).not()],
+    `${claim.player}_active_puzzlemaster_info`,
   );
-  game.addImplication(active, info);
+  game.addImplication(active, claim.learned);
 }
 
 function addFortuneTellerRedHerring(game: BOTCModel): RedHerring {

@@ -15,6 +15,7 @@ import {
   ScarletWoman,
   Slayer,
   Spy,
+  applyClaims,
   playerNames,
   script,
 } from "../characters";
@@ -23,9 +24,61 @@ export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 export const DAY_3 = "day_3";
 
-export const PLAYERS = ["Sula", "Olivia", "Fraser", "Oscar", "You", "Steph", "Adam", "Josh"];
-export const PLAYER_NAMES = playerNames(PLAYERS);
 export const MINION_ROLES = [Baron, Poisoner, Spy, ScarletWoman];
+export const PLAYERS = [
+  new Investigator({
+    name: "Sula",
+    role: Spy,
+    among: ["Steph", "Josh"],
+    poisonContext: NIGHT_1,
+  }),
+  new FortuneTeller({
+    name: "Olivia",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game, context) =>
+          game.fortuneTellerNo(
+            context as ReadonlyMap<string, BoolVar>,
+            ["Josh", "Oscar"],
+            "olivia_ft_josh_oscar_no",
+            (player) => isDemonAtContext(game, player, NIGHT_1),
+          ),
+      },
+      {
+        poisonContext: NIGHT_2,
+        learned: (game, context) =>
+          game.fortuneTellerNo(
+            context as ReadonlyMap<string, BoolVar>,
+            ["Adam", "Oscar"],
+            "olivia_ft_adam_oscar_no",
+            (player) => isDemonAtContext(game, player, NIGHT_2),
+          ),
+      },
+    ],
+  }),
+  new Recluse({ name: "Fraser" }),
+  new Slayer({
+    name: "Oscar",
+    infoClaims: [{ poisonContext: NIGHT_2, learned: (game) => isDemonOnDayTwo(game, "Steph").not() }],
+  }),
+  new Empath({
+    name: "You",
+    infoClaims: [
+      { poisonContext: NIGHT_1, learned: (game) => game.registeredEvilCount(["Oscar", "Steph"], 1, "you_empath_n1") },
+    ],
+  }),
+  new Saint({ name: "Steph" }),
+  new Slayer({
+    name: "Adam",
+    infoClaims: [{ poisonContext: DAY_3, learned: (game) => isDemonOnDayThree(game, "Sula").not() }],
+  }),
+  new Ravenkeeper({
+    name: "Josh",
+    infoClaims: [{ poisonContext: NIGHT_2, learned: (game) => game.actualIs("Adam", ScarletWoman) }],
+  }),
+];
+export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(
   Imp,
   Baron,
@@ -53,15 +106,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.fixNotActual("You", Imp);
   for (const minion of MINION_ROLES) game.fixNotActual("You", minion);
 
-  game.addClaim("Sula", Investigator, [Investigator, Drunk, Imp, ...MINION_ROLES]);
-  game.addClaim("Olivia", FortuneTeller, [FortuneTeller, Drunk, Imp, ...MINION_ROLES]);
-  game.addClaim("Fraser", Recluse, [Recluse, Imp, ...MINION_ROLES]);
-  game.addClaim("Oscar", Slayer, [Slayer, Drunk, Imp, ...MINION_ROLES]);
-  game.addClaim("You", Empath, [Empath, Drunk]);
-  game.addClaim("Steph", Saint, [Saint, Imp, ...MINION_ROLES]);
-  game.addClaim("Adam", Slayer, [Slayer, Drunk, Imp, ...MINION_ROLES]);
-  game.addClaim("Josh", Ravenkeeper, [Ravenkeeper, Drunk, Imp, ...MINION_ROLES]);
-
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2);
   game.addPoisonerEffect(DAY_3, {
@@ -72,47 +116,7 @@ export function buildModel(backend: SatBackend): BOTCModel {
   });
 
   const redHerrings = game.addFortuneTellerRedHerring("Olivia");
-
-  game.addTruthfulInfoClaim(
-    "Sula",
-    Investigator,
-    Investigator.learnsRoleAmong(game, ["Steph", "Josh"], Spy, "sula_investigator"),
-    { poisonContext: NIGHT_1 },
-  );
-  game.addTruthfulInfoClaim(
-    "Olivia",
-    FortuneTeller,
-    game.fortuneTellerNo(redHerrings, ["Josh", "Oscar"], "olivia_ft_josh_oscar_no", (player) =>
-      isDemonAtContext(game, player, NIGHT_1),
-    ),
-    { poisonContext: NIGHT_1 },
-  );
-  game.addTruthfulInfoClaim(
-    "Olivia",
-    FortuneTeller,
-    game.fortuneTellerNo(redHerrings, ["Adam", "Oscar"], "olivia_ft_adam_oscar_no", (player) =>
-      isDemonAtContext(game, player, NIGHT_2),
-    ),
-    { poisonContext: NIGHT_2 },
-  );
-  game.addTruthfulInfoClaim("You", Empath, game.registeredEvilCount(["Oscar", "Steph"], 1, "you_empath_n1"), {
-    poisonContext: NIGHT_1,
-  });
-  game.addTruthfulInfoClaim("Josh", Ravenkeeper, game.actualIs("Adam", ScarletWoman), {
-    poisonContext: NIGHT_2,
-  });
-
-  const oscarActiveSlayer = game.allOf(
-    [game.actualIs("Oscar", Slayer), game.poisoned("Oscar", NIGHT_2).not()],
-    "oscar_active_slayer",
-  );
-  game.addImplication(oscarActiveSlayer, isDemonOnDayTwo(game, "Steph").not());
-
-  const adamActiveSlayer = game.allOf(
-    [game.actualIs("Adam", Slayer), game.poisoned("Adam", DAY_3).not()],
-    "adam_active_slayer",
-  );
-  game.addImplication(adamActiveSlayer, isDemonOnDayThree(game, "Sula").not());
+  applyClaims(game, PLAYERS, { drunkThinksOutOfPlayRole: true, context: redHerrings });
   game.addTruth(
     game.anyOf(
       PLAYER_NAMES.map((player) => isDemonOnNightThree(game, player)),

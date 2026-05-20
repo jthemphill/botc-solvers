@@ -1,8 +1,9 @@
 import { CharacterType, type RoleRef } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolLike, BOTCModel } from "../model";
+import { type BoolLike, type BoolVar, BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
 import {
+  type AppliedInfoClaim,
   Clockmaker,
   Courtier,
   Dreamer,
@@ -13,13 +14,51 @@ import {
   Slayer,
   Spy,
   Vortox,
+  applyClaims,
   playerNames,
   roleNames,
   script,
 } from "../characters";
 import { sameAlignment } from "../predicates";
 
-export const PLAYERS = ["Hannah", "Sarah", "Jasmine", "You", "Tim", "Fraser"];
+export const PLAYERS = [
+  new Slayer({
+    name: "Hannah",
+    infoClaims: [(game) => game.actualIs("Fraser", Vortox).not()],
+  }),
+  new Courtier({ name: "Sarah" }),
+  new Mayor({ name: "Jasmine" }),
+  new Dreamer({
+    name: "You",
+    infoClaims: [
+      {
+        learned: (game) =>
+          game.anyOf(
+            [game.actualIs("Sarah", Lunatic), game.actualIs("Sarah", ScarletWoman)],
+            "you_dreamer_sarah_lunatic_or_scarlet_woman",
+          ),
+        falseWhenVortox: true,
+      },
+    ],
+  }),
+  new Clockmaker({
+    name: "Tim",
+    infoClaims: [{ learned: (game) => demonSitsStepsFromMinion(game, 2), falseWhenVortox: true }],
+  }),
+  new Empath({
+    name: "Fraser",
+    infoClaims: [
+      {
+        learned: (game) =>
+          game.allOf(
+            [registersGoodToEmpath(game, "Tim"), registersGoodToEmpath(game, "Hannah")],
+            "fraser_empath_both_good",
+          ),
+        falseWhenVortox: true,
+      },
+    ],
+  }),
+];
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(
   Vortox,
@@ -44,45 +83,9 @@ export function buildModel(backend: SatBackend): BOTCModel {
   );
   game.setCharacterCount(Lunatic, 1);
 
-  addClaim(game, "Hannah", Slayer, [Slayer, Lunatic, Vortox, Spy, ScarletWoman]);
-  addClaim(game, "Sarah", Courtier, [Courtier, Lunatic, Vortox, Spy, ScarletWoman]);
-  addClaim(game, "Jasmine", Mayor, [Mayor, Lunatic, Vortox, Spy, ScarletWoman]);
-  addClaim(game, "You", Dreamer, [Dreamer]);
-  addClaim(game, "Tim", Clockmaker, [Clockmaker, Lunatic, Vortox, Spy, ScarletWoman]);
-  addClaim(game, "Fraser", Empath, [Empath, Lunatic, Vortox, Spy, ScarletWoman]);
-
+  game.fixActual("You", Dreamer);
   const vortoxDrunk = game.actualIs("Sarah", Courtier);
-  const sarahDreamerInfo = game.anyOf(
-    [game.actualIs("Sarah", Lunatic), game.actualIs("Sarah", ScarletWoman)],
-    "you_dreamer_sarah_lunatic_or_scarlet_woman",
-  );
-  game.addImplication(vortoxDrunk, sarahDreamerInfo);
-  game.addImplication(vortoxDrunk.not(), game.not(sarahDreamerInfo, "you_dreamer_false_info"));
-
-  const clockmakerInfo = demonSitsStepsFromMinion(game, 2);
-  game.addImplication(
-    game.allOf([game.actualIs("Tim", Clockmaker), vortoxDrunk], "tim_clockmaker_correct"),
-    clockmakerInfo,
-  );
-  game.addImplication(
-    game.allOf([game.actualIs("Tim", Clockmaker), vortoxDrunk.not()], "tim_clockmaker_vortox_false"),
-    game.not(clockmakerInfo, "tim_clockmaker_info_false"),
-  );
-
-  const fraserEmpathInfo = game.allOf(
-    [registersGoodToEmpath(game, "Tim"), registersGoodToEmpath(game, "Hannah")],
-    "fraser_empath_both_good",
-  );
-  game.addImplication(
-    game.allOf([game.actualIs("Fraser", Empath), vortoxDrunk], "fraser_empath_correct"),
-    fraserEmpathInfo,
-  );
-  game.addImplication(
-    game.allOf([game.actualIs("Fraser", Empath), vortoxDrunk.not()], "fraser_empath_vortox_false"),
-    game.not(fraserEmpathInfo, "fraser_empath_info_false"),
-  );
-
-  game.addImplication(game.actualIs("Hannah", Slayer), game.actualIs("Fraser", Vortox).not());
+  applyClaims(game, PLAYERS, { extraPossibleActualRoles: [Lunatic], info: addInfoClaim, context: vortoxDrunk });
   game.addTruth(doomsayerCanKill(game, "Hannah", "Tim", "hannah_doomsayer_kills_tim"));
   game.addTruth(doomsayerCanKill(game, "You", "Sarah", "you_doomsayer_kills_sarah"));
 
@@ -93,18 +96,24 @@ export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
 }
 
-function addClaim(
-  game: BOTCModel,
-  player: string,
-  apparentRole: RoleRef,
-  possibleActualRoles: readonly RoleRef[],
-): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(player, possibleActualRoles);
-}
-
 function registersGoodToEmpath(game: BOTCModel, player: string): BoolLike {
   return game.anyOf([game.isGood(player), game.actualIs(player, Spy)], `${player}_registers_good_to_empath`);
+}
+
+function addInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
+  const vortoxDrunk = claim.context as BoolVar;
+  if (!claim.falseWhenVortox) {
+    game.addImplication(game.actualIs(claim.player, claim.role), claim.learned);
+    return;
+  }
+  game.addImplication(
+    game.allOf([game.actualIs(claim.player, claim.role), vortoxDrunk], `${claim.player}_correct_info`),
+    claim.learned,
+  );
+  game.addImplication(
+    game.allOf([game.actualIs(claim.player, claim.role), vortoxDrunk.not()], `${claim.player}_false_info`),
+    game.not(claim.learned, `${claim.player}_reported_info_false`),
+  );
 }
 
 function doomsayerCanKill(game: BOTCModel, caller: string, deadPlayer: string, name: string): BoolLike {

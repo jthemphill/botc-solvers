@@ -1,4 +1,4 @@
-import { CharacterType, type RoleRef } from "../core";
+import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
@@ -13,11 +13,51 @@ import {
   Ravenkeeper,
   Slayer,
   Washerwoman,
+  applyClaims,
   playerNames,
   script,
 } from "../characters";
 
-export const PLAYERS = ["Aoife", "Fraser", "Tom", "Sula", "You", "Hannah", "Matt", "Tim"];
+export const PLAYERS = [
+  new Ravenkeeper({
+    name: "Aoife",
+    infoClaims: [(game) => game.actualIs("Matt", Investigator)],
+  }),
+  new Goblin({ name: "Fraser" }),
+  new Librarian({
+    name: "Tom",
+    role: Lunatic,
+    among: ["Matt", "Fraser"],
+  }),
+  new Slayer({
+    name: "Sula",
+    infoClaims: [(game) => isDemonOnDayTwo(game, "Matt").not()],
+  }),
+  new Chef({ name: "You", count: 0, registers: false }),
+  new Washerwoman({
+    name: "Hannah",
+    role: Librarian,
+    among: ["Tom", "Sula"],
+  }),
+  new Investigator({
+    name: "Matt",
+    role: Goblin,
+    among: ["Aoife", "Fraser"],
+  }),
+  new FortuneTeller({
+    name: "Tim",
+    infoClaims: [
+      (game, context) =>
+        game.allOf(
+          [
+            fortuneTellerCheck(game, context as RedHerring, ["Hannah", "Tim"], false, "tim_ft_1"),
+            fortuneTellerCheck(game, context as RedHerring, ["Fraser", "Sula"], true, "tim_ft_2"),
+          ],
+          "tim_fortune_teller",
+        ),
+    ],
+  }),
+];
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(
   Imp,
@@ -39,62 +79,21 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.setCharacterCount(Imp, 1);
   game.setCharacterCount(Goblin, 1);
   game.setCharacterCount(Lunatic, 1);
+  game.fixActual("You", Chef);
 
-  addClaim(game, "Aoife", Ravenkeeper, [Ravenkeeper, Lunatic, Imp, Goblin]);
-  addClaim(game, "Fraser", Goblin, [Lunatic, Imp, Goblin]);
-  addClaim(game, "Tom", Librarian, [Librarian, Lunatic, Imp, Goblin]);
-  addClaim(game, "Sula", Slayer, [Slayer, Lunatic, Imp, Goblin]);
-  addClaim(game, "You", Chef, [Chef]);
-  addClaim(game, "Hannah", Washerwoman, [Washerwoman, Lunatic, Imp, Goblin]);
-  addClaim(game, "Matt", Investigator, [Investigator, Lunatic, Imp, Goblin]);
-  addClaim(game, "Tim", FortuneTeller, [FortuneTeller, Lunatic, Imp, Goblin]);
   game.addExactlyN(
     PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider)),
     1,
   );
 
   const redHerrings = addFortuneTellerRedHerring(game);
-
-  game.addTruthfulInfoClaim("Aoife", Ravenkeeper, game.actualIs("Matt", Investigator));
-  game.addTruthfulInfoClaim(
-    "Tom",
-    Librarian,
-    Librarian.learnsRoleAmong(game, ["Matt", "Fraser"], Lunatic, "tom_librarian"),
-  );
-  game.addImplication(game.actualIs("Sula", Slayer), isDemonOnDayTwo(game, "Matt").not());
-  game.addTruthfulInfoClaim("You", Chef, Chef.learnsCount(game, 0, "you_chef", { registers: false }));
-  game.addTruthfulInfoClaim(
-    "Hannah",
-    Washerwoman,
-    Washerwoman.learnsRoleAmong(game, ["Tom", "Sula"], Librarian, "hannah_washerwoman"),
-  );
-  game.addTruthfulInfoClaim(
-    "Matt",
-    Investigator,
-    Investigator.learnsRoleAmong(game, ["Aoife", "Fraser"], Goblin, "matt_investigator"),
-  );
-  game.addTruthfulInfoClaim(
-    "Tim",
-    FortuneTeller,
-    game.allOf(
-      [
-        fortuneTellerCheck(game, redHerrings, ["Hannah", "Tim"], false, "tim_ft_1"),
-        fortuneTellerCheck(game, redHerrings, ["Fraser", "Sula"], true, "tim_ft_2"),
-      ],
-      "tim_fortune_teller",
-    ),
-  );
+  applyClaims(game, PLAYERS, { extraPossibleActualRoles: [Lunatic], context: redHerrings });
 
   return game;
 }
 
 export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
-}
-
-function addClaim(game: BOTCModel, player: string, apparentRole: RoleRef, possibleRoles: readonly RoleRef[]): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(player, possibleRoles);
 }
 
 function addFortuneTellerRedHerring(game: BOTCModel): RedHerring {

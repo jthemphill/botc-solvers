@@ -1,8 +1,9 @@
-import { CharacterType, type RoleRef } from "../core";
+import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolLike, type BoolVar, BOTCModel } from "../model";
+import { type BoolVar, BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
 import {
+  type AppliedInfoClaim,
   Artist,
   Clockmaker,
   EvilTwin,
@@ -14,13 +15,67 @@ import {
   Seamstress,
   SnakeCharmer,
   Vortox,
+  applyClaims,
   playerNames,
   roleNames,
   script,
 } from "../characters";
-import { differentAlignments } from "../predicates";
 
-export const PLAYERS = ["Fraser", "Aoife", "Adam", "Jasmine", "You", "Oscar", "Sarah", "Hannah"];
+export const PLAYERS = [
+  new Clockmaker({
+    name: "Fraser",
+    infoClaims: [{ learned: (game) => demonSitsStepsFromMinion(game, 3), falseWhenVortox: true }],
+  }),
+  new Seamstress({
+    name: "Aoife",
+    among: ["Oscar", "Hannah"],
+    infoClaims: [
+      { learned: (game) => Seamstress.learnsDifferentAlignment(game, "Oscar", "Hannah"), falseWhenVortox: true },
+    ],
+  }),
+  new Artist({
+    name: "Adam",
+    infoClaims: [{ learned: artistInfo, falseWhenVortox: true }],
+  }),
+  new SnakeCharmer({
+    name: "Jasmine",
+    infoClaims: [(game) => snakeCharmerClaim(game, "Jasmine", ["Fraser", "Aoife", "Adam"], "Hannah")],
+  }),
+  new Savant({ name: "You", infoClaims: [savantInfo] }),
+  new Klutz({ name: "Oscar" }),
+  new Juggler({
+    name: "Sarah",
+    guesses: {
+      You: Savant,
+      Hannah: SnakeCharmer,
+      Fraser: Clockmaker,
+      Aoife: Seamstress,
+      Jasmine: SnakeCharmer,
+    },
+    infoClaims: [
+      {
+        learned: (game) =>
+          Juggler.learnsCorrectCount(
+            game,
+            {
+              You: Savant,
+              Hannah: SnakeCharmer,
+              Fraser: Clockmaker,
+              Aoife: Seamstress,
+              Jasmine: SnakeCharmer,
+            },
+            3,
+            "sarah_juggler_count",
+          ),
+        falseWhenVortox: true,
+      },
+    ],
+  }),
+  new SnakeCharmer({
+    name: "Hannah",
+    infoClaims: [(game) => snakeCharmerClaim(game, "Hannah", ["Sarah", "Oscar", "Aoife"], "Jasmine")],
+  }),
+];
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(
   NoDashii,
@@ -45,51 +100,10 @@ export function buildModel(backend: SatBackend): BOTCModel {
     backend,
   });
   enforceRoleCounts(game);
+  game.fixActual("You", Savant);
 
-  addClaim(game, "Fraser", Clockmaker, [Clockmaker, Mutant, NoDashii, Vortox, EvilTwin]);
-  addClaim(game, "Aoife", Seamstress, [Seamstress, Mutant, NoDashii, Vortox, EvilTwin]);
-  addClaim(game, "Adam", Artist, [Artist, Mutant, NoDashii, Vortox, EvilTwin]);
-  addClaim(game, "Jasmine", SnakeCharmer, [SnakeCharmer, Mutant, NoDashii, Vortox, EvilTwin]);
-  addClaim(game, "You", Savant, [Savant]);
-  addClaim(game, "Oscar", Klutz, [Klutz, NoDashii, Vortox, EvilTwin]);
-  addClaim(game, "Sarah", Juggler, [Juggler, Mutant, NoDashii, Vortox, EvilTwin]);
-  addClaim(game, "Hannah", SnakeCharmer, [SnakeCharmer, Mutant, NoDashii, Vortox, EvilTwin]);
-
-  addInfo(game, "Fraser", Clockmaker, demonSitsStepsFromMinion(game, 3));
-  addInfo(game, "Aoife", Seamstress, differentAlignments(game, "Oscar", "Hannah"));
-  addInfo(
-    game,
-    "Adam",
-    Artist,
-    game.not(
-      game.anyOf(
-        ["You", "Oscar", "Sarah"].map((player) => game.actualIs(player, Vortox)),
-        "artist_any_vortox",
-      ),
-      "artist_none_vortox",
-    ),
-  );
-  addInfo(
-    game,
-    "Sarah",
-    Juggler,
-    Juggler.learnsCorrectCount(
-      game,
-      {
-        You: Savant,
-        Hannah: SnakeCharmer,
-        Fraser: Clockmaker,
-        Aoife: Seamstress,
-        Jasmine: SnakeCharmer,
-      },
-      3,
-      "sarah_juggler_count",
-    ),
-  );
-  addSavantInfo(game);
+  applyClaims(game, PLAYERS, { info: addInfo });
   game.addTruth(EvilTwin.pairIsOneOf(game, [["Jasmine", "Hannah"]], "snake_charmer_twin_pair"));
-  addSnakeCharmerClaim(game, "Hannah", ["Sarah", "Oscar", "Aoife"], "Jasmine");
-  addSnakeCharmerClaim(game, "Jasmine", ["Fraser", "Aoife", "Adam"], "Hannah");
   game.addImplication(game.actualIs("Oscar", Klutz), game.isGood("Sarah"));
 
   return game;
@@ -124,57 +138,64 @@ function enforceRoleCounts(game: BOTCModel): void {
   );
 }
 
-function addClaim(
-  game: BOTCModel,
-  player: string,
-  apparentRole: RoleRef,
-  possibleActualRoles: readonly RoleRef[],
-): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(player, possibleActualRoles);
-}
-
-function addInfo(game: BOTCModel, player: string, role: RoleRef, reportedInfo: BoolLike): void {
+function addInfo(game: BOTCModel, claim: AppliedInfoClaim): void {
   const active = game.allOf(
-    [game.actualIs(player, role), noDashiiPoisoned(game, player).not()],
-    `${player}_active_info`,
+    [game.actualIs(claim.player, claim.role), noDashiiPoisoned(game, claim.player).not()],
+    `${claim.player}_active_info`,
   );
-  game.addImplication(game.allOf([active, game.roleInPlay(NoDashii)], `${player}_true_info`), reportedInfo);
+  if (!claim.falseWhenVortox) {
+    game.addImplication(active, claim.learned);
+    return;
+  }
+  game.addImplication(game.allOf([active, game.roleInPlay(NoDashii)], `${claim.player}_true_info`), claim.learned);
   game.addImplication(
-    game.allOf([active, game.roleInPlay(Vortox)], `${player}_vortox_false_info`),
-    game.not(reportedInfo, `${player}_reported_info_false`),
+    game.allOf([active, game.roleInPlay(Vortox)], `${claim.player}_vortox_false_info`),
+    game.not(claim.learned, `${claim.player}_reported_info_false`),
   );
 }
 
-function addSavantInfo(game: BOTCModel): void {
+function artistInfo(game: BOTCModel): BoolVar {
+  return game.not(
+    game.anyOf(
+      ["You", "Oscar", "Sarah"].map((player) => game.actualIs(player, Vortox)),
+      "artist_any_vortox",
+    ),
+    "artist_none_vortox",
+  );
+}
+
+function savantInfo(game: BOTCModel): BoolVar {
   const roleMissingCount = game.boolSumEquals(
     [Clockmaker, Klutz, Juggler, Vortox].map((role) => game.roleInPlay(role).not()),
     1,
     "savant_role_missing_count",
   );
   const chainLengthFive = longestTownfolkChainIs(game, 5);
-  const active = game.allOf([game.actualIs("You", Savant), noDashiiPoisoned(game, "You").not()], "you_active_savant");
-  game.addImplication(
-    game.allOf([active, game.roleInPlay(NoDashii)], "you_savant_normal"),
-    Savant.learnsExactlyOne(game, [roleMissingCount, chainLengthFive], "you_savant_one_true"),
-  );
-  game.addImplication(
-    game.allOf([active, game.roleInPlay(Vortox)], "you_savant_vortox"),
-    game.allOf([roleMissingCount.not(), chainLengthFive.not()], "you_savant_both_false"),
+  return game.allOf(
+    [
+      game.anyOf(
+        [
+          game.roleInPlay(NoDashii).not(),
+          Savant.learnsExactlyOne(game, [roleMissingCount, chainLengthFive], "you_savant_one_true"),
+        ],
+        "you_savant_normal_claim",
+      ),
+      game.anyOf(
+        [
+          game.roleInPlay(Vortox).not(),
+          game.allOf([roleMissingCount.not(), chainLengthFive.not()], "you_savant_both_false"),
+        ],
+        "you_savant_vortox_claim",
+      ),
+    ],
+    "you_savant_info",
   );
 }
 
-function addSnakeCharmerClaim(game: BOTCModel, player: string, picks: readonly string[], accusedTwin: string): void {
-  const active = game.allOf(
-    [game.actualIs(player, SnakeCharmer), noDashiiPoisoned(game, player).not()],
-    `${player}_active_snake_charmer`,
-  );
-  game.addImplication(
-    active,
-    game.allOf(
-      [...picks.map((pick) => game.isDemon(pick).not()), game.actualIs(accusedTwin, EvilTwin)],
-      `${player}_snake_charmer_claims`,
-    ),
+function snakeCharmerClaim(game: BOTCModel, player: string, picks: readonly string[], accusedTwin: string): BoolVar {
+  return game.allOf(
+    [...picks.map((pick) => game.isDemon(pick).not()), game.actualIs(accusedTwin, EvilTwin)],
+    `${player}_snake_charmer_claims`,
   );
 }
 

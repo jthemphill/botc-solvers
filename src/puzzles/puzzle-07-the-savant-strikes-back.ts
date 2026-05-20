@@ -1,8 +1,9 @@
-import { CharacterType, type RoleRef, roleName } from "../core";
+import { CharacterType, roleName } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolLike, type BoolVar, BOTCModel } from "../model";
+import { type BoolVar, BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
 import {
+  type AppliedInfoClaim,
   Dreamer,
   Drunk,
   FortuneTeller,
@@ -20,10 +21,32 @@ import {
   script,
 } from "../characters";
 
+const EXTRA_ACTUAL_ROLES = [Leviathan, Goblin, Mutant, Drunk] as const;
+
 export const PLAYERS = [
-  new Juggler({ name: "Anna", guesses: { You: Savant, Tim: VillageIdiot }, correctCount: 1 }),
-  new Shugenja({ name: "Aoife", evilDirection: "anticlockwise" }),
-  new Dreamer({ name: "Steph" }),
+  new Juggler({
+    name: "Anna",
+    guesses: { You: Savant, Tim: VillageIdiot },
+    correctCount: 1,
+  }),
+  new Shugenja({
+    name: "Aoife",
+    evilDirection: "anticlockwise",
+  }),
+  new Dreamer({
+    name: "Steph",
+    infoClaims: [
+      (game) =>
+        game.allOf(
+          [
+            Dreamer.learnsOneOf(game, "Sarah", [FortuneTeller, Leviathan], "steph_dreamer_sarah"),
+            Dreamer.learnsOneOf(game, "You", [Savant, Goblin], "steph_dreamer_you"),
+            Dreamer.learnsOneOf(game, "Fraser", [Mutant, Goblin], "steph_dreamer_fraser"),
+          ],
+          "steph_dreamer_all_checks",
+        ),
+    ],
+  }),
   new VillageIdiot({
     name: "Tim",
     checks: [
@@ -32,7 +55,15 @@ export const PLAYERS = [
       { player: "You", good: true },
     ],
   }),
-  new Savant({ name: "You" }),
+  new Savant({
+    name: "You",
+    infoClaims: [
+      (game, context) => {
+        const { redHerrings, drunkVillageIdiots } = context as ClaimContext;
+        return savantInfo(game, redHerrings, drunkVillageIdiots);
+      },
+    ],
+  }),
   new VillageIdiot({
     name: "Fraser",
     checks: [
@@ -41,9 +72,33 @@ export const PLAYERS = [
       { player: "You", good: true },
     ],
   }),
-  new FortuneTeller({ name: "Sarah" }),
-  new Investigator({ name: "Oscar", role: Goblin, among: ["Fraser", "Steph"] }),
+  new FortuneTeller({
+    name: "Sarah",
+    infoClaims: [
+      (game, context) => {
+        const { redHerrings } = context as ClaimContext;
+        return game.allOf(
+          [
+            fortuneTellerLearnsCheck(game, redHerrings, "Oscar", "Aoife", false, "sarah_ft_oscar_aoife"),
+            fortuneTellerLearnsCheck(game, redHerrings, "You", "Sarah", true, "sarah_ft_you_sarah"),
+            fortuneTellerLearnsCheck(game, redHerrings, "Fraser", "Tim", false, "sarah_ft_fraser_tim"),
+          ],
+          "sarah_fortune_teller_checks",
+        );
+      },
+    ],
+  }),
+  new Investigator({
+    name: "Oscar",
+    role: Goblin,
+    among: ["Fraser", "Steph"],
+  }),
 ];
+
+interface ClaimContext {
+  readonly redHerrings: ReadonlyMap<string, BoolVar>;
+  readonly drunkVillageIdiots: ReadonlyMap<string, BoolVar>;
+}
 
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(
@@ -77,52 +132,13 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.setCharacterCount(Drunk, 0);
   game.fixActual("You", Savant);
 
-  for (const claim of PLAYERS)
-    game.addRoleClaim({ player: claim.name, apparentRole: claim }, { extraPossibleActualRoles: [Mutant] });
-
   const redHerrings = addFortuneTellerRedHerring(game);
   const drunkVillageIdiots = addVillageIdiotDrunkenness(game);
-
-  for (const claim of PLAYERS) {
-    if (claim instanceof Dreamer) {
-      addInfoClaim(
-        game,
-        claim.name,
-        Dreamer,
-        game.allOf(
-          [
-            Dreamer.learnsOneOf(game, "Sarah", [FortuneTeller, Leviathan], "steph_dreamer_sarah"),
-            Dreamer.learnsOneOf(game, "You", [Savant, Goblin], "steph_dreamer_you"),
-            Dreamer.learnsOneOf(game, "Fraser", [Mutant, Goblin], "steph_dreamer_fraser"),
-          ],
-          "steph_dreamer_all_checks",
-        ),
-      );
-    } else if (claim instanceof FortuneTeller) {
-      addInfoClaim(
-        game,
-        claim.name,
-        FortuneTeller,
-        game.allOf(
-          [
-            fortuneTellerLearnsCheck(game, redHerrings, "Oscar", "Aoife", false, "sarah_ft_oscar_aoife"),
-            fortuneTellerLearnsCheck(game, redHerrings, "You", "Sarah", true, "sarah_ft_you_sarah"),
-            fortuneTellerLearnsCheck(game, redHerrings, "Fraser", "Tim", false, "sarah_ft_fraser_tim"),
-          ],
-          "sarah_fortune_teller_checks",
-        ),
-      );
-    } else if (claim instanceof Savant) {
-      addInfoClaim(game, claim.name, Savant, savantInfo(game, redHerrings, drunkVillageIdiots));
-    } else if (claim instanceof VillageIdiot) {
-      const learned = claim.learnedInfo(game);
-      if (learned !== undefined)
-        addVillageIdiotInfoClaim(game, claim.name, learned, drunkVillageIdiots.get(claim.name));
-    } else {
-      const learned = claim.learnedInfo(game);
-      if (learned !== undefined) addInfoClaim(game, claim.name, claim, learned);
-    }
-  }
+  applyClaims(game, PLAYERS, {
+    extraPossibleActualRoles: [Mutant],
+    info: addInfoClaim,
+    context: { redHerrings, drunkVillageIdiots },
+  });
 
   return game;
 }
@@ -169,25 +185,22 @@ function addVillageIdiotDrunkenness(game: BOTCModel): ReadonlyMap<string, BoolVa
   return drunkVillageIdiots;
 }
 
-function addInfoClaim(game: BOTCModel, player: string, apparentRole: RoleRef, learned: BoolLike): void {
-  game.addTruthfulInfoClaim(player, apparentRole, learned);
-}
-
-function addVillageIdiotInfoClaim(
-  game: BOTCModel,
-  player: string,
-  learned: BoolLike,
-  drunkVillageIdiot: BoolVar | undefined,
-): void {
+function addInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
+  const { drunkVillageIdiots } = claim.context as ClaimContext;
+  const drunkVillageIdiot = claim.role === VillageIdiot ? drunkVillageIdiots.get(claim.player) : undefined;
   if (drunkVillageIdiot === undefined) {
-    game.addTruthfulInfoClaim(player, VillageIdiot, learned);
+    const active = game.allOf(
+      [game.actualIs(claim.player, claim.role), game.poisoned(claim.player).not()],
+      `${claim.player}_${roleName(claim.role)}_sober_claim`,
+    );
+    game.addImplication(active, claim.learned);
     return;
   }
   const active = game.allOf(
-    [game.actualIs(player, VillageIdiot), game.poisoned(player).not(), drunkVillageIdiot.not()],
-    `${player}_sober_village_idiot`,
+    [game.actualIs(claim.player, VillageIdiot), game.poisoned(claim.player).not(), drunkVillageIdiot.not()],
+    `${claim.player}_sober_village_idiot`,
   );
-  game.addImplication(active, learned);
+  game.addImplication(active, claim.learned);
 }
 
 function fortuneTellerLearnsCheck(

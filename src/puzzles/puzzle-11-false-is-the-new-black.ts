@@ -1,8 +1,9 @@
-import { Alignment, CharacterType, type RoleRef, roleAlignment, roleName } from "../core";
+import { Alignment, CharacterType, type RoleRef, roleAlignment } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolLike, BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
 import {
+  type AppliedInfoClaim,
   Artist,
   Cerenovus,
   Clockmaker,
@@ -15,13 +16,81 @@ import {
   SnakeCharmer,
   Sweetheart,
   Vortox,
+  applyClaims,
   playerNames,
   roleNames,
   script,
 } from "../characters";
 import { sameAlignment } from "../predicates";
 
-export const PLAYERS = ["Matthew", "Anna", "Aoife", "Hannah", "You", "Sula", "Sarah", "Tom"];
+export const PLAYERS = [
+  new Artist({
+    name: "Matthew",
+    infoClaims: [
+      { learned: (game) => game.actualIs("You", Clockmaker), falseWhenVortox: true },
+      { role: Seamstress, learned: (game) => sameAlignment(game, "Aoife", "Tom"), falseWhenVortox: true },
+    ],
+  }),
+  new Sage({
+    name: "Anna",
+    infoClaims: [
+      {
+        learned: (game) =>
+          game.anyOf([game.actualIs("Matthew", Vortox), game.actualIs("Hannah", Vortox)], "anna_sage_pair_has_demon"),
+        falseWhenVortox: true,
+      },
+    ],
+  }),
+  new SnakeCharmer({
+    name: "Aoife",
+    infoClaims: [
+      (game) =>
+        game.allOf(
+          [
+            game.actualIs("Tom", Vortox).not(),
+            game.actualIs("Hannah", Vortox).not(),
+            game.actualIs("Matthew", Vortox).not(),
+          ],
+          "Aoife_Snake Charmer_action_happened",
+        ),
+    ],
+  }),
+  new Artist({ name: "Hannah" }),
+  new Clockmaker({
+    name: "You",
+    infoClaims: [{ learned: (game) => demonSitsStepsFromMinion(game, 2), falseWhenVortox: true }],
+  }),
+  new SnakeCharmer({
+    name: "Sula",
+    infoClaims: [
+      {
+        learned: (game) => game.allOf([game.actualIs("Sarah", Vortox).not()], "Sula_Snake Charmer_action_happened"),
+      },
+      {
+        role: Philosopher,
+        learned: (game) => game.allOf([game.actualIs("Sarah", Vortox).not()], "Sula_Philosopher_action_happened"),
+      },
+    ],
+  }),
+  new Dreamer({
+    name: "Sarah",
+    infoClaims: [
+      {
+        learned: (game) =>
+          game.allOf(
+            [
+              Dreamer.learnsOneOf(game, "Matthew", [Cerenovus, Seamstress], "sarah_dreamer_matthew"),
+              Dreamer.learnsOneOf(game, "Aoife", [Vortox, Mutant], "sarah_dreamer_aoife"),
+              Dreamer.learnsOneOf(game, "You", [Vortox, Mutant], "sarah_dreamer_you"),
+            ],
+            "sarah_dreamer_all_checks",
+          ),
+        falseWhenVortox: true,
+      },
+    ],
+  }),
+  new Sweetheart({ name: "Tom" }),
+];
 export const CHARACTERS = script(
   Vortox,
   Cerenovus,
@@ -51,50 +120,27 @@ export function buildModel(backend: SatBackend): BOTCModel {
     1,
   );
 
-  addClaim(game, "Matthew", Artist, [Artist, Mutant, Vortox, Cerenovus, PitHag]);
-  addClaim(game, "Anna", Sage, [Sage, Vortox, Cerenovus, PitHag]);
-  addClaim(game, "Aoife", SnakeCharmer, [SnakeCharmer, Mutant, Vortox, Cerenovus, PitHag]);
-  addClaim(game, "Hannah", Artist, [Artist, Mutant, Vortox, Cerenovus, PitHag]);
-  addClaim(game, "You", Clockmaker, [Clockmaker]);
-  addClaim(game, "Sula", SnakeCharmer, [SnakeCharmer, Philosopher, Vortox, Cerenovus, PitHag]);
-  addClaim(game, "Sarah", Dreamer, [Dreamer, Mutant, Vortox, Cerenovus, PitHag]);
-  addClaim(game, "Tom", Sweetheart, [Sweetheart, Vortox, Cerenovus, PitHag]);
+  game.fixActual("You", Clockmaker);
+  applyClaims(
+    game,
+    PLAYERS.filter((claim) => ["Matthew", "Aoife", "Hannah", "Sarah"].includes(claim.name)),
+    { extraPossibleActualRoles: [Mutant], info: addInfoClaim },
+  );
+  applyClaims(
+    game,
+    PLAYERS.filter((claim) => claim.name === "Sula"),
+    { extraPossibleActualRoles: [Philosopher], info: addInfoClaim },
+  );
+  applyClaims(
+    game,
+    PLAYERS.filter((claim) => !["Matthew", "Aoife", "Hannah", "Sarah", "Sula"].includes(claim.name)),
+    { info: addInfoClaim },
+  );
 
   for (const deadPlayer of ["Anna", "You", "Sula", "Tom"]) {
     game.fixNotActual(deadPlayer, Mutant);
     game.fixNotActual(deadPlayer, Vortox);
   }
-
-  addFalseInfoClaim(game, "Matthew", Artist, game.actualIs("You", Clockmaker));
-  addFalseInfoClaim(
-    game,
-    "Anna",
-    Sage,
-    game.anyOf([game.actualIs("Matthew", Vortox), game.actualIs("Hannah", Vortox)], "anna_sage_pair_has_demon"),
-  );
-  addFalseInfoClaim(game, "You", Clockmaker, demonSitsStepsFromMinion(game, 2));
-  addFalseInfoClaim(
-    game,
-    "Sarah",
-    Dreamer,
-    game.allOf(
-      [
-        Dreamer.learnsOneOf(game, "Matthew", [Cerenovus, Seamstress], "sarah_dreamer_matthew"),
-        Dreamer.learnsOneOf(game, "Aoife", [Vortox, Mutant], "sarah_dreamer_aoife"),
-        Dreamer.learnsOneOf(game, "You", [Vortox, Mutant], "sarah_dreamer_you"),
-      ],
-      "sarah_dreamer_all_checks",
-    ),
-  );
-  addFalseInfoClaim(game, "Matthew", Seamstress, sameAlignment(game, "Aoife", "Tom"));
-
-  addActionClaim(game, "Aoife", SnakeCharmer, [
-    game.actualIs("Tom", Vortox).not(),
-    game.actualIs("Hannah", Vortox).not(),
-    game.actualIs("Matthew", Vortox).not(),
-  ]);
-  addActionClaim(game, "Sula", SnakeCharmer, [game.actualIs("Sarah", Vortox).not()]);
-  addActionClaim(game, "Sula", Philosopher, [game.actualIs("Sarah", Vortox).not()]);
 
   return game;
 }
@@ -103,24 +149,10 @@ export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
 }
 
-function addClaim(
-  game: BOTCModel,
-  player: string,
-  apparentRole: RoleRef,
-  possibleActualRoles: readonly RoleRef[],
-): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(player, possibleActualRoles);
-}
-
-function addFalseInfoClaim(game: BOTCModel, player: string, role: RoleRef, reportedInfo: BoolLike): void {
-  game.addImplication(game.actualIs(player, role), game.not(reportedInfo, `${player}_${roleName(role)}_vortox_false`));
-}
-
-function addActionClaim(game: BOTCModel, player: string, role: RoleRef, consequences: readonly BoolLike[]): void {
+function addInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
   game.addImplication(
-    game.actualIs(player, role),
-    game.allOf(consequences, `${player}_${roleName(role)}_action_happened`),
+    game.actualIs(claim.player, claim.role),
+    claim.falseWhenVortox ? game.not(claim.learned, `${claim.player}_${claim.role}_vortox_false`) : claim.learned,
   );
 }
 

@@ -1,8 +1,9 @@
-import { CharacterType, type RoleRef } from "../core";
+import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolLike, type BoolVar, BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
 import {
+  type AppliedInfoClaim,
   Chambermaid,
   Clockmaker,
   Drunk,
@@ -15,6 +16,7 @@ import {
   Pukka,
   ScarletWoman,
   Undertaker,
+  applyClaims,
   playerNames,
   roleNames,
   script,
@@ -24,7 +26,86 @@ export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 export const NIGHT_3 = "night_3";
 
-export const PLAYERS = ["Adam", "Oscar", "Olivia", "Sarah", "You", "Matt", "Fraser", "Aoife"];
+export const PLAYERS = [
+  new Clockmaker({
+    name: "Adam",
+    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => demonOppositeMinion(game) }],
+  }),
+  new Empath({
+    name: "Oscar",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game) => empathAliveNeighborCount(game, ["Adam", "Olivia"], 1, "oscar_empath_n1"),
+      },
+      {
+        poisonContext: NIGHT_2,
+        learned: (game) => empathAliveNeighborCount(game, ["Aoife", "Olivia"], 2, "oscar_empath_n2"),
+      },
+      {
+        poisonContext: NIGHT_3,
+        learned: (game) => empathAliveNeighborCount(game, ["Fraser", "Olivia"], 1, "oscar_empath_n3"),
+      },
+    ],
+  }),
+  new FortuneTeller({
+    name: "Olivia",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game, context) =>
+          fortuneTellerCheck(game, context as RedHerring, NIGHT_1, ["Olivia", "Sarah"], false, "olivia_ft_n1"),
+      },
+      {
+        poisonContext: NIGHT_2,
+        learned: (game, context) =>
+          fortuneTellerCheck(game, context as RedHerring, NIGHT_2, ["Olivia", "Aoife"], false, "olivia_ft_n2"),
+      },
+      {
+        poisonContext: NIGHT_3,
+        learned: (game, context) =>
+          fortuneTellerCheck(game, context as RedHerring, NIGHT_3, ["Matt", "Oscar"], false, "olivia_ft_n3"),
+      },
+    ],
+  }),
+  new Oracle({
+    name: "Sarah",
+    infoClaims: [
+      { poisonContext: NIGHT_2, learned: (game) => deadEvilCount(game, ["Adam", "You"], 1, "sarah_oracle_n2") },
+    ],
+  }),
+  new Chambermaid({
+    name: "You",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game) => chambermaidWokeCount(game, ["Adam", "Sarah"], 1, "you_chambermaid"),
+      },
+    ],
+  }),
+  new Juggler({
+    name: "Matt",
+    guesses: { Fraser: Undertaker, Oscar: NoDashii },
+    correctCount: 2,
+    poisonContext: NIGHT_1,
+  }),
+  new Undertaker({
+    name: "Fraser",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_2,
+        learned: (game) =>
+          game.allOf([game.actualIs("Adam", Drunk), game.actualIs("Aoife", NoDashii)], "fraser_undertaker_claims"),
+      },
+    ],
+  }),
+  new Librarian({
+    name: "Aoife",
+    role: Drunk,
+    among: ["Matt", "Adam"],
+    poisonContext: NIGHT_1,
+  }),
+];
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(
   Pukka,
@@ -54,15 +135,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.setCharacterCount(ScarletWoman, 1);
   game.setCharacterCount(Drunk, 1);
 
-  addClaim(game, "Adam", Clockmaker, [Clockmaker, Drunk, Pukka, NoDashii, ScarletWoman]);
-  addClaim(game, "Oscar", Empath, [Empath, Drunk, Pukka, NoDashii, ScarletWoman]);
-  addClaim(game, "Olivia", FortuneTeller, [FortuneTeller, Drunk, Pukka, NoDashii, ScarletWoman]);
-  addClaim(game, "Sarah", Oracle, [Oracle, Drunk, Pukka, NoDashii, ScarletWoman]);
-  addClaim(game, "You", Chambermaid, [Chambermaid, Drunk]);
-  addClaim(game, "Matt", Juggler, [Juggler, Drunk, Pukka, NoDashii, ScarletWoman]);
-  addClaim(game, "Fraser", Undertaker, [Undertaker, Drunk, Pukka, NoDashii, ScarletWoman]);
-  addClaim(game, "Aoife", Librarian, [Librarian, Drunk, Pukka, NoDashii, ScarletWoman]);
-
   game.allowPoisonInContext(NIGHT_1);
   game.allowPoisonInContext(NIGHT_2);
   game.allowPoisonInContext(NIGHT_3);
@@ -78,54 +150,7 @@ export function buildModel(backend: SatBackend): BOTCModel {
   }
 
   const redHerrings = addFortuneTellerRedHerring(game);
-  addInfo(game, "Adam", Clockmaker, NIGHT_1, demonOppositeMinion(game));
-  addInfo(game, "Oscar", Empath, NIGHT_1, empathAliveNeighborCount(game, ["Adam", "Olivia"], 1, "oscar_empath_n1"));
-  addInfo(game, "Oscar", Empath, NIGHT_2, empathAliveNeighborCount(game, ["Aoife", "Olivia"], 2, "oscar_empath_n2"));
-  addInfo(game, "Oscar", Empath, NIGHT_3, empathAliveNeighborCount(game, ["Fraser", "Olivia"], 1, "oscar_empath_n3"));
-  addInfo(
-    game,
-    "Olivia",
-    FortuneTeller,
-    NIGHT_1,
-    fortuneTellerCheck(game, redHerrings, NIGHT_1, ["Olivia", "Sarah"], false, "olivia_ft_n1"),
-  );
-  addInfo(
-    game,
-    "Olivia",
-    FortuneTeller,
-    NIGHT_2,
-    fortuneTellerCheck(game, redHerrings, NIGHT_2, ["Olivia", "Aoife"], false, "olivia_ft_n2"),
-  );
-  addInfo(
-    game,
-    "Olivia",
-    FortuneTeller,
-    NIGHT_3,
-    fortuneTellerCheck(game, redHerrings, NIGHT_3, ["Matt", "Oscar"], false, "olivia_ft_n3"),
-  );
-  addInfo(game, "Sarah", Oracle, NIGHT_2, deadEvilCount(game, ["Adam", "You"], 1, "sarah_oracle_n2"));
-  addInfo(game, "You", Chambermaid, NIGHT_1, chambermaidWokeCount(game, ["Adam", "Sarah"], 1, "you_chambermaid"));
-  addInfo(
-    game,
-    "Matt",
-    Juggler,
-    NIGHT_1,
-    Juggler.learnsCorrectCount(game, { Fraser: Undertaker, Oscar: NoDashii }, 2, "matt_juggler"),
-  );
-  addInfo(
-    game,
-    "Fraser",
-    Undertaker,
-    NIGHT_2,
-    game.allOf([game.actualIs("Adam", Drunk), game.actualIs("Aoife", NoDashii)], "fraser_undertaker_claims"),
-  );
-  addInfo(
-    game,
-    "Aoife",
-    Librarian,
-    NIGHT_1,
-    Librarian.learnsRoleAmong(game, ["Matt", "Adam"], Drunk, "aoife_librarian"),
-  );
+  applyClaims(game, PLAYERS, { info: addInfo, context: redHerrings });
 
   return game;
 }
@@ -134,21 +159,17 @@ export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
 }
 
-function addClaim(game: BOTCModel, player: string, apparentRole: RoleRef, possibleRoles: readonly RoleRef[]): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(player, possibleRoles);
-}
-
-function addInfo(game: BOTCModel, player: string, role: RoleRef, poisonContext: string, info: BoolLike): void {
+function addInfo(game: BOTCModel, claim: AppliedInfoClaim): void {
+  const poisonContext = claim.poisonContext as string;
   const active = game.allOf(
     [
-      game.actualIs(player, role),
-      game.poisoned(player, poisonContext).not(),
-      noDashiiPoisoned(game, player, poisonContext).not(),
+      game.actualIs(claim.player, claim.role),
+      game.poisoned(claim.player, poisonContext).not(),
+      noDashiiPoisoned(game, claim.player, poisonContext).not(),
     ],
-    `${player}_${poisonContext}_active_info`,
+    `${claim.player}_${poisonContext}_active_info`,
   );
-  game.addImplication(active, info);
+  game.addImplication(active, claim.learned);
 }
 
 function noDashiiPoisoned(game: BOTCModel, player: string, poisonContext: string): BoolVar {

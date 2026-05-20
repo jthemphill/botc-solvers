@@ -23,13 +23,55 @@ export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 
 export const PLAYERS = [
-  new Virgin({ name: "Sula" }),
+  new Virgin({
+    name: "Sula",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game) => game.hasCharacterType("Adam", CharacterType.Townsfolk).not(),
+      },
+    ],
+  }),
   new Librarian({ name: "Oscar", role: Klutz, among: ["You", "Olivia"], poisonContext: NIGHT_1 }),
   new Chef({ name: "Adam", count: 1, poisonContext: NIGHT_1 }),
-  new Empath({ name: "Josh" }),
-  new Investigator({ name: "You", role: Poisoner, among: ["Olivia", "Josh"], poisonContext: NIGHT_1 }),
-  new Klutz({ name: "Olivia" }),
-  new FortuneTeller({ name: "Steph" }),
+  new Empath({
+    name: "Josh",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game) => empathAliveNeighborCount(game, ["You", "Adam"], 1, "josh_empath_n1"),
+      },
+      {
+        poisonContext: NIGHT_2,
+        learned: (game) => empathAliveNeighborCount(game, ["Steph", "Adam"], 0, "josh_empath_n2"),
+      },
+    ],
+  }),
+  new Investigator({
+    name: "You",
+    role: Poisoner,
+    among: ["Olivia", "Josh"],
+    poisonContext: NIGHT_1,
+  }),
+  new Klutz({
+    name: "Olivia",
+    infoClaims: [{ poisonContext: NIGHT_2, learned: (game) => game.isGood("Adam") }],
+  }),
+  new FortuneTeller({
+    name: "Steph",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game, context) =>
+          fortuneTellerCheck(game, context as RedHerring, 1, ["Steph", "Adam"], false, "steph_ft_n1"),
+      },
+      {
+        poisonContext: NIGHT_2,
+        learned: (game, context) =>
+          fortuneTellerCheck(game, context as RedHerring, 2, ["Steph", "Adam"], true, "steph_ft_n2"),
+      },
+    ],
+  }),
   new Washerwoman({ name: "Fraser", role: Virgin, among: ["Olivia", "Sula"], poisonContext: NIGHT_1 }),
 ];
 
@@ -58,10 +100,7 @@ export function buildModel(backend: SatBackend): BOTCModel {
     PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider)),
     1,
   );
-
-  applyClaims(game, PLAYERS);
-  game.setPossibleActualRoles("You", [Investigator, Drunk]);
-  game.setPossibleActualRoles("Olivia", [Klutz, Imp, Poisoner]);
+  for (const evilRole of [Imp, Poisoner]) game.fixNotActual("You", evilRole);
 
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2, {
@@ -72,29 +111,13 @@ export function buildModel(backend: SatBackend): BOTCModel {
   });
 
   const redHerrings = addFortuneTellerRedHerring(game);
-  addVirginNomination(game);
-  game.addTruthfulInfoClaim("Josh", Empath, empathAliveNeighborCount(game, ["You", "Adam"], 1, "josh_empath_n1"), {
-    poisonContext: NIGHT_1,
-  });
-  game.addTruthfulInfoClaim("Josh", Empath, empathAliveNeighborCount(game, ["Steph", "Adam"], 0, "josh_empath_n2"), {
-    poisonContext: NIGHT_2,
-  });
-  addFortuneTellerInfo(game, redHerrings);
-  addKlutzChoice(game);
+  applyClaims(game, PLAYERS, { context: redHerrings });
 
   return game;
 }
 
 export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
-}
-
-function addVirginNomination(game: BOTCModel): void {
-  const activeVirgin = game.allOf(
-    [game.actualIs("Sula", Virgin), game.poisoned("Sula", NIGHT_1).not()],
-    "sula_active_virgin",
-  );
-  game.addImplication(activeVirgin, game.hasCharacterType("Adam", CharacterType.Townsfolk).not());
 }
 
 function empathAliveNeighborCount(
@@ -108,29 +131,6 @@ function empathAliveNeighborCount(
     count,
     `${name}_alive_neighbor_count`,
   );
-}
-
-function addFortuneTellerInfo(game: BOTCModel, redHerrings: RedHerring): void {
-  game.addTruthfulInfoClaim(
-    "Steph",
-    FortuneTeller,
-    fortuneTellerCheck(game, redHerrings, 1, ["Steph", "Adam"], false, "steph_ft_n1"),
-    { poisonContext: NIGHT_1 },
-  );
-  game.addTruthfulInfoClaim(
-    "Steph",
-    FortuneTeller,
-    fortuneTellerCheck(game, redHerrings, 2, ["Steph", "Adam"], true, "steph_ft_n2"),
-    { poisonContext: NIGHT_2 },
-  );
-}
-
-function addKlutzChoice(game: BOTCModel): void {
-  const activeKlutz = game.allOf(
-    [game.actualIs("Olivia", Klutz), game.poisoned("Olivia", NIGHT_2).not()],
-    "olivia_active_klutz",
-  );
-  game.addImplication(activeKlutz, game.isGood("Adam"));
 }
 
 function addFortuneTellerRedHerring(game: BOTCModel): RedHerring {

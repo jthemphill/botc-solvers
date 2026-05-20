@@ -3,6 +3,7 @@ import { type BoolLike, BOTCModel } from "../model";
 import { differentAlignments } from "../predicates";
 import { KissatBackend, type SatBackend } from "../sat";
 import {
+  type AppliedInfoClaim,
   Artist,
   Juggler,
   Klutz,
@@ -14,6 +15,7 @@ import {
   Sage,
   Seamstress,
   Witch,
+  applyClaims,
   playerNames,
   script,
 } from "../characters";
@@ -21,9 +23,84 @@ import {
 export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 
-export const PLAYERS = ["Fraser", "Tom", "Sula", "Hannah", "You", "Jasmine", "Matt", "Aoife"];
-export const PLAYER_NAMES = playerNames(PLAYERS);
 export const EVIL_ROLES = [NoDashii, Witch];
+type Night = typeof NIGHT_1 | typeof NIGHT_2;
+interface ClaimContext {
+  readonly malfunctions: Record<Night, BoolLike[]>;
+}
+
+export const PLAYERS = [
+  new Sage({
+    name: "Fraser",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game) =>
+          game.anyOf([game.actualIs("Jasmine", NoDashii), game.actualIs("Matt", NoDashii)], "fraser_sage_demon_pair"),
+      },
+    ],
+  }),
+  new Artist({
+    name: "Tom",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game) =>
+          game.anyOf(
+            [game.actualIs("Jasmine", Mutant), game.actualIs("Matt", Mutant), game.actualIs("Aoife", Mutant)],
+            "tom_artist_mutant_yes",
+          ),
+      },
+    ],
+  }),
+  new Mathematician({
+    name: "Sula",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game, context) =>
+          game.boolSumEquals((context as ClaimContext).malfunctions[NIGHT_1], 0, "sula_mathematician_night_1_0"),
+      },
+      {
+        poisonContext: NIGHT_2,
+        learned: (game, context) =>
+          game.boolSumEquals((context as ClaimContext).malfunctions[NIGHT_2], 1, "sula_mathematician_night_2_1"),
+      },
+    ],
+  }),
+  new Klutz({ name: "Hannah" }),
+  new Oracle({
+    name: "You",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_2,
+        learned: (game) =>
+          game.boolSumEquals(
+            ["Tom", "Aoife", "Fraser"].map((player) => game.isEvil(player)),
+            1,
+            "you_oracle_one_dead_evil",
+          ),
+      },
+    ],
+  }),
+  new Juggler({
+    name: "Jasmine",
+    guesses: { You: Witch, Aoife: Witch, Tom: Witch, Fraser: Sage, Hannah: Klutz },
+    correctCount: 3,
+    poisonContext: NIGHT_2,
+  }),
+  new Philosopher({
+    name: "Matt",
+    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => differentAlignments(game, "Aoife", "Tom") }],
+  }),
+  new Seamstress({
+    name: "Aoife",
+    among: ["Matt", "Hannah"],
+    aligned: false,
+    poisonContext: NIGHT_1,
+  }),
+];
+export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(
   NoDashii,
   Witch,
@@ -50,53 +127,30 @@ export function buildModel(backend: SatBackend): BOTCModel {
     game.fixNotActual(deadBeforeFinalNight, NoDashii);
   for (const deadPlayer of ["Tom", "Aoife", "Fraser"]) game.fixNotActual(deadPlayer, Mutant);
 
-  game.addClaim("Fraser", Sage, [Sage, NoDashii, Witch]);
-  game.addClaim("Tom", Artist, [Artist, NoDashii, Witch]);
-  game.addClaim("Sula", Mathematician, [Mathematician, NoDashii, Witch]);
-  game.addClaim("Hannah", Klutz, [Klutz, NoDashii, Witch]);
-  game.addClaim("You", Oracle, [Oracle, Klutz]);
-  game.addClaim("Jasmine", Juggler, [Juggler, Mutant, NoDashii, Witch]);
-  game.addClaim("Matt", Philosopher, [Philosopher, Mutant, NoDashii, Witch]);
-  game.addClaim("Aoife", Seamstress, [Seamstress, NoDashii, Witch]);
-
-  const aoifeInfo = differentAlignments(game, "Matt", "Hannah");
-  const fraserInfo = game.anyOf(
-    [game.actualIs("Jasmine", NoDashii), game.actualIs("Matt", NoDashii)],
-    "fraser_sage_demon_pair",
+  const context: ClaimContext = { malfunctions: { [NIGHT_1]: [], [NIGHT_2]: [] } };
+  applyClaims(
+    game,
+    PLAYERS.filter((claim) => claim.name === "You"),
+    { evilRoles: [], extraPossibleActualRoles: [Klutz], info: addInfoClaim, context },
   );
-  const tomInfo = game.anyOf(
-    [game.actualIs("Jasmine", Mutant), game.actualIs("Matt", Mutant), game.actualIs("Aoife", Mutant)],
-    "tom_artist_mutant_yes",
+  applyClaims(
+    game,
+    PLAYERS.filter((claim) => claim.name === "Jasmine" || claim.name === "Matt"),
+    { extraPossibleActualRoles: [Mutant], info: addInfoClaim, context },
   );
-  const youInfo = game.boolSumEquals(
-    ["Tom", "Aoife", "Fraser"].map((player) => game.isEvil(player)),
-    1,
-    "you_oracle_one_dead_evil",
-  );
-
-  const nightOneMalfunctions = [
-    game.addNoDashiiInfoClaim("Aoife", Seamstress, aoifeInfo, NIGHT_1),
-    game.addNoDashiiInfoClaim("Fraser", Sage, fraserInfo, NIGHT_1),
-  ];
-  const nightTwoMalfunctions = [
-    game.addNoDashiiInfoClaim("You", Oracle, youInfo, NIGHT_2),
-    game.addNoDashiiInfoClaim(
-      "Jasmine",
-      Juggler,
-      Juggler.learnsCorrectCount(
-        game,
-        { You: Witch, Aoife: Witch, Tom: Witch, Fraser: Sage, Hannah: Klutz },
-        3,
-        "jasmine_juggler_count",
-      ),
-      NIGHT_2,
+  applyClaims(
+    game,
+    PLAYERS.filter(
+      (claim) =>
+        !(claim instanceof Mathematician) && claim.name !== "You" && claim.name !== "Jasmine" && claim.name !== "Matt",
     ),
-  ];
-
-  game.addNoDashiiInfoClaim("Tom", Artist, tomInfo, NIGHT_1);
-  game.addNoDashiiInfoClaim("Matt", Philosopher, differentAlignments(game, "Aoife", "Tom"), NIGHT_1);
-  addMathematicianInfo(game, nightOneMalfunctions, 0, NIGHT_1);
-  addMathematicianInfo(game, nightTwoMalfunctions, 1, NIGHT_2);
+    { info: addInfoClaim, context },
+  );
+  applyClaims(
+    game,
+    PLAYERS.filter((claim) => claim instanceof Mathematician),
+    { info: addInfoClaim, context },
+  );
 
   return game;
 }
@@ -105,14 +159,21 @@ export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
 }
 
-function addMathematicianInfo(game: BOTCModel, malfunctions: readonly BoolLike[], count: number, name: string): void {
-  game.addImplication(
-    game.allOf(
-      [game.actualIs("Sula", Mathematician), game.noDashiiPoisoned("Sula").not()],
-      `sula_mathematician_${name}_active`,
-    ),
-    game.boolSumEquals(malfunctions, count, `sula_mathematician_${name}_${count}`),
-  );
+function addInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
+  const poisonContext = claim.poisonContext as Night;
+  if (claim.role === Mathematician) {
+    game.addImplication(
+      game.allOf(
+        [game.actualIs(claim.player, Mathematician), game.noDashiiPoisoned(claim.player).not()],
+        `sula_mathematician_${poisonContext}_active`,
+      ),
+      claim.learned,
+    );
+    return;
+  }
+
+  const malfunction = game.addNoDashiiInfoClaim(claim.player, claim.role, claim.learned, poisonContext);
+  (claim.context as ClaimContext).malfunctions[poisonContext].push(malfunction);
 }
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-39-squid-game.ts"))

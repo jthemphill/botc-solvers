@@ -33,7 +33,19 @@ export const PLAYERS = [
   new Investigator({ name: "Sarah", role: Poisoner, among: ["Olivia", "Hannah"], poisonContext: NIGHT_1 }),
   new Chef({ name: "Tim", count: 1, poisonContext: NIGHT_1 }),
   new Saint({ name: "You" }),
-  new Empath({ name: "Olivia" }),
+  new Empath({
+    name: "Olivia",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game) => empathAliveNeighborCount(game, ["You", "Jasmine"], 0, "olivia_empath_night_1"),
+      },
+      {
+        poisonContext: NIGHT_2,
+        learned: (game) => empathAliveNeighborCount(game, ["Tim", "Jasmine"], 1, "olivia_empath_night_2"),
+      },
+    ],
+  }),
   new FortuneTeller({
     name: "Jasmine",
     checks: [
@@ -42,7 +54,10 @@ export const PLAYERS = [
       { left: "Sarah", right: "Jasmine", yes: false, demonRole: Imp, registers: true, poisonContext: NIGHT_3 },
     ],
   }),
-  new Nightwatchman({ name: "Fraser" }),
+  new Nightwatchman({
+    name: "Fraser",
+    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => game.isEvil("Tim") }],
+  }),
 ];
 
 export const PLAYER_NAMES = playerNames(PLAYERS);
@@ -90,37 +105,11 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.addTruth(demonCanKillAfterDayOne(game));
   game.addTruth(demonCanKillAfterDayTwo(game));
 
-  game.addTruthfulInfoClaim(
-    "Olivia",
-    Empath,
-    empathAliveNeighborCount(game, ["You", "Jasmine"], 0, "olivia_empath_night_1"),
-    {
-      poisonContext: NIGHT_1,
-    },
-  );
-  game.addTruthfulInfoClaim(
-    "Olivia",
-    Empath,
-    empathAliveNeighborCount(game, ["Tim", "Jasmine"], 1, "olivia_empath_night_2"),
-    {
-      poisonContext: NIGHT_2,
-    },
-  );
-
-  game.addImplication(activeNightwatchman(game), game.isEvil("Tim"));
-
   return game;
 }
 
 export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
-}
-
-function activeNightwatchman(game: BOTCModel): BoolVar {
-  return game.allOf(
-    [game.actualIs("Fraser", Nightwatchman), game.poisoned("Fraser", NIGHT_1).not()],
-    "fraser_active_nightwatchman",
-  );
 }
 
 function demonCanKillAfterDayOne(game: BOTCModel): BoolVar {

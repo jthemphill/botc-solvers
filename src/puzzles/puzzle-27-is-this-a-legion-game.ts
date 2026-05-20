@@ -1,8 +1,9 @@
-import { CharacterType, type RoleRef } from "../core";
+import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolLike, type BoolVar, BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
 import {
+  type InfoClaim,
   Empath,
   FortuneTeller,
   Imp,
@@ -10,6 +11,7 @@ import {
   Legionary,
   Poisoner,
   Washerwoman,
+  applyClaims,
   playerNames,
   script,
 } from "../characters";
@@ -17,7 +19,58 @@ import {
 export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 
-export const PLAYERS = ["Sarah", "Tom", "Aoife", "Hannah", "You", "Fraser", "Adam"];
+export const PLAYERS = [
+  new Legionary({
+    name: "Sarah",
+    infoClaims: legionaryInfo("Sarah", [1, 2]),
+  }),
+  new FortuneTeller({
+    name: "Tom",
+    checks: [
+      { left: "You", right: "Fraser", yes: false, name: "tom_fortune_teller", demonRole: Imp, poisonContext: NIGHT_1 },
+    ],
+  }),
+  new Empath({
+    name: "Aoife",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game) => empathAliveNeighborCount(game, ["Tom", "Hannah"], 0, "aoife_empath_n1"),
+      },
+      {
+        poisonContext: NIGHT_2,
+        learned: (game) => empathAliveNeighborCount(game, ["Sarah", "Hannah"], 0, "aoife_empath_n2"),
+      },
+    ],
+  }),
+  new Legionary({
+    name: "Hannah",
+    infoClaims: legionaryInfo("Hannah", [2, 2]),
+  }),
+  new Washerwoman({
+    name: "You",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game) =>
+          game.anyOf(
+            [game.actualIs("Fraser", Legionary), game.actualIs("Sarah", Legionary)],
+            "you_washerwoman_legionary",
+          ),
+      },
+    ],
+  }),
+  new Legionary({
+    name: "Fraser",
+    infoClaims: legionaryInfo("Fraser", [2, 1]),
+  }),
+  new Investigator({
+    name: "Adam",
+    role: Poisoner,
+    among: ["Tom", "Aoife"],
+    poisonContext: NIGHT_1,
+  }),
+];
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(Imp, Poisoner, Empath, FortuneTeller, Investigator, Legionary, Washerwoman);
 export const LEGIONARY_CLAIMANTS = ["Sarah", "Hannah", "Fraser"];
@@ -37,53 +90,10 @@ export function buildModel(backend: SatBackend): BOTCModel {
     0,
   );
 
-  addClaim(game, "Sarah", Legionary, [Legionary, Imp, Poisoner]);
-  addClaim(game, "Tom", FortuneTeller, [FortuneTeller, Imp, Poisoner]);
-  addClaim(game, "Aoife", Empath, [Empath, Imp, Poisoner]);
-  addClaim(game, "Hannah", Legionary, [Legionary, Imp, Poisoner]);
-  addClaim(game, "You", Washerwoman, [Washerwoman]);
-  addClaim(game, "Fraser", Legionary, [Legionary, Imp, Poisoner]);
-  addClaim(game, "Adam", Investigator, [Investigator, Imp, Poisoner]);
-
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2, { activeIf: game.actualIs("Tom", Poisoner).not() });
   game.fixNotActual("Tom", Imp);
-
-  game.addTruthfulInfoClaim(
-    "Tom",
-    FortuneTeller,
-    FortuneTeller.learnsCheck(game, "You", "Fraser", { yes: false, name: "tom_fortune_teller", demonRole: Imp }),
-    { poisonContext: NIGHT_1 },
-  );
-  game.addTruthfulInfoClaim("Aoife", Empath, empathAliveNeighborCount(game, ["Tom", "Hannah"], 0, "aoife_empath_n1"), {
-    poisonContext: NIGHT_1,
-  });
-  game.addTruthfulInfoClaim(
-    "Aoife",
-    Empath,
-    empathAliveNeighborCount(game, ["Sarah", "Hannah"], 0, "aoife_empath_n2"),
-    {
-      poisonContext: NIGHT_2,
-    },
-  );
-  game.addTruthfulInfoClaim(
-    "You",
-    Washerwoman,
-    game.anyOf([game.actualIs("Fraser", Legionary), game.actualIs("Sarah", Legionary)], "you_washerwoman_legionary"),
-    { poisonContext: NIGHT_1 },
-  );
-  game.addTruthfulInfoClaim(
-    "Adam",
-    Investigator,
-    Investigator.learnsRoleAmong(game, ["Tom", "Aoife"], Poisoner, "adam_investigator"),
-    {
-      poisonContext: NIGHT_1,
-    },
-  );
-
-  addLegionaryInfo(game, "Sarah", [1, 2]);
-  addLegionaryInfo(game, "Hannah", [2, 2]);
-  addLegionaryInfo(game, "Fraser", [2, 1]);
+  applyClaims(game, PLAYERS);
 
   return game;
 }
@@ -108,11 +118,6 @@ function enforceUniqueRolesExceptLegionary(game: BOTCModel): void {
   );
 }
 
-function addClaim(game: BOTCModel, player: string, apparentRole: RoleRef, possibleRoles: readonly RoleRef[]): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(player, possibleRoles);
-}
-
 function empathAliveNeighborCount(
   game: BOTCModel,
   aliveNeighbors: readonly string[],
@@ -126,32 +131,25 @@ function empathAliveNeighborCount(
   );
 }
 
-function addLegionaryInfo(game: BOTCModel, player: string, counts: readonly [number, number]): void {
-  addLegionaryNightInfo(game, player, NIGHT_1, new Set(PLAYER_NAMES), counts[0]);
-  addLegionaryNightInfo(
-    game,
-    player,
-    NIGHT_2,
-    new Set(PLAYER_NAMES.filter((candidate) => candidate !== "Tom")),
-    counts[1],
-  );
-}
-
-function addLegionaryNightInfo(
-  game: BOTCModel,
-  player: string,
-  poisonContext: string,
-  livingPlayers: ReadonlySet<string>,
-  count: number,
-): void {
-  const active = game.allOf(
-    [game.actualIs(player, Legionary), game.poisoned(player, poisonContext).not()],
-    `${player}_${poisonContext}_active_legionary`,
-  );
-  game.addImplication(
-    active,
-    legionaryLearnsCount(game, player, livingPlayers, count, `${player}_${poisonContext}_legionary_count`),
-  );
+function legionaryInfo(player: string, counts: readonly [number, number]): readonly InfoClaim[] {
+  return [
+    {
+      poisonContext: NIGHT_1,
+      learned: (game) =>
+        legionaryLearnsCount(game, player, new Set(PLAYER_NAMES), counts[0], `${player}_${NIGHT_1}_legionary_count`),
+    },
+    {
+      poisonContext: NIGHT_2,
+      learned: (game) =>
+        legionaryLearnsCount(
+          game,
+          player,
+          new Set(PLAYER_NAMES.filter((candidate) => candidate !== "Tom")),
+          counts[1],
+          `${player}_${NIGHT_2}_legionary_count`,
+        ),
+    },
+  ];
 }
 
 function legionaryLearnsCount(

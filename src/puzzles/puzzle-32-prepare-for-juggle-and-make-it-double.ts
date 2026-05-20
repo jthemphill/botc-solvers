@@ -1,6 +1,6 @@
-import { CharacterType, type RoleRef } from "../core";
+import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolLike, type BoolVar, BOTCModel } from "../model";
+import { type BoolVar, BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
 import {
   Baron,
@@ -14,6 +14,7 @@ import {
   Recluse,
   Saint,
   Undertaker,
+  applyClaims,
   playerNames,
   script,
 } from "../characters";
@@ -22,9 +23,54 @@ export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 export const NIGHT_3 = "night_3";
 
-export const PLAYERS = ["Dan", "Fraser", "Jasmine", "Tim", "You", "Matthew", "Olivia", "Sula"];
-export const PLAYER_NAMES = playerNames(PLAYERS);
 export const EVIL_ROLES = [Imp, Baron, Poisoner];
+export const PLAYERS = [
+  new Juggler({
+    name: "Dan",
+    guesses: { You: Dreamer, Fraser: Poisoner, Tim: Baron },
+    correctCount: 0,
+    poisonContext: NIGHT_2,
+  }),
+  new Saint({ name: "Fraser" }),
+  new Undertaker({
+    name: "Jasmine",
+    infoClaims: [
+      { poisonContext: NIGHT_2, learned: (game) => Undertaker.learnsRole(game, "You", Dreamer) },
+      { poisonContext: NIGHT_3, learned: (game) => Undertaker.learnsRole(game, "Dan", Juggler) },
+    ],
+  }),
+  new FortuneTeller({
+    name: "Tim",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game, context) => fortuneTellerNo(game, context as RedHerring, ["Matthew", "Fraser"], "tim_ft"),
+      },
+    ],
+  }),
+  new Dreamer({
+    name: "You",
+    player: "Sula",
+    roles: [Drunk, Imp],
+    poisonContext: NIGHT_1,
+  }),
+  new Juggler({
+    name: "Matthew",
+    guesses: { You: Imp, Dan: Drunk, Jasmine: Baron, Tim: FortuneTeller },
+    correctCount: 0,
+    poisonContext: NIGHT_2,
+  }),
+  new Recluse({ name: "Olivia" }),
+  new Empath({
+    name: "Sula",
+    infoClaims: [
+      { poisonContext: NIGHT_1, learned: (game) => empathCount(game, ["Olivia", "Dan"], 1, "sula_empath_n1") },
+      { poisonContext: NIGHT_2, learned: (game) => empathCount(game, ["Olivia", "Dan"], 1, "sula_empath_n2") },
+      { poisonContext: NIGHT_3, learned: (game) => empathCount(game, ["Olivia", "Jasmine"], 0, "sula_empath_n3") },
+    ],
+  }),
+];
+export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(
   Imp,
   Baron,
@@ -55,15 +101,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.fixNotActual("Tim", Imp);
   game.fixNotActual("Dan", Imp);
 
-  addClaim(game, "Dan", Juggler, [Juggler, Drunk, ...EVIL_ROLES]);
-  addClaim(game, "Fraser", Saint, [Saint, ...EVIL_ROLES]);
-  addClaim(game, "Jasmine", Undertaker, [Undertaker, Drunk, ...EVIL_ROLES]);
-  addClaim(game, "Tim", FortuneTeller, [FortuneTeller, Drunk, ...EVIL_ROLES]);
-  addClaim(game, "You", Dreamer, [Dreamer, Drunk]);
-  addClaim(game, "Matthew", Juggler, [Juggler, Drunk, ...EVIL_ROLES]);
-  addClaim(game, "Olivia", Recluse, [Recluse, ...EVIL_ROLES]);
-  addClaim(game, "Sula", Empath, [Empath, Drunk, ...EVIL_ROLES]);
-
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2);
   game.addPoisonerEffect(NIGHT_3, {
@@ -78,32 +115,7 @@ export function buildModel(backend: SatBackend): BOTCModel {
   });
 
   const redHerrings = addFortuneTellerRedHerring(game);
-  addInfo(
-    game,
-    "Dan",
-    Juggler,
-    NIGHT_2,
-    Juggler.learnsCorrectCount(game, { You: Dreamer, Fraser: Poisoner, Tim: Baron }, 0, "dan_juggler"),
-  );
-  addInfo(
-    game,
-    "Matthew",
-    Juggler,
-    NIGHT_2,
-    Juggler.learnsCorrectCount(
-      game,
-      { You: Imp, Dan: Drunk, Jasmine: Baron, Tim: FortuneTeller },
-      0,
-      "matthew_juggler",
-    ),
-  );
-  addInfo(game, "Jasmine", Undertaker, NIGHT_2, Undertaker.learnsRole(game, "You", Dreamer));
-  addInfo(game, "Jasmine", Undertaker, NIGHT_3, Undertaker.learnsRole(game, "Dan", Juggler));
-  addInfo(game, "Tim", FortuneTeller, NIGHT_1, fortuneTellerNo(game, redHerrings, ["Matthew", "Fraser"], "tim_ft"));
-  addInfo(game, "You", Dreamer, NIGHT_1, Dreamer.learnsOneOf(game, "Sula", [Drunk, Imp], "you_dreamer"));
-  addInfo(game, "Sula", Empath, NIGHT_1, empathCount(game, ["Olivia", "Dan"], 1, "sula_empath_n1"));
-  addInfo(game, "Sula", Empath, NIGHT_2, empathCount(game, ["Olivia", "Dan"], 1, "sula_empath_n2"));
-  addInfo(game, "Sula", Empath, NIGHT_3, empathCount(game, ["Olivia", "Jasmine"], 0, "sula_empath_n3"));
+  applyClaims(game, PLAYERS, { context: redHerrings });
 
   return game;
 }
@@ -112,21 +124,12 @@ export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
 }
 
-function addClaim(game: BOTCModel, player: string, apparentRole: RoleRef, possibleRoles: readonly RoleRef[]): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(player, possibleRoles);
-}
-
 function outsiderCount(game: BOTCModel, count: number): BoolVar {
   return game.boolSumEquals(
     PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider)),
     count,
     `outsider_count_${count}`,
   );
-}
-
-function addInfo(game: BOTCModel, player: string, role: RoleRef, poisonContext: string, info: BoolLike): void {
-  game.addTruthfulInfoClaim(player, role, info, { poisonContext });
 }
 
 function addFortuneTellerRedHerring(game: BOTCModel): RedHerring {

@@ -1,6 +1,6 @@
-import { CharacterType, type RoleRef } from "../core";
+import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolLike, type BoolVar, BOTCModel } from "../model";
+import { type BoolVar, BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
 import {
   Baron,
@@ -17,6 +17,7 @@ import {
   ScarletWoman,
   Spy,
   Washerwoman,
+  applyClaims,
   playerNames,
   script,
 } from "../characters";
@@ -25,9 +26,60 @@ export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 export const NIGHT_3 = "night_3";
 
-export const PLAYERS = ["Tom", "Oscar", "Sula", "Fraser", "You", "Olivia", "Jasmine", "Hannah"];
-export const PLAYER_NAMES = playerNames(PLAYERS);
 export const EVIL_ROLES = [Imp, Baron, Poisoner, Spy, ScarletWoman];
+export const PLAYERS = [
+  new Librarian({
+    name: "Tom",
+    role: Saint,
+    among: ["Olivia", "Sula"],
+    poisonContext: NIGHT_1,
+  }),
+  new FortuneTeller({
+    name: "Oscar",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game, context) =>
+          fortuneTellerNo(game, context as RedHerring, NIGHT_1, ["Sula", "Fraser"], "oscar_ft_n1"),
+      },
+      {
+        poisonContext: NIGHT_2,
+        learned: (game, context) =>
+          fortuneTellerNo(game, context as RedHerring, NIGHT_2, ["Tom", "Sula"], "oscar_ft_n2"),
+      },
+      {
+        poisonContext: NIGHT_3,
+        learned: (game, context) =>
+          fortuneTellerNo(game, context as RedHerring, NIGHT_3, ["Hannah", "Tom"], "oscar_ft_n3"),
+      },
+    ],
+  }),
+  new Saint({ name: "Sula" }),
+  new Investigator({
+    name: "Fraser",
+    role: Poisoner,
+    among: ["You", "Jasmine"],
+    poisonContext: NIGHT_1,
+  }),
+  new Empath({
+    name: "You",
+    infoClaims: [
+      { poisonContext: NIGHT_1, learned: (game) => empathCount(game, ["Olivia", "Fraser"], 0, "you_empath") },
+    ],
+  }),
+  new Recluse({ name: "Olivia" }),
+  new Ravenkeeper({
+    name: "Jasmine",
+    infoClaims: [{ poisonContext: NIGHT_3, learned: (game) => game.actualIs("Hannah", Washerwoman) }],
+  }),
+  new Washerwoman({
+    name: "Hannah",
+    role: Investigator,
+    among: ["Sula", "Fraser"],
+    poisonContext: NIGHT_1,
+  }),
+];
+export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(
   Imp,
   Baron,
@@ -59,15 +111,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.fixNotActual("You", Imp);
   for (const minion of [Baron, Poisoner, Spy, ScarletWoman]) game.fixNotActual("You", minion);
 
-  addClaim(game, "Tom", Librarian, [Librarian, Drunk, ...EVIL_ROLES]);
-  addClaim(game, "Oscar", FortuneTeller, [FortuneTeller, Drunk, ...EVIL_ROLES]);
-  addClaim(game, "Sula", Saint, [Saint, ...EVIL_ROLES]);
-  addClaim(game, "Fraser", Investigator, [Investigator, Drunk, ...EVIL_ROLES]);
-  addClaim(game, "You", Empath, [Empath, Drunk]);
-  addClaim(game, "Olivia", Recluse, [Recluse, ...EVIL_ROLES]);
-  addClaim(game, "Jasmine", Ravenkeeper, [Ravenkeeper, Drunk, ...EVIL_ROLES]);
-  addClaim(game, "Hannah", Washerwoman, [Washerwoman, Drunk, ...EVIL_ROLES]);
-
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2);
   game.addPoisonerEffect(NIGHT_3, {
@@ -83,44 +126,7 @@ export function buildModel(backend: SatBackend): BOTCModel {
   addDeathTimelineConstraints(game);
 
   const redHerrings = addFortuneTellerRedHerring(game);
-  addInfo(game, "Tom", Librarian, NIGHT_1, Librarian.learnsRoleAmong(game, ["Olivia", "Sula"], Saint, "tom_librarian"));
-  addInfo(
-    game,
-    "Oscar",
-    FortuneTeller,
-    NIGHT_1,
-    fortuneTellerNo(game, redHerrings, NIGHT_1, ["Sula", "Fraser"], "oscar_ft_n1"),
-  );
-  addInfo(
-    game,
-    "Oscar",
-    FortuneTeller,
-    NIGHT_2,
-    fortuneTellerNo(game, redHerrings, NIGHT_2, ["Tom", "Sula"], "oscar_ft_n2"),
-  );
-  addInfo(
-    game,
-    "Oscar",
-    FortuneTeller,
-    NIGHT_3,
-    fortuneTellerNo(game, redHerrings, NIGHT_3, ["Hannah", "Tom"], "oscar_ft_n3"),
-  );
-  addInfo(
-    game,
-    "Fraser",
-    Investigator,
-    NIGHT_1,
-    Investigator.learnsRoleAmong(game, ["You", "Jasmine"], Poisoner, "fraser_investigator"),
-  );
-  addInfo(game, "You", Empath, NIGHT_1, empathCount(game, ["Olivia", "Fraser"], 0, "you_empath"));
-  addInfo(game, "Jasmine", Ravenkeeper, NIGHT_3, game.actualIs("Hannah", Washerwoman));
-  addInfo(
-    game,
-    "Hannah",
-    Washerwoman,
-    NIGHT_1,
-    Washerwoman.learnsRoleAmong(game, ["Sula", "Fraser"], Investigator, "hannah_washerwoman"),
-  );
+  applyClaims(game, PLAYERS, { context: redHerrings });
 
   return game;
 }
@@ -129,21 +135,12 @@ export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
 }
 
-function addClaim(game: BOTCModel, player: string, apparentRole: RoleRef, possibleRoles: readonly RoleRef[]): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(player, possibleRoles);
-}
-
 function outsiderCount(game: BOTCModel, count: number): BoolVar {
   return game.boolSumEquals(
     PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider)),
     count,
     `outsider_count_${count}`,
   );
-}
-
-function addInfo(game: BOTCModel, player: string, role: RoleRef, poisonContext: string, info: BoolLike): void {
-  game.addTruthfulInfoClaim(player, role, info, { poisonContext });
 }
 
 function addDeathTimelineConstraints(game: BOTCModel): void {

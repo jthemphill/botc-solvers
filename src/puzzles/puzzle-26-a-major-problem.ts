@@ -30,11 +30,20 @@ export const NIGHT_3 = "night_3";
 export const PLAYERS = [
   new Librarian({ name: "Matthew", role: Drunk, among: ["You", "Josh"], poisonContext: NIGHT_1 }),
   new Soldier({ name: "Josh" }),
-  new Undertaker({ name: "Sula" }),
+  new Undertaker({
+    name: "Sula",
+    infoClaims: [
+      { poisonContext: NIGHT_2, learned: (game) => game.actualIs("You", Empath) },
+      { poisonContext: NIGHT_3, learned: (game) => game.actualIs("Dan", Slayer) },
+    ],
+  }),
   new Chef({ name: "Fraser", count: 2, poisonContext: NIGHT_1 }),
   new Empath({ name: "You", count: 0, poisonContext: NIGHT_1 }),
   new Saint({ name: "Olivia" }),
-  new Slayer({ name: "Dan" }),
+  new Slayer({
+    name: "Dan",
+    infoClaims: [{ poisonContext: NIGHT_2, learned: (game) => isDemonOnDayTwo(game, "Matthew").not() }],
+  }),
   new Recluse({ name: "Tom" }),
 ];
 
@@ -90,19 +99,9 @@ export function buildModel(backend: SatBackend): BOTCModel {
   });
 
   applyClaims(game, PLAYERS);
-  game.setPossibleActualRoles("You", [Empath, Drunk]);
-
-  game.addTruthfulInfoClaim("Sula", Undertaker, game.actualIs("You", Empath), { poisonContext: NIGHT_2 });
-  game.addTruthfulInfoClaim("Sula", Undertaker, game.actualIs("Dan", Slayer), { poisonContext: NIGHT_3 });
   game.addImplication(game.actualIs("Josh", Soldier), game.poisoned("Josh", NIGHT_2));
   game.addTruth(demonExistsAtNight(game, 2));
   game.addTruth(demonExistsAtNight(game, 3));
-
-  const activeSlayer = game.allOf(
-    [game.actualIs("Dan", Slayer), game.poisoned("Dan", NIGHT_2).not()],
-    "dan_active_slayer_day_2",
-  );
-  game.addImplication(activeSlayer, isDemonOnDayTwo(game, "Matthew").not());
 
   return game;
 }

@@ -1,4 +1,4 @@
-import { CharacterType, type RoleRef } from "../core";
+import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
@@ -16,6 +16,7 @@ import {
   Saint,
   Spy,
   Undertaker,
+  applyClaims,
   playerNames,
   script,
 } from "../characters";
@@ -23,7 +24,92 @@ import {
 export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 
-export const PLAYERS = ["Oscar", "Olivia", "Sarah", "Jasmine", "You", "Tim", "Sula", "Fraser"];
+const EVIL_ROLES = [Imp, LordOfTyphon, Poisoner, Spy] as const;
+
+export const PLAYERS = [
+  new Ravenkeeper({
+    name: "Oscar",
+    infoClaims: [
+      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Sula", Imp, "oscar_ravenkeeper_sula_imp") },
+    ],
+  }),
+  new Saint({ name: "Olivia" }),
+  new Investigator({
+    name: "Sarah",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game) =>
+          game.anyOf(
+            [
+              game.registersAsRole("Olivia", Spy, "sarah_investigator_olivia_spy"),
+              game.registersAsRole("Jasmine", Spy, "sarah_investigator_jasmine_spy"),
+            ],
+            "sarah_investigator_spy",
+          ),
+      },
+    ],
+  }),
+  new Empath({
+    name: "Jasmine",
+    infoClaims: [
+      { poisonContext: NIGHT_1, learned: (game) => empathCount(game, ["Sarah", "You"], 2, "jasmine_empath_n1") },
+      { poisonContext: NIGHT_2, learned: (game) => empathCount(game, ["Sarah", "Tim"], 2, "jasmine_empath_n2") },
+    ],
+  }),
+  new Librarian({
+    name: "You",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game) =>
+          game.anyOf(
+            [
+              game.registersAsRole("Sula", Drunk, "you_librarian_sula_drunk"),
+              game.registersAsRole("Oscar", Drunk, "you_librarian_oscar_drunk"),
+            ],
+            "you_librarian_drunk",
+          ),
+      },
+    ],
+  }),
+  new Clockmaker({
+    name: "Tim",
+    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => demonSitsStepsFromMinion(game, 4) }],
+  }),
+  new Undertaker({
+    name: "Sula",
+    infoClaims: [
+      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("You", Spy, "sula_undertaker_you_spy") },
+    ],
+  }),
+  new FortuneTeller({
+    name: "Fraser",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game, context) =>
+          game.allOf(
+            [
+              fortuneTellerNo(
+                game,
+                context as ReadonlyMap<string, BoolVar>,
+                ["Sula", "Oscar"],
+                "fraser_ft_sula_oscar_no",
+              ),
+              fortuneTellerNo(
+                game,
+                context as ReadonlyMap<string, BoolVar>,
+                ["Sarah", "Jasmine"],
+                "fraser_ft_sarah_jasmine_no",
+              ),
+            ],
+            "fraser_fortune_teller_checks",
+          ),
+      },
+    ],
+  }),
+];
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(
   Imp,
@@ -54,81 +140,19 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.fixNotActual("You", LordOfTyphon);
   game.fixNotActual("Oscar", Imp);
   game.fixNotActual("Oscar", LordOfTyphon);
-
-  addClaim(game, "Oscar", Ravenkeeper, [Ravenkeeper, Drunk, Imp, LordOfTyphon, Poisoner, Spy]);
-  addClaim(game, "Olivia", Saint, [Saint, Imp, LordOfTyphon, Poisoner, Spy]);
-  addClaim(game, "Sarah", Investigator, [Investigator, Drunk, Imp, LordOfTyphon, Poisoner, Spy]);
-  addClaim(game, "Jasmine", Empath, [Empath, Drunk, Imp, LordOfTyphon, Poisoner, Spy]);
-  addClaim(game, "You", Librarian, [Librarian, Drunk]);
-  addClaim(game, "Tim", Clockmaker, [Clockmaker, Drunk, Imp, LordOfTyphon, Poisoner, Spy]);
-  addClaim(game, "Sula", Undertaker, [Undertaker, Drunk, Imp, LordOfTyphon, Poisoner, Spy]);
-  addClaim(game, "Fraser", FortuneTeller, [FortuneTeller, Drunk, Imp, LordOfTyphon, Poisoner, Spy]);
+  for (const evilRole of EVIL_ROLES) game.fixNotActual("You", evilRole);
 
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2);
 
   const redHerrings = addFortuneTellerRedHerring(game);
-
-  game.addTruthfulInfoClaim("Oscar", Ravenkeeper, game.registersAsRole("Sula", Imp, "oscar_ravenkeeper_sula_imp"), {
-    poisonContext: NIGHT_2,
-  });
-  game.addTruthfulInfoClaim(
-    "Sarah",
-    Investigator,
-    game.anyOf(
-      [
-        game.registersAsRole("Olivia", Spy, "sarah_investigator_olivia_spy"),
-        game.registersAsRole("Jasmine", Spy, "sarah_investigator_jasmine_spy"),
-      ],
-      "sarah_investigator_spy",
-    ),
-    { poisonContext: NIGHT_1 },
-  );
-  game.addTruthfulInfoClaim("Jasmine", Empath, empathCount(game, ["Sarah", "You"], 2, "jasmine_empath_n1"), {
-    poisonContext: NIGHT_1,
-  });
-  game.addTruthfulInfoClaim("Jasmine", Empath, empathCount(game, ["Sarah", "Tim"], 2, "jasmine_empath_n2"), {
-    poisonContext: NIGHT_2,
-  });
-  game.addTruthfulInfoClaim(
-    "You",
-    Librarian,
-    game.anyOf(
-      [
-        game.registersAsRole("Sula", Drunk, "you_librarian_sula_drunk"),
-        game.registersAsRole("Oscar", Drunk, "you_librarian_oscar_drunk"),
-      ],
-      "you_librarian_drunk",
-    ),
-    { poisonContext: NIGHT_1 },
-  );
-  game.addTruthfulInfoClaim("Tim", Clockmaker, demonSitsStepsFromMinion(game, 4), { poisonContext: NIGHT_1 });
-  game.addTruthfulInfoClaim("Sula", Undertaker, game.registersAsRole("You", Spy, "sula_undertaker_you_spy"), {
-    poisonContext: NIGHT_2,
-  });
-  game.addTruthfulInfoClaim(
-    "Fraser",
-    FortuneTeller,
-    game.allOf(
-      [
-        fortuneTellerNo(game, redHerrings, ["Sula", "Oscar"], "fraser_ft_sula_oscar_no"),
-        fortuneTellerNo(game, redHerrings, ["Sarah", "Jasmine"], "fraser_ft_sarah_jasmine_no"),
-      ],
-      "fraser_fortune_teller_checks",
-    ),
-    { poisonContext: NIGHT_1 },
-  );
+  applyClaims(game, PLAYERS, { context: redHerrings });
 
   return game;
 }
 
 export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
-}
-
-function addClaim(game: BOTCModel, player: string, apparentRole: RoleRef, possibleRoles: readonly RoleRef[]): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(player, possibleRoles);
 }
 
 function impSetup(game: BOTCModel): BoolVar {

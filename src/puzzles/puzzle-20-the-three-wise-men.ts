@@ -1,8 +1,10 @@
-import { CharacterType, type RoleRef, roleName } from "../core";
+import { CharacterType, roleName } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolLike, type BoolVar, BOTCModel } from "../model";
+import { type BoolVar, BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
 import {
+  type AppliedInfoClaim,
+  type InfoClaim,
   Baron,
   Drunk,
   Imp,
@@ -14,6 +16,7 @@ import {
   Spy,
   VillageIdiot,
   Virgin,
+  applyClaims,
   playerNames,
   roleNames,
   script,
@@ -23,7 +26,56 @@ export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 export const DRUNK_VILLAGE_IDIOT = "drunk_village_idiot";
 
-export const PLAYERS = ["Melchior", "Mary", "Balthazar", "Gabriel", "You", "Caspar", "Joseph"];
+const EVIL_ROLES = [Imp, Baron, Poisoner, ScarletWoman, Spy] as const;
+
+export const PLAYERS = [
+  new VillageIdiot({
+    name: "Melchior",
+    infoClaims: [
+      villageIdiotCheck("Melchior", NIGHT_1, "Balthazar", true),
+      villageIdiotCheck("Melchior", NIGHT_2, "Mary", true),
+    ],
+  }),
+  new Virgin({
+    name: "Mary",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game) => game.hasCharacterType("Balthazar", CharacterType.Townsfolk).not(),
+      },
+    ],
+  }),
+  new VillageIdiot({
+    name: "Balthazar",
+    infoClaims: [
+      villageIdiotCheck("Balthazar", NIGHT_1, "Joseph", true),
+      villageIdiotCheck("Balthazar", NIGHT_2, "Caspar", true),
+    ],
+  }),
+  new Ravenkeeper({
+    name: "Gabriel",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_2,
+        learned: (game) => game.registersAsRole("Balthazar", Drunk, "gabriel_ravenkeeper"),
+      },
+    ],
+  }),
+  new Investigator({
+    name: "You",
+    role: Baron,
+    among: ["Mary", "Gabriel"],
+    poisonContext: NIGHT_1,
+  }),
+  new VillageIdiot({
+    name: "Caspar",
+    infoClaims: [
+      villageIdiotCheck("Caspar", NIGHT_1, "Mary", true),
+      villageIdiotCheck("Caspar", NIGHT_2, "Joseph", true),
+    ],
+  }),
+  new Saint({ name: "Joseph" }),
+];
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const VILLAGE_IDIOT_CLAIMANTS = ["Melchior", "Balthazar", "Caspar"];
 export const CHARACTERS = script(
@@ -59,36 +111,10 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.addEnforcedExactlyN(outsiderCount, 2, game.roleInPlay(Baron));
   game.addEnforcedExactlyN(outsiderCount, 0, game.roleInPlay(Baron).not());
 
-  addClaim(game, "Melchior", VillageIdiot, [VillageIdiot, Drunk, Imp, Baron, Poisoner, ScarletWoman, Spy]);
-  addClaim(game, "Mary", Virgin, [Virgin, Drunk, Imp, Baron, Poisoner, ScarletWoman, Spy]);
-  addClaim(game, "Balthazar", VillageIdiot, [VillageIdiot, Drunk, Imp, Baron, Poisoner, ScarletWoman, Spy]);
-  addClaim(game, "Gabriel", Ravenkeeper, [Ravenkeeper, Drunk, Imp, Baron, Poisoner, ScarletWoman, Spy]);
-  addClaim(game, "You", Investigator, [Investigator, Drunk]);
-  addClaim(game, "Caspar", VillageIdiot, [VillageIdiot, Drunk, Imp, Baron, Poisoner, ScarletWoman, Spy]);
-  addClaim(game, "Joseph", Saint, [Saint, Imp, Baron, Poisoner, ScarletWoman, Spy]);
-
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2);
   const drunkVillageIdiots = addVillageIdiotDrunkenness(game);
-
-  addVillageIdiotCheck(game, drunkVillageIdiots, "Melchior", NIGHT_1, "Balthazar", true);
-  addVillageIdiotCheck(game, drunkVillageIdiots, "Melchior", NIGHT_2, "Mary", true);
-  addVirginNomination(game);
-  addVillageIdiotCheck(game, drunkVillageIdiots, "Balthazar", NIGHT_1, "Joseph", true);
-  addVillageIdiotCheck(game, drunkVillageIdiots, "Balthazar", NIGHT_2, "Caspar", true);
-  game.addTruthfulInfoClaim("Gabriel", Ravenkeeper, game.registersAsRole("Balthazar", Drunk, "gabriel_ravenkeeper"), {
-    poisonContext: NIGHT_2,
-  });
-  game.addTruthfulInfoClaim(
-    "You",
-    Investigator,
-    Investigator.learnsRoleAmong(game, ["Mary", "Gabriel"], Baron, "you_investigator"),
-    {
-      poisonContext: NIGHT_1,
-    },
-  );
-  addVillageIdiotCheck(game, drunkVillageIdiots, "Caspar", NIGHT_1, "Mary", true);
-  addVillageIdiotCheck(game, drunkVillageIdiots, "Caspar", NIGHT_2, "Joseph", true);
+  applyClaims(game, PLAYERS, { info: addInfoClaim, context: drunkVillageIdiots });
 
   return game;
 }
@@ -107,11 +133,6 @@ function enforceUniqueRolesExceptVillageIdiot(game: BOTCModel): void {
       always,
     );
   }
-}
-
-function addClaim(game: BOTCModel, player: string, apparentRole: RoleRef, possibleRoles: readonly RoleRef[]): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(player, possibleRoles);
 }
 
 function addVillageIdiotDrunkenness(game: BOTCModel): ReadonlyMap<string, BoolVar> {
@@ -133,44 +154,25 @@ function addVillageIdiotDrunkenness(game: BOTCModel): ReadonlyMap<string, BoolVa
   return drunkVillageIdiots;
 }
 
-function addVillageIdiotCheck(
-  game: BOTCModel,
-  drunkVillageIdiots: ReadonlyMap<string, BoolVar>,
-  player: string,
-  poisonContext: string,
-  target: string,
-  evil: boolean,
-): void {
-  const learned = evil
-    ? game.registersAsEvil(target, `${player}_${target}`)
-    : game.registersAsGood(target, `${player}_${target}`);
-  addVillageIdiotInfoClaim(game, drunkVillageIdiots, player, poisonContext, learned);
+function villageIdiotCheck(player: string, poisonContext: string, target: string, evil: boolean): InfoClaim {
+  return {
+    poisonContext,
+    learned: (game) =>
+      evil ? game.registersAsEvil(target, `${player}_${target}`) : game.registersAsGood(target, `${player}_${target}`),
+  };
 }
 
-function addVillageIdiotInfoClaim(
-  game: BOTCModel,
-  drunkVillageIdiots: ReadonlyMap<string, BoolVar>,
-  player: string,
-  poisonContext: string,
-  learned: BoolLike,
-): void {
-  const active = game.allOf(
-    [
-      game.actualIs(player, VillageIdiot),
-      game.poisoned(player, poisonContext).not(),
-      (drunkVillageIdiots.get(player) as BoolVar).not(),
-    ],
-    `${player}_${poisonContext}_active_village_idiot`,
+function addInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
+  const drunkVillageIdiots = claim.context as ReadonlyMap<string, BoolVar>;
+  const activeConditions = [
+    game.actualIs(claim.player, claim.role),
+    game.poisoned(claim.player, claim.poisonContext).not(),
+  ];
+  if (claim.role === VillageIdiot) activeConditions.push((drunkVillageIdiots.get(claim.player) as BoolVar).not());
+  game.addImplication(
+    game.allOf(activeConditions, `${claim.player}_${claim.poisonContext ?? "default"}_active_claim`),
+    claim.learned,
   );
-  game.addImplication(active, learned);
-}
-
-function addVirginNomination(game: BOTCModel): void {
-  const activeVirgin = game.allOf(
-    [game.actualIs("Mary", Virgin), game.poisoned("Mary", NIGHT_1).not()],
-    "mary_active_virgin",
-  );
-  game.addImplication(activeVirgin, game.hasCharacterType("Balthazar", CharacterType.Townsfolk).not());
 }
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-20-the-three-wise-men.ts"))

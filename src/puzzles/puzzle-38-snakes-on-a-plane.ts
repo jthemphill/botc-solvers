@@ -15,6 +15,7 @@ import {
   ScarletWoman,
   SnakeCharmer,
   Spy,
+  applyClaims,
   playerNames,
   script,
 } from "../characters";
@@ -23,9 +24,74 @@ export const NIGHT_1 = "night_1";
 export const NIGHT_2 = "night_2";
 export const NIGHT_3 = "night_3";
 
-export const PLAYERS = ["Tim", "Fraser", "Sula", "Matt", "You", "Hannah", "Dan", "Adam"];
-export const PLAYER_NAMES = playerNames(PLAYERS);
 export const MINION_ROLES = [Baron, Poisoner, Spy, ScarletWoman];
+export const PLAYERS = [
+  new SnakeCharmer({
+    name: "Tim",
+    infoClaims: [
+      { poisonContext: NIGHT_1, learned: (game) => isDemonAtContext(game, "Matt", NIGHT_1).not() },
+      { poisonContext: NIGHT_2, learned: (game) => isDemonAtContext(game, "Sula", NIGHT_2).not() },
+      { poisonContext: NIGHT_3, learned: (game) => isDemonAtContext(game, "Hannah", NIGHT_3).not() },
+    ],
+  }),
+  new SnakeCharmer({
+    name: "Fraser",
+    infoClaims: [
+      { poisonContext: NIGHT_1, learned: (game) => isDemonAtContext(game, "Sula", NIGHT_1).not() },
+      { poisonContext: NIGHT_2, learned: (game) => isDemonAtContext(game, "Hannah", NIGHT_2).not() },
+      { poisonContext: NIGHT_3, learned: (game) => isDemonAtContext(game, "Adam", NIGHT_3).not() },
+    ],
+  }),
+  new FortuneTeller({
+    name: "Sula",
+    infoClaims: [
+      {
+        poisonContext: NIGHT_1,
+        learned: (game, context) =>
+          game.fortuneTellerNo(
+            context as ReadonlyMap<string, BoolVar>,
+            ["You", "Tim"],
+            "sula_ft_you_tim_no",
+            (player) => isDemonAtContext(game, player, NIGHT_1),
+          ),
+      },
+      {
+        poisonContext: NIGHT_2,
+        learned: (game, context) =>
+          game.fortuneTellerNo(
+            context as ReadonlyMap<string, BoolVar>,
+            ["Fraser", "Matt"],
+            "sula_ft_fraser_matt_no",
+            (player) => isDemonAtContext(game, player, NIGHT_2),
+          ),
+      },
+    ],
+  }),
+  new Saint({ name: "Matt" }),
+  new Recluse({ name: "You" }),
+  new Empath({
+    name: "Hannah",
+    infoClaims: [
+      { poisonContext: NIGHT_1, learned: (game) => game.registeredEvilCount(["You", "Dan"], 0, "hannah_empath_n1") },
+      { poisonContext: NIGHT_2, learned: (game) => game.registeredEvilCount(["Adam", "Matt"], 1, "hannah_empath_n2") },
+      {
+        poisonContext: NIGHT_3,
+        learned: (game) => game.registeredEvilCount(["Adam", "Fraser"], 1, "hannah_empath_n3"),
+      },
+    ],
+  }),
+  new Ravenkeeper({
+    name: "Dan",
+    infoClaims: [{ poisonContext: NIGHT_2, learned: (game) => game.actualIs("Fraser", Poisoner) }],
+  }),
+  new Investigator({
+    name: "Adam",
+    role: Baron,
+    among: ["Tim", "Sula"],
+    poisonContext: NIGHT_1,
+  }),
+];
+export const PLAYER_NAMES = playerNames(PLAYERS);
 export const CHARACTERS = script(
   Imp,
   Baron,
@@ -54,15 +120,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
   for (const minion of MINION_ROLES) game.fixNotActual("You", minion);
   game.fixNotActual("You", Drunk);
 
-  game.addClaim("Tim", SnakeCharmer, [SnakeCharmer, Drunk, Imp, ...MINION_ROLES]);
-  game.addClaim("Fraser", SnakeCharmer, [SnakeCharmer, Drunk, Imp, ...MINION_ROLES]);
-  game.addClaim("Sula", FortuneTeller, [FortuneTeller, Drunk, Imp, ...MINION_ROLES]);
-  game.addClaim("Matt", Saint, [Saint, Imp, ...MINION_ROLES]);
-  game.addClaim("You", Recluse, [Recluse]);
-  game.addClaim("Hannah", Empath, [Empath, Drunk, Imp, ...MINION_ROLES]);
-  game.addClaim("Dan", Ravenkeeper, [Ravenkeeper, Drunk, Imp, ...MINION_ROLES]);
-  game.addClaim("Adam", Investigator, [Investigator, Drunk, Imp, ...MINION_ROLES]);
-
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2, { activeIf: game.actualIs("Dan", Poisoner).not() });
   game.addPoisonerEffect(NIGHT_3, {
@@ -77,50 +134,7 @@ export function buildModel(backend: SatBackend): BOTCModel {
   });
 
   const redHerrings = game.addFortuneTellerRedHerring("Sula");
-
-  addSnakeCharmerPicks(game, "Tim", [
-    [NIGHT_1, "Matt"],
-    [NIGHT_2, "Sula"],
-    [NIGHT_3, "Hannah"],
-  ]);
-  addSnakeCharmerPicks(game, "Fraser", [
-    [NIGHT_1, "Sula"],
-    [NIGHT_2, "Hannah"],
-    [NIGHT_3, "Adam"],
-  ]);
-
-  game.addTruthfulInfoClaim(
-    "Sula",
-    FortuneTeller,
-    game.fortuneTellerNo(redHerrings, ["You", "Tim"], "sula_ft_you_tim_no", (player) =>
-      isDemonAtContext(game, player, NIGHT_1),
-    ),
-    { poisonContext: NIGHT_1 },
-  );
-  game.addTruthfulInfoClaim(
-    "Sula",
-    FortuneTeller,
-    game.fortuneTellerNo(redHerrings, ["Fraser", "Matt"], "sula_ft_fraser_matt_no", (player) =>
-      isDemonAtContext(game, player, NIGHT_2),
-    ),
-    { poisonContext: NIGHT_2 },
-  );
-  game.addTruthfulInfoClaim("Hannah", Empath, game.registeredEvilCount(["You", "Dan"], 0, "hannah_empath_n1"), {
-    poisonContext: NIGHT_1,
-  });
-  game.addTruthfulInfoClaim("Hannah", Empath, game.registeredEvilCount(["Adam", "Matt"], 1, "hannah_empath_n2"), {
-    poisonContext: NIGHT_2,
-  });
-  game.addTruthfulInfoClaim("Hannah", Empath, game.registeredEvilCount(["Adam", "Fraser"], 1, "hannah_empath_n3"), {
-    poisonContext: NIGHT_3,
-  });
-  game.addTruthfulInfoClaim("Dan", Ravenkeeper, game.actualIs("Fraser", Poisoner), { poisonContext: NIGHT_2 });
-  game.addTruthfulInfoClaim(
-    "Adam",
-    Investigator,
-    Investigator.learnsRoleAmong(game, ["Tim", "Sula"], Baron, "adam_investigator"),
-    { poisonContext: NIGHT_1 },
-  );
+  applyClaims(game, PLAYERS, { context: redHerrings });
 
   game.addTruth(
     game.anyOf(
@@ -134,18 +148,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
 
 export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
-}
-
-function addSnakeCharmerPicks(game: BOTCModel, player: string, picks: readonly (readonly [string, string])[]): void {
-  for (const [night, pick] of picks) {
-    game.addImplication(
-      game.allOf(
-        [game.actualIs(player, SnakeCharmer), game.poisoned(player, night).not()],
-        `${player}_active_snake_charmer_${night}`,
-      ),
-      isDemonAtContext(game, pick, night).not(),
-    );
-  }
 }
 
 function isDemonAtContext(game: BOTCModel, player: string, poisonContext: string): BoolVar {
