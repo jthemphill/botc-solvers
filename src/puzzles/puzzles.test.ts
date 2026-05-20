@@ -275,8 +275,8 @@ describe("ported puzzles", () => {
     expect(worlds[0]?.holder("Klutz")).toBe("Olivia");
   });
 
-  test("clockdoku has unique solution", () => {
-    const grids = solve25();
+  test("clockdoku has unique solution", async () => {
+    const grids = await solve25();
     expect(grids).toHaveLength(1);
     expect(grids[0]).toEqual([
       ["Empath", "Imp", "Recluse", "Saint", "Librarian", "Baron", "Chef"],
