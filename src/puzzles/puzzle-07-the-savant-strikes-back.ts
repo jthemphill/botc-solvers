@@ -26,6 +26,7 @@ const EXTRA_ACTUAL_ROLES = [Leviathan, Goblin, Mutant, Drunk] as const;
 
 export const PLAYERS = [
   new Juggler({
+    timing: "night_2",
     name: "Anna",
     guesses: { You: Savant, Tim: VillageIdiot },
     correctCount: 1,
@@ -57,6 +58,7 @@ export const PLAYERS = [
     ],
   }),
   new Savant({
+    timing: "day_1",
     name: "You",
     infoClaims: [
       (game, context) => {

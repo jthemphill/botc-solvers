@@ -1,5 +1,5 @@
 import { type RoleRef, roleName } from "./core";
-import type { World } from "./model";
+import { type Timing, type TimingQuery, type World } from "./model";
 
 export interface ForcedRole {
   readonly label: string;
@@ -35,15 +35,14 @@ export function formatSolution(
   options: {
     readonly forcedRoles?: readonly ForcedRoleSpec[];
     readonly forcedMissing?: string;
-    readonly poisonContext?: string;
-  } = {},
+  } & TimingQuery = {},
 ): string {
   const facts = (options.forcedRoles ?? []).map((role) =>
     coerceForcedRole(role, options.forcedMissing ?? "not forced"),
   );
   const lines = [`${worlds.length} satisfying world(s)`];
   worlds.forEach((world, index) => {
-    lines.push("", `World ${index + 1}`, ...formatWorldLines(world, players, options.poisonContext));
+    lines.push("", `World ${index + 1}`, ...formatWorldLines(world, players, options.timing));
   });
   if (facts.length > 0) {
     lines.push("", "Forced facts");
@@ -58,8 +57,7 @@ export function printSolution(
   options: {
     readonly forcedRoles?: readonly ForcedRoleSpec[];
     readonly forcedMissing?: string;
-    readonly poisonContext?: string;
-  } = {},
+  } & TimingQuery = {},
 ): void {
   console.log(formatSolution(worlds, players, options));
 }
@@ -69,11 +67,11 @@ function coerceForcedRole(role: ForcedRoleSpec, forcedMissing: string): ForcedRo
   return forcedRole(role as RoleRef, undefined, { missing: forcedMissing });
 }
 
-function formatWorldLines(world: World, players: readonly string[], poisonContext?: string): string[] {
+function formatWorldLines(world: World, players: readonly string[], timing?: Timing): string[] {
   return players.map((player) => {
     const actual = world.actualRole(player);
     const apparent = world.apparent.get(player);
-    const poisonSuffix = world.isPoisoned(player, poisonContext) ? " poisoned" : "";
+    const poisonSuffix = world.isPoisoned(player, timing) ? " poisoned" : "";
     return apparent !== undefined && apparent !== actual
       ? `  ${player}: ${actual} (appears as ${apparent})${poisonSuffix}`
       : `  ${player}: ${actual}${poisonSuffix}`;

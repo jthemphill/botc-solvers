@@ -34,9 +34,17 @@ export const PLAYERS = [
   new Investigator({ name: "Steph", role: Goblin, among: ["Sarah", "Fraser"] }),
   new Noble({ name: "Aoife", oneEvilAmong: ["Sarah", "Tim", "Matthew"] }),
   new Knight({ name: "Fraser", noDemonAmong: ["You", "Steph"] }),
-  new Juggler({ name: "You" }),
+  new Juggler({
+    timing: "night_2",
+    name: "You",
+  }),
   new Empath({ name: "Sarah", count: 0 }),
-  new Seamstress({ name: "Tim", aligned: true, among: ["You", "Fraser"] }),
+  new Seamstress({
+    timing: "night_1",
+    name: "Tim",
+    aligned: true,
+    among: ["You", "Fraser"],
+  }),
 ];
 
 export const PLAYER_NAMES = playerNames(PLAYERS);

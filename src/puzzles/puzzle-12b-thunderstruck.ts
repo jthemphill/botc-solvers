@@ -26,6 +26,7 @@ import { sameAlignment } from "../predicates";
 
 export const PLAYERS = [
   new Slayer({
+    timing: "day_1",
     name: "Fraser",
     infoClaims: [(game) => game.actualIs("Steph", Vortox).not()],
   }),
@@ -35,13 +36,13 @@ export const PLAYERS = [
       {
         learned: (game) =>
           game.anyOf([game.actualIs("Steph", Lunatic), game.actualIs("Steph", Spy)], "tom_dreamer_info"),
-        falseWhenVortox: true,
+        vortoxAffected: true,
       },
     ],
   }),
   new Clockmaker({
     name: "Aoife",
-    infoClaims: [{ learned: (game) => demonSitsStepsFromMinion(game, 3), falseWhenVortox: true }],
+    infoClaims: [{ learned: (game) => demonSitsStepsFromMinion(game, 3), vortoxAffected: true }],
   }),
   new Courtier({ name: "Steph" }),
   new Librarian({
@@ -54,7 +55,7 @@ export const PLAYERS = [
       {
         learned: (game) =>
           game.anyOf([game.actualIs("Josh", Spy), game.actualIs("Fraser", Spy)], "oscar_investigator_info"),
-        falseWhenVortox: true,
+        vortoxAffected: true,
       },
     ],
   }),
@@ -64,7 +65,7 @@ export const PLAYERS = [
       {
         learned: (game) =>
           game.boolSumEquals([game.isEvil("Oscar"), game.isEvil("Josh")], 1, "anna_empath_exactly_one_evil"),
-        falseWhenVortox: true,
+        vortoxAffected: true,
       },
     ],
   }),
@@ -107,7 +108,7 @@ export async function solve() {
 
 function addInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
   const vortoxDrunk = claim.context as BoolVar;
-  if (!claim.falseWhenVortox) {
+  if (!claim.vortoxAffected) {
     game.addImplication(game.actualIs(claim.player, claim.role), claim.learned);
     return;
   }

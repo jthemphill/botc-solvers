@@ -1,3 +1,4 @@
+import { night } from "../model";
 import { forcedRole, printSolution } from "../display";
 import { type BoolLike, type BOTCModel } from "../model";
 import { differentAlignments } from "../predicates";
@@ -21,31 +22,32 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
 
 export const EVIL_ROLES = [NoDashii, Witch];
-type Night = typeof NIGHT_1 | typeof NIGHT_2;
 interface ClaimContext {
-  readonly malfunctions: Record<Night, BoolLike[]>;
+  readonly malfunctions: Record<string, BoolLike[]>;
 }
 
 export const PLAYERS = [
   new Sage({
+    timing: "night_2",
     name: "Fraser",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game) =>
           game.anyOf([game.actualIs("Jasmine", NoDashii), game.actualIs("Matt", NoDashii)], "fraser_sage_demon_pair"),
       },
     ],
   }),
   new Artist({
+    timing: "day_1",
     name: "Tom",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game) =>
           game.anyOf(
             [game.actualIs("Jasmine", Mutant), game.actualIs("Matt", Mutant), game.actualIs("Aoife", Mutant)],
@@ -58,14 +60,14 @@ export const PLAYERS = [
     name: "Sula",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game, context) =>
-          game.boolSumEquals((context as ClaimContext).malfunctions[NIGHT_1], 0, "sula_mathematician_night_1_0"),
+          game.boolSumEquals((context as ClaimContext).malfunctions[NIGHT_1] ?? [], 0, "sula_mathematician_night_1_0"),
       },
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game, context) =>
-          game.boolSumEquals((context as ClaimContext).malfunctions[NIGHT_2], 1, "sula_mathematician_night_2_1"),
+          game.boolSumEquals((context as ClaimContext).malfunctions[NIGHT_2] ?? [], 1, "sula_mathematician_night_2_1"),
       },
     ],
   }),
@@ -74,7 +76,7 @@ export const PLAYERS = [
     name: "You",
     infoClaims: [
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game) =>
           game.boolSumEquals(
             ["Tom", "Aoife", "Fraser"].map((player) => game.isEvil(player)),
@@ -88,17 +90,17 @@ export const PLAYERS = [
     name: "Jasmine",
     guesses: { You: Witch, Aoife: Witch, Tom: Witch, Fraser: Sage, Hannah: Klutz },
     correctCount: 3,
-    poisonContext: NIGHT_2,
+    timing: "night_2",
   }),
   new Philosopher({
     name: "Matt",
-    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => differentAlignments(game, "Aoife", "Tom") }],
+    infoClaims: [{ timing: "night_1", learned: (game) => differentAlignments(game, "Aoife", "Tom") }],
   }),
   new Seamstress({
     name: "Aoife",
     among: ["Matt", "Hannah"],
     aligned: false,
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
 ];
 export const PLAYER_NAMES = playerNames(PLAYERS);
@@ -159,20 +161,21 @@ export async function solve() {
 }
 
 function addInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
-  const poisonContext = claim.poisonContext as Night;
+  const timing = claim.timing;
+  const timingName = timing;
   if (claim.role === Mathematician) {
     game.addImplication(
       game.allOf(
         [game.actualIs(claim.player, Mathematician), game.noDashiiPoisoned(claim.player).not()],
-        `sula_mathematician_${poisonContext}_active`,
+        `sula_mathematician_${timingName}_active`,
       ),
       claim.learned,
     );
     return;
   }
 
-  const malfunction = game.addNoDashiiInfoClaim(claim.player, claim.role, claim.learned, poisonContext);
-  (claim.context as ClaimContext).malfunctions[poisonContext].push(malfunction);
+  const malfunction = game.addNoDashiiInfoClaim(claim.player, claim.role, claim.learned, timingName, { timing });
+  (claim.context as ClaimContext).malfunctions[timingName]?.push(malfunction);
 }
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-39-squid-game.ts"))

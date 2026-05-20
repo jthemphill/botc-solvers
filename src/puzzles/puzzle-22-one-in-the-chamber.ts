@@ -1,3 +1,4 @@
+import { night, type Timing } from "../model";
 import { CharacterType, type RoleRef } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, type BOTCModel } from "../model";
@@ -24,32 +25,40 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
-export const NIGHT_3 = "night_3";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
+export const NIGHT_3 = night(3);
 
 export const PLAYERS = [
   new Saint({ name: "Tim" }),
   new Recluse({ name: "Fraser" }),
-  new Librarian({ name: "Oscar", role: Drunk, among: ["You", "Sarah"], poisonContext: NIGHT_1 }),
-  new Washerwoman({ name: "Steph", role: Chambermaid, among: ["You", "Aoife"], poisonContext: NIGHT_1 }),
+  new Librarian({ name: "Oscar", role: Drunk, among: ["You", "Sarah"], timing: "night_1" }),
+  new Washerwoman({ name: "Steph", role: Chambermaid, among: ["You", "Aoife"], timing: "night_1" }),
   new Chambermaid({
     name: "You",
     infoClaims: [
-      { poisonContext: NIGHT_1, learned: (game) => chambermaidInfo(game, NIGHT_1, ["Anna", "Steph"], 2) },
-      { poisonContext: NIGHT_2, learned: (game) => chambermaidInfo(game, NIGHT_2, ["Tim", "Steph"], 0) },
-      { poisonContext: NIGHT_3, learned: (game) => chambermaidInfo(game, NIGHT_3, ["Tim", "Steph"], 1) },
+      {
+        timing: "night_1",
+        learned: (game) => chambermaidInfo(game, NIGHT_1, ["Anna", "Steph"], 2),
+      },
+      { timing: "night_2", learned: (game) => chambermaidInfo(game, NIGHT_2, ["Tim", "Steph"], 0) },
+      { timing: "night_3", learned: (game) => chambermaidInfo(game, NIGHT_3, ["Tim", "Steph"], 1) },
     ],
   }),
-  new Investigator({ name: "Anna", role: Baron, among: ["Aoife", "Steph"], poisonContext: NIGHT_1 }),
+  new Investigator({ name: "Anna", role: Baron, among: ["Aoife", "Steph"], timing: "night_1" }),
   new Slayer({
+    timing: "day_1",
     name: "Aoife",
-    infoClaims: [{ poisonContext: NIGHT_3, learned: (game) => isDemonOnDayThree(game, "Tim").not() }],
+    infoClaims: [{ timing: "night_3", learned: (game) => isDemonOnDayThree(game, "Tim").not() }],
   }),
   new Ravenkeeper({
+    timing: "night_2",
     name: "Sarah",
     infoClaims: [
-      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Steph", Washerwoman, "sarah_ravenkeeper") },
+      {
+        timing: "night_2",
+        learned: (game) => game.registersAsRole("Steph", Washerwoman, "sarah_ravenkeeper"),
+      },
     ],
   }),
 ];
@@ -114,21 +123,16 @@ export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
 }
 
-function chambermaidInfo(
-  game: BOTCModel,
-  poisonContext: string,
-  players: readonly [string, string],
-  count: number,
-): BoolVar {
+function chambermaidInfo(game: BOTCModel, timing: Timing, players: readonly [string, string], count: number): BoolVar {
   return game.boolSumEquals(
-    players.map((player) => wokeDueToAbility(game, player, poisonContext)),
+    players.map((player) => wokeDueToAbility(game, player, timing)),
     count,
-    `you_chambermaid_${poisonContext}`,
+    `you_chambermaid_${timing}`,
   );
 }
 
-function wokeDueToAbility(game: BOTCModel, player: string, night: string): BoolVar {
-  if (night === NIGHT_1) {
+function wokeDueToAbility(game: BOTCModel, player: string, timing: Timing): BoolVar {
+  if (timing === NIGHT_1) {
     return game.anyOf(
       [
         ...[Investigator, Librarian, Washerwoman, Chambermaid, Poisoner, Spy].map((role) =>
@@ -139,7 +143,7 @@ function wokeDueToAbility(game: BOTCModel, player: string, night: string): BoolV
       `${player}_woke_n1`,
     );
   }
-  const nightNumber = night === NIGHT_2 ? 2 : 3;
+  const nightNumber = timing === NIGHT_2 ? 2 : 3;
   return game.anyOf(
     [
       isDemonAtNight(game, nightNumber, player),
@@ -249,7 +253,7 @@ function isDemonOnDayThree(game: BOTCModel, player: string): BoolVar {
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-22-one-in-the-chamber.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_3,
+    timing: "night_3",
     forcedRoles: [
       forcedRole("Demon", Imp, { includeRole: true }),
       forcedRole("Minion", MINION_ROLES, { includeRole: true }),

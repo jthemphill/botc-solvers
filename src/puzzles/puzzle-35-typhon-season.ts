@@ -1,3 +1,4 @@
+import { night } from "../model";
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, BOTCModel } from "../model";
@@ -21,16 +22,20 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
 
 const EVIL_ROLES = [Imp, LordOfTyphon, Poisoner, Spy] as const;
 
 export const PLAYERS = [
   new Ravenkeeper({
+    timing: "night_2",
     name: "Oscar",
     infoClaims: [
-      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Sula", Imp, "oscar_ravenkeeper_sula_imp") },
+      {
+        timing: "night_2",
+        learned: (game) => game.registersAsRole("Sula", Imp, "oscar_ravenkeeper_sula_imp"),
+      },
     ],
   }),
   new Saint({ name: "Olivia" }),
@@ -38,7 +43,7 @@ export const PLAYERS = [
     name: "Sarah",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game) =>
           game.anyOf(
             [
@@ -53,15 +58,21 @@ export const PLAYERS = [
   new Empath({
     name: "Jasmine",
     infoClaims: [
-      { poisonContext: NIGHT_1, learned: (game) => empathCount(game, ["Sarah", "You"], 2, "jasmine_empath_n1") },
-      { poisonContext: NIGHT_2, learned: (game) => empathCount(game, ["Sarah", "Tim"], 2, "jasmine_empath_n2") },
+      {
+        timing: "night_1",
+        learned: (game) => empathCount(game, ["Sarah", "You"], 2, "jasmine_empath_n1"),
+      },
+      {
+        timing: "night_2",
+        learned: (game) => empathCount(game, ["Sarah", "Tim"], 2, "jasmine_empath_n2"),
+      },
     ],
   }),
   new Librarian({
     name: "You",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game) =>
           game.anyOf(
             [
@@ -75,19 +86,22 @@ export const PLAYERS = [
   }),
   new Clockmaker({
     name: "Tim",
-    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => demonSitsStepsFromMinion(game, 4) }],
+    infoClaims: [{ timing: "night_1", learned: (game) => demonSitsStepsFromMinion(game, 4) }],
   }),
   new Undertaker({
     name: "Sula",
     infoClaims: [
-      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("You", Spy, "sula_undertaker_you_spy") },
+      {
+        timing: "night_2",
+        learned: (game) => game.registersAsRole("You", Spy, "sula_undertaker_you_spy"),
+      },
     ],
   }),
   new FortuneTeller({
     name: "Fraser",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game, context) =>
           game.allOf(
             [

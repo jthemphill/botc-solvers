@@ -1,3 +1,4 @@
+import { night } from "../model";
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import type { BOTCModel } from "../model";
@@ -23,27 +24,49 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
 
 export const PLAYERS = [
   new Ravenkeeper({
+    timing: "night_2",
     name: "Tim",
     infoClaims: [
-      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Oscar", Librarian, "tim_ravenkeeper") },
+      {
+        timing: "night_2",
+        learned: (game) => game.registersAsRole("Oscar", Librarian, "tim_ravenkeeper"),
+      },
     ],
   }),
   new FortuneTeller({
     name: "Sarah",
     checks: [
-      { left: "You", right: "Oscar", yes: false, demonRole: Imp, registers: true, poisonContext: NIGHT_1 },
-      { left: "You", right: "Jasmine", yes: false, demonRole: Imp, registers: true, poisonContext: NIGHT_2 },
+      {
+        left: "You",
+        right: "Oscar",
+        yes: false,
+        demonRole: Imp,
+        registers: true,
+        timing: "night_1",
+      },
+      {
+        left: "You",
+        right: "Jasmine",
+        yes: false,
+        demonRole: Imp,
+        registers: true,
+        timing: "night_2",
+      },
     ],
   }),
   new Slayer({
+    timing: "day_1",
     name: "Fraser",
     infoClaims: [
-      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Oscar", Imp, "fraser_slayer").not() },
+      {
+        timing: "night_2",
+        learned: (game) => game.registersAsRole("Oscar", Imp, "fraser_slayer").not(),
+      },
     ],
   }),
   new Recluse({ name: "Aoife" }),
@@ -51,13 +74,13 @@ export const PLAYERS = [
     name: "You",
     role: ScarletWoman,
     among: ["Sarah", "Aoife"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
   new Clockmaker({
     name: "Jasmine",
-    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => demonSitsStepsFromMinion(game, 3) }],
+    infoClaims: [{ timing: "night_1", learned: (game) => demonSitsStepsFromMinion(game, 3) }],
   }),
-  new Librarian({ name: "Oscar", outsiderCount: 0, poisonContext: NIGHT_1 }),
+  new Librarian({ name: "Oscar", outsiderCount: 0, timing: "night_1" }),
 ];
 
 export const PLAYER_NAMES = playerNames(PLAYERS);
@@ -123,7 +146,7 @@ function demonSitsStepsFromMinion(game: BOTCModel, steps: number) {
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-13-clockblocking.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_2,
+    timing: "night_2",
     forcedRoles: [
       forcedRole("Demon", Imp, { includeRole: true }),
       forcedRole("Minion", MINION_ROLES, { includeRole: true }),

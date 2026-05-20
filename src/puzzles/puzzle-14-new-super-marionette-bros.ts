@@ -1,3 +1,4 @@
+import { night } from "../model";
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import type { BOTCModel } from "../model";
@@ -23,8 +24,8 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
 
 export const PLAYERS = [
   new FortuneTeller({
@@ -37,25 +38,42 @@ export const PLAYERS = [
         name: "brett_fortune_teller",
         demonRole: Imp,
         registers: true,
-        poisonContext: NIGHT_1,
+        timing: "night_1",
       },
     ],
   }),
   new Empath({
     name: "Rob",
     infoClaims: [
-      { poisonContext: NIGHT_1, learned: (game) => Empath.learnsCount(game, "Rob", 0, "rob_empath_night_1") },
-      { poisonContext: NIGHT_2, learned: (game) => Empath.learnsCount(game, "Rob", 0, "rob_empath_night_2") },
+      {
+        timing: "night_1",
+        learned: (game) => Empath.learnsCount(game, "Rob", 0, "rob_empath_night_1"),
+      },
+      {
+        timing: "night_2",
+        learned: (game) => Empath.learnsCount(game, "Rob", 0, "rob_empath_night_2"),
+      },
     ],
   }),
-  new Chef({ name: "Lav", count: 1, poisonContext: NIGHT_1 }),
-  new Investigator({ name: "Lydia", role: Marionette, among: ["You", "Danielle"], poisonContext: NIGHT_1 }),
-  new Slayer({
-    name: "You",
-    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => game.registersAsRole("Lydia", Imp, "you_slayer").not() }],
+  new Chef({ name: "Lav", count: 1, timing: "night_1" }),
+  new Investigator({
+    name: "Lydia",
+    role: Marionette,
+    among: ["You", "Danielle"],
+    timing: "night_1",
   }),
-  new Washerwoman({ name: "Danielle", role: Empath, among: ["Rob", "Lav"], poisonContext: NIGHT_1 }),
-  new Undertaker({ name: "Gwilym", player: "You", role: Slayer, poisonContext: NIGHT_2 }),
+  new Slayer({
+    timing: "day_1",
+    name: "You",
+    infoClaims: [
+      {
+        timing: "night_1",
+        learned: (game) => game.registersAsRole("Lydia", Imp, "you_slayer").not(),
+      },
+    ],
+  }),
+  new Washerwoman({ name: "Danielle", role: Empath, among: ["Rob", "Lav"], timing: "night_1" }),
+  new Undertaker({ name: "Gwilym", player: "You", role: Slayer, timing: "night_2" }),
 ];
 
 export const PLAYER_NAMES = playerNames(PLAYERS);
@@ -103,7 +121,7 @@ export async function solve() {
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-14-new-super-marionette-bros.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_2,
+    timing: "night_2",
     forcedRoles: [
       forcedRole("Demon", Imp, { includeRole: true }),
       forcedRole("Minion", MINION_ROLES, { includeRole: true }),

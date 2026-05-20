@@ -25,26 +25,33 @@ import {
 export const PLAYERS = [
   new Clockmaker({
     name: "Fraser",
-    infoClaims: [{ learned: (game) => demonSitsStepsFromMinion(game, 3), falseWhenVortox: true }],
+    infoClaims: [{ learned: (game) => demonSitsStepsFromMinion(game, 3), vortoxAffected: true }],
   }),
   new Seamstress({
+    timing: "night_1",
     name: "Aoife",
     among: ["Oscar", "Hannah"],
     infoClaims: [
-      { learned: (game) => Seamstress.learnsDifferentAlignment(game, "Oscar", "Hannah"), falseWhenVortox: true },
+      { learned: (game) => Seamstress.learnsDifferentAlignment(game, "Oscar", "Hannah"), vortoxAffected: true },
     ],
   }),
   new Artist({
+    timing: "day_1",
     name: "Adam",
-    infoClaims: [{ learned: artistInfo, falseWhenVortox: true }],
+    infoClaims: [{ learned: artistInfo, vortoxAffected: true }],
   }),
   new SnakeCharmer({
     name: "Jasmine",
     infoClaims: [(game) => snakeCharmerClaim(game, "Jasmine", ["Fraser", "Aoife", "Adam"], "Hannah")],
   }),
-  new Savant({ name: "You", infoClaims: [savantInfo] }),
+  new Savant({
+    timing: "day_1",
+    name: "You",
+    infoClaims: [savantInfo],
+  }),
   new Klutz({ name: "Oscar" }),
   new Juggler({
+    timing: "night_2",
     name: "Sarah",
     guesses: {
       You: Savant,
@@ -68,7 +75,7 @@ export const PLAYERS = [
             3,
             "sarah_juggler_count",
           ),
-        falseWhenVortox: true,
+        vortoxAffected: true,
       },
     ],
   }),
@@ -136,7 +143,7 @@ function addInfo(game: BOTCModel, claim: AppliedInfoClaim): void {
     [game.actualIs(claim.player, claim.role), noDashiiPoisoned(game, claim.player).not()],
     `${claim.player}_active_info`,
   );
-  if (!claim.falseWhenVortox) {
+  if (!claim.vortoxAffected) {
     game.addImplication(active, claim.learned);
     return;
   }

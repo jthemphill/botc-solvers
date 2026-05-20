@@ -25,68 +25,84 @@ export const PLAYERS = [
   new Clockmaker({
     name: "Sula",
     infoClaims: [
-      { poisonContext: "night_1", learned: (game) => demonSitsStepsFromMinion(game, 3), falseWhenVortox: true },
+      {
+        timing: "night_1",
+        learned: (game) => demonSitsStepsFromMinion(game, 3),
+        vortoxAffected: true,
+      },
     ],
   }),
   new Seamstress({
+    timing: "night_1",
     name: "Sarah",
     infoClaims: [
-      { poisonContext: "night_1", learned: (game) => sameAlignment(game, "Steph", "Aoife"), falseWhenVortox: true },
+      {
+        timing: "night_1",
+        learned: (game) => sameAlignment(game, "Steph", "Aoife"),
+        vortoxAffected: true,
+      },
     ],
   }),
   new Juggler({
+    timing: "night_2",
     name: "Josh",
     infoClaims: [
       {
-        poisonContext: "night_2",
+        timing: "night_2",
         learned: (game) => Juggler.learnsCorrectCount(game, { Steph: Artist, Sula: Clockmaker }, 0, "josh_juggle_zero"),
-        falseWhenVortox: true,
+        vortoxAffected: true,
       },
     ],
   }),
   new SnakeCharmer({
     name: "Aoife",
-    infoClaims: [{ poisonContext: "night_1", learned: (game) => game.isDemon("Josh").not() }],
+    infoClaims: [{ timing: "night_1", learned: (game) => game.isDemon("Josh").not() }],
   }),
   new Mathematician({
     name: "You",
     infoClaims: [
       {
-        poisonContext: "night_1",
+        timing: "night_1",
         learned: (game, context) =>
           game.boolSumEquals(
-            (context as ClaimContext).malfunctions.night_1,
+            (context as ClaimContext).malfunctions.night_1 ?? [],
             1,
             "you_mathematician_night_1_true_count_1",
           ),
-        falseWhenVortox: true,
+        vortoxAffected: true,
       },
       {
-        poisonContext: "night_2",
+        timing: "night_2",
         learned: (game, context) =>
           game.boolSumEquals(
-            (context as ClaimContext).malfunctions.night_2,
+            (context as ClaimContext).malfunctions.night_2 ?? [],
             0,
             "you_mathematician_night_2_true_count_0",
           ),
-        falseWhenVortox: true,
+        vortoxAffected: true,
       },
     ],
   }),
   new Sage({
+    timing: "night_2",
     name: "Fraser",
     infoClaims: [
       {
-        poisonContext: "night_2",
+        timing: "night_2",
         learned: (game) => game.anyOf([game.isDemon("Sarah"), game.isDemon("Josh")], "fraser_sage_pair_has_demon"),
-        falseWhenVortox: true,
+        vortoxAffected: true,
       },
     ],
   }),
   new Artist({
+    timing: "day_1",
     name: "Steph",
     infoClaims: [
-      { poisonContext: "night_2", learned: (game) => game.actualIs("Aoife", NoDashii), falseWhenVortox: true },
+      {
+        timing: "night_2",
+        learned: (game) => game.actualIs("Aoife", NoDashii),
+        vortoxAffected: true,
+      },
     ],
   }),
 ];
@@ -105,9 +121,8 @@ export const CHARACTERS = script(
 );
 export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
-type MathPeriod = "night_1" | "night_2";
 interface ClaimContext {
-  readonly malfunctions: Record<MathPeriod, BoolVar[]>;
+  readonly malfunctions: Record<string, BoolVar[]>;
 }
 
 export function buildModel(backend: SatBackend): BOTCModel {
@@ -139,28 +154,28 @@ export async function solve() {
 }
 
 function addInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
-  const period = claim.poisonContext as MathPeriod;
+  const timing = claim.timing;
   if (claim.role === Mathematician) {
     game.addImplication(
       game.allOf(
         [game.roleInPlay(NoDashii), noDashiiPoisoned(game, claim.player).not()],
-        `you_mathematician_${period}_sober`,
+        `you_mathematician_${timing}_sober`,
       ),
       claim.learned,
     );
     game.addImplication(
       game.allOf(
         [game.roleInPlay(Vortox), game.actualIs(claim.player, Mathematician)],
-        `you_mathematician_${period}_vortox`,
+        `you_mathematician_${timing}_vortox`,
       ),
-      game.not(claim.learned, `you_mathematician_${period}_false_count`),
+      game.not(claim.learned, `you_mathematician_${timing}_false_count`),
     );
     return;
   }
 
   const active = game.actualIs(claim.player, claim.role);
   const noDashiiPoison = noDashiiPoisoned(game, claim.player);
-  if (claim.falseWhenVortox) {
+  if (claim.vortoxAffected) {
     game.addImplication(
       game.allOf(
         [active, game.roleInPlay(NoDashii), noDashiiPoison.not()],
@@ -181,22 +196,22 @@ function addInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
 
   const malfunction = game.anyOf(
     [
-      ...(claim.falseWhenVortox
+      ...(claim.vortoxAffected
         ? [
             game.allOf(
               [active, game.roleInPlay(Vortox)],
-              `${claim.player}_${roleName(claim.role)}_${period}_vortox_malfunction`,
+              `${claim.player}_${roleName(claim.role)}_${timing}_vortox_malfunction`,
             ),
           ]
         : []),
       game.allOf(
         [active, game.roleInPlay(NoDashii), noDashiiPoison],
-        `${claim.player}_${roleName(claim.role)}_${period}_nodashii_malfunction`,
+        `${claim.player}_${roleName(claim.role)}_${timing}_nodashii_malfunction`,
       ),
     ],
-    `${claim.player}_${roleName(claim.role)}_${period}_malfunction`,
+    `${claim.player}_${roleName(claim.role)}_${timing}_malfunction`,
   );
-  (claim.context as ClaimContext).malfunctions[period].push(malfunction);
+  (claim.context as ClaimContext).malfunctions[timing]?.push(malfunction);
 }
 
 function noDashiiPoisoned(game: BOTCModel, player: string): BoolVar {

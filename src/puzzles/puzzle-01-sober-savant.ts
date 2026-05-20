@@ -22,8 +22,14 @@ import { drunkBetweenTwoTownsfolk } from "../predicates";
 export const PLAYERS = [
   new Investigator({ name: "Oscar", minionRole: ScarletWoman, among: ["Anna", "Sula"] }),
   new Noble({ name: "Matt", oneEvilAmong: ["Tim", "Oscar", "Sula"] }),
-  new Seamstress({ name: "Anna", aligned: false, among: ["Oscar", "Sula"] }),
+  new Seamstress({
+    timing: "night_1",
+    name: "Anna",
+    aligned: false,
+    among: ["Oscar", "Sula"],
+  }),
   new Savant({
+    timing: "day_1",
     name: "You",
     statements: [
       (game) => [game.roleInPlay(Investigator), game.sitsNextToEvil("You")],

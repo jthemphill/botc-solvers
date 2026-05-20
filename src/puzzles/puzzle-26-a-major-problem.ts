@@ -1,3 +1,4 @@
+import { night } from "../model";
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, type BOTCModel } from "../model";
@@ -24,26 +25,27 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
-export const NIGHT_3 = "night_3";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
+export const NIGHT_3 = night(3);
 
 export const PLAYERS = [
-  new Librarian({ name: "Matthew", role: Drunk, among: ["You", "Josh"], poisonContext: NIGHT_1 }),
+  new Librarian({ name: "Matthew", role: Drunk, among: ["You", "Josh"], timing: "night_1" }),
   new Soldier({ name: "Josh" }),
   new Undertaker({
     name: "Sula",
     infoClaims: [
-      { poisonContext: NIGHT_2, learned: (game) => game.actualIs("You", Empath) },
-      { poisonContext: NIGHT_3, learned: (game) => game.actualIs("Dan", Slayer) },
+      { timing: "night_2", learned: (game) => game.actualIs("You", Empath) },
+      { timing: "night_3", learned: (game) => game.actualIs("Dan", Slayer) },
     ],
   }),
-  new Chef({ name: "Fraser", count: 2, poisonContext: NIGHT_1 }),
-  new Empath({ name: "You", count: 0, poisonContext: NIGHT_1 }),
+  new Chef({ name: "Fraser", count: 2, timing: "night_1" }),
+  new Empath({ name: "You", count: 0, timing: "night_1" }),
   new Saint({ name: "Olivia" }),
   new Slayer({
+    timing: "day_1",
     name: "Dan",
-    infoClaims: [{ poisonContext: NIGHT_2, learned: (game) => isDemonOnDayTwo(game, "Matthew").not() }],
+    infoClaims: [{ timing: "night_2", learned: (game) => isDemonOnDayTwo(game, "Matthew").not() }],
   }),
   new Recluse({ name: "Tom" }),
 ];
@@ -147,7 +149,7 @@ function isDemonOnNightThree(game: BOTCModel, player: string): BoolVar {
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-26-a-major-problem.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_3,
+    timing: "night_3",
     forcedRoles: [
       forcedRole("Demon", Imp, { includeRole: true }),
       forcedRole("Minion", MINION_ROLES, { includeRole: true }),

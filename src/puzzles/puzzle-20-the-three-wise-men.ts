@@ -1,3 +1,4 @@
+import { night, type Timing } from "../model";
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, type BOTCModel } from "../model";
@@ -23,8 +24,8 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
 export const DRUNK_VILLAGE_IDIOT = "drunk_village_idiot";
 
 const EVIL_ROLES = [Imp, Baron, Poisoner, ScarletWoman, Spy] as const;
@@ -41,7 +42,7 @@ export const PLAYERS = [
     name: "Mary",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game) => game.hasCharacterType("Balthazar", CharacterType.Townsfolk).not(),
       },
     ],
@@ -54,10 +55,11 @@ export const PLAYERS = [
     ],
   }),
   new Ravenkeeper({
+    timing: "night_2",
     name: "Gabriel",
     infoClaims: [
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game) => game.registersAsRole("Balthazar", Drunk, "gabriel_ravenkeeper"),
       },
     ],
@@ -66,7 +68,7 @@ export const PLAYERS = [
     name: "You",
     role: Baron,
     among: ["Mary", "Gabriel"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
   new VillageIdiot({
     name: "Caspar",
@@ -133,9 +135,10 @@ function addVillageIdiotDrunkenness(game: BOTCModel): ReadonlyMap<string, BoolVa
   return drunkVillageIdiots;
 }
 
-function villageIdiotCheck(player: string, poisonContext: string, target: string, evil: boolean): InfoClaim {
+function villageIdiotCheck(player: string, timing: Timing, target: string, evil: boolean): InfoClaim {
+  const nightNumber = timing === NIGHT_1 ? 1 : 2;
   return {
-    poisonContext,
+    timing: `night_${nightNumber}`,
     learned: (game) =>
       evil ? game.registersAsEvil(target, `${player}_${target}`) : game.registersAsGood(target, `${player}_${target}`),
   };
@@ -143,20 +146,14 @@ function villageIdiotCheck(player: string, poisonContext: string, target: string
 
 function addInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
   const drunkVillageIdiots = claim.context as ReadonlyMap<string, BoolVar>;
-  const activeConditions = [
-    game.actualIs(claim.player, claim.role),
-    game.poisoned(claim.player, claim.poisonContext).not(),
-  ];
+  const activeConditions = [game.actualIs(claim.player, claim.role), game.poisoned(claim.player, claim.timing).not()];
   if (claim.role === VillageIdiot) activeConditions.push((drunkVillageIdiots.get(claim.player) as BoolVar).not());
-  game.addImplication(
-    game.allOf(activeConditions, `${claim.player}_${claim.poisonContext ?? "default"}_active_claim`),
-    claim.learned,
-  );
+  game.addImplication(game.allOf(activeConditions, `${claim.player}_${claim.timing}_active_claim`), claim.learned);
 }
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-20-the-three-wise-men.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_2,
+    timing: "night_2",
     forcedRoles: [
       forcedRole("Demon", Imp, { includeRole: true }),
       forcedRole("Minion", MINION_ROLES, { includeRole: true }),

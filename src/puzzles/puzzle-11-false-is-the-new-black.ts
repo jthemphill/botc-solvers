@@ -26,19 +26,21 @@ import { sameAlignment } from "../predicates";
 
 export const PLAYERS = [
   new Artist({
+    timing: "day_1",
     name: "Matthew",
     infoClaims: [
-      { learned: (game) => game.actualIs("You", Clockmaker), falseWhenVortox: true },
-      { role: Seamstress, learned: (game) => sameAlignment(game, "Aoife", "Tom"), falseWhenVortox: true },
+      { learned: (game) => game.actualIs("You", Clockmaker), vortoxAffected: true },
+      { role: Seamstress, learned: (game) => sameAlignment(game, "Aoife", "Tom"), vortoxAffected: true },
     ],
   }),
   new Sage({
+    timing: "night_2",
     name: "Anna",
     infoClaims: [
       {
         learned: (game) =>
           game.anyOf([game.actualIs("Matthew", Vortox), game.actualIs("Hannah", Vortox)], "anna_sage_pair_has_demon"),
-        falseWhenVortox: true,
+        vortoxAffected: true,
       },
     ],
   }),
@@ -56,10 +58,13 @@ export const PLAYERS = [
         ),
     ],
   }),
-  new Artist({ name: "Hannah" }),
+  new Artist({
+    timing: "day_1",
+    name: "Hannah",
+  }),
   new Clockmaker({
     name: "You",
-    infoClaims: [{ learned: (game) => demonSitsStepsFromMinion(game, 2), falseWhenVortox: true }],
+    infoClaims: [{ learned: (game) => demonSitsStepsFromMinion(game, 2), vortoxAffected: true }],
   }),
   new SnakeCharmer({
     name: "Sula",
@@ -86,7 +91,7 @@ export const PLAYERS = [
             ],
             "sarah_dreamer_all_checks",
           ),
-        falseWhenVortox: true,
+        vortoxAffected: true,
       },
     ],
   }),
@@ -145,7 +150,7 @@ export async function solve() {
 function addInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
   game.addImplication(
     game.actualIs(claim.player, claim.role),
-    claim.falseWhenVortox ? game.not(claim.learned, `${claim.player}_${claim.role}_vortox_false`) : claim.learned,
+    claim.vortoxAffected ? game.not(claim.learned, `${claim.player}_${claim.role}_vortox_false`) : claim.learned,
   );
 }
 

@@ -28,10 +28,12 @@ export interface Puzzle30Solution {
 
 export const LEFT_PLAYERS = [
   new Seamstress({
+    timing: "night_1",
     name: "Sarah",
     infoClaims: [(game) => sameAlignment(game, "Oli", "Callum", "sarah_seamstress")],
   }),
   new Artist({
+    timing: "day_1",
     name: "Max",
     infoClaims: [(game) => game.registersAsRole("Erika", Drunk, "max_artist")],
   }),
@@ -59,6 +61,7 @@ export const RIGHT_PLAYERS = [
     infoClaims: [(game) => evilRegisterCount(game, ["Lydia", "Louisa", "Shan"], 1, "owen_noble")],
   }),
   new Seamstress({
+    timing: "night_1",
     name: "Lydia",
     infoClaims: [(game) => sameAlignment(game, "Finn", "Ben", "lydia_seamstress")],
   }),
@@ -68,6 +71,7 @@ export const RIGHT_PLAYERS = [
     infoClaims: [(game) => noDemonAmong(game, ["Lydia", "Shan"], "louisa_knight")],
   }),
   new Artist({
+    timing: "day_1",
     name: "Shan",
     infoClaims: [(game) => game.registersAsRole("Louisa", Drunk, "shan_artist")],
   }),

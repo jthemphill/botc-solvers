@@ -1,3 +1,4 @@
+import { night, type Timing } from "../model";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, type BOTCModel } from "../model";
 import { chefCountRegistersAs } from "../predicates";
@@ -22,9 +23,9 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
-export const NIGHT_3 = "night_3";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
+export const NIGHT_3 = night(3);
 
 export const MINION_ROLES = [Poisoner, Spy, ScarletWoman, Marionette];
 export const PLAYERS = [
@@ -32,29 +33,29 @@ export const PLAYERS = [
     name: "Sula",
     role: Drunk,
     among: ["Jasmine", "Steph"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
   new FortuneTeller({
     name: "Aoife",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game, context) =>
           game.fortuneTellerYes(
             context as ReadonlyMap<string, BoolVar>,
             ["You", "Jasmine"],
             "aoife_ft_you_jasmine_yes",
-            (player) => isDemonAtContext(game, player, NIGHT_1),
+            (player) => isDemonAtTiming(game, player, NIGHT_1),
           ),
       },
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game, context) =>
           game.fortuneTellerNo(
             context as ReadonlyMap<string, BoolVar>,
             ["Jasmine", "Sula"],
             "aoife_ft_jasmine_sula_no",
-            (player) => isDemonAtContext(game, player, NIGHT_2),
+            (player) => isDemonAtTiming(game, player, NIGHT_2),
           ),
       },
     ],
@@ -63,15 +64,15 @@ export const PLAYERS = [
     name: "Fraser",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game) => game.registeredEvilCount(["Jasmine", "Aoife"], 1, "fraser_empath_n1"),
       },
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game) => game.registeredEvilCount(["Jasmine", "Aoife"], 1, "fraser_empath_n2"),
       },
       {
-        poisonContext: NIGHT_3,
+        timing: "night_3",
         learned: (game) => game.registeredEvilCount(["Jasmine", "Steph"], 1, "fraser_empath_n3"),
       },
     ],
@@ -80,24 +81,28 @@ export const PLAYERS = [
   new Undertaker({
     name: "You",
     infoClaims: [
-      { poisonContext: NIGHT_2, learned: (game) => game.actualIs("Matt", Spy) },
-      { poisonContext: NIGHT_3, learned: (game) => game.actualIs("Aoife", Marionette) },
+      { timing: "night_2", learned: (game) => game.actualIs("Matt", Spy) },
+      { timing: "night_3", learned: (game) => game.actualIs("Aoife", Marionette) },
     ],
   }),
   new Washerwoman({
     name: "Matt",
     role: Undertaker,
     among: ["You", "Fraser"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
   new Chef({
     name: "Steph",
-    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => chefCountRegistersAs(game, 1, "steph_chef") }],
+    infoClaims: [{ timing: "night_1", learned: (game) => chefCountRegistersAs(game, 1, "steph_chef") }],
   }),
   new Ravenkeeper({
+    timing: "night_2",
     name: "Adam",
     infoClaims: [
-      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Fraser", Empath, "adam_ravenkeeper") },
+      {
+        timing: "night_2",
+        learned: (game) => game.registersAsRole("Fraser", Empath, "adam_ravenkeeper"),
+      },
     ],
   }),
 ];
@@ -184,9 +189,9 @@ function marionetteNeighborsDemon(game: BOTCModel): BoolVar {
   );
 }
 
-function isDemonAtContext(game: BOTCModel, player: string, poisonContext: string): BoolVar {
-  if (poisonContext === NIGHT_1) return game.actualIs(player, Imp);
-  if (poisonContext === NIGHT_2) return isDemonOnNightTwo(game, player);
+function isDemonAtTiming(game: BOTCModel, player: string, timing: Timing): BoolVar {
+  if (timing === NIGHT_1) return game.actualIs(player, Imp);
+  if (timing === NIGHT_2) return isDemonOnNightTwo(game, player);
   return isDemonOnNightThree(game, player);
 }
 
@@ -236,7 +241,7 @@ function isDemonOnNightThree(game: BOTCModel, player: string): BoolVar {
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-37-new-super-marionette-bros-u.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_3,
+    timing: "night_3",
     forcedRoles: [
       forcedRole("Demon", Imp, { includeRole: true }),
       forcedRole("Minion", MINION_ROLES, { includeRole: true }),

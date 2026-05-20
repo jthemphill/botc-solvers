@@ -24,6 +24,7 @@ import { sameAlignment } from "../predicates";
 
 export const PLAYERS = [
   new Slayer({
+    timing: "day_1",
     name: "Hannah",
     infoClaims: [(game) => game.actualIs("Fraser", Vortox).not()],
   }),
@@ -38,13 +39,13 @@ export const PLAYERS = [
             [game.actualIs("Sarah", Lunatic), game.actualIs("Sarah", ScarletWoman)],
             "you_dreamer_sarah_lunatic_or_scarlet_woman",
           ),
-        falseWhenVortox: true,
+        vortoxAffected: true,
       },
     ],
   }),
   new Clockmaker({
     name: "Tim",
-    infoClaims: [{ learned: (game) => demonSitsStepsFromMinion(game, 2), falseWhenVortox: true }],
+    infoClaims: [{ learned: (game) => demonSitsStepsFromMinion(game, 2), vortoxAffected: true }],
   }),
   new Empath({
     name: "Fraser",
@@ -55,7 +56,7 @@ export const PLAYERS = [
             [registersGoodToEmpath(game, "Tim"), registersGoodToEmpath(game, "Hannah")],
             "fraser_empath_both_good",
           ),
-        falseWhenVortox: true,
+        vortoxAffected: true,
       },
     ],
   }),
@@ -98,7 +99,7 @@ function registersGoodToEmpath(game: BOTCModel, player: string): BoolLike {
 
 function addInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
   const vortoxDrunk = claim.context as BoolVar;
-  if (!claim.falseWhenVortox) {
+  if (!claim.vortoxAffected) {
     game.addImplication(game.actualIs(claim.player, claim.role), claim.learned);
     return;
   }

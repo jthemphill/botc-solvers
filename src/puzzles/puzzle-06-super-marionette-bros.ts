@@ -1,3 +1,4 @@
+import { night } from "../model";
 import { CharacterType, type RoleRef, roleName } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolLike, type BOTCModel } from "../model";
@@ -26,6 +27,7 @@ import {
 export const PLAYERS = [
   new Investigator({ name: "Aoife", role: Marionette, among: ["Dan", "Matthew"] }),
   new Juggler({
+    timing: "night_2",
     name: "Sula",
     guesses: { You: Librarian, Tim: Marionette, Dan: Vortox, Fraser: Drunk, Matthew: Pukka },
     correctCount: 2,
@@ -36,7 +38,12 @@ export const PLAYERS = [
   new Librarian({ name: "You", role: Drunk, among: ["Sula", "Fraser"] }),
   new Saint({ name: "Sarah" }),
   new Noble({ name: "Tim", oneEvilAmong: ["Aoife", "Sula", "Fraser"] }),
-  new Seamstress({ name: "Dan", aligned: false, among: ["Aoife", "Tim"] }),
+  new Seamstress({
+    timing: "night_1",
+    name: "Dan",
+    aligned: false,
+    among: ["Aoife", "Tim"],
+  }),
 ];
 
 export const PLAYER_NAMES = playerNames(PLAYERS);
@@ -57,12 +64,12 @@ export const CHARACTERS = script(
   Steward,
 );
 export const DEMON_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Demon });
-export const NIGHT_1 = "night_1";
+export const NIGHT_1 = night(1);
 export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
   const game = buildPuzzleModel(PUZZLE, backend);
-  game.allowPoisonInContext(NIGHT_1);
+  game.allowPoisonAt(NIGHT_1);
 
   for (const claim of PLAYERS) game.addRoleClaim({ player: claim.name, apparentRole: claim });
   game.setPossibleActualRoles("You", [Librarian, Drunk, Marionette]);
@@ -148,7 +155,7 @@ function addDemonPoisoning(game: BOTCModel): void {
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-06-super-marionette-bros.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_1,
+    timing: "night_1",
     forcedRoles: [
       forcedRole("Demon", DEMON_ROLES, { includeRole: true }),
       forcedRole("Minion", Marionette, { includeRole: true }),

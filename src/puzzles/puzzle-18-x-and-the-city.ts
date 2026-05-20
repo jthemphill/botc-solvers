@@ -49,6 +49,7 @@ export const PLAYERS = [
     ],
   }),
   new Juggler({
+    timing: "night_2",
     name: "Steph",
     infoClaims: [
       nightInfo(2, "steph_juggler_n2", (game) =>
@@ -147,6 +148,7 @@ function addXBranches(game: BOTCModel): XVars {
 
 function nightInfo(night: Night, name: string, info: (game: BOTCModel, context: unknown) => BoolLike): InfoClaim {
   return {
+    timing: `night_${night}`,
     learned: (game, context) => {
       const { x } = context as ClaimContext;
       return game.anyOf([x[night], info(game, context)], name);

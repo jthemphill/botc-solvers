@@ -7,7 +7,7 @@ import {
   roleCharacterType,
   roleName,
 } from "./core";
-import type { BoolLike, BoolVar, BOTCModel } from "./model";
+import { night, type BoolLike, type BoolVar, type BOTCModel, type Timing } from "./model";
 import * as predicates from "./predicates";
 
 export type StatementResult = BoolLike | readonly BoolLike[];
@@ -16,16 +16,20 @@ export type StatementBuilder = StatementResult | StatementFactory;
 export type ClaimPredicate = (game: BOTCModel, context: unknown) => BoolLike;
 export type InfoClaimBuilder = BoolLike | ClaimPredicate | InfoClaim;
 
+interface TimedOptions {
+  readonly timing?: Timing;
+}
+
 export interface InfoClaim {
   readonly role?: RoleRef;
   readonly learned: BoolLike | ClaimPredicate;
-  readonly poisonContext?: string;
-  readonly falseWhenVortox?: boolean;
+  readonly timing?: Timing;
+  readonly vortoxAffected?: boolean;
 }
 
 export interface RoleBaseOptions {
   readonly name: string;
-  readonly poisonContext?: string;
+  readonly timing?: Timing;
   readonly infoClaims?: readonly InfoClaimBuilder[];
 }
 
@@ -33,15 +37,14 @@ export interface AppliedInfoClaim {
   readonly player: string;
   readonly role: RoleRef;
   readonly learned: BoolLike;
-  readonly poisonContext?: string;
-  readonly falseWhenVortox?: boolean;
+  readonly timing: Timing;
+  readonly vortoxAffected?: boolean;
   readonly context?: unknown;
 }
 
 export type ApplyInfoClaim = (game: BOTCModel, claim: AppliedInfoClaim) => void;
 
-export interface ApplyClaimsOptions {
-  readonly poisonContext?: string;
+export interface ApplyClaimsOptions extends TimedOptions {
   readonly drunkRole?: RoleRef;
   readonly evilRoles?: readonly RoleRef[];
   readonly extraPossibleActualRoles?: readonly RoleRef[];
@@ -77,23 +80,18 @@ function resolveInfoClaim(game: BOTCModel, context: unknown, claim: InfoClaim): 
   return typeof claim.learned === "function" ? claim.learned(game, context) : claim.learned;
 }
 
+function explicitTiming(options: TimedOptions): Timing | undefined {
+  return options.timing;
+}
+
 function addDefaultInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
-  if (!claim.falseWhenVortox) {
-    game.addTruthfulInfoClaim(claim.player, claim.role, claim.learned, { poisonContext: claim.poisonContext });
-    return;
-  }
-  const active = game.allOf(
-    [game.actualIs(claim.player, claim.role), game.poisoned(claim.player, claim.poisonContext).not()],
-    `${claim.player}_${roleName(claim.role)}_sober_healthy_claim`,
-  );
-  game.addImplication(
-    game.allOf([active, game.roleInPlay(Vortox)], `${claim.player}_${roleName(claim.role)}_vortox_claim`),
-    game.not(claim.learned, `${claim.player}_${roleName(claim.role)}_vortox_false_claim`),
-  );
-  game.addImplication(
-    game.allOf([active, game.roleInPlay(Vortox).not()], `${claim.player}_${roleName(claim.role)}_normal_claim`),
-    claim.learned,
-  );
+  game.addInfoClaim({
+    player: claim.player,
+    role: claim.role,
+    learned: claim.learned,
+    timing: claim.timing,
+    vortoxAffected: claim.vortoxAffected,
+  });
 }
 
 function learnsRoleAmong(
@@ -149,20 +147,19 @@ export abstract class Role {
   readonly characterType: CharacterType;
   readonly maxCopies?: number;
   readonly name: string;
-  readonly poisonContext?: string;
+  readonly timing?: Timing;
   readonly infoClaims: readonly InfoClaim[];
 
-  constructor(nameOrOptions: string | RoleBaseOptions, options: { readonly poisonContext?: string } = {}) {
+  constructor(nameOrOptions: string | RoleBaseOptions, options: TimedOptions = {}) {
     const resolvedName = typeof nameOrOptions === "string" ? nameOrOptions : nameOrOptions.name;
-    const resolvedPoisonContext =
-      typeof nameOrOptions === "string" ? options.poisonContext : nameOrOptions.poisonContext;
+    const resolvedTiming = typeof nameOrOptions === "string" ? explicitTiming(options) : explicitTiming(nameOrOptions);
     const cls = this.constructor as unknown as RoleClass;
     this.name = resolvedName;
     this.roleName = cls.roleName;
     this.alignment = cls.alignment;
     this.characterType = cls.characterType;
     this.maxCopies = cls.maxCopies;
-    this.poisonContext = resolvedPoisonContext;
+    this.timing = resolvedTiming;
     this.infoClaims = typeof nameOrOptions === "string" ? [] : (nameOrOptions.infoClaims ?? []).map(normalizeInfoClaim);
   }
 
@@ -170,11 +167,15 @@ export abstract class Role {
     this: RoleClass,
     game: BOTCModel,
     player: string,
-    options: { readonly learned?: BoolLike; readonly poisonContext?: string; readonly drunkRole?: RoleRef } = {},
+    options: { readonly learned?: BoolLike; readonly drunkRole?: RoleRef } & TimedOptions = {},
   ): void {
     game.addRoleClaim({ player, apparentRole: this }, { drunkRole: options.drunkRole ?? "Drunk" });
-    if (options.learned !== undefined)
-      game.addTruthfulInfoClaim(player, this, options.learned, { poisonContext: options.poisonContext });
+    if (options.learned !== undefined) {
+      const timing = explicitTiming(options);
+      if (timing === undefined)
+        throw new Error(`${player}'s ${roleName(this)} info claim needs an explicit night or day.`);
+      game.addTruthfulInfoClaim(player, this, options.learned, { timing });
+    }
   }
 
   learnedInfo(_game: BOTCModel): BoolLike | undefined {
@@ -200,17 +201,60 @@ export abstract class Role {
     options: ApplyClaimsOptions = {},
   ): void {
     const applyInfo = options.info ?? addDefaultInfoClaim;
-    for (const claim of claims) {
+    for (const [index, claim] of claims.entries()) {
       const resolvedClaim = normalizeInfoClaim(claim);
+      const timing = this.claimTiming(explicitTiming(resolvedClaim) ?? explicitTiming(options), index);
       applyInfo(game, {
         player: this.name,
         role: resolvedClaim.role ?? role,
         learned: resolveInfoClaim(game, options.context, resolvedClaim),
-        poisonContext: resolvedClaim.poisonContext ?? this.poisonContext ?? options.poisonContext,
-        falseWhenVortox: resolvedClaim.falseWhenVortox,
+        timing,
+        vortoxAffected: resolvedClaim.vortoxAffected,
         context: options.context,
       });
     }
+  }
+
+  protected defaultInfoTiming(_claimIndex: number): Timing | undefined {
+    if (this.timing !== undefined) return this.timing;
+    if (
+      [
+        Balloonist.roleName,
+        Chef.roleName,
+        Clockmaker.roleName,
+        Investigator.roleName,
+        Knight.roleName,
+        Librarian.roleName,
+        Noble.roleName,
+        Shugenja.roleName,
+        Steward.roleName,
+        Washerwoman.roleName,
+      ].includes(this.roleName)
+    ) {
+      return night(1);
+    }
+    if (
+      [
+        Chambermaid.roleName,
+        Dreamer.roleName,
+        Empath.roleName,
+        FortuneTeller.roleName,
+        Mathematician.roleName,
+        SnakeCharmer.roleName,
+        VillageIdiot.roleName,
+      ].includes(this.roleName)
+    ) {
+      return night(_claimIndex + 1);
+    }
+    return undefined;
+  }
+
+  protected claimTiming(timing: Timing | undefined, claimIndex = 0): Timing {
+    const resolved = timing ?? this.defaultInfoTiming(claimIndex);
+    if (resolved === undefined) {
+      throw new Error(`${this.name}'s ${this.roleName} info claim needs an explicit night or day.`);
+    }
+    return resolved;
   }
 
   apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
@@ -634,7 +678,7 @@ export interface FortuneTellerCheck {
   readonly name?: string;
   readonly demonRole?: RoleRef;
   readonly registers?: boolean;
-  readonly poisonContext?: string;
+  readonly timing?: Timing;
 }
 
 export class FortuneTeller extends Role {
@@ -687,7 +731,12 @@ export class FortuneTeller extends Role {
         demonRole: check.demonRole,
         registers: check.registers ?? false,
       });
-      this.applyInfoClaimBuilders(game, FortuneTeller, [{ learned, poisonContext: check.poisonContext }], options);
+      this.applyInfoClaimBuilders(
+        game,
+        FortuneTeller,
+        [{ learned, timing: check.timing ?? night(index + 1) }],
+        options,
+      );
     });
     this.applyInfoClaimBuilders(game, FortuneTeller, this.infoClaims, options);
   }

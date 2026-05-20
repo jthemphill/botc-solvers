@@ -21,6 +21,7 @@ import {
 
 export const PLAYERS = [
   new Ravenkeeper({
+    timing: "night_2",
     name: "Aoife",
     infoClaims: [(game) => game.actualIs("Matt", Investigator)],
   }),
@@ -31,6 +32,7 @@ export const PLAYERS = [
     among: ["Matt", "Fraser"],
   }),
   new Slayer({
+    timing: "day_1",
     name: "Sula",
     infoClaims: [(game) => isDemonOnDayTwo(game, "Matt").not()],
   }),
