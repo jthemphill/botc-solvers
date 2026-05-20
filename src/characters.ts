@@ -173,10 +173,39 @@ export class Goblin extends Role {
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Minion;
 }
+export class Cerenovus extends Role {
+  static readonly roleName = "Cerenovus";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+}
 export class Marionette extends Role {
   static readonly roleName = "Marionette";
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Minion;
+}
+export class PitHag extends Role {
+  static readonly roleName = "Pit-Hag";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+}
+export class EvilTwin extends Role {
+  static readonly roleName = "Evil Twin";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+
+  static pairedWith(game: BOTCModel, evilTwin: string, goodTwin: string, name: string): BoolVar {
+    return game.allOf([game.actualIs(evilTwin, EvilTwin), game.isGood(goodTwin)], name);
+  }
+
+  static pairIsOneOf(game: BOTCModel, pairs: readonly (readonly [string, string])[], name: string): BoolVar {
+    return game.anyOf(
+      pairs.flatMap(([left, right]) => [
+        EvilTwin.pairedWith(game, left, right, `${name}_${slug(left)}_${slug(right)}`),
+        EvilTwin.pairedWith(game, right, left, `${name}_${slug(right)}_${slug(left)}`),
+      ]),
+      name,
+    );
+  }
 }
 export class Poisoner extends Role {
   static readonly roleName = "Poisoner";
@@ -193,8 +222,38 @@ export class Spy extends Role {
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Minion;
 }
+export class Xaan extends Role {
+  static readonly roleName = "Xaan";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+}
+export class Witch extends Role {
+  static readonly roleName = "Witch";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+}
+export class Lunatic extends Role {
+  static readonly roleName = "Lunatic";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
+export class Klutz extends Role {
+  static readonly roleName = "Klutz";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
+export class Puzzlemaster extends Role {
+  static readonly roleName = "Puzzlemaster";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
 export class Drunk extends Role {
   static readonly roleName = "Drunk";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
+export class Butler extends Role {
+  static readonly roleName = "Butler";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Outsider;
 }
@@ -213,6 +272,11 @@ export class Saint extends Role {
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Outsider;
 }
+export class Sweetheart extends Role {
+  static readonly roleName = "Sweetheart";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
 export class Slayer extends Role {
   static readonly roleName = "Slayer";
   static readonly alignment = Alignment.Good;
@@ -221,6 +285,24 @@ export class Slayer extends Role {
 
 export class Alsaahir extends Role {
   static readonly roleName = "Alsaahir";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Artist extends Role {
+  static readonly roleName = "Artist";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Atheist extends Role {
+  static readonly roleName = "Atheist";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Philosopher extends Role {
+  static readonly roleName = "Philosopher";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
 }
@@ -237,6 +319,12 @@ export class Gambler extends Role {
   static readonly characterType = CharacterType.Townsfolk;
 }
 
+export class Mathematician extends Role {
+  static readonly roleName = "Mathematician";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
 export class Gossip extends Role {
   static readonly roleName = "Gossip";
   static readonly alignment = Alignment.Good;
@@ -245,6 +333,23 @@ export class Gossip extends Role {
 
 export class Ravenkeeper extends Role {
   static readonly roleName = "Ravenkeeper";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Sage extends Role {
+  static readonly roleName = "Sage";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class SnakeCharmer extends Role {
+  static readonly roleName = "Snake Charmer";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+export class Soldier extends Role {
+  static readonly roleName = "Soldier";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
 }
@@ -312,6 +417,12 @@ export class Chef extends Role {
   }
 }
 
+export class Chambermaid extends Role {
+  static readonly roleName = "Chambermaid";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
 export class Clockmaker extends Role {
   static readonly roleName = "Clockmaker";
   static readonly alignment = Alignment.Good;
@@ -349,6 +460,12 @@ export class Clockmaker extends Role {
       ? claim
       : game.not(claim, claimName(this.name, Clockmaker, "demon_not_next_to_minion"));
   }
+}
+
+export class Courtier extends Role {
+  static readonly roleName = "Courtier";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
 }
 
 export class Dreamer extends Role {
@@ -676,6 +793,12 @@ export class VillageIdiot extends Role {
   }
 }
 
+export class Virgin extends Role {
+  static readonly roleName = "Virgin";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
 export class Librarian extends Role {
   static readonly roleName = "Librarian";
   static readonly alignment = Alignment.Good;
@@ -735,6 +858,18 @@ export class Librarian extends Role {
   }
 }
 
+export class Legionary extends Role {
+  static readonly roleName = "Legionary";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Mayor extends Role {
+  static readonly roleName = "Mayor";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
 export class Noble extends Role {
   static readonly roleName = "Noble";
   static readonly alignment = Alignment.Good;
@@ -761,6 +896,18 @@ export class Noble extends Role {
     if (this.oneEvilAmong.length > 0) return Noble.learnsEvilCount(game, this.oneEvilAmong, 1);
     return this.evilCount === undefined ? undefined : Noble.learnsEvilCount(game, this.among, this.evilCount);
   }
+}
+
+export class Oracle extends Role {
+  static readonly roleName = "Oracle";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Nightwatchman extends Role {
+  static readonly roleName = "Nightwatchman";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
 }
 
 export class Savant extends Role {

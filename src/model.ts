@@ -217,6 +217,10 @@ export class BOTCModel {
     this.addFalse(this.actualIs(player, role));
   }
 
+  addDrunkThinksOutOfPlayRole(player: string, apparentRole: RoleRef, drunkRole: RoleRef): void {
+    this.addImplication(this.actualIs(player, drunkRole), this.roleInPlay(apparentRole).not());
+  }
+
   fixPoisoned(player: string, value: boolean, context?: string): void {
     const poisonContext = this.poisonContext(context);
     this.addClause([value ? this.poisoned(player, poisonContext).lit : this.poisoned(player, poisonContext).not()]);
