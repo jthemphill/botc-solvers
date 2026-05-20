@@ -1,4 +1,3 @@
-import { CharacterType, type RoleRef } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, BOTCModel } from "../model";
 import { chefCountRegistersAs } from "../predicates";
@@ -54,14 +53,14 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.setCharacterCount(Drunk, 1);
   game.addImplication(game.roleInPlay(Marionette), marionetteNeighborsDemon(game));
 
-  addClaim(game, "Sula", Librarian, [Librarian, Drunk, Imp, ...MINION_ROLES]);
-  addClaim(game, "Aoife", FortuneTeller, [FortuneTeller, Drunk, Imp, ...MINION_ROLES]);
-  addClaim(game, "Fraser", Empath, [Empath, Drunk, Imp, ...MINION_ROLES]);
-  addClaim(game, "Jasmine", Imp, [Imp, ...MINION_ROLES]);
-  addClaim(game, "You", Undertaker, [Undertaker, Drunk, Marionette]);
-  addClaim(game, "Matt", Washerwoman, [Washerwoman, Drunk, Imp, ...MINION_ROLES]);
-  addClaim(game, "Steph", Chef, [Chef, Drunk, Imp, ...MINION_ROLES]);
-  addClaim(game, "Adam", Ravenkeeper, [Ravenkeeper, Drunk, Imp, ...MINION_ROLES]);
+  game.addClaim("Sula", Librarian, [Librarian, Drunk, Imp, ...MINION_ROLES]);
+  game.addClaim("Aoife", FortuneTeller, [FortuneTeller, Drunk, Imp, ...MINION_ROLES]);
+  game.addClaim("Fraser", Empath, [Empath, Drunk, Imp, ...MINION_ROLES]);
+  game.addClaim("Jasmine", Imp, [Imp, ...MINION_ROLES]);
+  game.addClaim("You", Undertaker, [Undertaker, Drunk, Marionette]);
+  game.addClaim("Matt", Washerwoman, [Washerwoman, Drunk, Imp, ...MINION_ROLES]);
+  game.addClaim("Steph", Chef, [Chef, Drunk, Imp, ...MINION_ROLES]);
+  game.addClaim("Adam", Ravenkeeper, [Ravenkeeper, Drunk, Imp, ...MINION_ROLES]);
 
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2, {
@@ -84,7 +83,7 @@ export function buildModel(backend: SatBackend): BOTCModel {
     ),
   });
 
-  const redHerrings = addFortuneTellerRedHerring(game);
+  const redHerrings = game.addFortuneTellerRedHerring("Aoife");
 
   game.addTruthfulInfoClaim(
     "Sula",
@@ -95,22 +94,26 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.addTruthfulInfoClaim(
     "Aoife",
     FortuneTeller,
-    fortuneTellerYes(game, redHerrings, NIGHT_1, ["You", "Jasmine"], "aoife_ft_you_jasmine_yes"),
+    game.fortuneTellerYes(redHerrings, ["You", "Jasmine"], "aoife_ft_you_jasmine_yes", (player) =>
+      isDemonAtContext(game, player, NIGHT_1),
+    ),
     { poisonContext: NIGHT_1 },
   );
   game.addTruthfulInfoClaim(
     "Aoife",
     FortuneTeller,
-    fortuneTellerNo(game, redHerrings, NIGHT_2, ["Jasmine", "Sula"], "aoife_ft_jasmine_sula_no"),
+    game.fortuneTellerNo(redHerrings, ["Jasmine", "Sula"], "aoife_ft_jasmine_sula_no", (player) =>
+      isDemonAtContext(game, player, NIGHT_2),
+    ),
     { poisonContext: NIGHT_2 },
   );
-  game.addTruthfulInfoClaim("Fraser", Empath, empathCount(game, ["Jasmine", "Aoife"], 1, "fraser_empath_n1"), {
+  game.addTruthfulInfoClaim("Fraser", Empath, game.registeredEvilCount(["Jasmine", "Aoife"], 1, "fraser_empath_n1"), {
     poisonContext: NIGHT_1,
   });
-  game.addTruthfulInfoClaim("Fraser", Empath, empathCount(game, ["Jasmine", "Aoife"], 1, "fraser_empath_n2"), {
+  game.addTruthfulInfoClaim("Fraser", Empath, game.registeredEvilCount(["Jasmine", "Aoife"], 1, "fraser_empath_n2"), {
     poisonContext: NIGHT_2,
   });
-  game.addTruthfulInfoClaim("Fraser", Empath, empathCount(game, ["Jasmine", "Steph"], 1, "fraser_empath_n3"), {
+  game.addTruthfulInfoClaim("Fraser", Empath, game.registeredEvilCount(["Jasmine", "Steph"], 1, "fraser_empath_n3"), {
     poisonContext: NIGHT_3,
   });
   game.addTruthfulInfoClaim("You", Undertaker, game.actualIs("Matt", Spy), { poisonContext: NIGHT_2 });
@@ -146,12 +149,6 @@ export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
 }
 
-function addClaim(game: BOTCModel, player: string, apparentRole: RoleRef, possibleRoles: readonly RoleRef[]): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(player, possibleRoles);
-  if (possibleRoles.includes(Drunk)) game.addDrunkThinksOutOfPlayRole(player, apparentRole, Drunk);
-}
-
 function marionetteNeighborsDemon(game: BOTCModel): BoolVar {
   return game.anyOf(
     PLAYER_NAMES.map((player) => {
@@ -166,52 +163,6 @@ function marionetteNeighborsDemon(game: BOTCModel): BoolVar {
     }),
     "marionette_neighbors_demon",
   );
-}
-
-function empathCount(game: BOTCModel, players: readonly string[], count: number, name: string): BoolVar {
-  return game.boolSumEquals(
-    players.map((player) => game.registersAsEvil(player, `${name}_${player}`)),
-    count,
-    name,
-  );
-}
-
-function addFortuneTellerRedHerring(game: BOTCModel): ReadonlyMap<string, BoolVar> {
-  const entries = PLAYER_NAMES.map((player) => [player, game.newBool(`${player}_fortune_teller_red_herring`)] as const);
-  const redHerrings = new Map(entries);
-  game.addEnforcedExactlyN(
-    entries.map(([, variable]) => variable),
-    1,
-    game.actualIs("Aoife", FortuneTeller),
-  );
-  for (const [player, redHerring] of entries) game.addImplication(redHerring, game.isGood(player));
-  return redHerrings;
-}
-
-function fortuneTellerYes(
-  game: BOTCModel,
-  redHerrings: ReadonlyMap<string, BoolVar>,
-  poisonContext: string,
-  players: readonly [string, string],
-  name: string,
-): BoolVar {
-  return game.anyOf(
-    [
-      ...players.map((player) => isDemonAtContext(game, player, poisonContext)),
-      ...players.map((player) => redHerrings.get(player) as BoolVar),
-    ],
-    name,
-  );
-}
-
-function fortuneTellerNo(
-  game: BOTCModel,
-  redHerrings: ReadonlyMap<string, BoolVar>,
-  poisonContext: string,
-  players: readonly [string, string],
-  name: string,
-): BoolVar {
-  return game.not(fortuneTellerYes(game, redHerrings, poisonContext, players, `${name}_yes`), name);
 }
 
 function isDemonAtContext(game: BOTCModel, player: string, poisonContext: string): BoolVar {

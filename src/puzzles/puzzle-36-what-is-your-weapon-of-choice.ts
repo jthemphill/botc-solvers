@@ -1,4 +1,3 @@
-import { CharacterType, type RoleRef } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
@@ -50,19 +49,18 @@ export function buildModel(backend: SatBackend): BOTCModel {
     PLAYER_NAMES.map((player) => game.isMinion(player)),
     1,
   );
-  game.addImplication(game.roleInPlay(Baron), outsiderCount(game, 3));
-  game.addImplication(game.roleInPlay(Baron).not(), outsiderCount(game, 1));
+  game.addBaronOutsiderCounts({ withoutBaron: 1, withBaron: 3 });
   game.fixNotActual("You", Imp);
   for (const minion of MINION_ROLES) game.fixNotActual("You", minion);
 
-  addClaim(game, "Sula", Investigator, [Investigator, Drunk, Imp, ...MINION_ROLES]);
-  addClaim(game, "Olivia", FortuneTeller, [FortuneTeller, Drunk, Imp, ...MINION_ROLES]);
-  addClaim(game, "Fraser", Recluse, [Recluse, Imp, ...MINION_ROLES]);
-  addClaim(game, "Oscar", Slayer, [Slayer, Drunk, Imp, ...MINION_ROLES]);
-  addClaim(game, "You", Empath, [Empath, Drunk]);
-  addClaim(game, "Steph", Saint, [Saint, Imp, ...MINION_ROLES]);
-  addClaim(game, "Adam", Slayer, [Slayer, Drunk, Imp, ...MINION_ROLES]);
-  addClaim(game, "Josh", Ravenkeeper, [Ravenkeeper, Drunk, Imp, ...MINION_ROLES]);
+  game.addClaim("Sula", Investigator, [Investigator, Drunk, Imp, ...MINION_ROLES]);
+  game.addClaim("Olivia", FortuneTeller, [FortuneTeller, Drunk, Imp, ...MINION_ROLES]);
+  game.addClaim("Fraser", Recluse, [Recluse, Imp, ...MINION_ROLES]);
+  game.addClaim("Oscar", Slayer, [Slayer, Drunk, Imp, ...MINION_ROLES]);
+  game.addClaim("You", Empath, [Empath, Drunk]);
+  game.addClaim("Steph", Saint, [Saint, Imp, ...MINION_ROLES]);
+  game.addClaim("Adam", Slayer, [Slayer, Drunk, Imp, ...MINION_ROLES]);
+  game.addClaim("Josh", Ravenkeeper, [Ravenkeeper, Drunk, Imp, ...MINION_ROLES]);
 
   game.addPoisonerEffect(NIGHT_1);
   game.addPoisonerEffect(NIGHT_2);
@@ -73,7 +71,7 @@ export function buildModel(backend: SatBackend): BOTCModel {
     ),
   });
 
-  const redHerrings = addFortuneTellerRedHerring(game);
+  const redHerrings = game.addFortuneTellerRedHerring("Olivia");
 
   game.addTruthfulInfoClaim(
     "Sula",
@@ -84,16 +82,20 @@ export function buildModel(backend: SatBackend): BOTCModel {
   game.addTruthfulInfoClaim(
     "Olivia",
     FortuneTeller,
-    fortuneTellerNo(game, redHerrings, NIGHT_1, ["Josh", "Oscar"], "olivia_ft_josh_oscar_no"),
+    game.fortuneTellerNo(redHerrings, ["Josh", "Oscar"], "olivia_ft_josh_oscar_no", (player) =>
+      isDemonAtContext(game, player, NIGHT_1),
+    ),
     { poisonContext: NIGHT_1 },
   );
   game.addTruthfulInfoClaim(
     "Olivia",
     FortuneTeller,
-    fortuneTellerNo(game, redHerrings, NIGHT_2, ["Adam", "Oscar"], "olivia_ft_adam_oscar_no"),
+    game.fortuneTellerNo(redHerrings, ["Adam", "Oscar"], "olivia_ft_adam_oscar_no", (player) =>
+      isDemonAtContext(game, player, NIGHT_2),
+    ),
     { poisonContext: NIGHT_2 },
   );
-  game.addTruthfulInfoClaim("You", Empath, empathCount(game, ["Oscar", "Steph"], 1, "you_empath_n1"), {
+  game.addTruthfulInfoClaim("You", Empath, game.registeredEvilCount(["Oscar", "Steph"], 1, "you_empath_n1"), {
     poisonContext: NIGHT_1,
   });
   game.addTruthfulInfoClaim("Josh", Ravenkeeper, game.actualIs("Adam", ScarletWoman), {
@@ -123,59 +125,6 @@ export function buildModel(backend: SatBackend): BOTCModel {
 
 export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
-}
-
-function addClaim(game: BOTCModel, player: string, apparentRole: RoleRef, possibleRoles: readonly RoleRef[]): void {
-  game.setApparentRole(player, apparentRole);
-  game.setPossibleActualRoles(player, possibleRoles);
-  if (possibleRoles.includes(Drunk)) game.addDrunkThinksOutOfPlayRole(player, apparentRole, Drunk);
-}
-
-function outsiderCount(game: BOTCModel, count: number): BoolVar {
-  return game.boolSumEquals(
-    PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider)),
-    count,
-    `outsider_count_${count}`,
-  );
-}
-
-function empathCount(game: BOTCModel, players: readonly string[], count: number, name: string): BoolVar {
-  return game.boolSumEquals(
-    players.map((player) => game.registersAsEvil(player, `${name}_${player}`)),
-    count,
-    name,
-  );
-}
-
-function addFortuneTellerRedHerring(game: BOTCModel): ReadonlyMap<string, BoolVar> {
-  const entries = PLAYER_NAMES.map((player) => [player, game.newBool(`${player}_fortune_teller_red_herring`)] as const);
-  const redHerrings = new Map(entries);
-  game.addEnforcedExactlyN(
-    entries.map(([, variable]) => variable),
-    1,
-    game.actualIs("Olivia", FortuneTeller),
-  );
-  for (const [player, redHerring] of entries) game.addImplication(redHerring, game.isGood(player));
-  return redHerrings;
-}
-
-function fortuneTellerNo(
-  game: BOTCModel,
-  redHerrings: ReadonlyMap<string, BoolVar>,
-  poisonContext: string,
-  players: readonly [string, string],
-  name: string,
-): BoolVar {
-  return game.not(
-    game.anyOf(
-      [
-        ...players.map((player) => isDemonAtContext(game, player, poisonContext)),
-        ...players.map((player) => redHerrings.get(player) as BoolVar),
-      ],
-      `${name}_yes`,
-    ),
-    name,
-  );
 }
 
 function isDemonAtContext(game: BOTCModel, player: string, poisonContext: string): BoolVar {
