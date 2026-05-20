@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, test } from "bun:test";
-import { CharacterType } from "../src/core";
-import { formatSolution, forcedRole } from "../src/display";
-import { BOTCModel } from "../src/model";
+import { CharacterType } from "./core";
+import { formatSolution, forcedRole } from "./display";
+import { BOTCModel } from "./model";
 import {
   Chef,
   Drunk,
@@ -19,10 +19,10 @@ import {
   VillageIdiot,
   applyClaims,
   script,
-} from "../src/characters";
-import { chefCountRegistersAs, drunkBetweenTwoTownsfolk, registersAsRoleAmong } from "../src/predicates";
-import { World } from "../src/model";
-import { KissatBackend, type SatBackend } from "../src/sat";
+} from "./characters";
+import { chefCountRegistersAs, drunkBetweenTwoTownsfolk, registersAsRoleAmong } from "./predicates";
+import { World } from "./model";
+import { KissatBackend, type SatBackend } from "./sat";
 
 const TEST_CHARACTERS = script(Imp, ScarletWoman, Drunk, Recluse, Investigator, Noble);
 const POISON_CHARACTERS = script(Imp, Poisoner, Investigator);
