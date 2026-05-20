@@ -1,7 +1,8 @@
 import { Alignment, CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { BOTCModel } from "../model";
+import type { BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
+import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
   Baron,
   Chef,
@@ -49,19 +50,11 @@ export const CHARACTERS = script(
 );
 export const MINION_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Minion });
 export const POISON_CONTEXT = "day_1";
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
-  game.setCharacterCount(Imp, 1);
-  game.addExactlyN(
-    PLAYER_NAMES.map((player) => game.isMinion(player)),
-    1,
-  );
+  const game = buildPuzzleModel(PUZZLE, backend);
   game.addFalse(game.isEvil("You"));
-  const outsiderCount = PLAYER_NAMES.map((player) => game.hasCharacterType(player, CharacterType.Outsider));
-  const baronInPlay = game.roleInPlay(Baron);
-  game.addEnforcedExactlyN(outsiderCount, 2, baronInPlay);
-  game.addEnforcedExactlyN(outsiderCount, 0, baronInPlay.not());
   game.addPoisonerEffect(POISON_CONTEXT);
   applyClaims(game, PLAYERS, { poisonContext: POISON_CONTEXT });
   game.addTruth(game.actualIs("You", Slayer));

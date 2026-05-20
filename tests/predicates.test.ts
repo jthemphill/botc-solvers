@@ -16,6 +16,7 @@ import {
   Savant,
   ScarletWoman,
   Spy,
+  VillageIdiot,
   applyClaims,
   script,
 } from "../src/characters";
@@ -131,6 +132,25 @@ describe("predicates and helpers", () => {
     expect(await savant.solveAll({ limit: 1 })).toEqual([]);
   });
 
+  test("village idiot can have up to three copies under default uniqueness", async () => {
+    const threeVillageIdiots = new BOTCModel(["A", "B", "C", "D"], {
+      characters: script(Imp, VillageIdiot, Chef, Empath),
+      backend,
+    });
+    threeVillageIdiots.fixActual("A", VillageIdiot);
+    threeVillageIdiots.fixActual("B", VillageIdiot);
+    threeVillageIdiots.fixActual("C", VillageIdiot);
+    threeVillageIdiots.fixActual("D", Imp);
+    expect(await threeVillageIdiots.solveAll({ limit: 1 })).toHaveLength(1);
+
+    const fourVillageIdiots = new BOTCModel(["A", "B", "C", "D"], {
+      characters: script(Imp, VillageIdiot, Chef, Empath),
+      backend,
+    });
+    for (const player of fourVillageIdiots.players) fourVillageIdiots.fixActual(player, VillageIdiot);
+    expect(await fourVillageIdiots.solveAll({ limit: 1 })).toEqual([]);
+  });
+
   test("display formatting", () => {
     const world = new World(
       new Map([
@@ -153,5 +173,21 @@ describe("predicates and helpers", () => {
     ).toBe(
       "1 satisfying world(s)\n\nWorld 1\n  Alice: Imp (appears as Fortune Teller)\n  Bob: Drunk poisoned\n\nForced facts\n  Demon: Alice (Imp)\n  Drunk: Bob",
     );
+    const alternateDemon = new World(
+      new Map([
+        ["Alice", "Po"],
+        ["Bob", "Drunk"],
+      ]),
+      new Map(),
+      new Set(),
+      ["Alice", "Bob"],
+    );
+    expect(
+      formatSolution([world, alternateDemon], ["Alice", "Bob"], {
+        forcedRoles: [forcedRole("Demon", ["Imp", "Po"])],
+      })
+        .split("\n")
+        .at(-1),
+    ).toBe("  Demon: Alice");
   });
 });

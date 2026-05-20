@@ -5,6 +5,7 @@ import {
   type RoleRef,
   roleAlignment,
   roleCharacterType,
+  roleMaxCopies,
   roleName,
 } from "./core";
 import { type Clause, type Literal, type SatBackend, combinations, negate } from "./sat";
@@ -34,6 +35,8 @@ export class BoolVar {
 }
 
 export type BoolLike = BoolVar | Literal;
+export type RedHerrings = ReadonlyMap<string, BoolVar>;
+export type DemonPredicate = (player: string, name: string) => BoolLike;
 
 function lit(value: BoolLike): Literal {
   return typeof value === "number" ? value : value.lit;
@@ -78,6 +81,7 @@ export class BOTCModel {
   readonly players: string[];
   readonly seating: string[];
   readonly characters: ReadonlyMap<string, RoleRef>;
+  readonly uniqueCharacters: boolean;
   readonly apparentRoles = new Map<string, string>();
   readonly poisonContexts = new Set<string>();
 
@@ -112,6 +116,7 @@ export class BOTCModel {
     for (const character of options.characters) chars.set(roleName(character), character);
     if (chars.size !== options.characters.length) throw new Error("Character names must be unique.");
     this.characters = chars;
+    this.uniqueCharacters = options.uniqueCharacters ?? true;
     this.backend = options.backend;
 
     for (const player of this.players) {
@@ -121,11 +126,11 @@ export class BOTCModel {
     }
     for (const player of this.players)
       this.addExactlyOne([...this.characters.keys()].map((role) => this.actualIs(player, role)));
-    if (options.uniqueCharacters ?? true) {
+    if (this.uniqueCharacters) {
       for (const role of this.characters.keys())
         this.addAtMostN(
           this.players.map((player) => this.actualIs(player, role)),
-          1,
+          roleMaxCopies(this.characters.get(role) as RoleRef),
         );
     }
   }
@@ -179,7 +184,11 @@ export class BOTCModel {
 
   addRoleClaim(
     claim: RoleClaim,
-    options: { readonly evilRoles?: readonly RoleRef[]; readonly drunkRole?: RoleRef } = {},
+    options: {
+      readonly evilRoles?: readonly RoleRef[];
+      readonly drunkRole?: RoleRef;
+      readonly extraPossibleActualRoles?: readonly RoleRef[];
+    } = {},
   ): void {
     const apparentRole = roleName(claim.apparentRole);
     this.setApparentRole(claim.player, apparentRole);
@@ -188,10 +197,32 @@ export class BOTCModel {
       [...this.characters.entries()]
         .filter(([, character]) => roleAlignment(character) === Alignment.Evil)
         .map(([role]) => role);
-    const possibleRoles = [apparentRole, ...evilRoles.map(roleName)];
-    if (roleCharacterType(this.characters.get(apparentRole) as RoleRef) === CharacterType.Townsfolk)
-      possibleRoles.push(roleName(options.drunkRole ?? "Drunk"));
+    const possibleRoles = [
+      apparentRole,
+      ...evilRoles.map(roleName),
+      ...(options.extraPossibleActualRoles ?? []).map(roleName),
+    ];
+    const drunkRole = roleName(options.drunkRole ?? "Drunk");
+    const claimedTownsfolk =
+      roleCharacterType(this.characters.get(apparentRole) as RoleRef) === CharacterType.Townsfolk;
+    if (claimedTownsfolk && this.characters.has(drunkRole)) possibleRoles.push(drunkRole);
     this.setPossibleActualRoles(claim.player, possibleRoles);
+    if (claimedTownsfolk && this.characters.has(drunkRole))
+      this.addDrunkThinksOutOfPlayRole(claim.player, apparentRole, drunkRole);
+  }
+
+  addClaim(
+    player: string,
+    apparentRole: RoleRef,
+    possibleRoles: readonly RoleRef[],
+    options: { readonly drunkRole?: RoleRef } = {},
+  ): void {
+    const apparentRoleRef = roleName(apparentRole);
+    const drunkRole = options.drunkRole ?? "Drunk";
+    this.setApparentRole(player, apparentRoleRef);
+    this.setPossibleActualRoles(player, possibleRoles);
+    if (possibleRoles.some((role) => roleName(role) === roleName(drunkRole)))
+      this.addDrunkThinksOutOfPlayRole(player, apparentRoleRef, drunkRole);
   }
 
   setPossibleActualRoles(player: string, roles: readonly RoleRef[]): void {
@@ -207,6 +238,39 @@ export class BOTCModel {
 
   fixNotActual(player: string, role: RoleRef): void {
     this.addFalse(this.actualIs(player, role));
+  }
+
+  addDrunkThinksOutOfPlayRole(player: string, apparentRole: RoleRef, drunkRole: RoleRef): void {
+    if (!this.uniqueCharacters) return;
+    this.addImplication(this.actualIs(player, drunkRole), this.roleInPlay(apparentRole).not());
+  }
+
+  forceOutsiderCount(
+    count: number,
+    options: { readonly players?: readonly string[]; readonly name?: string } = {},
+  ): void {
+    this.addTruth(this.outsiderCountIs(count, options));
+  }
+
+  outsiderCountIs(
+    count: number,
+    options: { readonly players?: readonly string[]; readonly name?: string } = {},
+  ): BoolVar {
+    const players = options.players ?? this.players;
+    return this.boolSumEquals(
+      players.map((player) => this.hasCharacterType(player, CharacterType.Outsider)),
+      count,
+      options.name ?? `outsider_count_${count}`,
+    );
+  }
+
+  addBaronOutsiderCounts(
+    counts: { readonly withoutBaron: number; readonly withBaron: number },
+    options: { readonly players?: readonly string[]; readonly baronRole?: RoleRef } = {},
+  ): void {
+    const baronRole = options.baronRole ?? "Baron";
+    this.addImplication(this.roleInPlay(baronRole), this.outsiderCountIs(counts.withBaron, options));
+    this.addImplication(this.roleInPlay(baronRole).not(), this.outsiderCountIs(counts.withoutBaron, options));
   }
 
   fixPoisoned(player: string, value: boolean, context?: string): void {
@@ -240,6 +304,12 @@ export class BOTCModel {
     }
     this.addEnforcedExactlyN(poisoned, 1, poisonerActive);
     this.addEnforcedExactlyN(poisoned, 0, poisonerActive.not());
+  }
+
+  allowPoisonInContext(context?: string): void {
+    const poisonContext = this.poisonContext(context);
+    this.poisonSourceContexts.add(poisonContext);
+    this.poisonContexts.add(poisonContext);
   }
 
   setCharacterCount(role: RoleRef, count: number): void {
@@ -412,6 +482,54 @@ export class BOTCModel {
     return result;
   }
 
+  registeredEvilCount(players: readonly string[], count: number, name: string): BoolVar {
+    return this.boolSumEquals(
+      players.map((player) => this.registersAsEvil(player, `${name}_${player}`)),
+      count,
+      name,
+    );
+  }
+
+  addFortuneTellerRedHerring(
+    fortuneTeller: string,
+    options: { readonly players?: readonly string[]; readonly fortuneTellerRole?: RoleRef } = {},
+  ): RedHerrings {
+    const players = options.players ?? this.players;
+    const fortuneTellerRole = options.fortuneTellerRole ?? "Fortune Teller";
+    const entries = players.map((player) => [player, this.newBool(`${player}_fortune_teller_red_herring`)] as const);
+    const redHerrings = new Map(entries);
+    this.addEnforcedExactlyN(
+      entries.map(([, variable]) => variable),
+      1,
+      this.actualIs(fortuneTeller, fortuneTellerRole),
+    );
+    for (const [player, redHerring] of entries) this.addImplication(redHerring, this.isGood(player));
+    return redHerrings;
+  }
+
+  fortuneTellerYes(
+    redHerrings: RedHerrings,
+    players: readonly [string, string],
+    name: string,
+    isDemon: DemonPredicate = (player, predicateName) => this.registersAsRole(player, "Imp", predicateName),
+  ): BoolVar {
+    const checkedRedHerrings = players.map((player) => {
+      const redHerring = redHerrings.get(player);
+      if (redHerring === undefined) throw new KeyError(`No Fortune Teller red herring variable for ${player}.`);
+      return redHerring;
+    });
+    return this.anyOf([...players.map((player) => isDemon(player, `${name}_${player}`)), ...checkedRedHerrings], name);
+  }
+
+  fortuneTellerNo(
+    redHerrings: RedHerrings,
+    players: readonly [string, string],
+    name: string,
+    isDemon?: DemonPredicate,
+  ): BoolVar {
+    return this.not(this.fortuneTellerYes(redHerrings, players, `${name}_yes`, isDemon), name);
+  }
+
   addTruthfulInfoClaim(
     player: string,
     apparentRole: RoleRef,
@@ -424,6 +542,40 @@ export class BOTCModel {
       `${player}_${apparentRoleRef}_sober_healthy_claim`,
     );
     this.addImplication(activeClaimedRole, claimTruth);
+  }
+
+  addNoDashiiInfoClaim(
+    player: string,
+    role: RoleRef,
+    reportedInfo: BoolLike,
+    name: string,
+    options: { readonly seating?: readonly string[]; readonly noDashiiRole?: RoleRef } = {},
+  ): BoolVar {
+    const active = this.actualIs(player, role);
+    const poisoned = this.noDashiiPoisoned(player, options);
+    this.addImplication(this.allOf([active, poisoned.not()], `${player}_${name}_sober_info`), reportedInfo);
+    return this.allOf(
+      [active, poisoned, this.not(reportedInfo, `${player}_${name}_false_info`)],
+      `${player}_${name}_malfunction`,
+    );
+  }
+
+  noDashiiPoisoned(
+    player: string,
+    options: { readonly seating?: readonly string[]; readonly noDashiiRole?: RoleRef } = {},
+  ): BoolVar {
+    const seating = options.seating ?? this.seating;
+    const noDashiiRole = options.noDashiiRole ?? "No Dashii";
+    this.checkPlayer(player);
+    if (!seating.includes(player)) throw new KeyError(`Player is not seated: ${player}`);
+    for (const seated of seating) this.checkPlayer(seated);
+    return this.anyOf(
+      seating.flatMap((demon) => [
+        this.closestTownfolkInDirectionIs(seating, demon, player, 1, noDashiiRole),
+        this.closestTownfolkInDirectionIs(seating, demon, player, -1, noDashiiRole),
+      ]),
+      `${player}_poisoned_by_no_dashii`,
+    );
   }
 
   neighbors(player: string): [string, string] {
@@ -607,6 +759,32 @@ export class BOTCModel {
       );
     }
     return false;
+  }
+
+  private closestTownfolkInDirectionIs(
+    seating: readonly string[],
+    demon: string,
+    target: string,
+    direction: 1 | -1,
+    noDashiiRole: RoleRef,
+  ): BoolVar {
+    const demonIndex = seating.indexOf(demon);
+    const targetIndex = seating.indexOf(target);
+    const distance =
+      (direction === 1 ? targetIndex - demonIndex : demonIndex - targetIndex + seating.length) % seating.length;
+    if (distance <= 0) return this.constantBool(false, `${demon}_${target}_not_in_direction_${direction}`);
+    const between = Array.from({ length: distance - 1 }, (_ignored, offset) => {
+      const index = (demonIndex + direction * (offset + 1) + seating.length) % seating.length;
+      return seating[index] as string;
+    });
+    return this.allOf(
+      [
+        this.actualIs(demon, noDashiiRole),
+        this.hasCharacterType(target, CharacterType.Townsfolk),
+        ...between.map((betweenPlayer) => this.hasCharacterType(betweenPlayer, CharacterType.Townsfolk).not()),
+      ],
+      `${target}_closest_townsfolk_${direction}_of_${demon}`,
+    );
   }
 
   private applyDefaultSoberConstraints(): void {

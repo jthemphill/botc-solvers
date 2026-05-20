@@ -13,6 +13,41 @@ import * as predicates from "./predicates";
 export type StatementResult = BoolLike | readonly BoolLike[];
 export type StatementFactory = (game: BOTCModel) => StatementResult;
 export type StatementBuilder = StatementResult | StatementFactory;
+export type ClaimPredicate = (game: BOTCModel, context: unknown) => BoolLike;
+export type InfoClaimBuilder = BoolLike | ClaimPredicate | InfoClaim;
+
+export interface InfoClaim {
+  readonly role?: RoleRef;
+  readonly learned: BoolLike | ClaimPredicate;
+  readonly poisonContext?: string;
+  readonly falseWhenVortox?: boolean;
+}
+
+export interface RoleBaseOptions {
+  readonly name: string;
+  readonly poisonContext?: string;
+  readonly infoClaims?: readonly InfoClaimBuilder[];
+}
+
+export interface AppliedInfoClaim {
+  readonly player: string;
+  readonly role: RoleRef;
+  readonly learned: BoolLike;
+  readonly poisonContext?: string;
+  readonly falseWhenVortox?: boolean;
+  readonly context?: unknown;
+}
+
+export type ApplyInfoClaim = (game: BOTCModel, claim: AppliedInfoClaim) => void;
+
+export interface ApplyClaimsOptions {
+  readonly poisonContext?: string;
+  readonly drunkRole?: RoleRef;
+  readonly evilRoles?: readonly RoleRef[];
+  readonly extraPossibleActualRoles?: readonly RoleRef[];
+  readonly info?: ApplyInfoClaim;
+  readonly context?: unknown;
+}
 
 function slug(value: string): string {
   return value
@@ -32,6 +67,33 @@ function buildStatement(game: BOTCModel, player: string, index: number, statemen
   return resolved instanceof Object && "id" in resolved
     ? (resolved as BoolVar)
     : game.constantBool(Boolean(resolved), claimName(player, Savant, `statement_${index}_constant`));
+}
+
+function normalizeInfoClaim(claim: InfoClaimBuilder): InfoClaim {
+  return claim instanceof Object && "learned" in claim ? (claim as InfoClaim) : { learned: claim };
+}
+
+function resolveInfoClaim(game: BOTCModel, context: unknown, claim: InfoClaim): BoolLike {
+  return typeof claim.learned === "function" ? claim.learned(game, context) : claim.learned;
+}
+
+function addDefaultInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
+  if (!claim.falseWhenVortox) {
+    game.addTruthfulInfoClaim(claim.player, claim.role, claim.learned, { poisonContext: claim.poisonContext });
+    return;
+  }
+  const active = game.allOf(
+    [game.actualIs(claim.player, claim.role), game.poisoned(claim.player, claim.poisonContext).not()],
+    `${claim.player}_${roleName(claim.role)}_sober_healthy_claim`,
+  );
+  game.addImplication(
+    game.allOf([active, game.roleInPlay(Vortox)], `${claim.player}_${roleName(claim.role)}_vortox_claim`),
+    game.not(claim.learned, `${claim.player}_${roleName(claim.role)}_vortox_false_claim`),
+  );
+  game.addImplication(
+    game.allOf([active, game.roleInPlay(Vortox).not()], `${claim.player}_${roleName(claim.role)}_normal_claim`),
+    claim.learned,
+  );
 }
 
 function learnsRoleAmong(
@@ -63,6 +125,20 @@ function learnsCharacterTypeCount(
   return game.boolSumEquals(options, count, `${name}_${characterType}_count_is_${count}`);
 }
 
+function directionalPlayers(game: BOTCModel, player: string, direction: "clockwise" | "anticlockwise"): string[] {
+  const index = game.seating.indexOf(player);
+  if (index === -1) throw new Error(`Unknown player: ${player}`);
+  const result: string[] = [];
+  for (let offset = 1; offset < game.seating.length; offset += 1) {
+    const seat =
+      direction === "clockwise"
+        ? game.seating[(index + offset) % game.seating.length]
+        : game.seating[(index - offset + game.seating.length) % game.seating.length];
+    result.push(seat as string);
+  }
+  return result;
+}
+
 export abstract class Role {
   static readonly roleName: string;
   static readonly alignment: Alignment;
@@ -71,13 +147,12 @@ export abstract class Role {
   readonly roleName: string;
   readonly alignment: Alignment;
   readonly characterType: CharacterType;
+  readonly maxCopies?: number;
   readonly name: string;
   readonly poisonContext?: string;
+  readonly infoClaims: readonly InfoClaim[];
 
-  constructor(
-    nameOrOptions: string | { readonly name: string; readonly poisonContext?: string },
-    options: { readonly poisonContext?: string } = {},
-  ) {
+  constructor(nameOrOptions: string | RoleBaseOptions, options: { readonly poisonContext?: string } = {}) {
     const resolvedName = typeof nameOrOptions === "string" ? nameOrOptions : nameOrOptions.name;
     const resolvedPoisonContext =
       typeof nameOrOptions === "string" ? options.poisonContext : nameOrOptions.poisonContext;
@@ -86,7 +161,9 @@ export abstract class Role {
     this.roleName = cls.roleName;
     this.alignment = cls.alignment;
     this.characterType = cls.characterType;
+    this.maxCopies = cls.maxCopies;
     this.poisonContext = resolvedPoisonContext;
+    this.infoClaims = typeof nameOrOptions === "string" ? [] : (nameOrOptions.infoClaims ?? []).map(normalizeInfoClaim);
   }
 
   static claim(
@@ -104,18 +181,58 @@ export abstract class Role {
     return undefined;
   }
 
-  apply(game: BOTCModel, options: { readonly poisonContext?: string; readonly drunkRole?: RoleRef } = {}): void {
+  protected applyRoleClaim(game: BOTCModel, role: RoleRef, options: ApplyClaimsOptions = {}): void {
+    const drunkRole = options.drunkRole ?? "Drunk";
+    game.addRoleClaim(
+      { player: this.name, apparentRole: role },
+      {
+        drunkRole,
+        evilRoles: options.evilRoles,
+        extraPossibleActualRoles: options.extraPossibleActualRoles,
+      },
+    );
+  }
+
+  protected applyInfoClaimBuilders(
+    game: BOTCModel,
+    role: RoleRef,
+    claims: readonly InfoClaimBuilder[],
+    options: ApplyClaimsOptions = {},
+  ): void {
+    const applyInfo = options.info ?? addDefaultInfoClaim;
+    for (const claim of claims) {
+      const resolvedClaim = normalizeInfoClaim(claim);
+      applyInfo(game, {
+        player: this.name,
+        role: resolvedClaim.role ?? role,
+        learned: resolveInfoClaim(game, options.context, resolvedClaim),
+        poisonContext: resolvedClaim.poisonContext ?? this.poisonContext ?? options.poisonContext,
+        falseWhenVortox: resolvedClaim.falseWhenVortox,
+        context: options.context,
+      });
+    }
+  }
+
+  apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
     const cls = this.constructor as RoleClass & typeof Role;
-    cls.claim(game, this.name, {
-      learned: this.learnedInfo(game),
-      poisonContext: this.poisonContext ?? options.poisonContext,
-      drunkRole: options.drunkRole ?? "Drunk",
-    });
+    this.applyRoleClaim(game, cls, options);
+    const learned = this.learnedInfo(game);
+    this.applyInfoClaimBuilders(
+      game,
+      cls,
+      learned === undefined ? this.infoClaims : [{ learned }, ...this.infoClaims],
+      options,
+    );
   }
 }
 
 export class Imp extends Role {
   static readonly roleName = "Imp";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
+export class NoDashii extends Role {
+  static readonly roleName = "No Dashii";
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Demon;
 }
@@ -129,6 +246,21 @@ export class LordOfTyphon extends Role {
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Demon;
 }
+export class Pukka extends Role {
+  static readonly roleName = "Pukka";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
+export class Po extends Role {
+  static readonly roleName = "Po";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
+export class Vortox extends Role {
+  static readonly roleName = "Vortox";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
 export class Baron extends Role {
   static readonly roleName = "Baron";
   static readonly alignment = Alignment.Evil;
@@ -139,10 +271,39 @@ export class Goblin extends Role {
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Minion;
 }
+export class Cerenovus extends Role {
+  static readonly roleName = "Cerenovus";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+}
 export class Marionette extends Role {
   static readonly roleName = "Marionette";
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Minion;
+}
+export class PitHag extends Role {
+  static readonly roleName = "Pit-Hag";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+}
+export class EvilTwin extends Role {
+  static readonly roleName = "Evil Twin";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+
+  static pairedWith(game: BOTCModel, evilTwin: string, goodTwin: string, name: string): BoolVar {
+    return game.allOf([game.actualIs(evilTwin, EvilTwin), game.isGood(goodTwin)], name);
+  }
+
+  static pairIsOneOf(game: BOTCModel, pairs: readonly (readonly [string, string])[], name: string): BoolVar {
+    return game.anyOf(
+      pairs.flatMap(([left, right]) => [
+        EvilTwin.pairedWith(game, left, right, `${name}_${slug(left)}_${slug(right)}`),
+        EvilTwin.pairedWith(game, right, left, `${name}_${slug(right)}_${slug(left)}`),
+      ]),
+      name,
+    );
+  }
 }
 export class Poisoner extends Role {
   static readonly roleName = "Poisoner";
@@ -159,8 +320,43 @@ export class Spy extends Role {
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Minion;
 }
+export class Xaan extends Role {
+  static readonly roleName = "Xaan";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+}
+export class Witch extends Role {
+  static readonly roleName = "Witch";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+}
+export class Lunatic extends Role {
+  static readonly roleName = "Lunatic";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
+export class Klutz extends Role {
+  static readonly roleName = "Klutz";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
+export class Puzzlemaster extends Role {
+  static readonly roleName = "Puzzlemaster";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
 export class Drunk extends Role {
   static readonly roleName = "Drunk";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
+export class Butler extends Role {
+  static readonly roleName = "Butler";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
+export class Mutant extends Role {
+  static readonly roleName = "Mutant";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Outsider;
 }
@@ -174,8 +370,84 @@ export class Saint extends Role {
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Outsider;
 }
+export class Sweetheart extends Role {
+  static readonly roleName = "Sweetheart";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
 export class Slayer extends Role {
   static readonly roleName = "Slayer";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Alsaahir extends Role {
+  static readonly roleName = "Alsaahir";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Artist extends Role {
+  static readonly roleName = "Artist";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Atheist extends Role {
+  static readonly roleName = "Atheist";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Philosopher extends Role {
+  static readonly roleName = "Philosopher";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Acrobat extends Role {
+  static readonly roleName = "Acrobat";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Gambler extends Role {
+  static readonly roleName = "Gambler";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Mathematician extends Role {
+  static readonly roleName = "Mathematician";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Gossip extends Role {
+  static readonly roleName = "Gossip";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Ravenkeeper extends Role {
+  static readonly roleName = "Ravenkeeper";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Sage extends Role {
+  static readonly roleName = "Sage";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class SnakeCharmer extends Role {
+  static readonly roleName = "Snake Charmer";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+export class Soldier extends Role {
+  static readonly roleName = "Soldier";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
 }
@@ -185,12 +457,12 @@ export class Balloonist extends Role {
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
   readonly differentCharacterTypePairs: readonly [string, string][];
-  constructor(options: {
-    readonly name: string;
-    readonly differentCharacterTypePairs?: readonly [string, string][];
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly differentCharacterTypePairs?: readonly [string, string][];
+    },
+  ) {
+    super(options);
     this.differentCharacterTypePairs = options.differentCharacterTypePairs ?? [];
   }
   static learnsDifferentCharacterTypes(game: BOTCModel, pairs: readonly [string, string][], name: string): BoolVar {
@@ -216,13 +488,13 @@ export class Chef extends Role {
   static readonly characterType = CharacterType.Townsfolk;
   readonly count?: number;
   readonly registers: boolean;
-  constructor(options: {
-    readonly name: string;
-    readonly count?: number;
-    readonly registers?: boolean;
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly count?: number;
+      readonly registers?: boolean;
+    },
+  ) {
+    super(options);
     this.count = options.count;
     this.registers = options.registers ?? true;
   }
@@ -243,17 +515,23 @@ export class Chef extends Role {
   }
 }
 
+export class Chambermaid extends Role {
+  static readonly roleName = "Chambermaid";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
 export class Clockmaker extends Role {
   static readonly roleName = "Clockmaker";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
   readonly demonNextToMinion?: boolean;
-  constructor(options: {
-    readonly name: string;
-    readonly demonNextToMinion?: boolean;
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly demonNextToMinion?: boolean;
+    },
+  ) {
+    super(options);
     this.demonNextToMinion = options.demonNextToMinion;
   }
   static learnsDemonNextToMinion(game: BOTCModel, name: string): BoolVar {
@@ -282,19 +560,25 @@ export class Clockmaker extends Role {
   }
 }
 
+export class Courtier extends Role {
+  static readonly roleName = "Courtier";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
 export class Dreamer extends Role {
   static readonly roleName = "Dreamer";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
   readonly player?: string;
   readonly roles: readonly RoleRef[];
-  constructor(options: {
-    readonly name: string;
-    readonly player?: string;
-    readonly roles?: readonly RoleRef[];
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly player?: string;
+      readonly roles?: readonly RoleRef[];
+    },
+  ) {
+    super(options);
     this.player = options.player;
     this.roles = options.roles ?? [];
   }
@@ -318,13 +602,13 @@ export class Empath extends Role {
   static readonly characterType = CharacterType.Townsfolk;
   readonly count?: number;
   readonly player?: string;
-  constructor(options: {
-    readonly name: string;
-    readonly count?: number;
-    readonly player?: string;
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly count?: number;
+      readonly player?: string;
+    },
+  ) {
+    super(options);
     this.count = options.count;
     this.player = options.player;
   }
@@ -358,12 +642,12 @@ export class FortuneTeller extends Role {
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
   readonly checks: readonly FortuneTellerCheck[];
-  constructor(options: {
-    readonly name: string;
-    readonly checks?: readonly FortuneTellerCheck[];
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly checks?: readonly FortuneTellerCheck[];
+    },
+  ) {
+    super(options);
     this.checks = options.checks ?? [];
   }
   static learnsCheck(
@@ -389,14 +673,12 @@ export class FortuneTeller extends Role {
     const either = game.anyOf(choices, `${options.name}_${left}_${right}_either_demon`);
     return options.yes ? either : game.not(either, `${options.name}_${left}_${right}_neither_demon`);
   }
-  override apply(
-    game: BOTCModel,
-    options: { readonly poisonContext?: string; readonly drunkRole?: RoleRef } = {},
-  ): void {
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
     if (this.checks.length === 0) {
       super.apply(game, options);
       return;
     }
+    this.applyRoleClaim(game, FortuneTeller, options);
     this.checks.forEach((check, index) => {
       const name = check.name ?? claimName(this.name, FortuneTeller, `check_${index + 1}`);
       const learned = FortuneTeller.learnsCheck(game, check.left, check.right, {
@@ -405,12 +687,9 @@ export class FortuneTeller extends Role {
         demonRole: check.demonRole,
         registers: check.registers ?? false,
       });
-      FortuneTeller.claim(game, this.name, {
-        learned,
-        poisonContext: check.poisonContext ?? this.poisonContext ?? options.poisonContext,
-        drunkRole: options.drunkRole ?? "Drunk",
-      });
+      this.applyInfoClaimBuilders(game, FortuneTeller, [{ learned, poisonContext: check.poisonContext }], options);
     });
+    this.applyInfoClaimBuilders(game, FortuneTeller, this.infoClaims, options);
   }
 }
 
@@ -422,15 +701,15 @@ export class Investigator extends Role {
   readonly role?: RoleRef;
   readonly minionRole?: RoleRef;
   readonly registers: boolean;
-  constructor(options: {
-    readonly name: string;
-    readonly among?: readonly string[];
-    readonly role?: RoleRef;
-    readonly minionRole?: RoleRef;
-    readonly registers?: boolean;
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly among?: readonly string[];
+      readonly role?: RoleRef;
+      readonly minionRole?: RoleRef;
+      readonly registers?: boolean;
+    },
+  ) {
+    super(options);
     this.among = options.among ?? [];
     this.role = options.role;
     this.minionRole = options.minionRole;
@@ -461,13 +740,13 @@ export class Juggler extends Role {
   static readonly characterType = CharacterType.Townsfolk;
   readonly guesses: ReadonlyMap<string, RoleRef>;
   readonly correctCount?: number;
-  constructor(options: {
-    readonly name: string;
-    readonly guesses?: ReadonlyMap<string, RoleRef> | Record<string, RoleRef>;
-    readonly correctCount?: number;
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly guesses?: ReadonlyMap<string, RoleRef> | Record<string, RoleRef>;
+      readonly correctCount?: number;
+    },
+  ) {
+    super(options);
     this.guesses = options.guesses instanceof Map ? options.guesses : new Map(Object.entries(options.guesses ?? {}));
     this.correctCount = options.correctCount;
   }
@@ -496,17 +775,60 @@ export class Juggler extends Role {
   }
 }
 
+export class Shugenja extends Role {
+  static readonly roleName = "Shugenja";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+  readonly evilDirection?: "clockwise" | "anticlockwise";
+  constructor(
+    options: RoleBaseOptions & {
+      readonly evilDirection?: "clockwise" | "anticlockwise";
+    },
+  ) {
+    super(options);
+    this.evilDirection = options.evilDirection;
+  }
+  static learnsNearestEvilDirection(
+    game: BOTCModel,
+    player: string,
+    direction: "clockwise" | "anticlockwise",
+    name: string,
+  ): BoolVar {
+    const toward = directionalPlayers(game, player, direction);
+    const away = directionalPlayers(game, player, direction === "clockwise" ? "anticlockwise" : "clockwise");
+    const possibilities = toward.map((towardPlayer, index) => {
+      const noCloserToward = toward.slice(0, index).map((closer) => game.isEvil(closer).not());
+      const noCloserAway = away.slice(0, index).map((closer) => game.isEvil(closer).not());
+      return game.allOf(
+        [game.isEvil(towardPlayer), ...noCloserToward, ...noCloserAway],
+        `${name}_${towardPlayer}_nearest_${direction}`,
+      );
+    });
+    return game.anyOf(possibilities, name);
+  }
+  override learnedInfo(game: BOTCModel): BoolLike | undefined {
+    return this.evilDirection === undefined
+      ? undefined
+      : Shugenja.learnsNearestEvilDirection(
+          game,
+          this.name,
+          this.evilDirection,
+          claimName(this.name, Shugenja, "nearest_evil_direction"),
+        );
+  }
+}
+
 export class Knight extends Role {
   static readonly roleName = "Knight";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
   readonly noDemonAmong: readonly string[];
-  constructor(options: {
-    readonly name: string;
-    readonly noDemonAmong?: readonly string[];
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly noDemonAmong?: readonly string[];
+    },
+  ) {
+    super(options);
     this.noDemonAmong = options.noDemonAmong ?? [];
   }
   static learnsNoDemonAmong(game: BOTCModel, players: readonly string[], name: string): BoolVar {
@@ -525,6 +847,52 @@ export class Knight extends Role {
   }
 }
 
+export interface VillageIdiotCheck {
+  readonly player: string;
+  readonly good: boolean;
+  readonly name?: string;
+}
+
+export class VillageIdiot extends Role {
+  static readonly roleName = "Village Idiot";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+  static readonly maxCopies = 3;
+  readonly checks: readonly VillageIdiotCheck[];
+  constructor(
+    options: RoleBaseOptions & {
+      readonly checks?: readonly VillageIdiotCheck[];
+    },
+  ) {
+    super(options);
+    this.checks = options.checks ?? [];
+  }
+  static learnsCheck(game: BOTCModel, player: string, good: boolean, name: string): BoolVar {
+    return good ? game.registersAsGood(player, name) : game.registersAsEvil(player, name);
+  }
+  override learnedInfo(game: BOTCModel): BoolLike | undefined {
+    return this.checks.length === 0
+      ? undefined
+      : game.allOf(
+          this.checks.map((check, index) =>
+            VillageIdiot.learnsCheck(
+              game,
+              check.player,
+              check.good,
+              check.name ?? claimName(this.name, VillageIdiot, `check_${index + 1}`),
+            ),
+          ),
+          claimName(this.name, VillageIdiot, "checks"),
+        );
+  }
+}
+
+export class Virgin extends Role {
+  static readonly roleName = "Virgin";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
 export class Librarian extends Role {
   static readonly roleName = "Librarian";
   static readonly alignment = Alignment.Good;
@@ -533,15 +901,15 @@ export class Librarian extends Role {
   readonly role?: RoleRef;
   readonly outsiderCount?: number;
   readonly registers: boolean;
-  constructor(options: {
-    readonly name: string;
-    readonly among?: readonly string[];
-    readonly role?: RoleRef;
-    readonly outsiderCount?: number;
-    readonly registers?: boolean;
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly among?: readonly string[];
+      readonly role?: RoleRef;
+      readonly outsiderCount?: number;
+      readonly registers?: boolean;
+    },
+  ) {
+    super(options);
     this.among = options.among ?? [];
     this.role = options.role;
     this.outsiderCount = options.outsiderCount;
@@ -584,6 +952,18 @@ export class Librarian extends Role {
   }
 }
 
+export class Legionary extends Role {
+  static readonly roleName = "Legionary";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Mayor extends Role {
+  static readonly roleName = "Mayor";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
 export class Noble extends Role {
   static readonly roleName = "Noble";
   static readonly alignment = Alignment.Good;
@@ -591,14 +971,14 @@ export class Noble extends Role {
   readonly oneEvilAmong: readonly string[];
   readonly among: readonly string[];
   readonly evilCount?: number;
-  constructor(options: {
-    readonly name: string;
-    readonly oneEvilAmong?: readonly string[];
-    readonly among?: readonly string[];
-    readonly evilCount?: number;
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly oneEvilAmong?: readonly string[];
+      readonly among?: readonly string[];
+      readonly evilCount?: number;
+    },
+  ) {
+    super(options);
     this.oneEvilAmong = options.oneEvilAmong ?? [];
     this.among = options.among ?? [];
     this.evilCount = options.evilCount;
@@ -612,17 +992,29 @@ export class Noble extends Role {
   }
 }
 
+export class Oracle extends Role {
+  static readonly roleName = "Oracle";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Nightwatchman extends Role {
+  static readonly roleName = "Nightwatchman";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
 export class Savant extends Role {
   static readonly roleName = "Savant";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
   readonly statements: readonly StatementBuilder[];
-  constructor(options: {
-    readonly name: string;
-    readonly statements?: readonly StatementBuilder[];
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly statements?: readonly StatementBuilder[];
+    },
+  ) {
+    super(options);
     this.statements = options.statements ?? [];
   }
   static learnsExactlyOne(game: BOTCModel, statements: readonly BoolLike[], name: string): BoolVar {
@@ -644,13 +1036,13 @@ export class Seamstress extends Role {
   static readonly characterType = CharacterType.Townsfolk;
   readonly among: readonly string[];
   readonly aligned?: boolean;
-  constructor(options: {
-    readonly name: string;
-    readonly among?: readonly string[];
-    readonly aligned?: boolean;
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly among?: readonly string[];
+      readonly aligned?: boolean;
+    },
+  ) {
+    super(options);
     this.among = options.among ?? [];
     this.aligned = options.aligned;
   }
@@ -675,8 +1067,8 @@ export class Steward extends Role {
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
   readonly goodPlayer?: string;
-  constructor(options: { readonly name: string; readonly goodPlayer?: string; readonly poisonContext?: string }) {
-    super(options.name, options);
+  constructor(options: RoleBaseOptions & { readonly goodPlayer?: string }) {
+    super(options);
     this.goodPlayer = options.goodPlayer;
   }
   static learnsGoodPlayer(game: BOTCModel, player: string): BoolVar {
@@ -693,13 +1085,13 @@ export class Undertaker extends Role {
   static readonly characterType = CharacterType.Townsfolk;
   readonly player?: string;
   readonly role?: RoleRef;
-  constructor(options: {
-    readonly name: string;
-    readonly player?: string;
-    readonly role?: RoleRef;
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly player?: string;
+      readonly role?: RoleRef;
+    },
+  ) {
+    super(options);
     this.player = options.player;
     this.role = options.role;
   }
@@ -720,14 +1112,14 @@ export class Washerwoman extends Role {
   readonly among: readonly string[];
   readonly role?: RoleRef;
   readonly registers: boolean;
-  constructor(options: {
-    readonly name: string;
-    readonly among?: readonly string[];
-    readonly role?: RoleRef;
-    readonly registers?: boolean;
-    readonly poisonContext?: string;
-  }) {
-    super(options.name, options);
+  constructor(
+    options: RoleBaseOptions & {
+      readonly among?: readonly string[];
+      readonly role?: RoleRef;
+      readonly registers?: boolean;
+    },
+  ) {
+    super(options);
     this.among = options.among ?? [];
     this.role = options.role;
     this.registers = options.registers ?? true;
@@ -765,11 +1157,7 @@ export function playerNames(players: readonly ClaimRef[]): string[] {
   return names;
 }
 
-export function applyClaims(
-  game: BOTCModel,
-  claims: readonly Role[],
-  options: { readonly poisonContext?: string; readonly drunkRole?: RoleRef } = {},
-): void {
+export function applyClaims(game: BOTCModel, claims: readonly Role[], options: ApplyClaimsOptions = {}): void {
   for (const claim of claims) claim.apply(game, options);
 }
 

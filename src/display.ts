@@ -81,17 +81,17 @@ function formatWorldLines(world: World, players: readonly string[], poisonContex
 }
 
 function formatForcedRole(worlds: readonly World[], role: ForcedRole): string {
-  const assignment = forcedAssignment(worlds, role.roles);
+  const assignment = forcedAssignment(worlds, role);
   if (assignment === undefined) return `${role.label}: ${role.missing}`;
   const [holder, actualRole] = assignment;
   return role.includeRole ? `${role.label}: ${holder} (${actualRole})` : `${role.label}: ${holder}`;
 }
 
-function forcedAssignment(worlds: readonly World[], roles: readonly string[]): readonly [string, string] | undefined {
+function forcedAssignment(worlds: readonly World[], role: ForcedRole): readonly [string, string] | undefined {
   const assignments = new Map<string, readonly [string, string] | undefined>();
   for (const world of worlds) {
-    const assignment = worldAssignment(world, roles);
-    assignments.set(JSON.stringify(assignment), assignment);
+    const assignment = worldAssignment(world, role.roles);
+    assignments.set(role.includeRole ? JSON.stringify(assignment) : JSON.stringify(assignment?.[0]), assignment);
   }
   return assignments.size === 1 ? [...assignments.values()][0] : undefined;
 }
