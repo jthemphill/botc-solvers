@@ -24,7 +24,10 @@ import {
 export const PLAYERS = [
   new Knight({ name: "Josh", noDemonAmong: ["Fraser", "Oscar"] }),
   new Gambler({ name: "Anna" }),
-  new Juggler({ name: "Sula" }),
+  new Juggler({
+    timing: "night_2",
+    name: "Sula",
+  }),
   new Steward({ name: "Hannah", goodPlayer: "Oscar" }),
   new Acrobat({ name: "You" }),
   new Balloonist({
@@ -34,7 +37,10 @@ export const PLAYERS = [
       ["Anna", "You"],
     ],
   }),
-  new Gossip({ name: "Oscar" }),
+  new Gossip({
+    timing: "day_1",
+    name: "Oscar",
+  }),
 ];
 
 export const PLAYER_NAMES = playerNames(PLAYERS);

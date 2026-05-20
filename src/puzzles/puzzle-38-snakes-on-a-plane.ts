@@ -1,3 +1,4 @@
+import { night, type Timing } from "../model";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
@@ -21,49 +22,49 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
-export const NIGHT_3 = "night_3";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
+export const NIGHT_3 = night(3);
 
 export const MINION_ROLES = [Baron, Poisoner, Spy, ScarletWoman];
 export const PLAYERS = [
   new SnakeCharmer({
     name: "Tim",
     infoClaims: [
-      { poisonContext: NIGHT_1, learned: (game) => isDemonAtContext(game, "Matt", NIGHT_1).not() },
-      { poisonContext: NIGHT_2, learned: (game) => isDemonAtContext(game, "Sula", NIGHT_2).not() },
-      { poisonContext: NIGHT_3, learned: (game) => isDemonAtContext(game, "Hannah", NIGHT_3).not() },
+      { timing: "night_1", learned: (game) => isDemonAtTiming(game, "Matt", NIGHT_1).not() },
+      { timing: "night_2", learned: (game) => isDemonAtTiming(game, "Sula", NIGHT_2).not() },
+      { timing: "night_3", learned: (game) => isDemonAtTiming(game, "Hannah", NIGHT_3).not() },
     ],
   }),
   new SnakeCharmer({
     name: "Fraser",
     infoClaims: [
-      { poisonContext: NIGHT_1, learned: (game) => isDemonAtContext(game, "Sula", NIGHT_1).not() },
-      { poisonContext: NIGHT_2, learned: (game) => isDemonAtContext(game, "Hannah", NIGHT_2).not() },
-      { poisonContext: NIGHT_3, learned: (game) => isDemonAtContext(game, "Adam", NIGHT_3).not() },
+      { timing: "night_1", learned: (game) => isDemonAtTiming(game, "Sula", NIGHT_1).not() },
+      { timing: "night_2", learned: (game) => isDemonAtTiming(game, "Hannah", NIGHT_2).not() },
+      { timing: "night_3", learned: (game) => isDemonAtTiming(game, "Adam", NIGHT_3).not() },
     ],
   }),
   new FortuneTeller({
     name: "Sula",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game, context) =>
           game.fortuneTellerNo(
             context as ReadonlyMap<string, BoolVar>,
             ["You", "Tim"],
             "sula_ft_you_tim_no",
-            (player) => isDemonAtContext(game, player, NIGHT_1),
+            (player) => isDemonAtTiming(game, player, NIGHT_1),
           ),
       },
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game, context) =>
           game.fortuneTellerNo(
             context as ReadonlyMap<string, BoolVar>,
             ["Fraser", "Matt"],
             "sula_ft_fraser_matt_no",
-            (player) => isDemonAtContext(game, player, NIGHT_2),
+            (player) => isDemonAtTiming(game, player, NIGHT_2),
           ),
       },
     ],
@@ -73,23 +74,30 @@ export const PLAYERS = [
   new Empath({
     name: "Hannah",
     infoClaims: [
-      { poisonContext: NIGHT_1, learned: (game) => game.registeredEvilCount(["You", "Dan"], 0, "hannah_empath_n1") },
-      { poisonContext: NIGHT_2, learned: (game) => game.registeredEvilCount(["Adam", "Matt"], 1, "hannah_empath_n2") },
       {
-        poisonContext: NIGHT_3,
+        timing: "night_1",
+        learned: (game) => game.registeredEvilCount(["You", "Dan"], 0, "hannah_empath_n1"),
+      },
+      {
+        timing: "night_2",
+        learned: (game) => game.registeredEvilCount(["Adam", "Matt"], 1, "hannah_empath_n2"),
+      },
+      {
+        timing: "night_3",
         learned: (game) => game.registeredEvilCount(["Adam", "Fraser"], 1, "hannah_empath_n3"),
       },
     ],
   }),
   new Ravenkeeper({
+    timing: "night_2",
     name: "Dan",
-    infoClaims: [{ poisonContext: NIGHT_2, learned: (game) => game.actualIs("Fraser", Poisoner) }],
+    infoClaims: [{ timing: "night_2", learned: (game) => game.actualIs("Fraser", Poisoner) }],
   }),
   new Investigator({
     name: "Adam",
     role: Baron,
     among: ["Tim", "Sula"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
 ];
 export const PLAYER_NAMES = playerNames(PLAYERS);
@@ -146,9 +154,9 @@ export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
 }
 
-function isDemonAtContext(game: BOTCModel, player: string, poisonContext: string): BoolVar {
-  if (poisonContext === NIGHT_1) return game.actualIs(player, Imp);
-  if (poisonContext === NIGHT_2) return isDemonOnNightTwo(game, player);
+function isDemonAtTiming(game: BOTCModel, player: string, timing: Timing): BoolVar {
+  if (timing === NIGHT_1) return game.actualIs(player, Imp);
+  if (timing === NIGHT_2) return isDemonOnNightTwo(game, player);
   return isDemonOnNightThree(game, player);
 }
 
@@ -184,7 +192,7 @@ function isDemonOnNightThree(game: BOTCModel, player: string): BoolVar {
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-38-snakes-on-a-plane.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_3,
+    timing: "night_3",
     forcedRoles: [
       forcedRole("Starting Demon", Imp, { includeRole: true }),
       forcedRole("Minion", MINION_ROLES, { includeRole: true }),

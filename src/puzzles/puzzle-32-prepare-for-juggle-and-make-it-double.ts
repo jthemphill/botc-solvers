@@ -1,3 +1,4 @@
+import { night } from "../model";
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, type BOTCModel } from "../model";
@@ -20,9 +21,9 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
-export const NIGHT_3 = "night_3";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
+export const NIGHT_3 = night(3);
 
 export const EVIL_ROLES = [Imp, Baron, Poisoner];
 export const PLAYERS = [
@@ -30,21 +31,21 @@ export const PLAYERS = [
     name: "Dan",
     guesses: { You: Dreamer, Fraser: Poisoner, Tim: Baron },
     correctCount: 0,
-    poisonContext: NIGHT_2,
+    timing: "night_2",
   }),
   new Saint({ name: "Fraser" }),
   new Undertaker({
     name: "Jasmine",
     infoClaims: [
-      { poisonContext: NIGHT_2, learned: (game) => Undertaker.learnsRole(game, "You", Dreamer) },
-      { poisonContext: NIGHT_3, learned: (game) => Undertaker.learnsRole(game, "Dan", Juggler) },
+      { timing: "night_2", learned: (game) => Undertaker.learnsRole(game, "You", Dreamer) },
+      { timing: "night_3", learned: (game) => Undertaker.learnsRole(game, "Dan", Juggler) },
     ],
   }),
   new FortuneTeller({
     name: "Tim",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game, context) => fortuneTellerNo(game, context as RedHerring, ["Matthew", "Fraser"], "tim_ft"),
       },
     ],
@@ -53,21 +54,30 @@ export const PLAYERS = [
     name: "You",
     player: "Sula",
     roles: [Drunk, Imp],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
   new Juggler({
     name: "Matthew",
     guesses: { You: Imp, Dan: Drunk, Jasmine: Baron, Tim: FortuneTeller },
     correctCount: 0,
-    poisonContext: NIGHT_2,
+    timing: "night_2",
   }),
   new Recluse({ name: "Olivia" }),
   new Empath({
     name: "Sula",
     infoClaims: [
-      { poisonContext: NIGHT_1, learned: (game) => empathCount(game, ["Olivia", "Dan"], 1, "sula_empath_n1") },
-      { poisonContext: NIGHT_2, learned: (game) => empathCount(game, ["Olivia", "Dan"], 1, "sula_empath_n2") },
-      { poisonContext: NIGHT_3, learned: (game) => empathCount(game, ["Olivia", "Jasmine"], 0, "sula_empath_n3") },
+      {
+        timing: "night_1",
+        learned: (game) => empathCount(game, ["Olivia", "Dan"], 1, "sula_empath_n1"),
+      },
+      {
+        timing: "night_2",
+        learned: (game) => empathCount(game, ["Olivia", "Dan"], 1, "sula_empath_n2"),
+      },
+      {
+        timing: "night_3",
+        learned: (game) => empathCount(game, ["Olivia", "Jasmine"], 0, "sula_empath_n3"),
+      },
     ],
   }),
 ];

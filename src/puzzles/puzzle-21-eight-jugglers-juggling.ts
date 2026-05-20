@@ -6,41 +6,49 @@ import { Drunk, Goblin, Juggler, Leviathan, applyClaims, playerNames, script } f
 
 export const PLAYERS = [
   new Juggler({
+    timing: "night_2",
     name: "Tim",
     guesses: { You: Leviathan, Josh: Juggler },
     correctCount: 0,
   }),
   new Juggler({
+    timing: "night_2",
     name: "Matt",
     guesses: { Josh: Goblin, Tim: Juggler },
     correctCount: 0,
   }),
   new Juggler({
+    timing: "night_2",
     name: "Olivia",
     guesses: { You: Juggler, Aoife: Drunk },
     correctCount: 2,
   }),
   new Juggler({
+    timing: "night_2",
     name: "Oscar",
     guesses: { Josh: Goblin, Matt: Juggler },
     correctCount: 0,
   }),
   new Juggler({
+    timing: "night_2",
     name: "You",
     guesses: { Matt: Goblin, Oscar: Goblin },
     correctCount: 0,
   }),
   new Juggler({
+    timing: "night_2",
     name: "Fraser",
     guesses: { Olivia: Juggler, Oscar: Drunk },
     correctCount: 1,
   }),
   new Juggler({
+    timing: "night_2",
     name: "Aoife",
     guesses: { Olivia: Leviathan, Oscar: Leviathan },
     correctCount: 0,
   }),
   new Juggler({
+    timing: "night_2",
     name: "Josh",
     guesses: { Tim: Goblin, Oscar: Juggler },
     correctCount: 1,

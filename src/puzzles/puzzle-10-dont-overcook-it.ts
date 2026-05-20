@@ -1,3 +1,4 @@
+import { night } from "../model";
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, type BOTCModel } from "../model";
@@ -23,15 +24,15 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
 
 export const PLAYERS = [
   new FortuneTeller({
     name: "Tom",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game, context) => {
           const redHerrings = context as ReadonlyMap<string, BoolVar>;
           return game.allOf(
@@ -45,22 +46,30 @@ export const PLAYERS = [
       },
     ],
   }),
-  new Chef({ name: "Sula", count: 0, poisonContext: NIGHT_1 }),
+  new Chef({ name: "Sula", count: 0, timing: "night_1" }),
   new Recluse({ name: "Fraser" }),
-  new Washerwoman({ name: "Josh", role: Undertaker, among: ["Dan", "Sula"], poisonContext: NIGHT_1 }),
+  new Washerwoman({ name: "Josh", role: Undertaker, among: ["Dan", "Sula"], timing: "night_1" }),
   new Slayer({
+    timing: "day_1",
     name: "You",
     infoClaims: [
-      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Fraser", Imp, "you_slayer").not() },
+      {
+        timing: "night_2",
+        learned: (game) => game.registersAsRole("Fraser", Imp, "you_slayer").not(),
+      },
     ],
   }),
   new Ravenkeeper({
+    timing: "night_2",
     name: "Matthew",
     infoClaims: [
-      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Josh", Imp, "matthew_ravenkeeper") },
+      {
+        timing: "night_2",
+        learned: (game) => game.registersAsRole("Josh", Imp, "matthew_ravenkeeper"),
+      },
     ],
   }),
-  new Undertaker({ name: "Dan", player: "Josh", role: Poisoner, poisonContext: NIGHT_2 }),
+  new Undertaker({ name: "Dan", player: "Josh", role: Poisoner, timing: "night_2" }),
 ];
 
 export const PLAYER_NAMES = playerNames(PLAYERS);
@@ -130,7 +139,7 @@ function fortuneTellerLearnsCheck(
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-10-dont-overcook-it.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_2,
+    timing: "night_2",
     forcedRoles: [
       forcedRole("Demon", Imp, { includeRole: true }),
       forcedRole("Minion", MINION_ROLES, { includeRole: true }),

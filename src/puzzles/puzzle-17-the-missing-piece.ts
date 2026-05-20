@@ -20,11 +20,10 @@ import {
   script,
 } from "../characters";
 
-export const PUZZLEMASTER_DRUNK = "puzzlemaster_drunk";
-
 export const PLAYERS = [
   new Undertaker({
     name: "Sarah",
+    timing: "night_2",
     infoClaims: [
       (game) =>
         game.allOf([game.actualIs("Steph", Empath), game.actualIs("Sula", Washerwoman)], "sarah_undertaker_info"),
@@ -42,6 +41,7 @@ export const PLAYERS = [
   }),
   new Slayer({
     name: "Tom",
+    timing: "day_3",
     infoClaims: [(game) => game.not(isDemonOnDayThree(game, "Sarah"), "tom_slayer_shot_does_not_kill_sarah")],
   }),
   new Puzzlemaster({ name: "You" }),
@@ -91,18 +91,13 @@ export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: 
 export function buildModel(backend: SatBackend): BOTCModel {
   const game = buildPuzzleModel(PUZZLE, backend);
 
-  game.allowPoisonInContext(PUZZLEMASTER_DRUNK);
-  game.addExactlyN(
-    PLAYER_NAMES.filter((player) => player !== "You").map((player) => game.poisoned(player, PUZZLEMASTER_DRUNK)),
-    1,
-  );
-  game.fixPoisoned("You", false, PUZZLEMASTER_DRUNK);
+  game.addPuzzlemasterDrunking({ excludedPlayers: ["You"] });
 
   game.addTruth(demonExistsOnNightTwo(game));
   game.addTruth(demonExistsOnNightThree(game));
 
   const redHerrings = addFortuneTellerRedHerring(game);
-  applyClaims(game, PLAYERS, { info: addPuzzlemasterInfo, poisonContext: PUZZLEMASTER_DRUNK, context: redHerrings });
+  applyClaims(game, PLAYERS, { info: addPuzzlemasterInfo, context: redHerrings });
   game.fixActual("You", Puzzlemaster);
 
   return game;
@@ -114,7 +109,7 @@ export async function solve() {
 
 function addPuzzlemasterInfo(game: BOTCModel, claim: AppliedInfoClaim): void {
   const active = game.allOf(
-    [game.actualIs(claim.player, claim.role), game.poisoned(claim.player, PUZZLEMASTER_DRUNK).not()],
+    [game.actualIs(claim.player, claim.role), game.globalDrunk(claim.player).not()],
     `${claim.player}_active_puzzlemaster_info`,
   );
   game.addImplication(active, claim.learned);
@@ -236,13 +231,12 @@ function isDemonOnDayThree(game: BOTCModel, player: string): BoolVar {
 
 export function puzzlemasterDrunkTargets(worlds: readonly World[]): string[] {
   const candidates = PLAYER_NAMES.filter((player) => player !== "You");
-  return candidates.filter((player) => worlds.every((world) => world.isPoisoned(player, PUZZLEMASTER_DRUNK)));
+  return candidates.filter((player) => worlds.every((world) => world.isDrunk(player)));
 }
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-17-the-missing-piece.ts")) {
   const worlds = await solve();
   printSolution(worlds, PLAYER_NAMES, {
-    poisonContext: PUZZLEMASTER_DRUNK,
     forcedRoles: [
       forcedRole("Demon", Imp, { includeRole: true }),
       forcedRole("Minion", ScarletWoman, { includeRole: true }),

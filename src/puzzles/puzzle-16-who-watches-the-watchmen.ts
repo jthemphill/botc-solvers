@@ -1,3 +1,4 @@
+import { night } from "../model";
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, type BOTCModel } from "../model";
@@ -24,25 +25,30 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
-export const NIGHT_3 = "night_3";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
+export const NIGHT_3 = night(3);
 
 export const PLAYERS = [
   new Recluse({ name: "Oscar" }),
-  new Washerwoman({ name: "Hannah", role: Chef, among: ["Oscar", "Tim"], poisonContext: NIGHT_1 }),
-  new Investigator({ name: "Sarah", role: Poisoner, among: ["Olivia", "Hannah"], poisonContext: NIGHT_1 }),
-  new Chef({ name: "Tim", count: 1, poisonContext: NIGHT_1 }),
+  new Washerwoman({ name: "Hannah", role: Chef, among: ["Oscar", "Tim"], timing: "night_1" }),
+  new Investigator({
+    name: "Sarah",
+    role: Poisoner,
+    among: ["Olivia", "Hannah"],
+    timing: "night_1",
+  }),
+  new Chef({ name: "Tim", count: 1, timing: "night_1" }),
   new Saint({ name: "You" }),
   new Empath({
     name: "Olivia",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game) => empathAliveNeighborCount(game, ["You", "Jasmine"], 0, "olivia_empath_night_1"),
       },
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game) => empathAliveNeighborCount(game, ["Tim", "Jasmine"], 1, "olivia_empath_night_2"),
       },
     ],
@@ -50,14 +56,35 @@ export const PLAYERS = [
   new FortuneTeller({
     name: "Jasmine",
     checks: [
-      { left: "Hannah", right: "Tim", yes: false, demonRole: Imp, registers: true, poisonContext: NIGHT_1 },
-      { left: "Olivia", right: "Tim", yes: false, demonRole: Imp, registers: true, poisonContext: NIGHT_2 },
-      { left: "Sarah", right: "Jasmine", yes: false, demonRole: Imp, registers: true, poisonContext: NIGHT_3 },
+      {
+        left: "Hannah",
+        right: "Tim",
+        yes: false,
+        demonRole: Imp,
+        registers: true,
+        timing: "night_1",
+      },
+      {
+        left: "Olivia",
+        right: "Tim",
+        yes: false,
+        demonRole: Imp,
+        registers: true,
+        timing: "night_2",
+      },
+      {
+        left: "Sarah",
+        right: "Jasmine",
+        yes: false,
+        demonRole: Imp,
+        registers: true,
+        timing: "night_3",
+      },
     ],
   }),
   new Nightwatchman({
     name: "Fraser",
-    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => game.isEvil("Tim") }],
+    infoClaims: [{ timing: "night_1", learned: (game) => game.isEvil("Tim") }],
   }),
 ];
 
@@ -164,7 +191,7 @@ function empathAliveNeighborCount(
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-16-who-watches-the-watchmen.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_2,
+    timing: "night_2",
     forcedRoles: [
       forcedRole("Demon", Imp, { includeRole: true }),
       forcedRole("Minion", MINION_ROLES, { includeRole: true }),

@@ -1,3 +1,4 @@
+import { night } from "../model";
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, type BOTCModel } from "../model";
@@ -22,9 +23,9 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
-export const NIGHT_3 = "night_3";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
+export const NIGHT_3 = night(3);
 
 export const EVIL_ROLES = [Imp, Poisoner, Spy, Baron, ScarletWoman];
 export const PLAYERS = [
@@ -32,25 +33,25 @@ export const PLAYERS = [
     name: "Adam",
     role: Spy,
     among: ["Aoife", "Fraser"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
   new Recluse({ name: "Fraser" }),
   new Undertaker({
     name: "Sarah",
     player: "You",
     role: Spy,
-    poisonContext: NIGHT_2,
+    timing: "night_2",
   }),
   new FortuneTeller({
     name: "Olivia",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game, context) =>
           fortuneTellerNo(game, context as RedHerring, ["Aoife", "Tim"], "olivia_ft_aoife_tim"),
       },
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game, context) =>
           fortuneTellerNo(game, context as RedHerring, ["Aoife", "Olivia"], "olivia_ft_aoife_olivia"),
       },
@@ -58,19 +59,29 @@ export const PLAYERS = [
   }),
   new Chef({
     name: "You",
-    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => chefRegistersCount(game, 1, "you_chef") }],
+    infoClaims: [{ timing: "night_1", learned: (game) => chefRegistersCount(game, 1, "you_chef") }],
   }),
   new Empath({
     name: "Aoife",
     infoClaims: [
-      { poisonContext: NIGHT_1, learned: (game) => empathCount(game, ["You", "Tim"], 0, "aoife_empath_n1") },
-      { poisonContext: NIGHT_2, learned: (game) => empathCount(game, ["Adam", "Olivia"], 1, "aoife_empath_n2") },
-      { poisonContext: NIGHT_3, learned: (game) => empathCount(game, ["Adam", "Fraser"], 1, "aoife_empath_n3") },
+      {
+        timing: "night_1",
+        learned: (game) => empathCount(game, ["You", "Tim"], 0, "aoife_empath_n1"),
+      },
+      {
+        timing: "night_2",
+        learned: (game) => empathCount(game, ["Adam", "Olivia"], 1, "aoife_empath_n2"),
+      },
+      {
+        timing: "night_3",
+        learned: (game) => empathCount(game, ["Adam", "Fraser"], 1, "aoife_empath_n3"),
+      },
     ],
   }),
   new Ravenkeeper({
+    timing: "night_2",
     name: "Tim",
-    infoClaims: [{ poisonContext: NIGHT_2, learned: (game) => game.actualIs("Olivia", Imp) }],
+    infoClaims: [{ timing: "night_2", learned: (game) => game.actualIs("Olivia", Imp) }],
   }),
 ];
 export const PLAYER_NAMES = playerNames(PLAYERS);

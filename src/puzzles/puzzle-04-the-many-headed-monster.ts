@@ -1,3 +1,4 @@
+import { night } from "../model";
 import { Alignment, CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { BOTCModel } from "../model";
@@ -21,34 +22,66 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
-export const NIGHT_3 = "night_3";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
+export const NIGHT_3 = night(3);
 export const PLAYERS = [
-  new Librarian({ name: "Sarah", role: Drunk, among: ["You", "Hannah"], registers: false, poisonContext: NIGHT_1 }),
+  new Librarian({
+    name: "Sarah",
+    role: Drunk,
+    among: ["You", "Hannah"],
+    registers: false,
+    timing: "night_1",
+  }),
   new Recluse({ name: "Tim" }),
   new Juggler({
     name: "Matt",
     guesses: { You: Investigator, Dan: LordOfTyphon, Tim: Recluse, Hannah: Dreamer },
     correctCount: 1,
-    poisonContext: NIGHT_2,
+    timing: "night_2",
   }),
-  new Dreamer({ name: "Hannah", player: "You", roles: [Investigator, LordOfTyphon], poisonContext: NIGHT_1 }),
+  new Dreamer({
+    name: "Hannah",
+    player: "You",
+    roles: [Investigator, LordOfTyphon],
+    timing: "night_1",
+  }),
   new Investigator({
     name: "You",
     role: Marionette,
     among: ["Matt", "Hannah"],
     registers: false,
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
-  new Empath({ name: "Anna", count: 2, poisonContext: NIGHT_1 }),
-  new Undertaker({ name: "Dan", player: "Anna", role: Empath, poisonContext: NIGHT_2 }),
+  new Empath({ name: "Anna", count: 2, timing: "night_1" }),
+  new Undertaker({ name: "Dan", player: "Anna", role: Empath, timing: "night_2" }),
   new FortuneTeller({
     name: "Fraser",
     checks: [
-      { left: "Anna", right: "Tim", yes: true, demonRole: LordOfTyphon, registers: true, poisonContext: NIGHT_1 },
-      { left: "You", right: "Fraser", yes: false, demonRole: LordOfTyphon, registers: true, poisonContext: NIGHT_2 },
-      { left: "You", right: "Sarah", yes: true, demonRole: LordOfTyphon, registers: true, poisonContext: NIGHT_3 },
+      {
+        left: "Anna",
+        right: "Tim",
+        yes: true,
+        demonRole: LordOfTyphon,
+        registers: true,
+        timing: "night_1",
+      },
+      {
+        left: "You",
+        right: "Fraser",
+        yes: false,
+        demonRole: LordOfTyphon,
+        registers: true,
+        timing: "night_2",
+      },
+      {
+        left: "You",
+        right: "Sarah",
+        yes: true,
+        demonRole: LordOfTyphon,
+        registers: true,
+        timing: "night_3",
+      },
     ],
   }),
 ];
@@ -98,6 +131,6 @@ export async function solve() {
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-04-the-many-headed-monster.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_2,
+    timing: "night_2",
     forcedRoles: [forcedRole("Demon", LordOfTyphon, { includeRole: true })],
   });

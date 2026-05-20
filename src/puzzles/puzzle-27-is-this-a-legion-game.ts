@@ -1,3 +1,4 @@
+import { night } from "../model";
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolLike, type BoolVar, type BOTCModel } from "../model";
@@ -17,8 +18,8 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
 
 export const PLAYERS = [
   new Legionary({
@@ -28,18 +29,25 @@ export const PLAYERS = [
   new FortuneTeller({
     name: "Tom",
     checks: [
-      { left: "You", right: "Fraser", yes: false, name: "tom_fortune_teller", demonRole: Imp, poisonContext: NIGHT_1 },
+      {
+        left: "You",
+        right: "Fraser",
+        yes: false,
+        name: "tom_fortune_teller",
+        demonRole: Imp,
+        timing: "night_1",
+      },
     ],
   }),
   new Empath({
     name: "Aoife",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game) => empathAliveNeighborCount(game, ["Tom", "Hannah"], 0, "aoife_empath_n1"),
       },
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game) => empathAliveNeighborCount(game, ["Sarah", "Hannah"], 0, "aoife_empath_n2"),
       },
     ],
@@ -52,7 +60,7 @@ export const PLAYERS = [
     name: "You",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game) =>
           game.anyOf(
             [game.actualIs("Fraser", Legionary), game.actualIs("Sarah", Legionary)],
@@ -69,7 +77,7 @@ export const PLAYERS = [
     name: "Adam",
     role: Poisoner,
     among: ["Tom", "Aoife"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
 ];
 export const PLAYER_NAMES = playerNames(PLAYERS);
@@ -130,12 +138,12 @@ function empathAliveNeighborCount(
 function legionaryInfo(player: string, counts: readonly [number, number]): readonly InfoClaim[] {
   return [
     {
-      poisonContext: NIGHT_1,
+      timing: "night_1",
       learned: (game) =>
         legionaryLearnsCount(game, player, new Set(PLAYER_NAMES), counts[0], `${player}_${NIGHT_1}_legionary_count`),
     },
     {
-      poisonContext: NIGHT_2,
+      timing: "night_2",
       learned: (game) =>
         legionaryLearnsCount(
           game,
@@ -199,7 +207,7 @@ function clockwiseBetween(player: string, target: string): string[] {
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-27-is-this-a-legion-game.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_2,
+    timing: "night_2",
     forcedRoles: [
       forcedRole("Demon", Imp, { includeRole: true }),
       forcedRole("Minion", Poisoner, { includeRole: true }),

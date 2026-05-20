@@ -1,3 +1,4 @@
+import { night, day, type Timing } from "../model";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
@@ -21,9 +22,9 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
-export const DAY_3 = "day_3";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
+export const DAY_3 = day(3);
 
 export const MINION_ROLES = [Baron, Poisoner, Spy, ScarletWoman];
 export const PLAYERS = [
@@ -31,52 +32,58 @@ export const PLAYERS = [
     name: "Sula",
     role: Spy,
     among: ["Steph", "Josh"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
   new FortuneTeller({
     name: "Olivia",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game, context) =>
           game.fortuneTellerNo(
             context as ReadonlyMap<string, BoolVar>,
             ["Josh", "Oscar"],
             "olivia_ft_josh_oscar_no",
-            (player) => isDemonAtContext(game, player, NIGHT_1),
+            (player) => isDemonAtTiming(game, player, NIGHT_1),
           ),
       },
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game, context) =>
           game.fortuneTellerNo(
             context as ReadonlyMap<string, BoolVar>,
             ["Adam", "Oscar"],
             "olivia_ft_adam_oscar_no",
-            (player) => isDemonAtContext(game, player, NIGHT_2),
+            (player) => isDemonAtTiming(game, player, NIGHT_2),
           ),
       },
     ],
   }),
   new Recluse({ name: "Fraser" }),
   new Slayer({
+    timing: "day_1",
     name: "Oscar",
-    infoClaims: [{ poisonContext: NIGHT_2, learned: (game) => isDemonOnDayTwo(game, "Steph").not() }],
+    infoClaims: [{ timing: "night_2", learned: (game) => isDemonOnDayTwo(game, "Steph").not() }],
   }),
   new Empath({
     name: "You",
     infoClaims: [
-      { poisonContext: NIGHT_1, learned: (game) => game.registeredEvilCount(["Oscar", "Steph"], 1, "you_empath_n1") },
+      {
+        timing: "night_1",
+        learned: (game) => game.registeredEvilCount(["Oscar", "Steph"], 1, "you_empath_n1"),
+      },
     ],
   }),
   new Saint({ name: "Steph" }),
   new Slayer({
+    timing: "day_1",
     name: "Adam",
-    infoClaims: [{ poisonContext: DAY_3, learned: (game) => isDemonOnDayThree(game, "Sula").not() }],
+    infoClaims: [{ timing: "day_3", learned: (game) => isDemonOnDayThree(game, "Sula").not() }],
   }),
   new Ravenkeeper({
+    timing: "night_2",
     name: "Josh",
-    infoClaims: [{ poisonContext: NIGHT_2, learned: (game) => game.actualIs("Adam", ScarletWoman) }],
+    infoClaims: [{ timing: "night_2", learned: (game) => game.actualIs("Adam", ScarletWoman) }],
   }),
 ];
 export const PLAYER_NAMES = playerNames(PLAYERS);
@@ -127,9 +134,9 @@ export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
 }
 
-function isDemonAtContext(game: BOTCModel, player: string, poisonContext: string): BoolVar {
-  if (poisonContext === NIGHT_1) return game.actualIs(player, Imp);
-  if (poisonContext === NIGHT_2) return isDemonOnDayTwo(game, player);
+function isDemonAtTiming(game: BOTCModel, player: string, timing: Timing): BoolVar {
+  if (timing === NIGHT_1) return game.actualIs(player, Imp);
+  if (timing === NIGHT_2) return isDemonOnDayTwo(game, player);
   return isDemonOnDayThree(game, player);
 }
 
@@ -177,7 +184,7 @@ function isDemonOnDayThree(game: BOTCModel, player: string): BoolVar {
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-36-what-is-your-weapon-of-choice.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_2,
+    timing: "night_2",
     forcedRoles: [
       forcedRole("Demon", Imp, { includeRole: true }),
       forcedRole("Minion", MINION_ROLES, { includeRole: true }),

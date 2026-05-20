@@ -1,3 +1,4 @@
+import { night, type Timing } from "../model";
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, type BOTCModel } from "../model";
@@ -23,9 +24,9 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
-export const NIGHT_3 = "night_3";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
+export const NIGHT_3 = night(3);
 
 export const EVIL_ROLES = [Imp, Baron, Poisoner, Spy, ScarletWoman];
 export const PLAYERS = [
@@ -33,23 +34,23 @@ export const PLAYERS = [
     name: "Tom",
     role: Saint,
     among: ["Olivia", "Sula"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
   new FortuneTeller({
     name: "Oscar",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game, context) =>
           fortuneTellerNo(game, context as RedHerring, NIGHT_1, ["Sula", "Fraser"], "oscar_ft_n1"),
       },
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game, context) =>
           fortuneTellerNo(game, context as RedHerring, NIGHT_2, ["Tom", "Sula"], "oscar_ft_n2"),
       },
       {
-        poisonContext: NIGHT_3,
+        timing: "night_3",
         learned: (game, context) =>
           fortuneTellerNo(game, context as RedHerring, NIGHT_3, ["Hannah", "Tom"], "oscar_ft_n3"),
       },
@@ -60,24 +61,28 @@ export const PLAYERS = [
     name: "Fraser",
     role: Poisoner,
     among: ["You", "Jasmine"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
   new Empath({
     name: "You",
     infoClaims: [
-      { poisonContext: NIGHT_1, learned: (game) => empathCount(game, ["Olivia", "Fraser"], 0, "you_empath") },
+      {
+        timing: "night_1",
+        learned: (game) => empathCount(game, ["Olivia", "Fraser"], 0, "you_empath"),
+      },
     ],
   }),
   new Recluse({ name: "Olivia" }),
   new Ravenkeeper({
+    timing: "night_2",
     name: "Jasmine",
-    infoClaims: [{ poisonContext: NIGHT_3, learned: (game) => game.actualIs("Hannah", Washerwoman) }],
+    infoClaims: [{ timing: "night_3", learned: (game) => game.actualIs("Hannah", Washerwoman) }],
   }),
   new Washerwoman({
     name: "Hannah",
     role: Investigator,
     among: ["Sula", "Fraser"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
 ];
 export const PLAYER_NAMES = playerNames(PLAYERS);
@@ -164,14 +169,14 @@ function addFortuneTellerRedHerring(game: BOTCModel): RedHerring {
 function fortuneTellerNo(
   game: BOTCModel,
   redHerrings: RedHerring,
-  poisonContext: string,
+  timing: Timing,
   players: readonly [string, string],
   name: string,
 ): BoolVar {
   return game.not(
     game.anyOf(
       [
-        ...players.map((player) => isDemonAtContext(game, player, poisonContext)),
+        ...players.map((player) => isDemonAtTiming(game, player, timing)),
         ...players.map((player) => redHerrings.get(player) as BoolVar),
       ],
       `${name}_yes`,
@@ -180,15 +185,16 @@ function fortuneTellerNo(
   );
 }
 
-function isDemonAtContext(game: BOTCModel, player: string, poisonContext: string): BoolVar {
-  if (poisonContext === NIGHT_1) return game.actualIs(player, Imp);
-  if (poisonContext === NIGHT_2)
+function isDemonAtTiming(game: BOTCModel, player: string, timing: Timing): BoolVar {
+  const timingName = timing;
+  if (timing === NIGHT_1) return game.actualIs(player, Imp);
+  if (timing === NIGHT_2)
     return game.anyOf(
       [
         game.allOf([game.actualIs(player, Imp), game.actualIs("Olivia", Imp).not()], `${player}_starting_imp_n2`),
         game.allOf([game.actualIs("Olivia", Imp), game.isMinion(player)], `${player}_olivia_starpass_imp_n2`),
       ],
-      `${player}_demon_${poisonContext}`,
+      `${player}_demon_${timingName}`,
     );
   return game.anyOf(
     [
@@ -207,7 +213,7 @@ function isDemonAtContext(game: BOTCModel, player: string, poisonContext: string
       game.allOf([game.actualIs("Fraser", Imp), game.actualIs(player, ScarletWoman)], `${player}_scarlet_woman_imp_n3`),
       game.allOf([game.actualIs("Jasmine", Imp), game.isMinion(player)], `${player}_jasmine_starpass_imp_n3`),
     ],
-    `${player}_demon_${poisonContext}`,
+    `${player}_demon_${timingName}`,
   );
 }
 

@@ -1,3 +1,4 @@
+import { night } from "../model";
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, type BOTCModel } from "../model";
@@ -24,30 +25,39 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
 
 export const PLAYERS = [
   new Undertaker({
     name: "Olivia",
-    infoClaims: [{ poisonContext: NIGHT_2, learned: (game) => game.actualIs("You", Baron) }],
+    infoClaims: [{ timing: "night_2", learned: (game) => game.actualIs("You", Baron) }],
   }),
   new Ravenkeeper({
+    timing: "night_2",
     name: "Matt",
     infoClaims: [
-      { poisonContext: NIGHT_2, learned: (game) => game.registersAsRole("Fraser", Saint, "matt_ravenkeeper") },
+      {
+        timing: "night_2",
+        learned: (game) => game.registersAsRole("Fraser", Saint, "matt_ravenkeeper"),
+      },
     ],
   }),
-  new Washerwoman({ name: "Sula", role: Undertaker, among: ["Fraser", "Olivia"], poisonContext: NIGHT_1 }),
+  new Washerwoman({
+    name: "Sula",
+    role: Undertaker,
+    among: ["Fraser", "Olivia"],
+    timing: "night_1",
+  }),
   new Empath({
     name: "Aoife",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game) => empathAliveNeighborCount(game, ["You", "Sula"], 0, "aoife_empath_night_1"),
       },
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game) => empathAliveNeighborCount(game, ["Fraser", "Sula"], 1, "aoife_empath_night_2"),
       },
     ],
@@ -56,11 +66,14 @@ export const PLAYERS = [
     name: "You",
     role: Drunk,
     among: ["Fraser", "Matt"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
   new Saint({ name: "Fraser" }),
   new Recluse({ name: "Oscar" }),
-  new Slayer({ name: "Jasmine" }),
+  new Slayer({
+    timing: "day_1",
+    name: "Jasmine",
+  }),
 ];
 
 export const PLAYER_NAMES = playerNames(PLAYERS);
@@ -121,7 +134,7 @@ function empathAliveNeighborCount(
 }
 
 function addNightTwoPoisonerEffect(game: BOTCModel): void {
-  game.allowPoisonInContext(NIGHT_2);
+  game.allowPoisonAt(NIGHT_2);
   const poisoned = PLAYER_NAMES.map((player) => game.poisoned(player, NIGHT_2));
   const poisonerStillActiveForInfo = game.allOf(
     [game.roleInPlay(Poisoner), game.actualIs("Matt", Poisoner).not(), game.actualIs("Matt", Imp).not()],
@@ -155,7 +168,7 @@ function scarletWomanAliveAfterOscarShot(game: BOTCModel): BoolVar {
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-19-he-could-be-you-he-could-be-me.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_2,
+    timing: "night_2",
     forcedRoles: [
       forcedRole("Demon", Imp, { includeRole: true }),
       forcedRole("Minion", MINION_ROLES, { includeRole: true }),

@@ -1,3 +1,4 @@
+import { night } from "../model";
 import { forcedRole, printSolution } from "../display";
 import { type BoolVar, type BOTCModel } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
@@ -23,9 +24,9 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
-export const NIGHT_3 = "night_3";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
+export const NIGHT_3 = night(3);
 
 export const MINION_ROLES = [Baron, Poisoner, Spy, ScarletWoman];
 export const PLAYERS = [
@@ -34,33 +35,43 @@ export const PLAYERS = [
     name: "Fraser",
     role: Drunk,
     among: ["Jasmine", "Hannah"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
   new Empath({
     name: "Tim",
     infoClaims: [
-      { poisonContext: NIGHT_1, learned: (game) => game.registeredEvilCount(["Fraser", "Josh"], 2, "tim_empath_n1") },
-      { poisonContext: NIGHT_2, learned: (game) => game.registeredEvilCount(["Adam", "Hannah"], 1, "tim_empath_n2") },
+      {
+        timing: "night_1",
+        learned: (game) => game.registeredEvilCount(["Fraser", "Josh"], 2, "tim_empath_n1"),
+      },
+      {
+        timing: "night_2",
+        learned: (game) => game.registeredEvilCount(["Adam", "Hannah"], 1, "tim_empath_n2"),
+      },
     ],
   }),
   new Butler({ name: "Josh" }),
   new Slayer({
+    timing: "day_1",
     name: "Adam",
     infoClaims: [
-      { poisonContext: NIGHT_3, learned: (game) => game.registersAsRole("Matthew", Imp, "adam_slayer_matthew").not() },
+      {
+        timing: "night_3",
+        learned: (game) => game.registersAsRole("Matthew", Imp, "adam_slayer_matthew").not(),
+      },
     ],
   }),
   new Investigator({
     name: "You",
     role: ScarletWoman,
     among: ["Steph", "Fraser"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
   new FortuneTeller({
     name: "Matthew",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game, context) =>
           game.allOf(
             [
@@ -86,7 +97,7 @@ export const PLAYERS = [
     name: "Jasmine",
     role: Empath,
     among: ["Tim", "Adam"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
 ];
 export const PLAYER_NAMES = playerNames(PLAYERS);
@@ -136,7 +147,7 @@ export async function solve() {
 
 if (import.meta.main && process.argv[1]?.endsWith("puzzle-40-nine-lives.ts"))
   printSolution(await solve(), PLAYER_NAMES, {
-    poisonContext: NIGHT_3,
+    timing: "night_3",
     forcedRoles: [
       forcedRole("Demon", Imp, { includeRole: true }),
       forcedRole("Minion", MINION_ROLES, { includeRole: true }),

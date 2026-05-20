@@ -1,3 +1,4 @@
+import { night, type Timing } from "../model";
 import { forcedRole, printSolution } from "../display";
 import type { BOTCModel } from "../model";
 import { type InfoClaim, Dreamer, Drunk, Imp, Poisoner, applyClaims, playerNames, script } from "../characters";
@@ -5,8 +6,8 @@ import { KissatBackend, type SatBackend } from "../sat";
 import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import type { RoleRef } from "../core";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
 
 export const PLAYERS = [
   new Dreamer({
@@ -85,15 +86,11 @@ export async function solve() {
   return buildModel(await KissatBackend.create()).solveAll();
 }
 
-function dreamerInfo(
-  player: string,
-  poisonContext: string,
-  target: string,
-  roles: readonly [RoleRef, RoleRef],
-): InfoClaim {
+function dreamerInfo(player: string, timing: Timing, target: string, roles: readonly [RoleRef, RoleRef]): InfoClaim {
+  const nightNumber = timing === NIGHT_1 ? 1 : 2;
   return {
-    poisonContext,
-    learned: (game) => Dreamer.learnsOneOf(game, target, roles, `${player}_${poisonContext}_dreamer`),
+    timing: `night_${nightNumber}`,
+    learned: (game) => Dreamer.learnsOneOf(game, target, roles, `${player}_${timing}_dreamer`),
   };
 }
 

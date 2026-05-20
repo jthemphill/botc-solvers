@@ -1,6 +1,7 @@
+import { night } from "../model";
 import { CharacterType } from "../core";
 import { forcedRole, printSolution } from "../display";
-import { type BoolLike, type BoolVar, type BOTCModel } from "../model";
+import { type BoolLike, type BoolVar, type BOTCModel, type Timing } from "../model";
 import { KissatBackend, type SatBackend } from "../sat";
 import { buildPuzzleModel, type PuzzleSpec } from "../setup";
 import {
@@ -23,28 +24,28 @@ import {
   script,
 } from "../characters";
 
-export const NIGHT_1 = "night_1";
-export const NIGHT_2 = "night_2";
-export const NIGHT_3 = "night_3";
+export const NIGHT_1 = night(1);
+export const NIGHT_2 = night(2);
+export const NIGHT_3 = night(3);
 
 export const PLAYERS = [
   new Clockmaker({
     name: "Adam",
-    infoClaims: [{ poisonContext: NIGHT_1, learned: (game) => demonOppositeMinion(game) }],
+    infoClaims: [{ timing: "night_1", learned: (game) => demonOppositeMinion(game) }],
   }),
   new Empath({
     name: "Oscar",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game) => empathAliveNeighborCount(game, ["Adam", "Olivia"], 1, "oscar_empath_n1"),
       },
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game) => empathAliveNeighborCount(game, ["Aoife", "Olivia"], 2, "oscar_empath_n2"),
       },
       {
-        poisonContext: NIGHT_3,
+        timing: "night_3",
         learned: (game) => empathAliveNeighborCount(game, ["Fraser", "Olivia"], 1, "oscar_empath_n3"),
       },
     ],
@@ -53,17 +54,17 @@ export const PLAYERS = [
     name: "Olivia",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game, context) =>
           fortuneTellerCheck(game, context as RedHerring, NIGHT_1, ["Olivia", "Sarah"], false, "olivia_ft_n1"),
       },
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game, context) =>
           fortuneTellerCheck(game, context as RedHerring, NIGHT_2, ["Olivia", "Aoife"], false, "olivia_ft_n2"),
       },
       {
-        poisonContext: NIGHT_3,
+        timing: "night_3",
         learned: (game, context) =>
           fortuneTellerCheck(game, context as RedHerring, NIGHT_3, ["Matt", "Oscar"], false, "olivia_ft_n3"),
       },
@@ -72,14 +73,17 @@ export const PLAYERS = [
   new Oracle({
     name: "Sarah",
     infoClaims: [
-      { poisonContext: NIGHT_2, learned: (game) => deadEvilCount(game, ["Adam", "You"], 1, "sarah_oracle_n2") },
+      {
+        timing: "night_2",
+        learned: (game) => deadEvilCount(game, ["Adam", "You"], 1, "sarah_oracle_n2"),
+      },
     ],
   }),
   new Chambermaid({
     name: "You",
     infoClaims: [
       {
-        poisonContext: NIGHT_1,
+        timing: "night_1",
         learned: (game) => chambermaidWokeCount(game, ["Adam", "Sarah"], 1, "you_chambermaid"),
       },
     ],
@@ -88,13 +92,13 @@ export const PLAYERS = [
     name: "Matt",
     guesses: { Fraser: Undertaker, Oscar: NoDashii },
     correctCount: 2,
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
   new Undertaker({
     name: "Fraser",
     infoClaims: [
       {
-        poisonContext: NIGHT_2,
+        timing: "night_2",
         learned: (game) =>
           game.allOf([game.actualIs("Adam", Drunk), game.actualIs("Aoife", NoDashii)], "fraser_undertaker_claims"),
       },
@@ -104,7 +108,7 @@ export const PLAYERS = [
     name: "Aoife",
     role: Drunk,
     among: ["Matt", "Adam"],
-    poisonContext: NIGHT_1,
+    timing: "night_1",
   }),
 ];
 export const PLAYER_NAMES = playerNames(PLAYERS);
@@ -131,9 +135,9 @@ type RedHerring = ReadonlyMap<string, BoolVar>;
 export function buildModel(backend: SatBackend): BOTCModel {
   const game = buildPuzzleModel(PUZZLE, backend);
 
-  game.allowPoisonInContext(NIGHT_1);
-  game.allowPoisonInContext(NIGHT_2);
-  game.allowPoisonInContext(NIGHT_3);
+  game.allowPoisonAt(NIGHT_1);
+  game.allowPoisonAt(NIGHT_2);
+  game.allowPoisonAt(NIGHT_3);
   game.addImplication(game.roleInPlay(Pukka), game.poisoned("You", NIGHT_1));
   game.addImplication(game.roleInPlay(Pukka), game.poisoned("Sarah", NIGHT_2));
   for (const player of PLAYER_NAMES) {
@@ -156,26 +160,26 @@ export async function solve() {
 }
 
 function addInfo(game: BOTCModel, claim: AppliedInfoClaim): void {
-  const poisonContext = claim.poisonContext as string;
+  const timing = claim.timing;
   const active = game.allOf(
     [
       game.actualIs(claim.player, claim.role),
-      game.poisoned(claim.player, poisonContext).not(),
-      noDashiiPoisoned(game, claim.player, poisonContext).not(),
+      game.poisoned(claim.player, timing).not(),
+      noDashiiPoisoned(game, claim.player, timing).not(),
     ],
-    `${claim.player}_${poisonContext}_active_info`,
+    `${claim.player}_${timing}_active_info`,
   );
   game.addImplication(active, claim.learned);
 }
 
-function noDashiiPoisoned(game: BOTCModel, player: string, poisonContext: string): BoolVar {
+function noDashiiPoisoned(game: BOTCModel, player: string, timing: Timing): BoolVar {
   return game.anyOf(
     PLAYER_NAMES.flatMap((demon) => {
       const [left, right] = game.neighbors(demon);
       return player === left || player === right
         ? [
             game.allOf(
-              [isNoDashiiAtContext(game, demon, poisonContext), game.hasCharacterType(player, CharacterType.Townsfolk)],
+              [isNoDashiiAtTiming(game, demon, timing), game.hasCharacterType(player, CharacterType.Townsfolk)],
               `${player}_poisoned_by_no_dashii_${demon}`,
             ),
           ]
@@ -185,23 +189,24 @@ function noDashiiPoisoned(game: BOTCModel, player: string, poisonContext: string
   );
 }
 
-function isNoDashiiAtContext(game: BOTCModel, player: string, poisonContext: string): BoolVar {
-  if (poisonContext === NIGHT_1) return game.actualIs(player, NoDashii);
+function isNoDashiiAtTiming(game: BOTCModel, player: string, timing: Timing): BoolVar {
+  const timingName = timing;
+  if (timing === NIGHT_1) return game.actualIs(player, NoDashii);
   return game.anyOf(
     [
-      player === "Adam" ? game.constantBool(false, `${player}_dead_${poisonContext}`) : game.actualIs(player, NoDashii),
+      player === "Adam" ? game.constantBool(false, `${player}_dead_${timingName}`) : game.actualIs(player, NoDashii),
       game.allOf(
         [game.actualIs("Adam", NoDashii), game.actualIs(player, ScarletWoman)],
-        `${player}_sw_no_dashii_${poisonContext}`,
+        `${player}_sw_no_dashii_${timingName}`,
       ),
-      poisonContext === NIGHT_3
+      timing === NIGHT_3
         ? game.allOf(
             [game.actualIs("Aoife", NoDashii), game.actualIs(player, ScarletWoman)],
             `${player}_sw_after_aoife_no_dashii`,
           )
-        : game.constantBool(false, `${player}_no_aoife_sw_${poisonContext}`),
+        : game.constantBool(false, `${player}_no_aoife_sw_${timingName}`),
     ],
-    `${player}_no_dashii_${poisonContext}`,
+    `${player}_no_dashii_${timingName}`,
   );
 }
 
@@ -268,14 +273,14 @@ function addFortuneTellerRedHerring(game: BOTCModel): RedHerring {
 function fortuneTellerCheck(
   game: BOTCModel,
   redHerrings: RedHerring,
-  poisonContext: string,
+  timing: Timing,
   players: readonly [string, string],
   yes: boolean,
   name: string,
 ): BoolVar {
   const either = game.anyOf(
     [
-      ...players.map((player) => isDemonAtContext(game, player, poisonContext)),
+      ...players.map((player) => isDemonAtTiming(game, player, timing)),
       ...players.map((player) => redHerrings.get(player) as BoolVar),
     ],
     `${name}_yes`,
@@ -283,19 +288,20 @@ function fortuneTellerCheck(
   return yes ? either : game.not(either, `${name}_no`);
 }
 
-function isDemonAtContext(game: BOTCModel, player: string, poisonContext: string): BoolVar {
-  if (poisonContext === NIGHT_1) return game.isDemon(player);
+function isDemonAtTiming(game: BOTCModel, player: string, timing: Timing): BoolVar {
+  const timingName = timing;
+  if (timing === NIGHT_1) return game.isDemon(player);
   return game.anyOf(
     [
-      player === "Adam" ? game.constantBool(false, `${player}_dead_demon_${poisonContext}`) : game.isDemon(player),
+      player === "Adam" ? game.constantBool(false, `${player}_dead_demon_${timingName}`) : game.isDemon(player),
       game.allOf(
         [
           game.anyOf([game.actualIs("Adam", Pukka), game.actualIs("Adam", NoDashii)], "adam_starting_demon"),
           game.actualIs(player, ScarletWoman),
         ],
-        `${player}_sw_demon_${poisonContext}`,
+        `${player}_sw_demon_${timingName}`,
       ),
-      poisonContext === NIGHT_3
+      timing === NIGHT_3
         ? game.allOf(
             [
               game.anyOf([game.actualIs("Aoife", Pukka), game.actualIs("Aoife", NoDashii)], "aoife_starting_demon"),
@@ -303,9 +309,9 @@ function isDemonAtContext(game: BOTCModel, player: string, poisonContext: string
             ],
             `${player}_sw_after_aoife_demon`,
           )
-        : game.constantBool(false, `${player}_no_aoife_demon_${poisonContext}`),
+        : game.constantBool(false, `${player}_no_aoife_demon_${timingName}`),
     ],
-    `${player}_demon_${poisonContext}`,
+    `${player}_demon_${timingName}`,
   );
 }
 

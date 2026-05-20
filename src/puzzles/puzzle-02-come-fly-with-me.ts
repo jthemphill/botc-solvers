@@ -23,6 +23,7 @@ export const PLAYERS = [
   new Investigator({ name: "Sarah", role: Goblin, among: ["Matthew", "Fraser"] }),
   new Juggler({
     name: "Matthew",
+    timing: "night_2",
     guesses: { Steph: Knight, Sarah: Leviathan, Anna: Goblin, Sula: Goblin, You: Seamstress },
     correctCount: 2,
   }),
@@ -34,7 +35,12 @@ export const PLAYERS = [
       ["Matthew", "Steph"],
     ],
   }),
-  new Seamstress({ name: "You", aligned: true, among: ["Matthew", "Sula"] }),
+  new Seamstress({
+    name: "You",
+    timing: "night_1",
+    aligned: true,
+    among: ["Matthew", "Sula"],
+  }),
   new Knight({ name: "Steph", noDemonAmong: ["Tim", "Sula"] }),
   new FortuneTeller({
     name: "Fraser",

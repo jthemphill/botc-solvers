@@ -29,7 +29,12 @@ export const PLAYERS = [
   new Investigator({ name: "Matt", role: Goblin, among: ["Anna", "Oscar"] }),
   new Empath({ name: "Anna", count: 1 }),
   new Steward({ name: "Hannah", goodPlayer: "Tom" }),
-  new Seamstress({ name: "Oscar", aligned: false, among: ["Tom", "Hannah"] }),
+  new Seamstress({
+    name: "Oscar",
+    timing: "night_1",
+    aligned: false,
+    among: ["Tom", "Hannah"],
+  }),
   new Alsaahir({ name: "You" }),
   new Noble({ name: "Dan", oneEvilAmong: ["Tom", "Anna", "Hannah"] }),
   new Knight({ name: "Tom", noDemonAmong: ["Anna", "Dan"] }),
