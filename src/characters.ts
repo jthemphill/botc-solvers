@@ -45,7 +45,6 @@ export interface ApplyClaimsOptions {
   readonly drunkRole?: RoleRef;
   readonly evilRoles?: readonly RoleRef[];
   readonly extraPossibleActualRoles?: readonly RoleRef[];
-  readonly drunkThinksOutOfPlayRole?: boolean;
   readonly info?: ApplyInfoClaim;
   readonly context?: unknown;
 }
@@ -188,7 +187,6 @@ export abstract class Role {
         drunkRole,
         evilRoles: options.evilRoles,
         extraPossibleActualRoles: options.extraPossibleActualRoles,
-        drunkThinksOutOfPlayRole: options.drunkThinksOutOfPlayRole,
       },
     );
   }

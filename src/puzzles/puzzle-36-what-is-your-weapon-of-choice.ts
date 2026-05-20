@@ -116,7 +116,7 @@ export function buildModel(backend: SatBackend): BOTCModel {
   });
 
   const redHerrings = game.addFortuneTellerRedHerring("Olivia");
-  applyClaims(game, PLAYERS, { drunkThinksOutOfPlayRole: true, context: redHerrings });
+  applyClaims(game, PLAYERS, { context: redHerrings });
   game.addTruth(
     game.anyOf(
       PLAYER_NAMES.map((player) => isDemonOnNightThree(game, player)),

@@ -80,6 +80,7 @@ export class BOTCModel {
   readonly players: string[];
   readonly seating: string[];
   readonly characters: ReadonlyMap<string, RoleRef>;
+  readonly uniqueCharacters: boolean;
   readonly apparentRoles = new Map<string, string>();
   readonly poisonContexts = new Set<string>();
 
@@ -114,6 +115,7 @@ export class BOTCModel {
     for (const character of options.characters) chars.set(roleName(character), character);
     if (chars.size !== options.characters.length) throw new Error("Character names must be unique.");
     this.characters = chars;
+    this.uniqueCharacters = options.uniqueCharacters ?? true;
     this.backend = options.backend;
 
     for (const player of this.players) {
@@ -123,7 +125,7 @@ export class BOTCModel {
     }
     for (const player of this.players)
       this.addExactlyOne([...this.characters.keys()].map((role) => this.actualIs(player, role)));
-    if (options.uniqueCharacters ?? true) {
+    if (this.uniqueCharacters) {
       for (const role of this.characters.keys())
         this.addAtMostN(
           this.players.map((player) => this.actualIs(player, role)),
@@ -185,7 +187,6 @@ export class BOTCModel {
       readonly evilRoles?: readonly RoleRef[];
       readonly drunkRole?: RoleRef;
       readonly extraPossibleActualRoles?: readonly RoleRef[];
-      readonly drunkThinksOutOfPlayRole?: boolean;
     } = {},
   ): void {
     const apparentRole = roleName(claim.apparentRole);
@@ -205,7 +206,7 @@ export class BOTCModel {
       roleCharacterType(this.characters.get(apparentRole) as RoleRef) === CharacterType.Townsfolk;
     if (claimedTownsfolk && this.characters.has(drunkRole)) possibleRoles.push(drunkRole);
     this.setPossibleActualRoles(claim.player, possibleRoles);
-    if (claimedTownsfolk && this.characters.has(drunkRole) && (options.drunkThinksOutOfPlayRole ?? false))
+    if (claimedTownsfolk && this.characters.has(drunkRole))
       this.addDrunkThinksOutOfPlayRole(claim.player, apparentRole, drunkRole);
   }
 
@@ -213,13 +214,13 @@ export class BOTCModel {
     player: string,
     apparentRole: RoleRef,
     possibleRoles: readonly RoleRef[],
-    options: { readonly drunkRole?: RoleRef; readonly drunkThinksOutOfPlayRole?: boolean } = {},
+    options: { readonly drunkRole?: RoleRef } = {},
   ): void {
     const apparentRoleRef = roleName(apparentRole);
     const drunkRole = options.drunkRole ?? "Drunk";
     this.setApparentRole(player, apparentRoleRef);
     this.setPossibleActualRoles(player, possibleRoles);
-    if (options.drunkThinksOutOfPlayRole ?? possibleRoles.some((role) => roleName(role) === roleName(drunkRole)))
+    if (possibleRoles.some((role) => roleName(role) === roleName(drunkRole)))
       this.addDrunkThinksOutOfPlayRole(player, apparentRoleRef, drunkRole);
   }
 
@@ -239,6 +240,7 @@ export class BOTCModel {
   }
 
   addDrunkThinksOutOfPlayRole(player: string, apparentRole: RoleRef, drunkRole: RoleRef): void {
+    if (!this.uniqueCharacters) return;
     this.addImplication(this.actualIs(player, drunkRole), this.roleInPlay(apparentRole).not());
   }
 
