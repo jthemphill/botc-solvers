@@ -8,7 +8,7 @@ export type PuzzleAction =
   | { type: "renamePlayer"; index: number; name: string }
   | { type: "movePlayer"; index: number; direction: "up" | "down" }
   | { type: "setScript"; script: readonly string[] }
-  | { type: "setYou"; you: PuzzleDoc["you"] }
+  | { type: "setFixedRoles"; fixedRoles: PuzzleDoc["fixedRoles"] }
   | { type: "addClaim"; claim: Claim }
   | { type: "updateClaim"; index: number; claim: Claim }
   | { type: "removeClaim"; index: number };
@@ -116,9 +116,7 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
     case "Balloonist":
       return {
         ...claim,
-        differentCharacterTypePairs: claim.differentCharacterTypePairs.filter(
-          ([l, r]) => l !== name && r !== name,
-        ),
+        differentCharacterTypePairs: claim.differentCharacterTypePairs.filter(([l, r]) => l !== name && r !== name),
       };
     default:
       return claim;
@@ -142,16 +140,18 @@ export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
         const next = removeNameFromClaim(c, name);
         return next === undefined ? [] : [next];
       });
-      const you = state.you?.name === name ? undefined : state.you;
-      return { ...state, players, claims, you };
+      const fixedRoles = state.fixedRoles?.filter((fixedRole) => fixedRole.name !== name);
+      return { ...state, players, claims, fixedRoles };
     }
     case "renamePlayer": {
       const oldName = state.players[action.index];
       if (oldName === undefined || !action.name || state.players.includes(action.name)) return state;
       const players = state.players.map((n, i) => (i === action.index ? action.name : n));
       const claims = state.claims.map((c) => rewriteName(c, oldName, action.name));
-      const you = state.you?.name === oldName ? { ...state.you, name: action.name } : state.you;
-      return { ...state, players, claims, you };
+      const fixedRoles = state.fixedRoles?.map((fixedRole) =>
+        fixedRole.name === oldName ? { ...fixedRole, name: action.name } : fixedRole,
+      );
+      return { ...state, players, claims, fixedRoles };
     }
     case "movePlayer": {
       const dir = action.direction === "up" ? -1 : 1;
@@ -163,10 +163,16 @@ export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
       players[j] = tmp;
       return { ...state, players };
     }
-    case "setScript":
-      return { ...state, script: action.script };
-    case "setYou":
-      return { ...state, you: action.you };
+    case "setScript": {
+      const script = action.script;
+      const fixedRoles = state.fixedRoles?.map((fixedRole) => ({
+        ...fixedRole,
+        roles: fixedRole.roles.filter((role) => script.includes(role)),
+      }));
+      return { ...state, script, fixedRoles };
+    }
+    case "setFixedRoles":
+      return { ...state, fixedRoles: action.fixedRoles };
     case "addClaim":
       return { ...state, claims: [...state.claims, action.claim] };
     case "updateClaim": {

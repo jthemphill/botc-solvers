@@ -6,8 +6,13 @@ export interface PuzzleDoc {
   readonly script: readonly string[];
   readonly setup?: "standard" | "none";
   readonly uniqueCharacters?: boolean;
-  readonly you?: { readonly name: string; readonly role: string };
+  readonly fixedRoles?: readonly FixedRoleConstraint[];
   readonly claims: readonly Claim[];
+}
+
+export interface FixedRoleConstraint {
+  readonly name: string;
+  readonly roles: readonly string[];
 }
 
 export type Claim =

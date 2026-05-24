@@ -425,20 +425,6 @@ function NobleBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: NobleClaim
         value={claim.oneEvilAmong ?? []}
         onChange={(v) => onChange({ ...claim, oneEvilAmong: v })}
       />
-      <span>Among (alt)</span>
-      <MultiPlayerSelect
-        players={doc.players}
-        value={claim.among ?? []}
-        onChange={(v) => onChange({ ...claim, among: v })}
-      />
-      <span>Evil count (alt)</span>
-      <input
-        type="number"
-        value={claim.evilCount ?? ""}
-        onChange={(e) =>
-          onChange({ ...claim, evilCount: e.target.value === "" ? undefined : Number(e.target.value) })
-        }
-      />
     </div>
   );
 }
@@ -716,4 +702,3 @@ function SavantBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SavantCla
     </div>
   );
 }
-

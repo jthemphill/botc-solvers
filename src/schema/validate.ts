@@ -50,7 +50,7 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
   const title = input["title"] === undefined ? undefined : expectString(input["title"], "$.title");
   const uniqueCharacters =
     input["uniqueCharacters"] === undefined ? undefined : expectBool(input["uniqueCharacters"], "$.uniqueCharacters");
-  const you = input["you"] === undefined ? undefined : validateYou(input["you"]);
+  const fixedRoles = input["fixedRoles"] === undefined ? undefined : validateFixedRoles(input["fixedRoles"]);
 
   return {
     version: 1,
@@ -60,17 +60,21 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
     script,
     setup,
     uniqueCharacters,
-    you,
+    fixedRoles,
     claims: validatedClaims,
   };
 }
 
-function validateYou(v: unknown): { name: string; role: string } {
-  if (!isObject(v)) throw new ValidationError(`Expected object`, "$.you");
-  return {
-    name: expectString(v["name"], "$.you.name"),
-    role: expectString(v["role"], "$.you.role"),
-  };
+function validateFixedRoles(v: unknown): PuzzleDoc["fixedRoles"] {
+  if (!Array.isArray(v)) throw new ValidationError(`Expected array`, "$.fixedRoles");
+  return v.map((entry, i) => {
+    const path = `$.fixedRoles[${i}]`;
+    if (!isObject(entry)) throw new ValidationError(`Expected object`, path);
+    return {
+      name: expectString(entry["name"], `${path}.name`),
+      roles: expectStringArray(entry["roles"], `${path}.roles`),
+    };
+  });
 }
 
 function validateClaim(input: unknown, path: string): Claim {
@@ -170,7 +174,8 @@ function validateClaim(input: unknown, path: string): Claim {
       };
     case "Seamstress": {
       const among = expectStringArray(input["among"], `${path}.among`);
-      if (among.length !== 2) throw new ValidationError(`Seamstress 'among' must have exactly two players`, `${path}.among`);
+      if (among.length !== 2)
+        throw new ValidationError(`Seamstress 'among' must have exactly two players`, `${path}.among`);
       return {
         ...base,
         type: "Seamstress",
@@ -226,8 +231,7 @@ function validateClaim(input: unknown, path: string): Claim {
     }
     case "Balloonist": {
       const pairs = input["differentCharacterTypePairs"];
-      if (!Array.isArray(pairs))
-        throw new ValidationError(`Expected array`, `${path}.differentCharacterTypePairs`);
+      if (!Array.isArray(pairs)) throw new ValidationError(`Expected array`, `${path}.differentCharacterTypePairs`);
       return {
         ...base,
         type: "Balloonist",

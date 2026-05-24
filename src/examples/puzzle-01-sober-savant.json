@@ -2,18 +2,8 @@
   "version": 1,
   "title": "Puzzle 1 — Sober Savant",
   "players": ["Oscar", "Matt", "Anna", "You", "Tim", "Sula"],
-  "script": [
-    "Imp",
-    "Scarlet Woman",
-    "Drunk",
-    "Investigator",
-    "Knight",
-    "Noble",
-    "Savant",
-    "Seamstress",
-    "Steward"
-  ],
-  "you": { "name": "You", "role": "Savant" },
+  "script": ["Imp", "Scarlet Woman", "Drunk", "Investigator", "Knight", "Noble", "Savant", "Seamstress", "Steward"],
+  "fixedRoles": [{ "name": "You", "roles": ["Savant"] }],
   "claims": [
     {
       "type": "Investigator",
@@ -39,10 +29,7 @@
       "timing": "day_1",
       "statements": [
         {
-          "options": [
-            "some p: players | p.role == Investigator",
-            "some p: You.neighbors | p.alignment == Evil"
-          ]
+          "options": ["some p: players | p.role == Investigator", "some p: You.neighbors | p.alignment == Evil"]
         },
         {
           "options": [
@@ -51,10 +38,7 @@
           ]
         },
         {
-          "options": [
-            "some p: {Tim, Sula} | p.type == Minion",
-            "no p: players | p.role == Noble"
-          ]
+          "options": ["some p: {Tim, Sula} | p.type == Minion", "no p: players | p.role == Noble"]
         }
       ]
     },

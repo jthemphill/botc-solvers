@@ -42,4 +42,20 @@ describe("buildFromDoc", () => {
     const worlds = await buildFromDoc(doc, backend).solveAll();
     expect(worlds.length).toBeGreaterThanOrEqual(0);
   });
+
+  test("fixed roles allow multiple possible actual roles", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["You", "A", "B"],
+        script: ["Imp", "Marionette", "Drunk", "Investigator"],
+        setup: "none",
+        fixedRoles: [{ name: "You", roles: ["Drunk", "Investigator"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(new Set(worlds.map((world) => world.actualRole("You")))).toEqual(new Set(["Drunk", "Investigator"]));
+  });
 });

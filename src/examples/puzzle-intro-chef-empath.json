@@ -2,26 +2,15 @@
   "version": 1,
   "title": "Intro — Chef and Empath",
   "players": ["You", "Anna", "Tim", "Sula", "Matt", "Oscar"],
-  "script": [
-    "Imp",
-    "Poisoner",
-    "Drunk",
-    "Chef",
-    "Empath",
-    "Fortune Teller",
-    "Knight",
-    "Steward"
-  ],
-  "you": { "name": "You", "role": "Chef" },
+  "script": ["Imp", "Poisoner", "Drunk", "Chef", "Empath", "Fortune Teller", "Knight", "Steward"],
+  "fixedRoles": [{ "name": "You", "roles": ["Chef", "Drunk"] }],
   "claims": [
     { "type": "Chef", "name": "You", "count": 1 },
     { "type": "Empath", "name": "Anna", "count": 1 },
     {
       "type": "FortuneTeller",
       "name": "Tim",
-      "checks": [
-        { "left": "Anna", "right": "Sula", "yes": false, "timing": "night_1" }
-      ]
+      "checks": [{ "left": "Anna", "right": "Sula", "yes": false, "timing": "night_1" }]
     },
     { "type": "Steward", "name": "Sula", "goodPlayer": "You" },
     { "type": "Knight", "name": "Matt", "noDemonAmong": ["You", "Anna"] },

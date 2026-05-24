@@ -15,7 +15,11 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
     setup: doc.setup === "none" ? false : "standard",
   };
   const game = buildPuzzleModel(spec, backend);
-  if (doc.you) game.fixActual(doc.you.name, resolveRoleRef(doc.you.role));
+  for (const fixedRole of doc.fixedRoles ?? []) {
+    if (fixedRole.name && fixedRole.roles.length > 0) {
+      game.setPossibleActualRoles(fixedRole.name, fixedRole.roles.map(resolveRoleRef));
+    }
+  }
   const ctx = { players: doc.players, script: doc.script };
   applyClaims(
     game,

@@ -2,19 +2,8 @@
   "version": 1,
   "title": "Puzzle 5a — You Only Guess Twice",
   "players": ["Matt", "Anna", "Hannah", "Oscar", "You", "Dan", "Tom"],
-  "script": [
-    "Leviathan",
-    "Goblin",
-    "Drunk",
-    "Alsaahir",
-    "Empath",
-    "Investigator",
-    "Knight",
-    "Noble",
-    "Seamstress",
-    "Steward"
-  ],
-  "you": { "name": "You", "role": "Alsaahir" },
+  "script": ["Leviathan", "Goblin", "Alsaahir", "Empath", "Investigator", "Knight", "Noble", "Seamstress", "Steward"],
+  "fixedRoles": [{ "name": "You", "roles": ["Alsaahir"] }],
   "claims": [
     { "type": "Investigator", "name": "Matt", "role": "Goblin", "among": ["Anna", "Oscar"] },
     { "type": "Empath", "name": "Anna", "count": 1 },
