@@ -69,9 +69,7 @@ const ROLE_CLASS_LIST: readonly RoleClass[] = [
   characters.Xaan,
 ];
 
-export const ROLE_CLASSES: ReadonlyMap<string, RoleClass> = new Map(
-  ROLE_CLASS_LIST.map((cls) => [cls.roleName, cls]),
-);
+export const ROLE_CLASSES: ReadonlyMap<string, RoleClass> = new Map(ROLE_CLASS_LIST.map((cls) => [cls.roleName, cls]));
 
 export function roleByName(name: string): RoleClass {
   const cls = ROLE_CLASSES.get(name);

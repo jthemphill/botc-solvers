@@ -154,21 +154,20 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
     case "Balloonist":
       return new Balloonist({
         ...base,
-        differentCharacterTypePairs: claim.differentCharacterTypePairs.map(
-          (p) => [p[0], p[1]] as [string, string],
-        ),
+        differentCharacterTypePairs: claim.differentCharacterTypePairs.map((p) => [p[0], p[1]] as [string, string]),
       });
     case "Savant":
       return new Savant({
         ...base,
-        statements: claim.statements.map((stmt, stmtIdx) => (game) =>
-          stmt.options.map((src, optIdx) =>
-            compile(src, game, {
-              players: ctx.players,
-              script: ctx.script,
-              nameRoot: `${slug(claim.name)}_savant_stmt${stmtIdx}_opt${optIdx}`,
-            }),
-          ),
+        statements: claim.statements.map(
+          (stmt, stmtIdx) => (game) =>
+            stmt.options.map((src, optIdx) =>
+              compile(src, game, {
+                players: ctx.players,
+                script: ctx.script,
+                nameRoot: `${slug(claim.name)}_savant_stmt${stmtIdx}_opt${optIdx}`,
+              }),
+            ),
         ),
       });
     default: {
@@ -180,5 +179,8 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
 }
 
 function slug(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 }

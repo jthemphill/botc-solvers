@@ -78,11 +78,7 @@ export function ClaimsEditor({ doc, dispatch }: Props) {
             </strong>
             <button onClick={() => dispatch({ type: "removeClaim", index: i })}>Remove</button>
           </header>
-          <ClaimBody
-            doc={doc}
-            claim={c}
-            onChange={(claim) => dispatch({ type: "updateClaim", index: i, claim })}
-          />
+          <ClaimBody doc={doc} claim={c} onChange={(claim) => dispatch({ type: "updateClaim", index: i, claim })} />
         </div>
       ))}
     </section>
@@ -267,24 +263,49 @@ function ClaimBody({ doc, claim, onChange }: BodyProps) {
   }
 }
 
-function InvestigatorBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: InvestigatorClaim; onChange: (c: Claim) => void }) {
+function InvestigatorBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: InvestigatorClaim;
+  onChange: (c: Claim) => void;
+}) {
   return (
     <div className="field-grid">
       <span>Minion role</span>
-      <RoleSelect script={doc.script} value={claim.minionRole} onChange={(v) => onChange({ ...claim, minionRole: v })} allowEmpty />
+      <RoleSelect
+        script={doc.script}
+        value={claim.minionRole}
+        onChange={(v) => onChange({ ...claim, minionRole: v })}
+        allowEmpty
+      />
       <span>Specific role</span>
       <RoleSelect script={doc.script} value={claim.role} onChange={(v) => onChange({ ...claim, role: v })} allowEmpty />
       <span>Among</span>
       <MultiPlayerSelect players={doc.players} value={claim.among} onChange={(v) => onChange({ ...claim, among: v })} />
       <span>Registers (Spy/Recluse confusion)</span>
-      <input type="checkbox" checked={claim.registers ?? true} onChange={(e) => onChange({ ...claim, registers: e.target.checked })} />
+      <input
+        type="checkbox"
+        checked={claim.registers ?? true}
+        onChange={(e) => onChange({ ...claim, registers: e.target.checked })}
+      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
   );
 }
 
-function LibrarianBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: LibrarianClaim; onChange: (c: Claim) => void }) {
+function LibrarianBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: LibrarianClaim;
+  onChange: (c: Claim) => void;
+}) {
   return (
     <div className="field-grid">
       <span>Role</span>
@@ -293,7 +314,9 @@ function LibrarianBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: Librar
       <input
         type="number"
         value={claim.outsiderCount ?? ""}
-        onChange={(e) => onChange({ ...claim, outsiderCount: e.target.value === "" ? undefined : Number(e.target.value) })}
+        onChange={(e) =>
+          onChange({ ...claim, outsiderCount: e.target.value === "" ? undefined : Number(e.target.value) })
+        }
       />
       <span>Among</span>
       <MultiPlayerSelect
@@ -302,14 +325,26 @@ function LibrarianBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: Librar
         onChange={(v) => onChange({ ...claim, among: v })}
       />
       <span>Registers</span>
-      <input type="checkbox" checked={claim.registers ?? true} onChange={(e) => onChange({ ...claim, registers: e.target.checked })} />
+      <input
+        type="checkbox"
+        checked={claim.registers ?? true}
+        onChange={(e) => onChange({ ...claim, registers: e.target.checked })}
+      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
   );
 }
 
-function WasherwomanBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: WasherwomanClaim; onChange: (c: Claim) => void }) {
+function WasherwomanBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: WasherwomanClaim;
+  onChange: (c: Claim) => void;
+}) {
   return (
     <div className="field-grid">
       <span>Role</span>
@@ -317,7 +352,11 @@ function WasherwomanBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: Wash
       <span>Among</span>
       <MultiPlayerSelect players={doc.players} value={claim.among} onChange={(v) => onChange({ ...claim, among: v })} />
       <span>Registers</span>
-      <input type="checkbox" checked={claim.registers ?? true} onChange={(e) => onChange({ ...claim, registers: e.target.checked })} />
+      <input
+        type="checkbox"
+        checked={claim.registers ?? true}
+        onChange={(e) => onChange({ ...claim, registers: e.target.checked })}
+      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
@@ -334,7 +373,11 @@ function ChefBody({ claim, onChange }: { claim: ChefClaim; onChange: (c: Claim) 
         onChange={(e) => onChange({ ...claim, count: Number(e.target.value) })}
       />
       <span>Registers</span>
-      <input type="checkbox" checked={claim.registers ?? true} onChange={(e) => onChange({ ...claim, registers: e.target.checked })} />
+      <input
+        type="checkbox"
+        checked={claim.registers ?? true}
+        onChange={(e) => onChange({ ...claim, registers: e.target.checked })}
+      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
@@ -351,14 +394,26 @@ function EmpathBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: EmpathCla
         onChange={(e) => onChange({ ...claim, count: Number(e.target.value) })}
       />
       <span>Player (override)</span>
-      <PlayerSelect players={doc.players} value={claim.player} onChange={(v) => onChange({ ...claim, player: v || undefined })} />
+      <PlayerSelect
+        players={doc.players}
+        value={claim.player}
+        onChange={(v) => onChange({ ...claim, player: v || undefined })}
+      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
   );
 }
 
-function FortuneTellerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: FortuneTellerClaim; onChange: (c: Claim) => void }) {
+function FortuneTellerBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: FortuneTellerClaim;
+  onChange: (c: Claim) => void;
+}) {
   const setCheck = (i: number, c: FortuneTellerCheckDoc) => {
     const next = claim.checks.map((c0, j) => (j === i ? c : c0));
     onChange({ ...claim, checks: next });
@@ -372,7 +427,11 @@ function FortuneTellerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: Fo
   return (
     <div>
       {claim.checks.map((chk, i) => (
-        <div key={i} className="field-grid" style={{ borderBottom: "1px solid rgba(0,0,0,0.05)", paddingBottom: "0.3rem" }}>
+        <div
+          key={i}
+          className="field-grid"
+          style={{ borderBottom: "1px solid rgba(0,0,0,0.05)", paddingBottom: "0.3rem" }}
+        >
           <span>Left</span>
           <PlayerSelect players={doc.players} value={chk.left} onChange={(v) => setCheck(i, { ...chk, left: v })} />
           <span>Right</span>
@@ -403,7 +462,15 @@ function FortuneTellerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: Fo
   );
 }
 
-function UndertakerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: UndertakerClaim; onChange: (c: Claim) => void }) {
+function UndertakerBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: UndertakerClaim;
+  onChange: (c: Claim) => void;
+}) {
   return (
     <div className="field-grid">
       <span>Executed player</span>
@@ -433,7 +500,11 @@ function StewardBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: StewardC
   return (
     <div className="field-grid">
       <span>Good player</span>
-      <PlayerSelect players={doc.players} value={claim.goodPlayer} onChange={(v) => onChange({ ...claim, goodPlayer: v })} />
+      <PlayerSelect
+        players={doc.players}
+        value={claim.goodPlayer}
+        onChange={(v) => onChange({ ...claim, goodPlayer: v })}
+      />
     </div>
   );
 }
@@ -451,7 +522,15 @@ function KnightBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: KnightCla
   );
 }
 
-function SeamstressBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SeamstressClaim; onChange: (c: Claim) => void }) {
+function SeamstressBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: SeamstressClaim;
+  onChange: (c: Claim) => void;
+}) {
   return (
     <div className="field-grid">
       <span>Left</span>
@@ -467,7 +546,11 @@ function SeamstressBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: Seams
         onChange={(v) => onChange({ ...claim, among: [claim.among[0], v] as const })}
       />
       <span>Same alignment</span>
-      <input type="checkbox" checked={claim.aligned} onChange={(e) => onChange({ ...claim, aligned: e.target.checked })} />
+      <input
+        type="checkbox"
+        checked={claim.aligned}
+        onChange={(e) => onChange({ ...claim, aligned: e.target.checked })}
+      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
@@ -566,10 +649,18 @@ function ClockmakerBody({ claim, onChange }: { claim: ClockmakerClaim; onChange:
   );
 }
 
-function VillageIdiotBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: VillageIdiotClaim; onChange: (c: Claim) => void }) {
+function VillageIdiotBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: VillageIdiotClaim;
+  onChange: (c: Claim) => void;
+}) {
   const addCheck = () =>
     onChange({ ...claim, checks: [...claim.checks, { player: doc.players[0] ?? "", good: true }] });
-  const setCheck = (i: number, c: typeof claim.checks[number]) =>
+  const setCheck = (i: number, c: (typeof claim.checks)[number]) =>
     onChange({ ...claim, checks: claim.checks.map((c0, j) => (j === i ? c : c0)) });
   const removeCheck = (i: number) => onChange({ ...claim, checks: claim.checks.filter((_, j) => j !== i) });
   return (
@@ -578,7 +669,11 @@ function VillageIdiotBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: Vil
         <div key={i} className="row">
           <PlayerSelect players={doc.players} value={chk.player} onChange={(v) => setCheck(i, { ...chk, player: v })} />
           <label>
-            <input type="checkbox" checked={chk.good} onChange={(e) => setCheck(i, { ...chk, good: e.target.checked })} />
+            <input
+              type="checkbox"
+              checked={chk.good}
+              onChange={(e) => setCheck(i, { ...chk, good: e.target.checked })}
+            />
             registers good
           </label>
           <button onClick={() => removeCheck(i)}>×</button>
@@ -589,7 +684,15 @@ function VillageIdiotBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: Vil
   );
 }
 
-function BalloonistBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: BalloonistClaim; onChange: (c: Claim) => void }) {
+function BalloonistBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: BalloonistClaim;
+  onChange: (c: Claim) => void;
+}) {
   const addPair = () => {
     const first = doc.players[0] ?? "";
     const second = doc.players[1] ?? "";
@@ -643,11 +746,7 @@ function SavantBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SavantCla
           <header className="row">
             <strong>Statement {si + 1}</strong>
             <span style={{ opacity: 0.6 }}>(exactly one option is true)</span>
-            <button
-              onClick={() =>
-                onChange({ ...claim, statements: claim.statements.filter((_, j) => j !== si) })
-              }
-            >
+            <button onClick={() => onChange({ ...claim, statements: claim.statements.filter((_, j) => j !== si) })}>
               Remove statement
             </button>
           </header>
@@ -684,9 +783,7 @@ function SavantBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SavantCla
             onClick={() => {
               onChange({
                 ...claim,
-                statements: claim.statements.map((s, j) =>
-                  j === si ? { options: [...s.options, ""] } : s,
-                ),
+                statements: claim.statements.map((s, j) => (j === si ? { options: [...s.options, ""] } : s)),
               });
             }}
           >
@@ -694,9 +791,7 @@ function SavantBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SavantCla
           </button>
         </div>
       ))}
-      <button
-        onClick={() => onChange({ ...claim, statements: [...claim.statements, { options: ["", ""] }] })}
-      >
+      <button onClick={() => onChange({ ...claim, statements: [...claim.statements, { options: ["", ""] }] })}>
         + Add statement
       </button>
     </div>

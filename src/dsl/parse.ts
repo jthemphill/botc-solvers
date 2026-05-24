@@ -27,7 +27,10 @@ class Parser {
   private expect(kind: TokenKind, label?: string): Token {
     const tok = this.peek();
     if (tok.kind !== kind) {
-      throw new DslError(`Expected ${label ?? kind} but got ${tok.kind === "eof" ? "end of input" : tok.text}`, tok.span);
+      throw new DslError(
+        `Expected ${label ?? kind} but got ${tok.kind === "eof" ? "end of input" : tok.text}`,
+        tok.span,
+      );
     }
     return this.consume();
   }

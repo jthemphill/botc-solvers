@@ -47,21 +47,27 @@ class Compiler {
 
   compile(node: AstNode): BoolLike {
     const v = this.evalNode(node, new Map());
-    if (v.kind !== "bool")
-      throw new DslError(`Expression has type '${v.kind}', expected a boolean formula`, node.span);
+    if (v.kind !== "bool") throw new DslError(`Expression has type '${v.kind}', expected a boolean formula`, node.span);
     return v.value;
   }
 
   private evalNode(node: AstNode, env: ReadonlyMap<string, DslValue>): DslValue {
     switch (node.kind) {
       case "boollit":
-        return { kind: "bool", value: this.game.constantBool(node.value, this.freshName(`lit_${node.value}`)), span: node.span };
+        return {
+          kind: "bool",
+          value: this.game.constantBool(node.value, this.freshName(`lit_${node.value}`)),
+          span: node.span,
+        };
       case "number":
         return { kind: "number", value: node.value, span: node.span };
       case "path":
         return this.evalPath(node, env);
       case "setlit":
-        return this.evalSetLit(node.elements.map((e) => this.evalNode(e, env)), node.span);
+        return this.evalSetLit(
+          node.elements.map((e) => this.evalNode(e, env)),
+          node.span,
+        );
       case "call":
         return this.evalCall(node, env);
       case "not": {
@@ -145,10 +151,7 @@ class Compiler {
     throw new DslError(`Set literals support only players or roles`, span);
   }
 
-  private evalQuant(
-    node: Extract<AstNode, { kind: "quant" }>,
-    env: ReadonlyMap<string, DslValue>,
-  ): DslValue {
+  private evalQuant(node: Extract<AstNode, { kind: "quant" }>, env: ReadonlyMap<string, DslValue>): DslValue {
     const set = this.evalNode(node.set, env);
     const atoms = setAtoms(set, node.set.span);
     const literals = atoms.elements.map((atom) => {
@@ -181,18 +184,23 @@ class Compiler {
     return { kind: "bool", value: result, span: node.span };
   }
 
-  private evalBinop(
-    node: Extract<AstNode, { kind: "binop" }>,
-    env: ReadonlyMap<string, DslValue>,
-  ): DslValue {
+  private evalBinop(node: Extract<AstNode, { kind: "binop" }>, env: ReadonlyMap<string, DslValue>): DslValue {
     const op = node.op;
     if (op === "and" || op === "or" || op === "implies") {
       const left = this.expectBool(this.evalNode(node.left, env));
       const right = this.expectBool(this.evalNode(node.right, env));
       if (op === "and")
-        return { kind: "bool", value: this.game.allOf([left.value, right.value], this.freshName("and")), span: node.span };
+        return {
+          kind: "bool",
+          value: this.game.allOf([left.value, right.value], this.freshName("and")),
+          span: node.span,
+        };
       if (op === "or")
-        return { kind: "bool", value: this.game.anyOf([left.value, right.value], this.freshName("or")), span: node.span };
+        return {
+          kind: "bool",
+          value: this.game.anyOf([left.value, right.value], this.freshName("or")),
+          span: node.span,
+        };
       const notLeft = this.game.not(left.value, this.freshName("implies_lhs"));
       return {
         kind: "bool",
@@ -236,12 +244,10 @@ class Compiler {
     const pair = orderPair(lhs, rhs);
     const a = pair[0];
     const b = pair[1];
-    if (a.kind === "playerRole" && b.kind === "role")
-      return this.game.actualIs(a.player, b.name);
+    if (a.kind === "playerRole" && b.kind === "role") return this.game.actualIs(a.player, b.name);
     if (a.kind === "playerAlignment" && b.kind === "alignment")
       return b.value === "Evil" ? this.game.isEvil(a.player) : this.game.isGood(a.player);
-    if (a.kind === "playerType" && b.kind === "type")
-      return this.game.hasCharacterType(a.player, b.value);
+    if (a.kind === "playerType" && b.kind === "type") return this.game.hasCharacterType(a.player, b.value);
     if (a.kind === "player" && b.kind === "player")
       return this.game.constantBool(a.name === b.name, this.freshName("player_eq"));
     if (a.kind === "role" && b.kind === "role")
@@ -305,11 +311,7 @@ function setAtoms(value: DslValue, span: Span): AtomBundle {
   throw new DslError(`Expected a set, got ${value.kind}`, span);
 }
 
-function atomsToSet(
-  atoms: readonly DslValue[],
-  kind: "player" | "role",
-  span: Span,
-): DslValue {
+function atomsToSet(atoms: readonly DslValue[], kind: "player" | "role", span: Span): DslValue {
   const names = atoms.map((a) => (a as { name: string }).name);
   return kind === "player" ? { kind: "playerSet", names, span } : { kind: "roleSet", names, span };
 }
