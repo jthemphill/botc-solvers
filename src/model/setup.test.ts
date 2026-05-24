@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, test } from "bun:test";
-import { CharacterType, type RoleRef, roleCharacterType, roleName } from "../src/core";
-import type { World } from "../src/model";
-import { KissatBackend, type SatBackend } from "../src/sat";
-import { buildPuzzleModel, standardSetupCounts } from "../src/setup";
+import { CharacterType, type RoleRef, roleCharacterType, roleName } from "./core";
+import type { World } from "./model";
+import { KissatBackend, type SatBackend } from "./sat";
+import { buildPuzzleModel, standardSetupCounts } from "./setup";
 import {
   Balloonist,
   Baron,
@@ -18,7 +18,7 @@ import {
   ScarletWoman,
   Slayer,
   script,
-} from "../src/characters";
+} from "./characters";
 
 describe("standard setup lowering", () => {
   let backend: SatBackend;

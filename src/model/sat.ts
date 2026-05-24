@@ -70,7 +70,7 @@ export class KissatBackend implements SatBackend {
   private constructor(private readonly runtime: KissatEmscriptenModule) {}
 
   static async create(): Promise<KissatBackend> {
-    const runtime = (await import("../vendor/kissat-js/kissat-emscripten")).default as KissatEmscriptenModule;
+    const runtime = (await import("../../vendor/kissat-js/kissat-emscripten")).default as KissatEmscriptenModule;
     await waitForRuntime(runtime);
     return new KissatBackend(runtime);
   }
