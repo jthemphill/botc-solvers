@@ -20,11 +20,11 @@ body {
 }
 
 main.app {
-  max-width: 1200px;
+  max-width: 1360px;
   margin: 0 auto;
   padding: 1rem;
   display: grid;
-  grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr);
+  grid-template-columns: minmax(640px, 1.2fr) minmax(320px, 0.8fr);
   gap: 1rem;
 }
 
@@ -132,9 +132,20 @@ textarea {
 
 .field-grid {
   display: grid;
-  grid-template-columns: max-content 1fr;
+  grid-template-columns: minmax(7rem, 12rem) minmax(0, 1fr);
   gap: 0.4rem 0.6rem;
   align-items: center;
+}
+
+.field-grid > * {
+  min-width: 0;
+}
+
+.field-grid input[type="text"],
+.field-grid input[type="number"],
+.field-grid select {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 table.results {
@@ -171,10 +182,23 @@ table.results thead {
   gap: 0.25rem 0.75rem;
 }
 
+.script-grid.compact {
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+}
+
 .script-grid label {
   display: flex;
   gap: 0.35rem;
   align-items: center;
+}
+
+.protected-role {
+  opacity: 0.75;
+}
+
+.hidden-role-groups {
+  display: grid;
+  gap: 0.75rem;
 }
 
 .statement-block {
@@ -183,4 +207,168 @@ table.results thead {
   gap: 0.4rem;
   border-left: 3px solid rgba(0, 0, 0, 0.1);
   padding-left: 0.6rem;
+}
+
+.seating-panel {
+  gap: 1rem;
+}
+
+.seating-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.seating-header label {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.seating-header input {
+  width: 4.5rem;
+}
+
+.seating-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(300px, 1.1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.seating-chart {
+  position: relative;
+  width: min(100%, 430px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+}
+
+.seating-ring {
+  position: absolute;
+  inset: 14%;
+  border: 2px solid rgba(37, 99, 235, 0.22);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, rgba(37, 99, 235, 0.08) 0 2px, transparent 3px),
+    rgba(255, 255, 255, 0.22);
+}
+
+.seat-button {
+  position: absolute;
+  width: 6.2rem;
+  min-height: 3.2rem;
+  transform: translate(-50%, -50%);
+  border-color: rgba(37, 99, 235, 0.45);
+  background: rgba(255, 255, 255, 0.88);
+  color: #172033;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.15rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+  box-shadow: 0 3px 10px rgba(17, 24, 39, 0.08);
+}
+
+.seat-button.selected {
+  border-color: #2563eb;
+  background: #dbeafe;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+}
+
+.seat-button span {
+  max-width: 100%;
+  font-weight: 650;
+  line-height: 1.1;
+}
+
+.seat-button small {
+  min-width: 1.3rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.1);
+  font-size: 0.75rem;
+}
+
+.seat-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.claim-add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+
+.selected-claims {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .seating-ring {
+    background:
+      radial-gradient(circle at center, rgba(96, 165, 250, 0.16) 0 2px, transparent 3px),
+      rgba(255, 255, 255, 0.04);
+    border-color: rgba(96, 165, 250, 0.3);
+  }
+
+  .seat-button {
+    background: #232a36;
+    color: #edf3ff;
+    border-color: rgba(96, 165, 250, 0.45);
+  }
+
+  .seat-button.selected {
+    background: #1e3a5f;
+    border-color: #60a5fa;
+  }
+
+  .seat-button small {
+    background: rgba(255, 255, 255, 0.12);
+  }
+}
+
+@media (max-width: 1000px) {
+  main.app {
+    grid-template-columns: 1fr;
+  }
+
+  .seating-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .seating-chart {
+    max-width: 360px;
+  }
+}
+
+@media (max-width: 520px) {
+  main.app {
+    padding: 0.75rem;
+  }
+
+  .seating-header,
+  .claim-add-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .seat-button {
+    width: 5.2rem;
+    min-height: 3rem;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.86rem;
+  }
+
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
 }

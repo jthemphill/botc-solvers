@@ -39,6 +39,17 @@ describe("predicates and helpers", () => {
     backend = await KissatBackend.create();
   });
 
+  test("left neighbor is the next seated player", () => {
+    const game = new BOTCModel(["A", "B", "C", "D"], {
+      characters: TEST_CHARACTERS,
+      seating: ["A", "B", "C", "D"],
+      backend,
+    });
+
+    expect(game.neighbors("A")).toEqual(["B", "D"]);
+    expect(game.neighbors("C")).toEqual(["D", "B"]);
+  });
+
   test("drunk can think they are townsfolk, not outsider", async () => {
     const valid = new BOTCModel(["A", "B"], { characters: TEST_CHARACTERS, backend });
     valid.addRoleClaim({ player: "A", apparentRole: "Investigator" });

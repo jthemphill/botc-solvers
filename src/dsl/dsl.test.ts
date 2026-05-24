@@ -96,6 +96,23 @@ describe("DSL", () => {
     }
   });
 
+  test("left and right fields use next and previous seating positions", async () => {
+    const game = buildPuzzleModel(
+      { players: ["A", "B", "C"], characters: CHARACTERS, seating: ["A", "B", "C"], setup: false },
+      backend,
+    );
+    const ctx: CompileCtx = {
+      players: ["A", "B", "C"],
+      script: CHARACTERS.map((c) => (typeof c === "string" ? c : c.roleName)),
+      nameRoot: "left_right",
+    };
+
+    game.addTruth(compile("A.left == B && A.right == C", game, ctx) as BoolLike);
+    game.addFalse(compile("A.left == C || A.right == B", game, ctx) as BoolLike);
+
+    expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
+  });
+
   test("each DSL statement matches its hand-coded counterpart under the puzzle-01 model", async () => {
     // Build the puzzle-01 game so the Savant statement is true exactly when the DSL form is.
     const buildBaseGame = (): BOTCModel => {

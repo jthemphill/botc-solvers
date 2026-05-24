@@ -814,8 +814,8 @@ export class BOTCModel {
     this.checkPlayer(player);
     const index = this.seating.indexOf(player);
     return [
-      this.seating[(index - 1 + this.seating.length) % this.seating.length] as string,
       this.seating[(index + 1) % this.seating.length] as string,
+      this.seating[(index - 1 + this.seating.length) % this.seating.length] as string,
     ];
   }
 

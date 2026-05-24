@@ -1,10 +1,9 @@
 import { useReducer, useState } from "react";
-import { ClaimsEditor } from "./components/ClaimsEditor";
 import { FixedRolesEditor } from "./components/FixedRolesEditor";
 import { ImportExportBar } from "./components/ImportExportBar";
-import { PlayersEditor } from "./components/PlayersEditor";
 import { PuzzleHeader } from "./components/PuzzleHeader";
 import { ResultsView } from "./components/ResultsView";
+import { SeatingChartEditor } from "./components/SeatingChartEditor";
 import { ScriptPicker } from "./components/ScriptPicker";
 import { initialDoc, reducer } from "./state/puzzleDoc";
 import { useSolver } from "./state/useSolver";
@@ -43,12 +42,11 @@ export function App() {
           </div>
         </section>
         <ImportExportBar doc={doc} dispatch={dispatch} onError={setError} />
-        <PlayersEditor doc={doc} dispatch={dispatch} />
+        <SeatingChartEditor doc={doc} dispatch={dispatch} />
         <ScriptPicker doc={doc} dispatch={dispatch} />
         <FixedRolesEditor doc={doc} dispatch={dispatch} />
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-        <ClaimsEditor doc={doc} dispatch={dispatch} />
         <ResultsView worlds={worlds} error={error} />
       </div>
     </main>

@@ -1,6 +1,7 @@
 import { useState, type Dispatch } from "react";
 import { DslError, lex } from "../dsl/lex";
 import { parse } from "../dsl/parse";
+import { ALL_ROLE_NAMES } from "../state/scriptRoles";
 import type {
   BalloonistClaim,
   Claim,
@@ -32,7 +33,7 @@ interface Props {
   dispatch: Dispatch<PuzzleAction>;
 }
 
-const CLAIM_TYPES = [...SUPPORTED_CLAIM_TYPES];
+export const CLAIM_TYPES = [...SUPPORTED_CLAIM_TYPES];
 
 const TIMING_OPTIONS = ["", "night_1", "day_1", "night_2", "day_2", "night_3", "day_3"];
 
@@ -85,7 +86,7 @@ export function ClaimsEditor({ doc, dispatch }: Props) {
   );
 }
 
-function makeEmptyClaim(type: Claim["type"], name: string): Claim {
+export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
   switch (type) {
     case "Investigator":
       return { type: "Investigator", name, among: [] };
@@ -182,10 +183,12 @@ function RoleSelect({
   onChange: (v: string) => void;
   allowEmpty?: boolean;
 }) {
+  const roles = value && !ALL_ROLE_NAMES.includes(value) ? [value, ...ALL_ROLE_NAMES] : ALL_ROLE_NAMES;
+  void script;
   return (
     <select value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
       {allowEmpty && <option value="">—</option>}
-      {script.map((r) => (
+      {roles.map((r) => (
         <option key={r} value={r}>
           {r}
         </option>
@@ -215,7 +218,7 @@ function PlayerSelect({
   );
 }
 
-function ClaimBody({ doc, claim, onChange }: BodyProps) {
+export function ClaimBody({ doc, claim, onChange }: BodyProps) {
   switch (claim.type) {
     case "Investigator":
       return <InvestigatorBody doc={doc} claim={claim} onChange={onChange} />;
