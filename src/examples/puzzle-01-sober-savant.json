@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "title": "Puzzle 1 — Sober Savant",
+  "players": ["Oscar", "Matt", "Anna", "You", "Tim", "Sula"],
+  "script": [
+    "Imp",
+    "Scarlet Woman",
+    "Drunk",
+    "Investigator",
+    "Knight",
+    "Noble",
+    "Savant",
+    "Seamstress",
+    "Steward"
+  ],
+  "you": { "name": "You", "role": "Savant" },
+  "claims": [
+    {
+      "type": "Investigator",
+      "name": "Oscar",
+      "minionRole": "Scarlet Woman",
+      "among": ["Anna", "Sula"]
+    },
+    {
+      "type": "Noble",
+      "name": "Matt",
+      "oneEvilAmong": ["Tim", "Oscar", "Sula"]
+    },
+    {
+      "type": "Seamstress",
+      "name": "Anna",
+      "timing": "night_1",
+      "aligned": false,
+      "among": ["Oscar", "Sula"]
+    },
+    {
+      "type": "Savant",
+      "name": "You",
+      "timing": "day_1",
+      "statements": [
+        {
+          "options": [
+            "some p: players | p.role == Investigator",
+            "some p: You.neighbors | p.alignment == Evil"
+          ]
+        },
+        {
+          "options": [
+            "chef(1, registers: false)",
+            "some p: players | p.role == Drunk && p.left.type == Townsfolk && p.right.type == Townsfolk"
+          ]
+        },
+        {
+          "options": [
+            "some p: {Tim, Sula} | p.type == Minion",
+            "no p: players | p.role == Noble"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Knight",
+      "name": "Tim",
+      "noDemonAmong": ["Anna", "Sula"]
+    },
+    {
+      "type": "Steward",
+      "name": "Sula",
+      "goodPlayer": "Matt"
+    }
+  ]
+}

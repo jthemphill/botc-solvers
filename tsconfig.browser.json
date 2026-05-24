@@ -3,8 +3,11 @@
   "compilerOptions": {
     "composite": true,
     "lib": ["ES2022", "DOM", "WebWorker"],
-    "types": []
+    "types": ["vite/client"],
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true
   },
-  "include": ["src/**/*.ts", "vendor/**/*.ts"],
-  "exclude": ["src/puzzles/**/*.ts", "src/**/*.test.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.json", "vendor/**/*.ts"],
+  "exclude": ["src/model/puzzles/**/*.ts", "src/**/*.test.ts", "src/**/*.test.tsx"]
 }

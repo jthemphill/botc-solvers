@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "title": "Puzzle 5b — You Only Guess Twice",
+  "players": ["Matthew", "Steph", "Aoife", "Fraser", "You", "Sarah", "Tim"],
+  "script": [
+    "Leviathan",
+    "Goblin",
+    "Drunk",
+    "Empath",
+    "Investigator",
+    "Juggler",
+    "Knight",
+    "Noble",
+    "Seamstress",
+    "Steward"
+  ],
+  "you": { "name": "You", "role": "Juggler" },
+  "claims": [
+    { "type": "Steward", "name": "Matthew", "goodPlayer": "You" },
+    { "type": "Investigator", "name": "Steph", "role": "Goblin", "among": ["Sarah", "Fraser"] },
+    { "type": "Noble", "name": "Aoife", "oneEvilAmong": ["Sarah", "Tim", "Matthew"] },
+    { "type": "Knight", "name": "Fraser", "noDemonAmong": ["You", "Steph"] },
+    { "type": "Juggler", "name": "You", "timing": "night_2", "guesses": {} },
+    { "type": "Empath", "name": "Sarah", "count": 0 },
+    {
+      "type": "Seamstress",
+      "name": "Tim",
+      "timing": "night_1",
+      "aligned": true,
+      "among": ["You", "Fraser"]
+    }
+  ]
+}
