@@ -31,13 +31,27 @@
       "statements": [
         {
           "options": ["some p: players | p.role == Investigator", "some p: You.neighbors | p.alignment == Evil"]
-        },
+        }
+      ]
+    },
+    {
+      "type": "Savant",
+      "name": "You",
+      "timing": "day_2",
+      "statements": [
         {
           "options": [
             "chef(1, registers: false)",
             "some p: players | p.role == Drunk && p.left.type == Townsfolk && p.right.type == Townsfolk"
           ]
-        },
+        }
+      ]
+    },
+    {
+      "type": "Savant",
+      "name": "You",
+      "timing": "day_3",
+      "statements": [
         {
           "options": ["some p: {Tim, Sula} | p.type == Minion", "no p: players | p.role == Noble"]
         }

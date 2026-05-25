@@ -35,7 +35,15 @@ interface Props {
 
 export const CLAIM_TYPES = [...SUPPORTED_CLAIM_TYPES];
 
-const TIMING_OPTIONS = ["", "night_1", "day_1", "night_2", "day_2", "night_3", "day_3"];
+const TIMING_OPTIONS = ["night_1", "day_1", "night_2", "day_2", "night_3", "day_3"];
+
+function timingLabel(timing: string): string {
+  const match = /^(night|day)_(\d+)$/.exec(timing);
+  if (match === null) return timing;
+  const [, period, number] = match;
+  if (period === undefined || number === undefined) return timing;
+  return `${period[0]?.toUpperCase()}${period.slice(1)} ${number}`;
+}
 
 export function ClaimsEditor({ doc, dispatch }: Props) {
   const [newType, setNewType] = useState<Claim["type"]>("Investigator");
@@ -123,7 +131,7 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
     case "Balloonist":
       return { type: "Balloonist", name, differentCharacterTypePairs: [] };
     case "Savant":
-      return { type: "Savant", name, timing: "day_1", statements: [] };
+      return { type: "Savant", name, timing: "day_1", statements: [{ options: ["", ""] }] };
     default:
       return { type, name } as Claim;
   }
@@ -135,12 +143,20 @@ interface BodyProps {
   onChange: (c: Claim) => void;
 }
 
-function TimingField({ value, onChange }: { value?: string; onChange: (v?: string) => void }) {
+function TimingField({
+  value,
+  onChange,
+  defaultValue = "night_1",
+}: {
+  value?: string;
+  onChange: (v?: string) => void;
+  defaultValue?: string;
+}) {
   return (
-    <select value={value ?? ""} onChange={(e) => onChange(e.target.value || undefined)}>
+    <select value={value ?? defaultValue} onChange={(e) => onChange(e.target.value)}>
       {TIMING_OPTIONS.map((t) => (
         <option key={t} value={t}>
-          {t || "(default)"}
+          {timingLabel(t)}
         </option>
       ))}
     </select>
@@ -295,7 +311,7 @@ function InvestigatorBody({
         onChange={(e) => onChange({ ...claim, registers: e.target.checked })}
       />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} defaultValue="night_2" />
     </div>
   );
 }
@@ -455,7 +471,11 @@ function FortuneTellerBody({
             onChange={(e) => setCheck(i, { ...chk, registers: e.target.checked })}
           />
           <span>Timing</span>
-          <TimingField value={chk.timing} onChange={(t) => setCheck(i, { ...chk, timing: t })} />
+          <TimingField
+            value={chk.timing}
+            onChange={(t) => setCheck(i, { ...chk, timing: t })}
+            defaultValue={`night_${i + 1}`}
+          />
           <span />
           <button onClick={() => removeCheck(i)}>Remove check</button>
         </div>
@@ -481,7 +501,7 @@ function UndertakerBody({
       <span>Role learned</span>
       <RoleSelect script={doc.script} value={claim.role} onChange={(v) => onChange({ ...claim, role: v })} />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} defaultValue="night_2" />
     </div>
   );
 }
@@ -586,7 +606,7 @@ function JugglerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: JugglerC
         ))}
       </div>
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} defaultValue="night_2" />
     </div>
   );
 }
@@ -728,6 +748,8 @@ function BalloonistBody({
 
 function SavantBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SavantClaim; onChange: (c: Claim) => void }) {
   void doc;
+  const statement = claim.statements[0] ?? { options: ["", ""] };
+  const setOptions = (options: readonly string[]) => onChange({ ...claim, statements: [{ options }] });
   const validate = (src: string): string | undefined => {
     if (!src.trim()) return "empty";
     try {
@@ -744,59 +766,36 @@ function SavantBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SavantCla
         <span>Timing</span>
         <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
       </div>
-      {claim.statements.map((stmt, si) => (
-        <div key={si} className="statement-block">
-          <header className="row">
-            <strong>Statement {si + 1}</strong>
-            <span style={{ opacity: 0.6 }}>(exactly one option is true)</span>
-            <button onClick={() => onChange({ ...claim, statements: claim.statements.filter((_, j) => j !== si) })}>
-              Remove statement
-            </button>
-          </header>
-          {stmt.options.map((opt, oi) => {
-            const err = validate(opt);
-            return (
-              <div key={oi}>
-                <textarea
-                  value={opt}
-                  onChange={(e) => {
-                    const nextOptions = stmt.options.map((o, j) => (j === oi ? e.target.value : o));
-                    onChange({
-                      ...claim,
-                      statements: claim.statements.map((s, j) => (j === si ? { options: nextOptions } : s)),
-                    });
-                  }}
-                />
-                {err && err !== "empty" && <div className="error">{err}</div>}
-                <button
-                  onClick={() => {
-                    const nextOptions = stmt.options.filter((_, j) => j !== oi);
-                    onChange({
-                      ...claim,
-                      statements: claim.statements.map((s, j) => (j === si ? { options: nextOptions } : s)),
-                    });
-                  }}
-                >
-                  Remove option
-                </button>
-              </div>
-            );
-          })}
-          <button
-            onClick={() => {
-              onChange({
-                ...claim,
-                statements: claim.statements.map((s, j) => (j === si ? { options: [...s.options, ""] } : s)),
-              });
-            }}
-          >
-            + Add option
-          </button>
-        </div>
-      ))}
-      <button onClick={() => onChange({ ...claim, statements: [...claim.statements, { options: ["", ""] }] })}>
-        + Add statement
-      </button>
+      <div className="statement-block">
+        <header className="row">
+          <strong>Statement</strong>
+          <span style={{ opacity: 0.6 }}>(exactly one option is true)</span>
+        </header>
+        {statement.options.map((opt, oi) => {
+          const err = validate(opt);
+          return (
+            <div key={oi}>
+              <textarea
+                value={opt}
+                onChange={(e) => {
+                  const nextOptions = statement.options.map((o, j) => (j === oi ? e.target.value : o));
+                  setOptions(nextOptions);
+                }}
+              />
+              {err && err !== "empty" && <div className="error">{err}</div>}
+              <button
+                onClick={() => {
+                  const nextOptions = statement.options.filter((_, j) => j !== oi);
+                  setOptions(nextOptions);
+                }}
+              >
+                Remove option
+              </button>
+            </div>
+          );
+        })}
+        <button onClick={() => setOptions([...statement.options, ""])}>+ Add option</button>
+      </div>
     </div>
   );
 }

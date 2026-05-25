@@ -31,9 +31,19 @@ export const PLAYERS = [
   new Savant({
     timing: "day_1",
     name: "You",
+    statements: [(game) => [game.roleInPlay(Investigator), game.sitsNextToEvil("You")]],
+  }),
+  new Savant({
+    timing: "day_2",
+    name: "You",
     statements: [
-      (game) => [game.roleInPlay(Investigator), game.sitsNextToEvil("You")],
       (game) => [Chef.learnsCount(game, 1, "you_savant_chef", { registers: false }), drunkBetweenTwoTownsfolk(game)],
+    ],
+  }),
+  new Savant({
+    timing: "day_3",
+    name: "You",
+    statements: [
       (game) => [
         game.anyOf([game.isMinion("Tim"), game.isMinion("Sula")], "tim_or_sula_minion"),
         game.not(game.roleInPlay(Noble), "noble_not_in_play"),

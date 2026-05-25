@@ -156,9 +156,13 @@ export interface BalloonistClaim extends BaseClaim {
   readonly differentCharacterTypePairs: readonly (readonly [string, string])[];
 }
 
+export interface SavantStatementDoc {
+  readonly options: readonly string[];
+}
+
 export interface SavantClaim extends BaseClaim {
   readonly type: "Savant";
-  readonly statements: readonly { readonly options: readonly string[] }[];
+  readonly statements: readonly [SavantStatementDoc];
 }
 
 export interface BareClaim extends BaseClaim {

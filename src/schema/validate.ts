@@ -248,13 +248,14 @@ function validateClaim(input: unknown, path: string): Claim {
     case "Savant": {
       const statements = input["statements"];
       if (!Array.isArray(statements)) throw new ValidationError(`Expected array`, `${path}.statements`);
+      if (statements.length !== 1)
+        throw new ValidationError(`Savant claims must have exactly one statement`, `${path}.statements`);
+      const statement = statements[0];
+      if (!isObject(statement)) throw new ValidationError(`Expected object`, `${path}.statements[0]`);
       return {
         ...base,
         type: "Savant",
-        statements: statements.map((s, i) => {
-          if (!isObject(s)) throw new ValidationError(`Expected object`, `${path}.statements[${i}]`);
-          return { options: expectStringArray(s["options"], `${path}.statements[${i}].options`) };
-        }),
+        statements: [{ options: expectStringArray(statement["options"], `${path}.statements[0].options`) }],
       };
     }
     default:
