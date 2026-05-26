@@ -44,4 +44,15 @@ describe("validatePuzzleDoc", () => {
       }),
     ).toThrow("Savant claims must have exactly one statement");
   });
+
+  test("rejects Knight claims with more than two players", () => {
+    expect(() =>
+      validatePuzzleDoc({
+        ...baseDoc,
+        players: ["You", "A", "B"],
+        script: ["Knight"],
+        claims: [{ type: "Knight", name: "You", noDemonAmong: ["You", "A", "B"] }],
+      }),
+    ).toThrow("Knight 'noDemonAmong' must have at most 2 players");
+  });
 });

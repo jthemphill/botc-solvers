@@ -217,6 +217,7 @@ export abstract class Role {
 
   protected defaultInfoTiming(_claimIndex: number): Timing | undefined {
     if (this.timing !== undefined) return this.timing;
+    if (this.roleName === "Juggler") return night(2);
     if (
       [
         Balloonist.roleName,
@@ -871,6 +872,7 @@ export class Knight extends Role {
   static readonly roleName = "Knight";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  static readonly maxNoDemonAmong = 2;
   readonly noDemonAmong: readonly string[];
   constructor(
     options: RoleBaseOptions & {
@@ -878,9 +880,12 @@ export class Knight extends Role {
     },
   ) {
     super(options);
-    this.noDemonAmong = options.noDemonAmong ?? [];
+    const noDemonAmong = options.noDemonAmong ?? [];
+    Knight.assertNoDemonAmongLimit(noDemonAmong);
+    this.noDemonAmong = noDemonAmong;
   }
   static learnsNoDemonAmong(game: BOTCModel, players: readonly string[], name: string): BoolVar {
+    Knight.assertNoDemonAmongLimit(players);
     return game.not(
       game.anyOf(
         players.map((player) => game.isDemon(player)),
@@ -893,6 +898,11 @@ export class Knight extends Role {
     return this.noDemonAmong.length === 0
       ? undefined
       : Knight.learnsNoDemonAmong(game, this.noDemonAmong, claimName(this.name, Knight, "no_demon"));
+  }
+  private static assertNoDemonAmongLimit(players: readonly string[]): void {
+    if (players.length > Knight.maxNoDemonAmong) {
+      throw new Error(`Knight claims can include at most ${Knight.maxNoDemonAmong} non-Demon players.`);
+    }
   }
 }
 

@@ -1,4 +1,5 @@
 import { lex } from "../dsl/lex";
+import { Alignment } from "../model/core";
 import { ROLE_CLASSES } from "../model/roleRegistry";
 import type { Claim, PuzzleDoc } from "../schema/puzzleDoc";
 
@@ -61,8 +62,27 @@ export function claimScriptRoles(claim: Claim): string[] {
   return mergeRoleNames(roles);
 }
 
+export function jugglerGuessRoleOptions(doc: PuzzleDoc, player: string): string[] {
+  const scriptRoles = mergeRoleNames(doc.script);
+  const scriptRoleSet = new Set(scriptRoles);
+  const claimedRole = claimedRoleForPlayer(doc, player);
+  return mergeRoleNames([claimedRole, ...scriptRoles.filter(isJugglerHiddenGuessRole), ...scriptRoles]).filter((role) =>
+    scriptRoleSet.has(role),
+  );
+}
+
 function claimTypeRoleName(type: Claim["type"]): string | undefined {
   return canonicalRoleName(type);
+}
+
+function claimedRoleForPlayer(doc: PuzzleDoc, player: string): string | undefined {
+  const claim = doc.claims.find((candidate) => candidate.name === player);
+  return claim === undefined ? undefined : claimTypeRoleName(claim.type);
+}
+
+function isJugglerHiddenGuessRole(role: string): boolean {
+  const cls = ROLE_CLASSES.get(role);
+  return cls?.alignment === Alignment.Evil || role === "Drunk";
 }
 
 function extractDslRoleNames(src: string): string[] {

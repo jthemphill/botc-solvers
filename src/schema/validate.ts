@@ -1,4 +1,4 @@
-import { type Claim, type PuzzleDoc, SUPPORTED_CLAIM_TYPES } from "./puzzleDoc";
+import { KNIGHT_NO_DEMON_AMONG_MAX, type Claim, type PuzzleDoc, SUPPORTED_CLAIM_TYPES } from "./puzzleDoc";
 
 export class ValidationError extends Error {
   constructor(
@@ -166,12 +166,20 @@ function validateClaim(input: unknown, path: string): Claim {
       };
     case "Steward":
       return { ...base, type: "Steward", goodPlayer: expectString(input["goodPlayer"], `${path}.goodPlayer`) };
-    case "Knight":
+    case "Knight": {
+      const noDemonAmong = expectStringArray(input["noDemonAmong"], `${path}.noDemonAmong`);
+      if (noDemonAmong.length > KNIGHT_NO_DEMON_AMONG_MAX) {
+        throw new ValidationError(
+          `Knight 'noDemonAmong' must have at most ${KNIGHT_NO_DEMON_AMONG_MAX} players`,
+          `${path}.noDemonAmong`,
+        );
+      }
       return {
         ...base,
         type: "Knight",
-        noDemonAmong: expectStringArray(input["noDemonAmong"], `${path}.noDemonAmong`),
+        noDemonAmong,
       };
+    }
     case "Seamstress": {
       const among = expectStringArray(input["among"], `${path}.among`);
       if (among.length !== 2)

@@ -37,6 +37,17 @@ describe("buildFromDoc", () => {
     expect(worlds.length).toBeGreaterThan(0);
   });
 
+  test("juggler count claims default to night 2 when timing is omitted", async () => {
+    const doc = loadDoc("puzzle-05b-you-only-guess-twice.json");
+    const claims = doc.claims.map((claim) =>
+      claim.type === "Juggler" ? { ...claim, timing: undefined, correctCount: 0 } : claim,
+    );
+
+    const worlds = await buildFromDoc({ ...doc, claims }, backend).solveAll();
+
+    expect(worlds.length).toBeGreaterThan(0);
+  });
+
   test("intro puzzle parses and solves", async () => {
     const doc = loadDoc("puzzle-intro-chef-empath.json");
     const worlds = await buildFromDoc(doc, backend).solveAll();

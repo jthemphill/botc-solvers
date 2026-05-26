@@ -70,4 +70,20 @@ describe("puzzle document reducer", () => {
     expect(next.fixedRoles).toEqual([]);
     expect(next.claims).toEqual([{ type: "Investigator", name: "A", among: ["B"] }]);
   });
+
+  test("Knight claims are capped at two no-demon players", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B", "C"],
+      script: ["Knight"],
+      claims: [],
+    };
+
+    const next = reducer(doc, {
+      type: "addClaim",
+      claim: { type: "Knight", name: "A", noDemonAmong: ["A", "B", "C"] },
+    });
+
+    expect(next.claims).toEqual([{ type: "Knight", name: "A", noDemonAmong: ["A", "B"] }]);
+  });
 });

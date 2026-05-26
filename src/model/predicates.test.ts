@@ -11,6 +11,7 @@ import {
   Imp,
   Investigator,
   Juggler,
+  Knight,
   Librarian,
   NoDashii,
   Noble,
@@ -200,6 +201,12 @@ describe("predicates and helpers", () => {
     const game = new BOTCModel(["A", "B", "C"], { characters: script(Seamstress, Imp, Chef), backend });
     expect(() => applyClaims(game, [new Seamstress({ name: "A", aligned: true, among: ["B", "C"] })])).toThrow(
       "A's Seamstress info claim needs an explicit night or day.",
+    );
+  });
+
+  test("Knight claims cannot include more than two no-demon players", () => {
+    expect(() => new Knight({ name: "A", noDemonAmong: ["A", "B", "C"] })).toThrow(
+      "Knight claims can include at most 2 non-Demon players.",
     );
   });
 

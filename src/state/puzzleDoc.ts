@@ -1,4 +1,4 @@
-import type { Claim, PuzzleDoc } from "../schema/puzzleDoc";
+import { KNIGHT_NO_DEMON_AMONG_MAX, type Claim, type PuzzleDoc } from "../schema/puzzleDoc";
 import { scriptWithProtectedRoles, withProtectedScript } from "./scriptRoles";
 
 export type PuzzleAction =
@@ -136,10 +136,17 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
   }
 }
 
+function normalizeClaim(claim: Claim): Claim {
+  if (claim.type === "Knight" && claim.noDemonAmong.length > KNIGHT_NO_DEMON_AMONG_MAX) {
+    return { ...claim, noDemonAmong: claim.noDemonAmong.slice(0, KNIGHT_NO_DEMON_AMONG_MAX) };
+  }
+  return claim;
+}
+
 export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
   switch (action.type) {
     case "load":
-      return withProtectedScript(action.doc);
+      return withProtectedScript({ ...action.doc, claims: action.doc.claims.map(normalizeClaim) });
     case "setTitle":
       return { ...state, title: action.title };
     case "setPlayerCount": {
@@ -160,7 +167,8 @@ export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
       const seating = seatingForDoc(state);
       const removed = new Set(seating.slice(target));
       const players = state.players.filter((player) => !removed.has(player));
-      const nextSeating = state.seating === undefined ? undefined : state.seating.filter((player) => !removed.has(player));
+      const nextSeating =
+        state.seating === undefined ? undefined : state.seating.filter((player) => !removed.has(player));
       const claims = state.claims.flatMap((claim) => {
         let next: Claim | undefined = claim;
         for (const name of removed) {
@@ -219,9 +227,9 @@ export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
     case "setFixedRoles":
       return withProtectedScript({ ...state, fixedRoles: action.fixedRoles });
     case "addClaim":
-      return withProtectedScript({ ...state, claims: [...state.claims, action.claim] });
+      return withProtectedScript({ ...state, claims: [...state.claims, normalizeClaim(action.claim)] });
     case "updateClaim": {
-      const claims = state.claims.map((c, i) => (i === action.index ? action.claim : c));
+      const claims = state.claims.map((c, i) => (i === action.index ? normalizeClaim(action.claim) : c));
       return withProtectedScript({ ...state, claims });
     }
     case "removeClaim":

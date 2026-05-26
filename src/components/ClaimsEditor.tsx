@@ -1,7 +1,7 @@
-import { useState, type Dispatch } from "react";
+import { Fragment, useState, type Dispatch } from "react";
 import { DslError, lex } from "../dsl/lex";
 import { parse } from "../dsl/parse";
-import { ALL_ROLE_NAMES } from "../state/scriptRoles";
+import { ALL_ROLE_NAMES, jugglerGuessRoleOptions } from "../state/scriptRoles";
 import type {
   BalloonistClaim,
   Claim,
@@ -25,7 +25,7 @@ import type {
   VillageIdiotClaim,
   WasherwomanClaim,
 } from "../schema/puzzleDoc";
-import { SUPPORTED_CLAIM_TYPES } from "../schema/puzzleDoc";
+import { KNIGHT_NO_DEMON_AMONG_MAX, SUPPORTED_CLAIM_TYPES } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
 
 interface Props {
@@ -119,7 +119,7 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
     case "Seamstress":
       return { type: "Seamstress", name, among: ["", ""], aligned: true };
     case "Juggler":
-      return { type: "Juggler", name, guesses: {} };
+      return { type: "Juggler", name, timing: "night_2", guesses: {} };
     case "Dreamer":
       return { type: "Dreamer", name, player: "", roles: [] };
     case "Shugenja":
@@ -167,23 +167,37 @@ function MultiPlayerSelect({
   players,
   value,
   onChange,
+  maxSelections,
 }: {
   players: readonly string[];
   value: readonly string[];
   onChange: (v: readonly string[]) => void;
+  maxSelections?: number;
 }) {
   return (
     <div className="row">
-      {players.map((p) => (
-        <label key={p} style={{ display: "inline-flex", gap: "0.2rem" }}>
-          <input
-            type="checkbox"
-            checked={value.includes(p)}
-            onChange={(e) => onChange(e.target.checked ? [...value, p] : value.filter((n) => n !== p))}
-          />
-          {p}
-        </label>
-      ))}
+      {players.map((p) => {
+        const selected = value.includes(p);
+        const limitReached = maxSelections !== undefined && value.length >= maxSelections;
+        return (
+          <label key={p} style={{ display: "inline-flex", gap: "0.2rem" }}>
+            <input
+              type="checkbox"
+              checked={selected}
+              disabled={!selected && limitReached}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  if (!selected && (maxSelections === undefined || value.length < maxSelections))
+                    onChange([...value, p]);
+                } else {
+                  onChange(value.filter((n) => n !== p));
+                }
+              }}
+            />
+            {p}
+          </label>
+        );
+      })}
     </div>
   );
 }
@@ -193,13 +207,16 @@ function RoleSelect({
   value,
   onChange,
   allowEmpty = false,
+  options,
 }: {
   script: readonly string[];
   value: string | undefined;
   onChange: (v: string) => void;
   allowEmpty?: boolean;
+  options?: readonly string[];
 }) {
-  const roles = value && !ALL_ROLE_NAMES.includes(value) ? [value, ...ALL_ROLE_NAMES] : ALL_ROLE_NAMES;
+  const baseRoles = options ?? ALL_ROLE_NAMES;
+  const roles = value && !baseRoles.includes(value) && options === undefined ? [value, ...baseRoles] : baseRoles;
   void script;
   return (
     <select value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
@@ -391,12 +408,6 @@ function ChefBody({ claim, onChange }: { claim: ChefClaim; onChange: (c: Claim) 
         value={claim.count}
         onChange={(e) => onChange({ ...claim, count: Number(e.target.value) })}
       />
-      <span>Registers</span>
-      <input
-        type="checkbox"
-        checked={claim.registers ?? true}
-        onChange={(e) => onChange({ ...claim, registers: e.target.checked })}
-      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
@@ -540,6 +551,7 @@ function KnightBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: KnightCla
         players={doc.players}
         value={claim.noDemonAmong}
         onChange={(v) => onChange({ ...claim, noDemonAmong: v })}
+        maxSelections={KNIGHT_NO_DEMON_AMONG_MAX}
       />
     </div>
   );
@@ -596,13 +608,19 @@ function JugglerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: JugglerC
           onChange({ ...claim, correctCount: e.target.value === "" ? undefined : Number(e.target.value) })
         }
       />
-      <span>Guesses</span>
-      <div className="field-grid">
+      <span className="juggler-guesses-heading">Guesses</span>
+      <div className="juggler-guesses">
         {doc.players.map((p) => (
-          <span key={p} style={{ display: "contents" }}>
-            <span>{p}</span>
-            <RoleSelect script={doc.script} value={claim.guesses[p]} onChange={(v) => setGuess(p, v)} allowEmpty />
-          </span>
+          <Fragment key={p}>
+            <span className="juggler-guess-player">{p}</span>
+            <RoleSelect
+              script={doc.script}
+              value={claim.guesses[p]}
+              onChange={(v) => setGuess(p, v)}
+              allowEmpty
+              options={jugglerGuessRoleOptions(doc, p)}
+            />
+          </Fragment>
         ))}
       </div>
       <span>Timing</span>

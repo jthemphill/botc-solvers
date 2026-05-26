@@ -148,6 +148,23 @@ textarea {
   box-sizing: border-box;
 }
 
+.juggler-guesses-heading {
+  align-self: start;
+}
+
+.juggler-guesses {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(6rem, 9rem) minmax(14rem, 1fr);
+  gap: 0.4rem 0.6rem;
+  align-items: center;
+}
+
+.juggler-guess-player {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 table.results {
   width: 100%;
   border-collapse: collapse;
@@ -251,8 +268,7 @@ table.results thead {
   border: 2px solid rgba(37, 99, 235, 0.22);
   border-radius: 50%;
   background:
-    radial-gradient(circle at center, rgba(37, 99, 235, 0.08) 0 2px, transparent 3px),
-    rgba(255, 255, 255, 0.22);
+    radial-gradient(circle at center, rgba(37, 99, 235, 0.08) 0 2px, transparent 3px), rgba(255, 255, 255, 0.22);
 }
 
 .seat-button {
@@ -314,8 +330,7 @@ table.results thead {
 @media (prefers-color-scheme: dark) {
   .seating-ring {
     background:
-      radial-gradient(circle at center, rgba(96, 165, 250, 0.16) 0 2px, transparent 3px),
-      rgba(255, 255, 255, 0.04);
+      radial-gradient(circle at center, rgba(96, 165, 250, 0.16) 0 2px, transparent 3px), rgba(255, 255, 255, 0.04);
     border-color: rgba(96, 165, 250, 0.3);
   }
 
@@ -370,5 +385,9 @@ table.results thead {
 
   .field-grid {
     grid-template-columns: 1fr;
+  }
+
+  .juggler-guesses {
+    grid-template-columns: minmax(5rem, 0.45fr) minmax(10rem, 1fr);
   }
 }
