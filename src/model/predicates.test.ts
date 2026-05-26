@@ -268,7 +268,6 @@ describe("predicates and helpers", () => {
         ["Bob", "Drunk"],
       ]),
       new Set(),
-      ["Alice", "Bob"],
       new Map([[day(1), new Set(["Bob"])]]),
     );
     expect(
@@ -286,7 +285,6 @@ describe("predicates and helpers", () => {
       ]),
       new Map(),
       new Set(),
-      ["Alice", "Bob"],
     );
     expect(
       formatSolution([world, alternateDemon], ["Alice", "Bob"], {

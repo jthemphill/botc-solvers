@@ -47,7 +47,7 @@ export function App() {
         <FixedRolesEditor doc={doc} dispatch={dispatch} />
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-        <ResultsView worlds={worlds} error={error} />
+        <ResultsView worlds={worlds} players={doc.players} error={error} />
       </div>
     </main>
   );

@@ -2,10 +2,11 @@ import type { SerializableWorld } from "../worker/protocol";
 
 interface Props {
   worlds: readonly SerializableWorld[] | undefined;
+  players: readonly string[];
   error: string | undefined;
 }
 
-export function ResultsView({ worlds, error }: Props) {
+export function ResultsView({ worlds, players, error }: Props) {
   if (error)
     return (
       <section className="panel">
@@ -40,7 +41,7 @@ export function ResultsView({ worlds, error }: Props) {
               </tr>
             </thead>
             <tbody>
-              {w.players.map((player) => {
+              {players.map((player) => {
                 const actual = w.actual.find(([p]) => p === player)?.[1];
                 const apparent = w.apparent.find(([p]) => p === player)?.[1];
                 return (

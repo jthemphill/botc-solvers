@@ -75,7 +75,6 @@ export class World {
     readonly actual: ReadonlyMap<string, string>,
     readonly apparent: ReadonlyMap<string, string>,
     readonly poisoned: ReadonlySet<string>,
-    readonly players: readonly string[],
     readonly poisonedByTiming: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
     readonly drunk: ReadonlySet<string> = new Set(),
     readonly drunkByTiming: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
@@ -869,15 +868,7 @@ export class BOTCModel {
       if (!seen.has(key)) {
         seen.add(key);
         worlds.push(
-          new World(
-            actual,
-            new Map(this.apparentRoles),
-            poisoned,
-            [...this.players],
-            poisonedByTiming,
-            globallyDrunk,
-            drunkByTiming,
-          ),
+          new World(actual, new Map(this.apparentRoles), poisoned, poisonedByTiming, globallyDrunk, drunkByTiming),
         );
       }
       const significant = [

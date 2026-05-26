@@ -5,7 +5,6 @@ import { loadKissat } from "./wasmLoader";
 
 function serializeWorld(w: World): SerializableWorld {
   return {
-    players: [...w.players],
     actual: [...w.actual.entries()],
     apparent: [...w.apparent.entries()],
     poisoned: [...w.poisoned],
