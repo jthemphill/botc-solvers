@@ -10,7 +10,6 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
   const spec: PuzzleSpec = {
     players: doc.players,
     characters: doc.script.map(resolveRoleRef),
-    seating: doc.seating ?? doc.players,
     uniqueCharacters: doc.uniqueCharacters,
     setup: doc.setup === "none" ? false : "standard",
   };

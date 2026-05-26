@@ -90,7 +90,7 @@ export async function solve(): Promise<Puzzle30Solution[]> {
 
 export function buildNonAtheistModel(side: GameSide, backend: SatBackend): BOTCModel {
   const players = playerNames(side === "left" ? LEFT_PLAYERS : RIGHT_PLAYERS);
-  const game = buildPuzzleModel({ players, characters: CHARACTERS, seating: players }, backend);
+  const game = buildPuzzleModel({ players, characters: CHARACTERS }, backend);
   game.setCharacterCount(Atheist, 0);
 
   for (const role of [Artist, Clockmaker, Knight, Noble, Seamstress]) {
@@ -132,7 +132,7 @@ function noDemonAmong(game: BOTCModel, players: readonly string[], name: string)
 }
 
 function demonOppositeMinion(game: BOTCModel, name: string): BoolVar {
-  const players = game.seating;
+  const players = game.players;
   return game.anyOf(
     players.map((demon, index) => {
       const opposite = players[(index + players.length / 2) % players.length] as string;

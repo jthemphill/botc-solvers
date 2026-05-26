@@ -43,7 +43,6 @@ describe("predicates and helpers", () => {
   test("left neighbor is the next seated player", () => {
     const game = new BOTCModel(["A", "B", "C", "D"], {
       characters: TEST_CHARACTERS,
-      seating: ["A", "B", "C", "D"],
       backend,
     });
 
@@ -124,7 +123,6 @@ describe("predicates and helpers", () => {
   test("model-owned sober and healthy checks include No Dashii adjacency", async () => {
     const poisonedInfo = new BOTCModel(["A", "B", "C", "D"], {
       characters: script(NoDashii, Chef, Empath, Investigator),
-      seating: ["A", "B", "C", "D"],
       backend,
     });
     poisonedInfo.fixActual("A", NoDashii);
@@ -138,7 +136,6 @@ describe("predicates and helpers", () => {
 
     const soberInfo = new BOTCModel(["A", "B", "C", "D"], {
       characters: script(NoDashii, Chef, Empath, Investigator),
-      seating: ["A", "B", "C", "D"],
       backend,
     });
     soberInfo.fixActual("A", NoDashii);
@@ -167,7 +164,6 @@ describe("predicates and helpers", () => {
   test("role timing defaults infer setup and nightly claim timing", async () => {
     const setupInfo = new BOTCModel(["A", "B", "C"], {
       characters: script(Chef, Imp, Poisoner),
-      seating: ["A", "B", "C"],
       backend,
     });
     setupInfo.fixActual("A", Chef);
@@ -213,7 +209,6 @@ describe("predicates and helpers", () => {
   test("character helper claims", async () => {
     const game = new BOTCModel(["A", "B", "C", "D"], {
       characters: script(Imp, ScarletWoman, Chef, Empath),
-      seating: ["A", "B", "C", "D"],
       backend,
     });
     game.fixActual("A", Imp);

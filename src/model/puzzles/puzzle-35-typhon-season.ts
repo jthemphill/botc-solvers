@@ -142,7 +142,7 @@ export const CHARACTERS = script(
 );
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
+  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, backend });
   game.addExactlyN(
     PLAYER_NAMES.map((player) => game.isDemon(player)),
     1,

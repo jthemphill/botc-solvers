@@ -23,7 +23,7 @@ import { drunkBetweenTwoTownsfolk } from "../model/predicates";
 
 const PLAYERS = ["Oscar", "Matt", "Anna", "You", "Tim", "Sula"];
 const CHARACTERS = script(Imp, ScarletWoman, Drunk, Investigator, Knight, Noble, Savant, Seamstress, Steward);
-const PUZZLE: PuzzleSpec = { players: PLAYERS, characters: CHARACTERS, seating: PLAYERS };
+const PUZZLE: PuzzleSpec = { players: PLAYERS, characters: CHARACTERS };
 
 const SAVANT_CLAIMS = [
   // statement 1
@@ -97,10 +97,7 @@ describe("DSL", () => {
   });
 
   test("left and right fields use next and previous seating positions", async () => {
-    const game = buildPuzzleModel(
-      { players: ["A", "B", "C"], characters: CHARACTERS, seating: ["A", "B", "C"], setup: false },
-      backend,
-    );
+    const game = buildPuzzleModel({ players: ["A", "B", "C"], characters: CHARACTERS, setup: false }, backend);
     const ctx: CompileCtx = {
       players: ["A", "B", "C"],
       script: CHARACTERS.map((c) => (typeof c === "string" ? c : c.roleName)),

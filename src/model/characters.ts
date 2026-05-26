@@ -124,14 +124,14 @@ function learnsCharacterTypeCount(
 }
 
 function directionalPlayers(game: BOTCModel, player: string, direction: "clockwise" | "anticlockwise"): string[] {
-  const index = game.seating.indexOf(player);
+  const index = game.players.indexOf(player);
   if (index === -1) throw new Error(`Unknown player: ${player}`);
   const result: string[] = [];
-  for (let offset = 1; offset < game.seating.length; offset += 1) {
+  for (let offset = 1; offset < game.players.length; offset += 1) {
     const seat =
       direction === "clockwise"
-        ? game.seating[(index + offset) % game.seating.length]
-        : game.seating[(index - offset + game.seating.length) % game.seating.length];
+        ? game.players[(index + offset) % game.players.length]
+        : game.players[(index - offset + game.players.length) % game.players.length];
     result.push(seat as string);
   }
   return result;

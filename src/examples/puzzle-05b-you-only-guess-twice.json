@@ -2,7 +2,6 @@
   "version": 1,
   "title": "Puzzle 5b — You Only Guess Twice",
   "players": ["Matthew", "Steph", "Aoife", "Fraser", "You", "Sarah", "Tim"],
-  "seating": ["Matthew", "Steph", "Aoife", "Fraser", "You", "Sarah", "Tim"],
   "script": ["Leviathan", "Goblin", "Empath", "Investigator", "Juggler", "Knight", "Noble", "Seamstress", "Steward"],
   "fixedRoles": [{ "name": "You", "roles": ["Juggler"] }],
   "claims": [

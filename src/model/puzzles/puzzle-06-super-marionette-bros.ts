@@ -65,7 +65,7 @@ export const CHARACTERS = script(
 );
 export const DEMON_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Demon });
 export const NIGHT_1 = night(1);
-export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
   const game = buildPuzzleModel(PUZZLE, backend);

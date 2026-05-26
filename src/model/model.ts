@@ -75,7 +75,7 @@ export class World {
     readonly actual: ReadonlyMap<string, string>,
     readonly apparent: ReadonlyMap<string, string>,
     readonly poisoned: ReadonlySet<string>,
-    readonly seating: readonly string[],
+    readonly players: readonly string[],
     readonly poisonedByTiming: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
     readonly drunk: ReadonlySet<string> = new Set(),
     readonly drunkByTiming: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
@@ -111,7 +111,6 @@ export class KeyError extends Error {}
 
 export class BOTCModel {
   readonly players: string[];
-  readonly seating: string[];
   readonly characters: ReadonlyMap<string, RoleRef>;
   readonly uniqueCharacters: boolean;
   readonly apparentRoles = new Map<string, string>();
@@ -142,7 +141,6 @@ export class BOTCModel {
     players: readonly string[],
     options: {
       readonly characters: readonly RoleRef[];
-      readonly seating?: readonly string[];
       readonly uniqueCharacters?: boolean;
       readonly backend: SatBackend;
     },
@@ -150,10 +148,6 @@ export class BOTCModel {
     if (players.length === 0) throw new Error("At least one player is required.");
     this.players = [...players];
     if (new Set(this.players).size !== this.players.length) throw new Error("Player names must be unique.");
-    this.seating = [...(options.seating ?? players)];
-    if (this.seating.length !== this.players.length || this.seating.some((player) => !this.players.includes(player))) {
-      throw new Error("Seating must contain exactly the model players.");
-    }
     const chars = new Map<string, RoleRef>();
     for (const character of options.characters) chars.set(roleName(character), character);
     if (chars.size !== options.characters.length) throw new Error("Character names must be unique.");
@@ -754,7 +748,6 @@ export class BOTCModel {
     reportedInfo: BoolLike,
     name: string,
     options: {
-      readonly seating?: readonly string[];
       readonly noDashiiRole?: RoleRef;
       readonly timing?: Timing;
     } = {},
@@ -771,7 +764,6 @@ export class BOTCModel {
   noDashiiPoisoned(
     player: string,
     options: {
-      readonly seating?: readonly string[];
       readonly noDashiiRole?: RoleRef;
       readonly timing?: Timing;
     } = {},
@@ -780,23 +772,17 @@ export class BOTCModel {
     return this.noDashiiPoisonedAt(player, timing, options);
   }
 
-  noDashiiPoisonedAt(
-    player: string,
-    timing: Timing,
-    options: { readonly seating?: readonly string[]; readonly noDashiiRole?: RoleRef } = {},
-  ): BoolVar {
+  noDashiiPoisonedAt(player: string, timing: Timing, options: { readonly noDashiiRole?: RoleRef } = {}): BoolVar {
     const timingName = timing;
-    const seating = options.seating ?? this.seating;
+    const players = this.players;
     const noDashiiRole = options.noDashiiRole ?? "No Dashii";
     this.checkPlayer(player);
     if (!this.characters.has(roleName(noDashiiRole)))
       return this.constantBool(false, `${player}_no_no_dashii_${timingName}`);
-    if (!seating.includes(player)) throw new KeyError(`Player is not seated: ${player}`);
-    for (const seated of seating) this.checkPlayer(seated);
     return this.anyOf(
-      seating.flatMap((demon) => [
-        this.closestTownfolkInDirectionIs(seating, demon, player, 1, noDashiiRole, timing),
-        this.closestTownfolkInDirectionIs(seating, demon, player, -1, noDashiiRole, timing),
+      players.flatMap((demon) => [
+        this.closestTownfolkInDirectionIs(players, demon, player, 1, noDashiiRole, timing),
+        this.closestTownfolkInDirectionIs(players, demon, player, -1, noDashiiRole, timing),
       ]),
       `${player}_poisoned_by_no_dashii_${timingName}`,
     );
@@ -812,15 +798,15 @@ export class BOTCModel {
 
   neighbors(player: string): [string, string] {
     this.checkPlayer(player);
-    const index = this.seating.indexOf(player);
+    const index = this.players.indexOf(player);
     return [
-      this.seating[(index + 1) % this.seating.length] as string,
-      this.seating[(index - 1 + this.seating.length) % this.seating.length] as string,
+      this.players[(index + 1) % this.players.length] as string,
+      this.players[(index - 1 + this.players.length) % this.players.length] as string,
     ];
   }
 
   adjacentPairs(): Array<[string, string]> {
-    return this.seating.map((player, index) => [player, this.seating[(index + 1) % this.seating.length] as string]);
+    return this.players.map((player, index) => [player, this.players[(index + 1) % this.players.length] as string]);
   }
 
   sitsNextToEvil(player: string): BoolVar {
@@ -878,7 +864,7 @@ export class BOTCModel {
         poisoned: [...poisonedByTiming.entries()].map(([timing, players]) => [timing, [...players].sort()]),
         drunk: [...globallyDrunk].sort(),
         drunkByTiming: [...drunkByTiming.entries()].map(([timing, players]) => [timing, [...players].sort()]),
-        seating: this.seating,
+        players: this.players,
       });
       if (!seen.has(key)) {
         seen.add(key);
@@ -887,7 +873,7 @@ export class BOTCModel {
             actual,
             new Map(this.apparentRoles),
             poisoned,
-            [...this.seating],
+            [...this.players],
             poisonedByTiming,
             globallyDrunk,
             drunkByTiming,
@@ -1024,7 +1010,7 @@ export class BOTCModel {
   }
 
   private closestTownfolkInDirectionIs(
-    seating: readonly string[],
+    players: readonly string[],
     demon: string,
     target: string,
     direction: 1 | -1,
@@ -1032,14 +1018,14 @@ export class BOTCModel {
     timing: Timing,
   ): BoolVar {
     const timingName = timing;
-    const demonIndex = seating.indexOf(demon);
-    const targetIndex = seating.indexOf(target);
+    const demonIndex = players.indexOf(demon);
+    const targetIndex = players.indexOf(target);
     const distance =
-      (direction === 1 ? targetIndex - demonIndex : demonIndex - targetIndex + seating.length) % seating.length;
+      (direction === 1 ? targetIndex - demonIndex : demonIndex - targetIndex + players.length) % players.length;
     if (distance <= 0) return this.constantBool(false, `${demon}_${target}_not_in_direction_${direction}`);
     const between = Array.from({ length: distance - 1 }, (_ignored, offset) => {
-      const index = (demonIndex + direction * (offset + 1) + seating.length) % seating.length;
-      return seating[index] as string;
+      const index = (demonIndex + direction * (offset + 1) + players.length) % players.length;
+      return players[index] as string;
     });
     return this.allOf(
       [

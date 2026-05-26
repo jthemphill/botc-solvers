@@ -38,7 +38,6 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
   if (input["version"] !== 1) throw new ValidationError(`Unsupported version (expected 1)`, "$.version");
   const players = expectStringArray(input["players"], "$.players");
   const script = expectStringArray(input["script"], "$.script");
-  const seating = input["seating"] === undefined ? undefined : expectStringArray(input["seating"], "$.seating");
   const claims = input["claims"];
   if (!Array.isArray(claims)) throw new ValidationError(`Expected array`, "$.claims");
   const validatedClaims = claims.map((c, i) => validateClaim(c, `$.claims[${i}]`));
@@ -56,7 +55,6 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
     version: 1,
     title,
     players,
-    seating,
     script,
     setup,
     uniqueCharacters,

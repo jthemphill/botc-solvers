@@ -76,7 +76,7 @@ export const CHARACTERS = script(
 );
 
 type RedHerring = ReadonlyMap<string, BoolVar>;
-export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
   const game = buildPuzzleModel(PUZZLE, backend);

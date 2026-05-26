@@ -23,10 +23,6 @@ export const initialDoc: PuzzleDoc = {
   claims: [],
 };
 
-function seatingForDoc(doc: PuzzleDoc): readonly string[] {
-  return doc.seating ?? doc.players;
-}
-
 function defaultPlayerName(existing: readonly string[]): string {
   for (let index = existing.length + 1; ; index += 1) {
     const name = `Player ${index}`;
@@ -155,20 +151,15 @@ export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
 
       if (target > state.players.length) {
         const players = [...state.players];
-        const seating = state.seating === undefined ? undefined : [...state.seating];
         while (players.length < target) {
           const name = defaultPlayerName(players);
           players.push(name);
-          seating?.push(name);
         }
-        return { ...state, players, seating };
+        return { ...state, players };
       }
 
-      const seating = seatingForDoc(state);
-      const removed = new Set(seating.slice(target));
+      const removed = new Set(state.players.slice(target));
       const players = state.players.filter((player) => !removed.has(player));
-      const nextSeating =
-        state.seating === undefined ? undefined : state.seating.filter((player) => !removed.has(player));
       const claims = state.claims.flatMap((claim) => {
         let next: Claim | undefined = claim;
         for (const name of removed) {
@@ -178,37 +169,34 @@ export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
         return next === undefined ? [] : [next];
       });
       const fixedRoles = state.fixedRoles?.filter((fixedRole) => !removed.has(fixedRole.name));
-      return { ...state, players, seating: nextSeating, claims, fixedRoles };
+      return { ...state, players, claims, fixedRoles };
     }
     case "addPlayer":
       if (!action.name || state.players.includes(action.name)) return state;
       return {
         ...state,
         players: [...state.players, action.name],
-        seating: state.seating === undefined ? undefined : [...state.seating, action.name],
       };
     case "removePlayer": {
       const name = state.players[action.index];
       if (name === undefined) return state;
       const players = state.players.filter((_, i) => i !== action.index);
-      const seating = state.seating?.filter((player) => player !== name);
       const claims = state.claims.flatMap((c) => {
         const next = removeNameFromClaim(c, name);
         return next === undefined ? [] : [next];
       });
       const fixedRoles = state.fixedRoles?.filter((fixedRole) => fixedRole.name !== name);
-      return { ...state, players, seating, claims, fixedRoles };
+      return { ...state, players, claims, fixedRoles };
     }
     case "renamePlayer": {
       const oldName = state.players[action.index];
       if (oldName === undefined || !action.name || state.players.includes(action.name)) return state;
       const players = state.players.map((n, i) => (i === action.index ? action.name : n));
-      const seating = state.seating?.map((name) => (name === oldName ? action.name : name));
       const claims = state.claims.map((c) => rewriteName(c, oldName, action.name));
       const fixedRoles = state.fixedRoles?.map((fixedRole) =>
         fixedRole.name === oldName ? { ...fixedRole, name: action.name } : fixedRole,
       );
-      return { ...state, players, seating, claims, fixedRoles };
+      return { ...state, players, claims, fixedRoles };
     }
     case "movePlayer": {
       const dir = action.direction === "up" ? -1 : 1;
@@ -218,7 +206,7 @@ export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
       const tmp = players[action.index] as string;
       players[action.index] = players[j] as string;
       players[j] = tmp;
-      return { ...state, players, seating: state.seating === undefined ? undefined : players };
+      return { ...state, players };
     }
     case "setScript": {
       const script = scriptWithProtectedRoles(action.script, state);

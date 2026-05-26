@@ -123,7 +123,6 @@ export const DRUNK_VILLAGE_IDIOT = "drunk_village_idiot";
 export const PUZZLE = {
   players: PLAYER_NAMES,
   characters: CHARACTERS,
-  seating: PLAYER_NAMES,
 } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {

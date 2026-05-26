@@ -66,7 +66,6 @@ export const CHARACTERS = script(Imp, Poisoner, Drunk, Dreamer);
 export const PUZZLE = {
   players: PLAYER_NAMES,
   characters: CHARACTERS,
-  seating: PLAYER_NAMES,
   uniqueCharacters: false,
 } satisfies PuzzleSpec;
 

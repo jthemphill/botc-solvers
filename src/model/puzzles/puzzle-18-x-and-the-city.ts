@@ -116,7 +116,7 @@ interface ClaimContext {
 }
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
+  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, backend });
   game.setCharacterCount(Leviathan, 1);
   game.setCharacterCount(Xaan, 1);
   for (const evilRole of [Leviathan, Xaan]) game.fixNotActual("You", evilRole);

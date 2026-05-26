@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type Dispatch } from "react";
+import { useEffect, useState, type CSSProperties, type Dispatch } from "react";
 import type { Claim, PuzzleDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
 import { CLAIM_TYPES, ClaimBody, makeEmptyClaim } from "./ClaimsEditor";
@@ -9,22 +9,21 @@ interface Props {
 }
 
 export function SeatingChartEditor({ doc, dispatch }: Props) {
-  const seating = useMemo(() => doc.seating ?? doc.players, [doc.players, doc.seating]);
+  const players = doc.players;
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [newType, setNewType] = useState<Claim["type"]>("Investigator");
 
   useEffect(() => {
-    if (selectedIndex >= seating.length) setSelectedIndex(Math.max(0, seating.length - 1));
-  }, [seating.length, selectedIndex]);
+    if (selectedIndex >= players.length) setSelectedIndex(Math.max(0, players.length - 1));
+  }, [players.length, selectedIndex]);
 
-  const selectedName = seating[selectedIndex];
+  const selectedName = players[selectedIndex];
   const selectedPlayerIndex = selectedName === undefined ? -1 : doc.players.indexOf(selectedName);
   const selectedClaims = selectedName === undefined ? [] : claimIndexesForPlayer(doc, selectedName);
-  const displayDoc = useMemo(() => ({ ...doc, players: seating }), [doc, seating]);
 
-  const leftNeighbor = selectedName === undefined ? undefined : seating[(selectedIndex + 1) % seating.length];
+  const leftNeighbor = selectedName === undefined ? undefined : players[(selectedIndex + 1) % players.length];
   const rightNeighbor =
-    selectedName === undefined ? undefined : seating[(selectedIndex - 1 + seating.length) % seating.length];
+    selectedName === undefined ? undefined : players[(selectedIndex - 1 + players.length) % players.length];
 
   const addClaim = () => {
     if (selectedName === undefined) return;
@@ -49,12 +48,12 @@ export function SeatingChartEditor({ doc, dispatch }: Props) {
       <div className="seating-layout">
         <div className="seating-chart" aria-label="Clockwise seating chart">
           <div className="seating-ring" />
-          {seating.map((player, index) => (
+          {players.map((player, index) => (
             <button
               key={player}
               type="button"
               className={`seat-button${index === selectedIndex ? " selected" : ""}`}
-              style={seatPosition(index, seating.length)}
+              style={seatPosition(index, players.length)}
               onClick={() => setSelectedIndex(index)}
               aria-pressed={index === selectedIndex}
             >
@@ -108,7 +107,7 @@ export function SeatingChartEditor({ doc, dispatch }: Props) {
                       </button>
                     </header>
                     <ClaimBody
-                      doc={displayDoc}
+                      doc={doc}
                       claim={claim}
                       onChange={(nextClaim) => dispatch({ type: "updateClaim", index, claim: nextClaim })}
                     />

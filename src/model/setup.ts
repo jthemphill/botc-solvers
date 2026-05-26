@@ -141,7 +141,6 @@ const STANDARD_SETUP_MODIFIERS: readonly SetupModifier[] = [
 export interface PuzzleSpec {
   readonly players: readonly string[];
   readonly characters: readonly RoleRef[];
-  readonly seating?: readonly string[];
   readonly uniqueCharacters?: boolean;
   readonly setup?: "standard" | false;
 }
@@ -149,7 +148,6 @@ export interface PuzzleSpec {
 export function buildPuzzleModel(spec: PuzzleSpec, backend: SatBackend): BOTCModel {
   const game = new BOTCModel(spec.players, {
     characters: spec.characters,
-    seating: spec.seating,
     uniqueCharacters: spec.uniqueCharacters,
     backend,
   });

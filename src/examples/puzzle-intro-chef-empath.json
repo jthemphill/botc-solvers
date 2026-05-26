@@ -2,7 +2,6 @@
   "version": 1,
   "title": "Intro — Chef and Empath",
   "players": ["You", "Anna", "Tim", "Sula", "Matt", "Oscar"],
-  "seating": ["You", "Anna", "Tim", "Sula", "Matt", "Oscar"],
   "script": ["Imp", "Poisoner", "Drunk", "Chef", "Empath", "Fortune Teller", "Knight", "Steward"],
   "fixedRoles": [{ "name": "You", "roles": ["Chef", "Drunk"] }],
   "claims": [

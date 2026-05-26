@@ -8,11 +8,11 @@ export interface SolveRequest {
 }
 
 export interface SerializableWorld {
+  readonly players: readonly string[];
   readonly actual: ReadonlyArray<readonly [string, string]>;
   readonly apparent: ReadonlyArray<readonly [string, string]>;
   readonly poisoned: readonly string[];
   readonly drunk: readonly string[];
-  readonly seating: readonly string[];
 }
 
 export type SolveResponse =

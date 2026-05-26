@@ -119,7 +119,7 @@ export const CHARACTERS = script(
   Seamstress,
   SnakeCharmer,
 );
-export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS } satisfies PuzzleSpec;
 
 interface ClaimContext {
   readonly malfunctions: Record<string, BoolVar[]>;

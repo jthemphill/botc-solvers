@@ -104,7 +104,7 @@ export const MINION_ROLES = roleNames(CHARACTERS, { characterType: CharacterType
 export const EVIL_ROLES = roleNames(CHARACTERS, { alignment: Alignment.Evil });
 
 export function buildModel(backend: SatBackend): BOTCModel {
-  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, seating: PLAYER_NAMES, backend });
+  const game = new BOTCModel(PLAYER_NAMES, { characters: CHARACTERS, backend });
   for (const role of EVIL_ROLES) game.setCharacterCount(role, 1);
   for (const player of PLAYER_NAMES) {
     const [left, right] = game.neighbors(player);

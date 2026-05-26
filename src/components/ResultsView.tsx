@@ -40,7 +40,7 @@ export function ResultsView({ worlds, error }: Props) {
               </tr>
             </thead>
             <tbody>
-              {w.seating.map((player) => {
+              {w.players.map((player) => {
                 const actual = w.actual.find(([p]) => p === player)?.[1];
                 const apparent = w.apparent.find(([p]) => p === player)?.[1];
                 return (

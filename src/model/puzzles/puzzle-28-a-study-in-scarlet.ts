@@ -128,7 +128,7 @@ export const CHARACTERS = script(
 );
 export const DEMON_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Demon });
 export const MINION_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Minion });
-export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS } satisfies PuzzleSpec;
 
 type RedHerring = ReadonlyMap<string, BoolVar>;
 

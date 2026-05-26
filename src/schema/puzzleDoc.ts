@@ -2,7 +2,6 @@ export interface PuzzleDoc {
   readonly version: 1;
   readonly title?: string;
   readonly players: readonly string[];
-  readonly seating?: readonly string[];
   readonly script: readonly string[];
   readonly setup?: "standard" | "none";
   readonly uniqueCharacters?: boolean;

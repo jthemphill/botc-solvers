@@ -102,7 +102,6 @@ export const DEMON_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.
 export const PUZZLE = {
   players: PLAYER_NAMES,
   characters: CHARACTERS,
-  seating: PLAYER_NAMES,
   uniqueCharacters: false,
 } satisfies PuzzleSpec;
 

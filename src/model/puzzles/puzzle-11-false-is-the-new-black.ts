@@ -113,7 +113,7 @@ export const CHARACTERS = script(
 );
 export const PLAYER_NAMES = playerNames(PLAYERS);
 export const MINION_ROLES = roleNames(CHARACTERS, { characterType: CharacterType.Minion });
-export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS, seating: PLAYER_NAMES } satisfies PuzzleSpec;
+export const PUZZLE = { players: PLAYER_NAMES, characters: CHARACTERS } satisfies PuzzleSpec;
 
 export function buildModel(backend: SatBackend): BOTCModel {
   const game = buildPuzzleModel(PUZZLE, backend);
