@@ -276,7 +276,7 @@ describe("predicates and helpers", () => {
         forcedRoles: [forcedRole("Demon", "Imp", { includeRole: true }), "Drunk"],
       }),
     ).toBe(
-      "1 satisfying world(s)\n\nWorld 1\n  Alice: Imp (appears as Fortune Teller)\n  Bob: Drunk poisoned\n\nForced facts\n  Demon: Alice (Imp)\n  Drunk: Bob",
+      "1 satisfying world(s)\n\nWorld 1\n  Alice: 👹 Imp (appears as 🔮 Fortune Teller)\n  Bob: 🍺 Drunk poisoned\n\nForced facts\n  Demon: Alice (👹 Imp)\n  🍺 Drunk: Bob",
     );
     const alternateDemon = new World(
       new Map([

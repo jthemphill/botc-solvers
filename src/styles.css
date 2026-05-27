@@ -303,10 +303,20 @@ table.results thead {
 
 .seat-button small {
   min-width: 1.3rem;
+  min-height: 1.2rem;
   padding: 0.05rem 0.35rem;
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.1);
   font-size: 0.75rem;
+}
+
+.seat-role-claims {
+  display: inline-flex;
+  max-width: 100%;
+  justify-content: center;
+  gap: 0.12rem;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .seat-sidebar {

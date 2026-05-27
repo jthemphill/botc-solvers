@@ -1,3 +1,4 @@
+import { roleEmojiLabel } from "../model/roleEmoji";
 import type { SerializableWorld } from "../worker/protocol";
 
 interface Props {
@@ -47,8 +48,8 @@ export function ResultsView({ worlds, players, error }: Props) {
                 return (
                   <tr key={player}>
                     <td>{player}</td>
-                    <td>{actual}</td>
-                    <td>{apparent && apparent !== actual ? apparent : ""}</td>
+                    <td>{roleEmojiLabel(actual)}</td>
+                    <td>{apparent && apparent !== actual ? roleEmojiLabel(apparent) : ""}</td>
                     <td>{w.poisoned.includes(player) ? "✓" : ""}</td>
                     <td>{w.drunk.includes(player) ? "✓" : ""}</td>
                   </tr>

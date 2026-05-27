@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties, type Dispatch } from "react";
+import { roleEmoji, roleEmojiLabel } from "../model/roleEmoji";
 import type { Claim, PuzzleDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
 import { CLAIM_TYPES, ClaimBody, makeEmptyClaim } from "./ClaimsEditor";
@@ -48,19 +49,33 @@ export function SeatingChartEditor({ doc, dispatch }: Props) {
       <div className="seating-layout">
         <div className="seating-chart" aria-label="Clockwise seating chart">
           <div className="seating-ring" />
-          {players.map((player, index) => (
-            <button
-              key={player}
-              type="button"
-              className={`seat-button${index === selectedIndex ? " selected" : ""}`}
-              style={seatPosition(index, players.length)}
-              onClick={() => setSelectedIndex(index)}
-              aria-pressed={index === selectedIndex}
-            >
-              <span>{player}</span>
-              <small>{claimIndexesForPlayer(doc, player).length}</small>
-            </button>
-          ))}
+          {players.map((player, index) => {
+            const roleClaims = claimIndexesForPlayer(doc, player);
+            const roleLabels = roleClaims.map(([claim]) => roleEmojiLabel(claim.type));
+            return (
+              <button
+                key={player}
+                type="button"
+                className={`seat-button${index === selectedIndex ? " selected" : ""}`}
+                style={seatPosition(index, players.length)}
+                onClick={() => setSelectedIndex(index)}
+                aria-pressed={index === selectedIndex}
+              >
+                <span>{player}</span>
+                <small
+                  className="seat-role-claims"
+                  aria-label={roleLabels.length === 0 ? "No claims" : `Claims: ${roleLabels.join(", ")}`}
+                  title={roleLabels.join(", ")}
+                >
+                  {roleClaims.map(([claim, claimIndex]) => (
+                    <span key={claimIndex} aria-hidden="true">
+                      {roleEmoji(claim.type)}
+                    </span>
+                  ))}
+                </small>
+              </button>
+            );
+          })}
         </div>
         <aside className="seat-sidebar">
           {selectedName === undefined ? (
@@ -101,7 +116,7 @@ export function SeatingChartEditor({ doc, dispatch }: Props) {
                 {selectedClaims.map(([claim, index]) => (
                   <div key={index} className="claim-block">
                     <header>
-                      <strong>{claim.type}</strong>
+                      <strong>{roleEmojiLabel(claim.type)}</strong>
                       <button type="button" onClick={() => dispatch({ type: "removeClaim", index })}>
                         Remove
                       </button>

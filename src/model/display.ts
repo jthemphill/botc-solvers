@@ -1,5 +1,6 @@
 import { type RoleRef, roleName } from "./core";
 import { type Timing, type TimingQuery, type World } from "./model";
+import { roleEmojiLabel } from "./roleEmoji";
 
 export interface ForcedRole {
   readonly label: string;
@@ -73,16 +74,17 @@ function formatWorldLines(world: World, players: readonly string[], timing?: Tim
     const apparent = world.apparent.get(player);
     const poisonSuffix = world.isPoisoned(player, timing) ? " poisoned" : "";
     return apparent !== undefined && apparent !== actual
-      ? `  ${player}: ${actual} (appears as ${apparent})${poisonSuffix}`
-      : `  ${player}: ${actual}${poisonSuffix}`;
+      ? `  ${player}: ${roleEmojiLabel(actual)} (appears as ${roleEmojiLabel(apparent)})${poisonSuffix}`
+      : `  ${player}: ${roleEmojiLabel(actual)}${poisonSuffix}`;
   });
 }
 
 function formatForcedRole(worlds: readonly World[], role: ForcedRole): string {
   const assignment = forcedAssignment(worlds, role);
-  if (assignment === undefined) return `${role.label}: ${role.missing}`;
+  const label = roleEmojiLabel(role.label);
+  if (assignment === undefined) return `${label}: ${role.missing}`;
   const [holder, actualRole] = assignment;
-  return role.includeRole ? `${role.label}: ${holder} (${actualRole})` : `${role.label}: ${holder}`;
+  return role.includeRole ? `${label}: ${holder} (${roleEmojiLabel(actualRole)})` : `${label}: ${holder}`;
 }
 
 function forcedAssignment(worlds: readonly World[], role: ForcedRole): readonly [string, string] | undefined {
