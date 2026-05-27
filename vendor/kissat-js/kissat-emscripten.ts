@@ -54,7 +54,6 @@ if (typeof XMLHttpRequest == "function") {
     xhr.send(null);
     return xhr.responseText;
   };
-
 }
 
 readAsync = (url, onload, onerror) => {
@@ -811,10 +810,8 @@ var FS_stdin_getChar = () => {
 };
 var TTY = {
   ttys: [],
-  init() {
-  },
-  shutdown() {
-  },
+  init() {},
+  shutdown() {},
   register(dev, ops) {
     TTY.ttys[dev] = { input: [], output: [], ops: ops };
     FS.registerDevice(dev, TTY.stream_ops);
