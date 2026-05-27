@@ -1,4 +1,6 @@
 // @ts-nocheck
+const wasmBinaryFile = new URL("./kissat-emscripten.wasm", import.meta.url).href;
+
 // include: shell.js
 // The Module object: Our interface to the outside world. We import
 // and export values on it. There are various ways Module can be used:
@@ -23,21 +25,7 @@ var Module =
 // Determine the runtime environment we are in. You can customize this by
 // setting the ENVIRONMENT setting at compile time (see settings.js).
 
-// Attempt to auto-detect the environment
-var ENVIRONMENT_IS_WEB = typeof window == "object";
 var ENVIRONMENT_IS_WORKER = typeof importScripts == "function";
-// N.b. Electron.js environment is simultaneously a NODE-environment, but
-// also a web environment.
-var ENVIRONMENT_IS_NODE =
-  typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string";
-var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
-
-if (ENVIRONMENT_IS_NODE) {
-  // `require()` is no-op in an ESM module, use `createRequire()` to construct
-  // the require()` function.  This is only necessary for multi-environment
-  // builds, `-sENVIRONMENT=node` emits a static import declaration instead.
-  // TODO: Swap all `require()`'s with `import()`'s?
-}
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
@@ -55,134 +43,52 @@ var quit_ = (status, toThrow) => {
   throw toThrow;
 };
 
-// `/` should be present at the end if `scriptDirectory` is not empty
-var scriptDirectory = "";
-function locateFile(path) {
-  if (Module["locateFile"]) {
-    return Module["locateFile"](path, scriptDirectory);
-  }
-  return scriptDirectory + path;
-}
-
 // Hooks that are implemented differently in different runtime environments.
-var read_, readAsync, readBinary;
+var read_, readAsync;
 
-if (ENVIRONMENT_IS_NODE) {
-  // These modules will usually be used on Node.js. Load them eagerly to avoid
-  // the complexity of lazy-loading.
-  var fs = require("fs");
-  var nodePath = require("path");
-
-  scriptDirectory = __dirname + "/";
-
-  // include: node_shell_read.js
-  read_ = (filename, binary) => {
-    // We need to re-wrap `file://` strings to URLs. Normalizing isn't
-    // necessary in that case, the path should already be absolute.
-    filename = isFileURI(filename) ? new URL(filename) : nodePath.normalize(filename);
-    return fs.readFileSync(filename, binary ? undefined : "utf8");
+if (typeof XMLHttpRequest == "function") {
+  // include: web_or_worker_shell_read.js
+  read_ = (url) => {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, false);
+    xhr.send(null);
+    return xhr.responseText;
   };
 
-  readBinary = (filename) => {
-    var ret = read_(filename, true);
-    if (!ret.buffer) {
-      ret = new Uint8Array(ret);
-    }
-    return ret;
-  };
-
-  readAsync = (filename, onload, onerror, binary = true) => {
-    // See the comment in the `read_` function.
-    filename = isFileURI(filename) ? new URL(filename) : nodePath.normalize(filename);
-    fs.readFile(filename, binary ? undefined : "utf8", (err, data) => {
-      if (err) onerror(err);
-      else onload(binary ? data.buffer : data);
-    });
-  };
-  // end include: node_shell_read.js
-  if (!Module["thisProgram"] && process.argv.length > 1) {
-    thisProgram = process.argv[1].replace(/\\/g, "/");
-  }
-
-  arguments_ = process.argv.slice(2);
-
-  if (typeof module != "undefined") {
-    module["exports"] = Module;
-  }
-
-  process.on("uncaughtException", (ex) => {
-    // suppress ExitStatus exceptions from showing an error
-    if (ex !== "unwind" && !(ex instanceof ExitStatus) && !(ex.context instanceof ExitStatus)) {
-      throw ex;
-    }
-  });
-
-  quit_ = (status, toThrow) => {
-    process.exitCode = status;
-    throw toThrow;
-  };
-} else if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
-  // Note that this includes Node.js workers when relevant (pthreads is enabled).
-  // Node.js workers are detected as a combination of ENVIRONMENT_IS_WORKER and
-  // ENVIRONMENT_IS_NODE.
-  if (ENVIRONMENT_IS_WORKER) {
-    // Check worker, not web, since window could be polyfilled
-    scriptDirectory = self.location.href;
-  } else if (typeof document != "undefined" && document.currentScript) {
-    // web
-    scriptDirectory = document.currentScript.src;
-  }
-  // blob urls look like blob:http://site.com/etc/etc and we cannot infer anything from them.
-  // otherwise, slice off the final part of the url to find the script directory.
-  // if scriptDirectory does not contain a slash, lastIndexOf will return -1,
-  // and scriptDirectory will correctly be replaced with an empty string.
-  // If scriptDirectory contains a query (starting with ?) or a fragment (starting with #),
-  // they are removed because they could contain a slash.
-  if (scriptDirectory.startsWith("blob:")) {
-    scriptDirectory = "";
-  } else {
-    scriptDirectory = scriptDirectory.substr(0, scriptDirectory.replace(/[?#].*/, "").lastIndexOf("/") + 1);
-  }
-
-  {
-    // include: web_or_worker_shell_read.js
-    read_ = (url) => {
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", url, false);
-      xhr.send(null);
-      return xhr.responseText;
-    };
-
-    if (ENVIRONMENT_IS_WORKER) {
-      readBinary = (url) => {
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", url, false);
-        xhr.responseType = "arraybuffer";
-        xhr.send(null);
-        return new Uint8Array(/** @type{!ArrayBuffer} */ xhr.response);
-      };
-    }
-
-    readAsync = (url, onload, onerror) => {
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", url, true);
-      xhr.responseType = "arraybuffer";
-      xhr.onload = () => {
-        if (xhr.status == 200 || (xhr.status == 0 && xhr.response)) {
-          // file URLs can return 0
-          onload(xhr.response);
-          return;
-        }
-        onerror();
-      };
-      xhr.onerror = onerror;
-      xhr.send(null);
-    };
-
-    // end include: web_or_worker_shell_read.js
-  }
-} else {
 }
+
+readAsync = (url, onload, onerror) => {
+  if (typeof fetch == "function" && !isFileURI(url)) {
+    fetch(url, { credentials: "same-origin" })
+      .then((response) => {
+        if (!response["ok"]) {
+          throw `failed to load binary file at '${url}'`;
+        }
+        return response["arrayBuffer"]();
+      })
+      .then(onload, onerror);
+    return;
+  }
+  if (typeof XMLHttpRequest == "function") {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.responseType = "arraybuffer";
+    xhr.onload = () => {
+      if (xhr.status == 200 || (xhr.status == 0 && xhr.response)) {
+        // file URLs can return 0
+        onload(xhr.response);
+        return;
+      }
+      onerror();
+    };
+    xhr.onerror = onerror;
+    xhr.send(null);
+    return;
+  }
+  onerror();
+};
+
+// end include: web_or_worker_shell_read.js
 
 var out = Module["print"] || console.log.bind(console);
 var err = Module["printErr"] || console.error.bind(console);
@@ -217,9 +123,6 @@ if (Module["quit"]) quit_ = Module["quit"];
 // You can also build docs locally as HTML or other formats in site/
 // An online HTML version (which may be of a different version of Emscripten)
 //    is up at http://kripken.github.io/emscripten-site/docs/api_reference/preamble.js.html
-
-var wasmBinary;
-if (Module["wasmBinary"]) wasmBinary = Module["wasmBinary"];
 
 // Wasm globals
 
@@ -429,15 +332,6 @@ function abort(what) {
 // include: memoryprofiler.js
 // end include: memoryprofiler.js
 // include: URIUtils.js
-// Prefix of data URIs emitted by SINGLE_FILE and related options.
-var dataURIPrefix = "data:application/octet-stream;base64,";
-
-/**
- * Indicates whether filename is a base64 data URI.
- * @noinline
- */
-var isDataURI = (filename) => filename.startsWith(dataURIPrefix);
-
 /**
  * Indicates whether filename is delivered via file protocol (as opposed to http/https)
  * @noinline
@@ -446,100 +340,18 @@ var isFileURI = (filename) => filename.startsWith("file://");
 // end include: URIUtils.js
 // include: runtime_exceptions.js
 // end include: runtime_exceptions.js
-function findWasmBinary() {
-  var f = "kissat-emscripten.wasm";
-  if (!isDataURI(f)) {
-    return locateFile(f);
-  }
-  return f;
-}
+function instantiateAsync(binaryFile, imports, callback) {
+  // Suppress closure warning here since the upstream definition for
+  // instantiateStreaming only allows Promise<Repsponse> rather than
+  // an actual Response.
+  // TODO(https://github.com/google/closure-compiler/pull/3913): Remove if/when upstream closure is fixed.
+  /** @suppress {checkTypes} */
+  var result = WebAssembly.instantiateStreaming(fetch(binaryFile, { credentials: "same-origin" }), imports);
 
-var wasmBinaryFile;
-
-function getBinarySync(file) {
-  if (file == wasmBinaryFile && wasmBinary) {
-    return new Uint8Array(wasmBinary);
-  }
-  if (readBinary) {
-    return readBinary(file);
-  }
-  throw "both async and sync fetching of the wasm failed";
-}
-
-function getBinaryPromise(binaryFile) {
-  // If we don't have the binary yet, try to load it asynchronously.
-  // Fetch has some additional restrictions over XHR, like it can't be used on a file:// url.
-  // See https://github.com/github/fetch/pull/92#issuecomment-140665932
-  // Cordova or Electron apps are typically loaded from a file:// url.
-  // So use fetch if it is available and the url is not a file, otherwise fall back to XHR.
-  if (!wasmBinary && (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER)) {
-    if (typeof fetch == "function" && !isFileURI(binaryFile)) {
-      return fetch(binaryFile, { credentials: "same-origin" })
-        .then((response) => {
-          if (!response["ok"]) {
-            throw `failed to load wasm binary file at '${binaryFile}'`;
-          }
-          return response["arrayBuffer"]();
-        })
-        .catch(() => getBinarySync(binaryFile));
-    } else if (readAsync) {
-      // fetch is not available or url is file => try XHR (readAsync uses XHR internally)
-      return new Promise((resolve, reject) => {
-        readAsync(binaryFile, (response) => resolve(new Uint8Array(/** @type{!ArrayBuffer} */ response)), reject);
-      });
-    }
-  }
-
-  // Otherwise, getBinarySync should be able to get it synchronously
-  return Promise.resolve().then(() => getBinarySync(binaryFile));
-}
-
-function instantiateArrayBuffer(binaryFile, imports, receiver) {
-  return getBinaryPromise(binaryFile)
-    .then((binary) => {
-      return WebAssembly.instantiate(binary, imports);
-    })
-    .then(receiver, (reason) => {
-      err(`failed to asynchronously prepare wasm: ${reason}`);
-
-      abort(reason);
-    });
-}
-
-function instantiateAsync(binary, binaryFile, imports, callback) {
-  if (
-    !binary &&
-    typeof WebAssembly.instantiateStreaming == "function" &&
-    !isDataURI(binaryFile) &&
-    // Don't use streaming for file:// delivered objects in a webview, fetch them synchronously.
-    !isFileURI(binaryFile) &&
-    // Avoid instantiateStreaming() on Node.js environment for now, as while
-    // Node.js v18.1.0 implements it, it does not have a full fetch()
-    // implementation yet.
-    //
-    // Reference:
-    //   https://github.com/emscripten-core/emscripten/pull/16917
-    !ENVIRONMENT_IS_NODE &&
-    typeof fetch == "function"
-  ) {
-    return fetch(binaryFile, { credentials: "same-origin" }).then((response) => {
-      // Suppress closure warning here since the upstream definition for
-      // instantiateStreaming only allows Promise<Repsponse> rather than
-      // an actual Response.
-      // TODO(https://github.com/google/closure-compiler/pull/3913): Remove if/when upstream closure is fixed.
-      /** @suppress {checkTypes} */
-      var result = WebAssembly.instantiateStreaming(response, imports);
-
-      return result.then(callback, function (reason) {
-        // We expect the most common failure cause to be a bad MIME type for the binary,
-        // in which case falling back to ArrayBuffer instantiation should work.
-        err(`wasm streaming compile failed: ${reason}`);
-        err("falling back to ArrayBuffer instantiation");
-        return instantiateArrayBuffer(binaryFile, imports, callback);
-      });
-    });
-  }
-  return instantiateArrayBuffer(binaryFile, imports, callback);
+  return result.then(callback, function (reason) {
+    err(`wasm streaming compile failed: ${reason}`);
+    abort(reason);
+  });
 }
 
 function getWasmImports() {
@@ -597,9 +409,7 @@ function createWasm() {
     }
   }
 
-  if (!wasmBinaryFile) wasmBinaryFile = findWasmBinary();
-
-  instantiateAsync(wasmBinary, wasmBinaryFile, info, receiveInstantiationResult);
+  instantiateAsync(wasmBinaryFile, info, receiveInstantiationResult);
   return {}; // no exports yet; we'll fill them in later
 }
 
@@ -779,27 +589,7 @@ var PATH = {
 
 var initRandomFill = () => {
   if (typeof crypto == "object" && typeof crypto["getRandomValues"] == "function") {
-    // for modern web browsers
     return (view) => crypto.getRandomValues(view);
-  } else if (ENVIRONMENT_IS_NODE) {
-    // for nodejs with or without crypto support included
-    try {
-      var crypto_module = require("crypto");
-      var randomFillSync = crypto_module["randomFillSync"];
-      if (randomFillSync) {
-        // nodejs with LTS crypto support
-        return (view) => crypto_module["randomFillSync"](view);
-      }
-      // very old nodejs with the original crypto API
-      var randomBytes = crypto_module["randomBytes"];
-      return (view) => (
-        view.set(randomBytes(view.byteLength)),
-        // Return the original view to match modern native implementations.
-        view
-      );
-    } catch (e) {
-      // nodejs doesn't have crypto support
-    }
   }
   // we couldn't find a proper implementation, as Math.random() is not suitable for /dev/random, see emscripten-core/emscripten/pull/7096
   abort("initRandomDevice");
@@ -825,7 +615,7 @@ var PATH_FS = {
       resolvedAbsolute = PATH.isAbs(path);
     }
     // At this point the path should be resolved to a full absolute path, but
-    // handle relative paths to be safe (might happen when process.cwd() fails)
+    // handle relative paths to be safe if the current working directory is unavailable.
     resolvedPath = PATH.normalizeArray(
       resolvedPath.split("/").filter((p) => !!p),
       !resolvedAbsolute,
@@ -1004,35 +794,7 @@ function intArrayFromString(stringy, dontAddNull, length) {
 var FS_stdin_getChar = () => {
   if (!FS_stdin_getChar_buffer.length) {
     var result = null;
-    if (ENVIRONMENT_IS_NODE) {
-      // we will read data by chunks of BUFSIZE
-      var BUFSIZE = 256;
-      var buf = Buffer.alloc(BUFSIZE);
-      var bytesRead = 0;
-
-      // For some reason we must suppress a closure warning here, even though
-      // fd definitely exists on process.stdin, and is even the proper way to
-      // get the fd of stdin,
-      // https://github.com/nodejs/help/issues/2136#issuecomment-523649904
-      // This started to happen after moving this logic out of library_tty.js,
-      // so it is related to the surrounding code in some unclear manner.
-      /** @suppress {missingProperties} */
-      var fd = process.stdin.fd;
-
-      try {
-        bytesRead = fs.readSync(fd, buf, 0, BUFSIZE);
-      } catch (e) {
-        // Cross-platform differences: on Windows, reading EOF throws an
-        // exception, but on other OSes, reading EOF returns 0. Uniformize
-        // behavior by treating the EOF exception to return 0.
-        if (e.toString().includes("EOF")) bytesRead = 0;
-        else throw e;
-      }
-
-      if (bytesRead > 0) {
-        result = buf.slice(0, bytesRead).toString("utf-8");
-      }
-    } else if (typeof window != "undefined" && typeof window.prompt == "function") {
+    if (typeof window != "undefined" && typeof window.prompt == "function") {
       // Browser.
       result = window.prompt("Input: "); // returns null on cancel
       if (result !== null) {
@@ -1050,25 +812,8 @@ var FS_stdin_getChar = () => {
 var TTY = {
   ttys: [],
   init() {
-    // https://github.com/emscripten-core/emscripten/pull/1555
-    // if (ENVIRONMENT_IS_NODE) {
-    //   // currently, FS.init does not distinguish if process.stdin is a file or TTY
-    //   // device, it always assumes it's a TTY device. because of this, we're forcing
-    //   // process.stdin to UTF8 encoding to at least make stdin reading compatible
-    //   // with text files until FS.init can be refactored.
-    //   process.stdin.setEncoding('utf8');
-    // }
   },
   shutdown() {
-    // https://github.com/emscripten-core/emscripten/pull/1555
-    // if (ENVIRONMENT_IS_NODE) {
-    //   // inolen: any idea as to why node -e 'process.stdin.read()' wouldn't exit immediately (with process.stdin being a tty)?
-    //   // isaacs: because now it's reading from the stream, you've expressed interest in it, so that read() kicks off a _read() which creates a ReadReq operation
-    //   // inolen: I thought read() in that case was a synchronous operation that just grabbed some amount of buffered data if it exists?
-    //   // isaacs: it is. but it also triggers a _read() call, which calls readStart() on the handle
-    //   // isaacs: do process.stdin.pause() and i'd think it'd probably close the pending call
-    //   process.stdin.pause();
-    // }
   },
   register(dev, ops) {
     TTY.ttys[dev] = { input: [], output: [], ops: ops };
@@ -2667,8 +2412,7 @@ var FS = {
     // Checking if we have permissions to write to the file unless
     // MAP_PRIVATE flag is set. According to POSIX spec it is possible
     // to write to file opened in read-only mode with MAP_PRIVATE flag,
-    // as all modifications will be visible only in the memory of
-    // the current process.
+    // as all modifications will be visible only in the current runtime memory.
     if ((prot & 2) !== 0 && (flags & 2) === 0 && (stream.flags & 2097155) !== 2) {
       throw new FS.ErrnoError(2);
     }
@@ -3362,7 +3106,7 @@ function ___syscall_fcntl64(fd, cmd, varargs) {
       }
       case 1:
       case 2:
-        return 0; // FD_CLOEXEC makes no sense for a single process.
+        return 0; // FD_CLOEXEC makes no sense for a single runtime.
       case 3:
         return stream.flags;
       case 4: {
