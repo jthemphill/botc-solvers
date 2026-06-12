@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type Dispatch } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type Dispatch, type DragEvent } from "react";
 import { CharacterType } from "../model/core";
 import { ROLE_CLASSES } from "../model/roleRegistry";
 import { roleEmoji, roleEmojiLabel } from "../model/roleEmoji";
@@ -36,10 +36,32 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
   const players = doc.players;
   const selectedName = players[selectedIndex];
   const roleCounts = countScriptRoles(doc.script);
+  const [draggedIndex, setDraggedIndex] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (selectedIndex >= players.length) onSelect(Math.max(0, players.length - 1));
   }, [onSelect, players.length, selectedIndex]);
+
+  const startSeatDrag = (event: DragEvent<HTMLButtonElement>, index: number) => {
+    setDraggedIndex(index);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(index));
+  };
+
+  const allowSeatDrop = (event: DragEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  };
+
+  const dropSeat = (event: DragEvent<HTMLButtonElement>, toIndex: number) => {
+    event.preventDefault();
+    const dataIndex = Number(event.dataTransfer.getData("text/plain"));
+    const fromIndex = Number.isInteger(dataIndex) ? dataIndex : draggedIndex;
+    setDraggedIndex(undefined);
+    if (fromIndex === undefined || fromIndex === toIndex) return;
+    dispatch({ type: "movePlayerTo", fromIndex, toIndex });
+    onSelect(toIndex);
+  };
 
   return (
     <div className="sheet-content">
@@ -69,10 +91,18 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
             <button
               key={player}
               type="button"
-              className={`seat-button${index === selectedIndex ? " selected" : ""}`}
+              className={`seat-button${index === selectedIndex ? " selected" : ""}${
+                index === draggedIndex ? " dragging" : ""
+              }`}
               style={seatPosition(index, players.length)}
+              draggable
+              onDragStart={(event) => startSeatDrag(event, index)}
+              onDragOver={allowSeatDrop}
+              onDrop={(event) => dropSeat(event, index)}
+              onDragEnd={() => setDraggedIndex(undefined)}
               onClick={() => onSelect(index)}
               aria-pressed={index === selectedIndex}
+              aria-label={`Seat ${index + 1}: ${player}. Drag to reorder seats.`}
             >
               <span className="seat-token-icon" aria-hidden="true">
                 {roleEmoji(primaryClaim?.type) ?? index + 1}

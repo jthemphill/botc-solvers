@@ -322,6 +322,7 @@ summary {
   box-shadow:
     0 8px 18px rgba(37, 27, 17, 0.16),
     0 0 0 0 rgba(14, 119, 169, 0);
+  cursor: grab;
 }
 
 .seat-button.selected {
@@ -329,6 +330,11 @@ summary {
   box-shadow:
     0 9px 20px rgba(37, 27, 17, 0.18),
     0 0 0 5px rgba(14, 119, 169, 0.16);
+}
+
+.seat-button.dragging {
+  opacity: 0.58;
+  cursor: grabbing;
 }
 
 .seat-token-icon {
