@@ -1,0 +1,116 @@
+name: PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  deploy-preview:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6.0.2
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build webapp
+        env:
+          BASE_PATH: /botc-solvers/preview/${{ github.event.number }}/
+        run: bun run build
+
+      - name: Deploy to GitHub Pages (PR Preview)
+        uses: peaceiris/actions-gh-pages@v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./browser-dist
+          destination_dir: preview/${{ github.event.number }}
+          keep_files: true
+
+      - name: Comment PR with preview link
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const previewUrl = `https://${{ github.repository_owner }}.github.io/botc-solvers/preview/${prNumber}/`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('PR Preview')
+            );
+
+            const commentBody = `## PR Preview
+
+            Your preview is ready. View the changes at:
+
+            **${previewUrl}**
+
+            This preview will be updated automatically when you push new commits to this PR.
+
+            ---
+            <sub>Built with commit ${context.sha.substring(0, 7)}</sub>`;
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody,
+              });
+            }
+
+  cleanup-preview:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v6.0.2
+        with:
+          ref: gh-pages
+
+      - name: Remove preview directory
+        run: |
+          rm -rf preview/${{ github.event.number }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Remove preview for PR #${{ github.event.number }}" || echo "No changes to commit"
+          git push origin gh-pages || echo "No changes to push"
+
+      - name: Comment PR about cleanup
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: '## Preview Cleanup\n\nThe preview for this PR has been removed.',
+            });
