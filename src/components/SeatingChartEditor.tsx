@@ -226,23 +226,6 @@ export function SelectedPlayerWorkbench({ doc, dispatch, selectedIndex, onSelect
                   dispatch({ type: "renamePlayer", index: selectedPlayerIndex, name: event.target.value })
                 }
               />
-              <span>Seat order</span>
-              <div className="row">
-                <button
-                  type="button"
-                  onClick={() => dispatch({ type: "movePlayer", index: selectedPlayerIndex, direction: "up" })}
-                  disabled={selectedPlayerIndex <= 0}
-                >
-                  Counterclockwise
-                </button>
-                <button
-                  type="button"
-                  onClick={() => dispatch({ type: "movePlayer", index: selectedPlayerIndex, direction: "down" })}
-                  disabled={selectedPlayerIndex === -1 || selectedPlayerIndex >= players.length - 1}
-                >
-                  Clockwise
-                </button>
-              </div>
               <span>Danger</span>
               <button type="button" onClick={removeSelectedPlayer}>
                 Remove seat
