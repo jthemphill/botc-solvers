@@ -1,0 +1,227 @@
+name: Deploy PR preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, closed]
+
+permissions:
+  contents: write
+  issues: write
+  pages: write
+  pull-requests: read
+  id-token: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy PR preview
+    if: github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v6
+
+      - name: Build preview
+        env:
+          BASE_PATH: ${{ format('{0}/pull/{1}/', steps.pages.outputs.base_path, github.event.number) }}
+        run: bun run build
+
+      - name: Update Pages state branch
+        env:
+          ARTIFACT_DIR: ${{ runner.temp }}/pages-artifact
+          DESTINATION_DIR: pull/${{ github.event.number }}
+          PAGES_DIR: ${{ runner.temp }}/gh-pages
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages:gh-pages
+            git worktree add "$PAGES_DIR" gh-pages
+          else
+            git worktree add --detach "$PAGES_DIR"
+            git -C "$PAGES_DIR" checkout --orphan gh-pages
+            git -C "$PAGES_DIR" rm -rf . >/dev/null 2>&1 || true
+            find "$PAGES_DIR" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          fi
+
+          rm -rf "$PAGES_DIR/$DESTINATION_DIR"
+          mkdir -p "$PAGES_DIR/$DESTINATION_DIR"
+          cp -a browser-dist/. "$PAGES_DIR/$DESTINATION_DIR/"
+          touch "$PAGES_DIR/.nojekyll"
+
+          git -C "$PAGES_DIR" add -A
+          if git -C "$PAGES_DIR" diff --cached --quiet; then
+            echo "No PR preview changes to publish."
+          else
+            git -C "$PAGES_DIR" commit -m "Deploy preview for PR #${{ github.event.number }}"
+            git -C "$PAGES_DIR" push origin HEAD:gh-pages
+          fi
+
+          rm -rf "$ARTIFACT_DIR"
+          mkdir -p "$ARTIFACT_DIR"
+          cp -a "$PAGES_DIR"/. "$ARTIFACT_DIR"/
+          rm -f "$ARTIFACT_DIR/.git"
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ${{ runner.temp }}/pages-artifact
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+      - name: Comment with preview URL
+        uses: actions/github-script@v8
+        env:
+          PREVIEW_SHA: ${{ github.event.pull_request.head.sha }}
+          PREVIEW_URL: ${{ steps.deployment.outputs.page_url }}pull/${{ github.event.number }}/
+        with:
+          script: |
+            const marker = '<!-- botc-solvers-preview -->';
+            const body = [
+              marker,
+              'GitHub Pages preview for this PR:',
+              '',
+              process.env.PREVIEW_URL,
+              '',
+              `Built from \`${process.env.PREVIEW_SHA}\`.`,
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body?.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
+
+  cleanup:
+    name: Remove closed PR preview
+    if: github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Remove preview from Pages state branch
+        id: cleanup
+        env:
+          ARTIFACT_DIR: ${{ runner.temp }}/pages-artifact
+          DESTINATION_DIR: pull/${{ github.event.number }}
+          PAGES_DIR: ${{ runner.temp }}/gh-pages
+        run: |
+          set -euo pipefail
+
+          if ! git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            echo "No gh-pages branch exists; nothing to clean up."
+            echo "has_artifact=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages:gh-pages
+          git worktree add "$PAGES_DIR" gh-pages
+
+          rm -rf "$PAGES_DIR/$DESTINATION_DIR"
+          touch "$PAGES_DIR/.nojekyll"
+
+          git -C "$PAGES_DIR" add -A
+          if git -C "$PAGES_DIR" diff --cached --quiet; then
+            echo "No PR preview files to remove."
+          else
+            git -C "$PAGES_DIR" commit -m "Remove preview for PR #${{ github.event.number }}"
+            git -C "$PAGES_DIR" push origin HEAD:gh-pages
+          fi
+
+          rm -rf "$ARTIFACT_DIR"
+          mkdir -p "$ARTIFACT_DIR"
+          cp -a "$PAGES_DIR"/. "$ARTIFACT_DIR"/
+          rm -f "$ARTIFACT_DIR/.git"
+          echo "has_artifact=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upload GitHub Pages artifact
+        if: steps.cleanup.outputs.has_artifact == 'true'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ${{ runner.temp }}/pages-artifact
+
+      - name: Deploy to GitHub Pages
+        if: steps.cleanup.outputs.has_artifact == 'true'
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+      - name: Comment that preview was removed
+        if: steps.cleanup.outputs.has_artifact == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const marker = '<!-- botc-solvers-preview -->';
+            const body = [
+              marker,
+              'GitHub Pages preview removed because this PR is closed.',
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body?.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            }
