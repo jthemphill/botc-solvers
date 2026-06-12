@@ -55,9 +55,8 @@ export function ImportExportBar({ doc, dispatch, onError }: Props) {
   };
 
   return (
-    <section className="panel">
-      <h3>Import / Export</h3>
-      <div className="row">
+    <section className="import-export-bar" aria-label="Import, export, and examples">
+      <div className="toolbar-button-row">
         <button onClick={() => fileRef.current?.click()}>Import JSON…</button>
         <input
           ref={fileRef}
@@ -72,7 +71,7 @@ export function ImportExportBar({ doc, dispatch, onError }: Props) {
         />
         <button onClick={exportFile}>Export JSON</button>
       </div>
-      <div className="row">
+      <div className="example-button-row">
         <span>Examples:</span>
         {EXAMPLES.map((ex) => (
           <button key={ex.label} onClick={() => importData(ex.data)}>

@@ -9,17 +9,18 @@ interface Props {
 
 export function PuzzleHeader({ doc, dispatch }: Props) {
   return (
-    <div className="row">
+    <div className="puzzle-title-editor">
+      <span className="puzzle-number">Puzzle Sheet</span>
       <label>
-        Title{" "}
+        <span className="sr-only">Title</span>
         <input
+          className="title-input"
           type="text"
           value={doc.title ?? ""}
           onChange={(e) => dispatch({ type: "setTitle", title: e.target.value })}
-          style={{ width: "20rem" }}
         />
       </label>
-      <span style={{ opacity: 0.6 }}>
+      <span className="puzzle-counts">
         {doc.players.length} players · {doc.script.length} roles · {doc.claims.length} claims
       </span>
     </div>

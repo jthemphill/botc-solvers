@@ -1,7 +1,10 @@
-import { useEffect, useState, type CSSProperties, type Dispatch } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type Dispatch } from "react";
+import { CharacterType } from "../model/core";
+import { ROLE_CLASSES } from "../model/roleRegistry";
 import { roleEmoji, roleEmojiLabel } from "../model/roleEmoji";
 import type { Claim, PuzzleDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
+import { ALL_ROLE_NAMES, protectedScriptRoles } from "../state/scriptRoles";
 import { CLAIM_TYPES, ClaimBody, makeEmptyClaim } from "./ClaimsEditor";
 
 interface Props {
@@ -9,131 +12,359 @@ interface Props {
   dispatch: Dispatch<PuzzleAction>;
 }
 
+interface SharedProps extends Props {
+  selectedIndex: number;
+  onSelect: (index: number) => void;
+}
+
 export function SeatingChartEditor({ doc, dispatch }: Props) {
-  const players = doc.players;
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [newType, setNewType] = useState<Claim["type"]>("Investigator");
+  return (
+    <section className="seating-composer">
+      <PuzzleSheet doc={doc} dispatch={dispatch} selectedIndex={selectedIndex} onSelect={setSelectedIndex} />
+      <SelectedPlayerWorkbench
+        doc={doc}
+        dispatch={dispatch}
+        selectedIndex={selectedIndex}
+        onSelect={setSelectedIndex}
+      />
+    </section>
+  );
+}
+
+export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedProps) {
+  const players = doc.players;
+  const selectedName = players[selectedIndex];
+  const roleCounts = countScriptRoles(doc.script);
 
   useEffect(() => {
-    if (selectedIndex >= players.length) setSelectedIndex(Math.max(0, players.length - 1));
-  }, [players.length, selectedIndex]);
-
-  const selectedName = players[selectedIndex];
-  const selectedPlayerIndex = selectedName === undefined ? -1 : doc.players.indexOf(selectedName);
-  const selectedClaims = selectedName === undefined ? [] : claimIndexesForPlayer(doc, selectedName);
-
-  const leftNeighbor = selectedName === undefined ? undefined : players[(selectedIndex + 1) % players.length];
-  const rightNeighbor =
-    selectedName === undefined ? undefined : players[(selectedIndex - 1 + players.length) % players.length];
-
-  const addClaim = () => {
-    if (selectedName === undefined) return;
-    dispatch({ type: "addClaim", claim: makeEmptyClaim(newType, selectedName) });
-  };
+    if (selectedIndex >= players.length) onSelect(Math.max(0, players.length - 1));
+  }, [onSelect, players.length, selectedIndex]);
 
   return (
-    <section className="panel seating-panel">
-      <div className="seating-header">
-        <h3>Seating & Claims</h3>
+    <div className="sheet-content">
+      <div className="sheet-tools">
         <label>
           Players
           <input
             type="number"
             min={0}
             max={20}
-            value={doc.players.length}
+            value={players.length}
             onChange={(event) => dispatch({ type: "setPlayerCount", count: Number(event.target.value) })}
           />
         </label>
+        <span>
+          {doc.script.length} roles · {doc.claims.length} claims
+        </span>
       </div>
-      <div className="seating-layout">
-        <div className="seating-chart" aria-label="Clockwise seating chart">
-          <div className="seating-ring" />
-          {players.map((player, index) => {
-            const roleClaims = claimIndexesForPlayer(doc, player);
-            const roleLabels = roleClaims.map(([claim]) => roleEmojiLabel(claim.type));
+
+      <div className="seating-chart" aria-label="Clockwise seating chart">
+        <div className="seating-ring" />
+        {players.map((player, index) => {
+          const roleClaims = claimIndexesForPlayer(doc, player);
+          const roleLabels = roleClaims.map(([claim]) => roleEmojiLabel(claim.type));
+          const primaryClaim = roleClaims[0]?.[0];
+          return (
+            <button
+              key={player}
+              type="button"
+              className={`seat-button${index === selectedIndex ? " selected" : ""}`}
+              style={seatPosition(index, players.length)}
+              onClick={() => onSelect(index)}
+              aria-pressed={index === selectedIndex}
+            >
+              <span className="seat-token-icon" aria-hidden="true">
+                {roleEmoji(primaryClaim?.type) ?? index + 1}
+              </span>
+              <span>{player}</span>
+              <small
+                className="seat-role-claims"
+                aria-label={roleLabels.length === 0 ? "No claims" : `Claims: ${roleLabels.join(", ")}`}
+                title={roleLabels.join(", ")}
+              >
+                {roleClaims.map(([claim, claimIndex]) => (
+                  <span key={claimIndex} aria-hidden="true">
+                    {roleEmoji(claim.type)}
+                  </span>
+                ))}
+              </small>
+            </button>
+          );
+        })}
+
+        {players.length <= 10 &&
+          players.map((player, index) => {
+            const claim = claimIndexesForPlayer(doc, player)[0]?.[0];
+            if (claim === undefined) return null;
             return (
               <button
-                key={player}
+                key={`${player}-callout`}
                 type="button"
-                className={`seat-button${index === selectedIndex ? " selected" : ""}`}
-                style={seatPosition(index, players.length)}
-                onClick={() => setSelectedIndex(index)}
-                aria-pressed={index === selectedIndex}
+                className="claim-callout"
+                style={calloutPosition(index, players.length)}
+                onClick={() => onSelect(index)}
               >
-                <span>{player}</span>
-                <small
-                  className="seat-role-claims"
-                  aria-label={roleLabels.length === 0 ? "No claims" : `Claims: ${roleLabels.join(", ")}`}
-                  title={roleLabels.join(", ")}
-                >
-                  {roleClaims.map(([claim, claimIndex]) => (
-                    <span key={claimIndex} aria-hidden="true">
-                      {roleEmoji(claim.type)}
-                    </span>
-                  ))}
-                </small>
+                "{claimSummary(claim)}"
               </button>
             );
           })}
+
+        <div className="center-timeline" aria-live="polite">
+          <strong>{selectedName ?? "No player selected"}</strong>
+          <span>Click tokens to edit claims</span>
         </div>
-        <aside className="seat-sidebar">
-          {selectedName === undefined ? (
-            <p>Add players to start entering seating and claims.</p>
-          ) : (
-            <>
-              <div className="field-grid">
-                <span>Seat</span>
-                <strong>{selectedIndex + 1}</strong>
-                <span>Name</span>
-                <input
-                  type="text"
-                  value={selectedName}
-                  disabled={selectedPlayerIndex === -1}
-                  onChange={(event) =>
-                    dispatch({ type: "renamePlayer", index: selectedPlayerIndex, name: event.target.value })
-                  }
-                />
-                <span>Left</span>
-                <strong>{leftNeighbor}</strong>
-                <span>Right</span>
-                <strong>{rightNeighbor}</strong>
+      </div>
+
+      <div className="sheet-divider" />
+
+      <div className="rules-strip" aria-label="Puzzle setup summary">
+        <div className="notes-box">
+          <strong>Notes</strong>
+          <span>Use the workbench to add role stamps and claims.</span>
+        </div>
+        <div className="rules-summary">
+          <h3>Rules</h3>
+          <div className="rule-token-row">
+            <RuleToken label="Townsfolk" count={roleCounts.townsfolk} />
+            <RuleToken label="Outsider" count={roleCounts.outsider} />
+            <RuleToken label="Minion" count={roleCounts.minion} tone="evil" />
+            <RuleToken label="Demon" count={roleCounts.demon} tone="evil" />
+          </div>
+        </div>
+        <div className="sheet-footnote">
+          {players.length} players · {roleCounts.demon} demon · {roleCounts.minion} minion · {roleCounts.outsider}{" "}
+          outsider
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function SelectedPlayerWorkbench({ doc, dispatch, selectedIndex, onSelect }: SharedProps) {
+  const players = doc.players;
+  const [newType, setNewType] = useState<Claim["type"]>("Investigator");
+  const selectedName = players[selectedIndex];
+  const selectedPlayerIndex = selectedName === undefined ? -1 : doc.players.indexOf(selectedName);
+  const selectedClaims = selectedName === undefined ? [] : claimIndexesForPlayer(doc, selectedName);
+  const leftNeighbor =
+    selectedName === undefined || players.length === 0 ? undefined : players[(selectedIndex + 1) % players.length];
+  const rightNeighbor =
+    selectedName === undefined || players.length === 0
+      ? undefined
+      : players[(selectedIndex - 1 + players.length) % players.length];
+
+  const addClaim = () => {
+    if (selectedName === undefined) return;
+    dispatch({ type: "addClaim", claim: makeEmptyClaim(newType, selectedName) });
+  };
+
+  const removeSelectedPlayer = () => {
+    if (selectedPlayerIndex === -1) return;
+    dispatch({ type: "removePlayer", index: selectedPlayerIndex });
+    onSelect(Math.max(0, selectedPlayerIndex - 1));
+  };
+
+  return (
+    <div className="draw-workbench">
+      <RolePalette doc={doc} dispatch={dispatch} />
+
+      <section className="panel selected-player-panel">
+        {selectedName === undefined ? (
+          <p>Add players to start drawing the puzzle.</p>
+        ) : (
+          <>
+            <header className="panel-heading-row">
+              <div>
+                <h3>Selected: {selectedName}</h3>
+                <span>
+                  Seat {selectedIndex + 1} · left {leftNeighbor ?? "-"} · right {rightNeighbor ?? "-"}
+                </span>
               </div>
-              <div className="claim-add-row">
-                <select value={newType} onChange={(event) => setNewType(event.target.value as Claim["type"])}>
-                  {CLAIM_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-                <button type="button" onClick={addClaim}>
-                  + Add claim
+              <button type="button" onClick={() => onSelect(0)}>
+                Clear
+              </button>
+            </header>
+
+            <div className="field-grid selected-player-grid">
+              <span>Name</span>
+              <input
+                type="text"
+                value={selectedName}
+                disabled={selectedPlayerIndex === -1}
+                onChange={(event) =>
+                  dispatch({ type: "renamePlayer", index: selectedPlayerIndex, name: event.target.value })
+                }
+              />
+              <span>Seat order</span>
+              <div className="row">
+                <button
+                  type="button"
+                  onClick={() => dispatch({ type: "movePlayer", index: selectedPlayerIndex, direction: "up" })}
+                  disabled={selectedPlayerIndex <= 0}
+                >
+                  Counterclockwise
+                </button>
+                <button
+                  type="button"
+                  onClick={() => dispatch({ type: "movePlayer", index: selectedPlayerIndex, direction: "down" })}
+                  disabled={selectedPlayerIndex === -1 || selectedPlayerIndex >= players.length - 1}
+                >
+                  Clockwise
                 </button>
               </div>
-              <div className="selected-claims">
-                {selectedClaims.length === 0 && <p>No claims for this player.</p>}
-                {selectedClaims.map(([claim, index]) => (
-                  <div key={index} className="claim-block">
-                    <header>
-                      <strong>{roleEmojiLabel(claim.type)}</strong>
-                      <button type="button" onClick={() => dispatch({ type: "removeClaim", index })}>
-                        Remove
-                      </button>
-                    </header>
-                    <ClaimBody
-                      doc={doc}
-                      claim={claim}
-                      onChange={(nextClaim) => dispatch({ type: "updateClaim", index, claim: nextClaim })}
-                    />
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </aside>
+              <span>Danger</span>
+              <button type="button" onClick={removeSelectedPlayer}>
+                Remove seat
+              </button>
+            </div>
+          </>
+        )}
+      </section>
+
+      <section className="panel claims-panel">
+        <header className="panel-heading-row">
+          <div>
+            <h3>Claims</h3>
+            <span>{selectedClaims.length} for selected player</span>
+          </div>
+          <button type="button" onClick={addClaim} disabled={selectedName === undefined}>
+            Add Claim
+          </button>
+        </header>
+        <div className="claim-add-row">
+          <select value={newType} onChange={(event) => setNewType(event.target.value as Claim["type"])}>
+            {CLAIM_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="selected-claims">
+          {selectedName !== undefined && selectedClaims.length === 0 && <p>No claims for {selectedName}.</p>}
+          {selectedClaims.map(([claim, index]) => (
+            <div key={index} className="claim-block">
+              <header>
+                <strong>{roleEmojiLabel(claim.type)}</strong>
+                <button type="button" onClick={() => dispatch({ type: "removeClaim", index })}>
+                  Remove
+                </button>
+              </header>
+              <ClaimBody
+                doc={doc}
+                claim={claim}
+                onChange={(nextClaim) => dispatch({ type: "updateClaim", index, claim: nextClaim })}
+              />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <HiddenRolesTray roles={doc.script} />
+    </div>
+  );
+}
+
+function RolePalette({ doc, dispatch }: Props) {
+  const protectedRoles = useMemo(() => new Set(protectedScriptRoles(doc)), [doc]);
+  const paletteRoles = useMemo(() => {
+    const preferred = [
+      "Librarian",
+      "Investigator",
+      "Empath",
+      "Chef",
+      "Ravenkeeper",
+      "Imp",
+      "Poisoner",
+      "Scarlet Woman",
+      "Baron",
+      "Drunk",
+    ];
+    return uniqueRoleList([...doc.script, ...preferred, ...ALL_ROLE_NAMES]).slice(0, 12);
+  }, [doc.script]);
+
+  const toggleRole = (role: string) => {
+    const selected = doc.script.includes(role);
+    if (selected && protectedRoles.has(role)) return;
+    dispatch({
+      type: "setScript",
+      script: selected ? doc.script.filter((entry) => entry !== role) : [...doc.script, role],
+    });
+  };
+
+  return (
+    <section className="panel role-palette-panel">
+      <header className="panel-heading-row">
+        <div>
+          <h3>Role Palette</h3>
+          <span>Click stamps to add or remove script roles.</span>
+        </div>
+      </header>
+      <div className="role-palette">
+        {paletteRoles.map((role) => {
+          const selected = doc.script.includes(role);
+          const locked = selected && protectedRoles.has(role);
+          return (
+            <button
+              key={role}
+              type="button"
+              className={`role-stamp${selected ? " selected" : ""}`}
+              onClick={() => toggleRole(role)}
+              disabled={locked}
+              title={locked ? "Used by a claim or fixed role" : role}
+            >
+              <span aria-hidden="true">{roleEmoji(role) ?? "?"}</span>
+              <small>{role}</small>
+            </button>
+          );
+        })}
       </div>
     </section>
+  );
+}
+
+function HiddenRolesTray({ roles }: { roles: readonly string[] }) {
+  const hiddenRoles = roles.filter((role) => {
+    const characterType = ROLE_CLASSES.get(role)?.characterType;
+    return (
+      characterType === CharacterType.Outsider ||
+      characterType === CharacterType.Minion ||
+      characterType === CharacterType.Demon
+    );
+  });
+
+  return (
+    <section className="panel hidden-role-tray">
+      <header className="panel-heading-row">
+        <div>
+          <h3>Potential hidden roles</h3>
+          <span>{hiddenRoles.length} roles</span>
+        </div>
+      </header>
+      <div className="hidden-role-slots">
+        {hiddenRoles.map((role) => (
+          <div key={role} className="hidden-role-token">
+            <span aria-hidden="true">{roleEmoji(role) ?? "?"}</span>
+            <small>{role}</small>
+          </div>
+        ))}
+        {Array.from({ length: Math.max(0, 5 - hiddenRoles.length) }, (_, index) => (
+          <div key={`empty-${index}`} className="hidden-role-token empty" aria-label="Empty hidden-role slot">
+            +
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RuleToken({ label, count, tone = "good" }: { label: string; count: number; tone?: "good" | "evil" }) {
+  return (
+    <div className={`rule-token ${tone}`}>
+      <strong>{count}</strong>
+      <span>{label}</span>
+    </div>
   );
 }
 
@@ -150,4 +381,98 @@ function seatPosition(index: number, count: number): CSSProperties {
     left: `${50 + Math.cos(radians) * radius}%`,
     top: `${50 + Math.sin(radians) * radius}%`,
   };
+}
+
+function calloutPosition(index: number, count: number): CSSProperties {
+  if (count === 0) return {};
+  const angle = -90 + (index * 360) / count;
+  const radians = (angle * Math.PI) / 180;
+  const radius = 49;
+  return {
+    left: `${50 + Math.cos(radians) * radius}%`,
+    top: `${50 + Math.sin(radians) * radius}%`,
+  };
+}
+
+function claimSummary(claim: Claim): string {
+  switch (claim.type) {
+    case "Chef":
+      return `${claim.count} adjacent evil pair${claim.count === 1 ? "" : "s"}`;
+    case "Empath":
+      return `${claim.player ? `${claim.player}: ` : ""}${claim.count} evil neighbor${claim.count === 1 ? "" : "s"}`;
+    case "Investigator": {
+      const role = claim.role ?? claim.minionRole ?? "a Minion";
+      return `${formatList(claim.among)} could be ${role}`;
+    }
+    case "Librarian":
+      return claim.outsiderCount !== undefined
+        ? `${claim.outsiderCount} Outsider${claim.outsiderCount === 1 ? "" : "s"}`
+        : `${formatList(claim.among ?? [])} could be ${claim.role || "an Outsider"}`;
+    case "Washerwoman":
+      return `${formatList(claim.among)} could be ${claim.role || "a Townsfolk"}`;
+    case "FortuneTeller": {
+      const check = claim.checks[0];
+      if (check === undefined) return "I checked nobody yet";
+      return `${check.left} + ${check.right}: ${check.yes ? "yes" : "no"}`;
+    }
+    case "Undertaker":
+      return `${claim.player || "Executed player"} was ${claim.role || "unknown"}`;
+    case "Noble":
+      return `${formatList(claim.oneEvilAmong ?? claim.among ?? [])}: ${claim.evilCount ?? 1} evil`;
+    case "Steward":
+      return `${claim.goodPlayer || "Someone"} is good`;
+    case "Knight":
+      return `${formatList(claim.noDemonAmong)} not Demon`;
+    case "Seamstress":
+      return `${formatList(claim.among)} are ${claim.aligned ? "same" : "different"}`;
+    case "Juggler":
+      return `${Object.keys(claim.guesses).length} guesses, ${claim.correctCount ?? "?"} correct`;
+    case "Dreamer":
+      return `${claim.player || "Player"} is ${formatList(claim.roles)}`;
+    case "Shugenja":
+      return `Evil is ${claim.evilDirection}`;
+    case "Clockmaker":
+      return claim.demonNextToMinion ? "Demon next to Minion" : "Demon not next to Minion";
+    case "VillageIdiot": {
+      const check = claim.checks[0];
+      if (check === undefined) return "No checks yet";
+      return `${check.player}: ${check.good ? "good" : "evil"}`;
+    }
+    case "Balloonist":
+      return `${claim.differentCharacterTypePairs.length} different-type pair${claim.differentCharacterTypePairs.length === 1 ? "" : "s"}`;
+    case "Savant":
+      return `${claim.statements[0]?.options.length ?? 0} Savant statements`;
+    default:
+      return `I am the ${claim.type}`;
+  }
+}
+
+function formatList(values: readonly string[]): string {
+  const visible = values.filter(Boolean);
+  if (visible.length === 0) return "Someone";
+  if (visible.length === 1) return visible[0] as string;
+  if (visible.length === 2) return `${visible[0]} or ${visible[1]}`;
+  return `${visible.slice(0, -1).join(", ")}, or ${visible[visible.length - 1]}`;
+}
+
+function countScriptRoles(script: readonly string[]): Record<CharacterType, number> {
+  const counts: Record<CharacterType, number> = {
+    [CharacterType.Townsfolk]: 0,
+    [CharacterType.Outsider]: 0,
+    [CharacterType.Minion]: 0,
+    [CharacterType.Demon]: 0,
+  };
+  for (const role of script) {
+    const characterType = ROLE_CLASSES.get(role)?.characterType;
+    if (characterType !== undefined) counts[characterType] += 1;
+  }
+  return counts;
+}
+
+function uniqueRoleList(roles: readonly string[]): string[] {
+  const result: string[] = [];
+  for (const role of roles) {
+    if (ROLE_CLASSES.has(role) && !result.includes(role)) result.push(role);
+  }
+  return result;
 }

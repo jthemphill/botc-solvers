@@ -1,4 +1,4 @@
-import { roleEmojiLabel } from "../model/roleEmoji";
+import { roleEmoji, roleEmojiLabel } from "../model/roleEmoji";
 import type { SerializableWorld } from "../worker/protocol";
 
 interface Props {
@@ -10,55 +10,51 @@ interface Props {
 export function ResultsView({ worlds, players, error }: Props) {
   if (error)
     return (
-      <section className="panel">
-        <h3>Results</h3>
+      <div className="results-view">
         <pre className="error" style={{ whiteSpace: "pre-wrap" }}>
           {error}
         </pre>
-      </section>
+      </div>
     );
   if (worlds === undefined)
     return (
-      <section className="panel">
-        <h3>Results</h3>
+      <div className="results-view empty-results">
         <p>Press Solve to compute satisfying worlds.</p>
-      </section>
+      </div>
     );
   return (
-    <section className="panel">
-      <h3>Results — {worlds.length} satisfying world(s)</h3>
+    <div className="results-view">
+      <div className="results-count">
+        Satisfying worlds: <strong>{worlds.length}</strong>
+      </div>
       {worlds.length === 0 && <p>No worlds — the constraints are unsatisfiable.</p>}
       {worlds.map((w, i) => (
-        <div key={i}>
-          <div className="world-header">World {i + 1}</div>
-          <table className="results">
-            <thead>
-              <tr>
-                <th>Player</th>
-                <th>Actual</th>
-                <th>Apparent</th>
-                <th>Poisoned</th>
-                <th>Drunk</th>
-              </tr>
-            </thead>
-            <tbody>
-              {players.map((player) => {
-                const actual = w.actual.find(([p]) => p === player)?.[1];
-                const apparent = w.apparent.find(([p]) => p === player)?.[1];
-                return (
-                  <tr key={player}>
-                    <td>{player}</td>
-                    <td>{roleEmojiLabel(actual)}</td>
-                    <td>{apparent && apparent !== actual ? roleEmojiLabel(apparent) : ""}</td>
-                    <td>{w.poisoned.includes(player) ? "✓" : ""}</td>
-                    <td>{w.drunk.includes(player) ? "✓" : ""}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <article key={i} className="solution-card">
+          <header>
+            <strong>Solution {i + 1}</strong>
+            <span>100%</span>
+          </header>
+          <div className="solution-strip">
+            {players.map((player) => {
+              const actual = w.actual.find(([p]) => p === player)?.[1];
+              const apparent = w.apparent.find(([p]) => p === player)?.[1];
+              return (
+                <div key={player} className="solution-token" title={roleEmojiLabel(actual)}>
+                  <span className="solution-role" aria-hidden="true">
+                    {roleEmoji(actual) ?? "?"}
+                  </span>
+                  <strong>{player}</strong>
+                  <small>{apparent && apparent !== actual ? roleEmojiLabel(apparent) : roleEmojiLabel(actual)}</small>
+                  <span className="solution-flags">
+                    {w.poisoned.includes(player) && <span>Poisoned</span>}
+                    {w.drunk.includes(player) && <span>Drunk</span>}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </article>
       ))}
-    </section>
+    </div>
   );
 }
