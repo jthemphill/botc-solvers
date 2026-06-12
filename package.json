@@ -6,7 +6,10 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "bun test",
+    "test": "bun run test:unit && bun run test:e2e",
+    "test:unit": "bun test src",
+    "test:e2e": "playwright test",
+    "playwright:install": "playwright install chromium",
     "typecheck": "bunx tsc --build tsconfig.json --pretty false",
     "dev": "vite",
     "build": "vite build",
@@ -56,6 +59,7 @@
     "puzzle:40": "bun run src/model/puzzles/puzzle-40-nine-lives.ts"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/bun": "^1.2.15",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",

@@ -9,6 +9,7 @@ export type PuzzleAction =
   | { type: "removePlayer"; index: number }
   | { type: "renamePlayer"; index: number; name: string }
   | { type: "movePlayer"; index: number; direction: "up" | "down" }
+  | { type: "movePlayerTo"; fromIndex: number; toIndex: number }
   | { type: "setScript"; script: readonly string[] }
   | { type: "setFixedRoles"; fixedRoles: PuzzleDoc["fixedRoles"] }
   | { type: "addClaim"; claim: Claim }
@@ -206,6 +207,24 @@ export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
       const tmp = players[action.index] as string;
       players[action.index] = players[j] as string;
       players[j] = tmp;
+      return { ...state, players };
+    }
+    case "movePlayerTo": {
+      const fromIndex = Math.floor(action.fromIndex);
+      const toIndex = Math.floor(action.toIndex);
+      if (
+        fromIndex === toIndex ||
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= state.players.length ||
+        toIndex >= state.players.length
+      ) {
+        return state;
+      }
+      const players = [...state.players];
+      const [player] = players.splice(fromIndex, 1);
+      if (player === undefined) return state;
+      players.splice(toIndex, 0, player);
       return { ...state, players };
     }
     case "setScript": {

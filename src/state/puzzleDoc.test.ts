@@ -71,6 +71,20 @@ describe("puzzle document reducer", () => {
     expect(next.claims).toEqual([{ type: "Investigator", name: "A", among: ["B"] }]);
   });
 
+  test("movePlayerTo reorders players without changing claims", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B", "C", "D"],
+      script: ["Investigator"],
+      claims: [{ type: "Investigator", name: "A", among: ["B", "C"] }],
+    };
+
+    const next = reducer(doc, { type: "movePlayerTo", fromIndex: 0, toIndex: 2 });
+
+    expect(next.players).toEqual(["B", "C", "A", "D"]);
+    expect(next.claims).toEqual(doc.claims);
+  });
+
   test("Knight claims are capped at two no-demon players", () => {
     const doc: PuzzleDoc = {
       version: 1,
