@@ -16,6 +16,7 @@ const ROLE_CLASS_LIST: readonly RoleClass[] = [
   characters.Courtier,
   characters.Dreamer,
   characters.Drunk,
+  characters.Damsel,
   characters.Empath,
   characters.EvilTwin,
   characters.FortuneTeller,

@@ -6,6 +6,7 @@ import type { Claim, PuzzleDoc } from "../schema/puzzleDoc";
 export const ALL_ROLE_NAMES = [...ROLE_CLASSES.keys()].sort((left, right) => left.localeCompare(right));
 
 const ROLE_BY_NORMALIZED_NAME = new Map(ALL_ROLE_NAMES.map((role) => [normalizeRoleName(role), role] as const));
+const SPECIAL_HIDDEN_SCRIPT_ROLES = new Set<string>(["Damsel", "Drunk", "Mutant"]);
 
 export function normalizeRoleName(role: string): string {
   return role.toLowerCase().replace(/[^a-z0-9]+/g, "");
@@ -21,6 +22,15 @@ export function protectedScriptRoles(doc: PuzzleDoc): string[] {
     ...doc.claims.flatMap(claimScriptRoles),
     ...(doc.fixedRoles ?? []).flatMap((fixedRole) => fixedRole.roles),
   ]);
+}
+
+export function hiddenScriptRoleOptions(): string[] {
+  return ALL_ROLE_NAMES.filter(isHiddenScriptRole);
+}
+
+export function isHiddenScriptRole(role: string): boolean {
+  const cls = ROLE_CLASSES.get(role);
+  return cls?.alignment === Alignment.Evil || SPECIAL_HIDDEN_SCRIPT_ROLES.has(role);
 }
 
 export function scriptWithProtectedRoles(script: readonly string[], doc: PuzzleDoc): string[] {

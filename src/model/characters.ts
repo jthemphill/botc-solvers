@@ -400,6 +400,11 @@ export class Butler extends Role {
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Outsider;
 }
+export class Damsel extends Role {
+  static readonly roleName = "Damsel";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
 export class Mutant extends Role {
   static readonly roleName = "Mutant";
   static readonly alignment = Alignment.Good;

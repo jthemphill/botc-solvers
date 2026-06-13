@@ -1,8 +1,19 @@
 import { describe, expect, test } from "bun:test";
 import type { PuzzleDoc } from "../schema/puzzleDoc";
-import { jugglerGuessRoleOptions } from "./scriptRoles";
+import { hiddenScriptRoleOptions, jugglerGuessRoleOptions } from "./scriptRoles";
 
 describe("script role helpers", () => {
+  test("lists evil and special good hidden roles for the script palette", () => {
+    const options = hiddenScriptRoleOptions();
+
+    expect(options).toContain("Imp");
+    expect(options).toContain("Poisoner");
+    expect(options).toContain("Damsel");
+    expect(options).toContain("Drunk");
+    expect(options).toContain("Mutant");
+    expect(options).not.toContain("Chef");
+  });
+
   test("orders juggler guesses by claimed role, hidden roles, then remaining script roles", () => {
     const doc: PuzzleDoc = {
       version: 1,
