@@ -92,7 +92,6 @@ function validateClaim(input: unknown, path: string): Claim {
         minionRole: input["minionRole"] as string | undefined,
         role: input["role"] as string | undefined,
         among: expectStringArray(input["among"], `${path}.among`),
-        registers: input["registers"] as boolean | undefined,
       };
     case "Librarian":
       return {

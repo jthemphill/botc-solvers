@@ -87,7 +87,6 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
         minionRole: claim.minionRole ? resolveRoleRef(claim.minionRole) : undefined,
         role: claim.role ? resolveRoleRef(claim.role) : undefined,
         among: claim.among,
-        registers: claim.registers,
       });
     case "Librarian":
       return new Librarian({

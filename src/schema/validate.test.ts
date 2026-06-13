@@ -55,4 +55,15 @@ describe("validatePuzzleDoc", () => {
       }),
     ).toThrow("Knight 'noDemonAmong' must have at most 2 players");
   });
+
+  test("drops legacy Investigator registration overrides", () => {
+    const doc = validatePuzzleDoc({
+      ...baseDoc,
+      players: ["You", "A"],
+      script: ["Investigator"],
+      claims: [{ type: "Investigator", name: "You", among: ["A"], registers: false }],
+    });
+
+    expect(doc.claims[0]).toEqual({ type: "Investigator", name: "You", among: ["A"] });
+  });
 });
