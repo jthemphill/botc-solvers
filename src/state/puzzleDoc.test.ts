@@ -100,4 +100,24 @@ describe("puzzle document reducer", () => {
 
     expect(next.claims).toEqual([{ type: "Knight", name: "A", noDemonAmong: ["A", "B"] }]);
   });
+
+  test("Investigator claims discard legacy registration overrides", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B"],
+      script: ["Investigator"],
+      claims: [
+        { type: "Investigator", name: "A", among: ["B"], registers: false } as unknown as PuzzleDoc["claims"][number],
+      ],
+    };
+
+    const loaded = reducer(doc, { type: "load", doc });
+    const added = reducer(
+      { ...doc, claims: [] },
+      { type: "addClaim", claim: doc.claims[0] as PuzzleDoc["claims"][number] },
+    );
+
+    expect(loaded.claims).toEqual([{ type: "Investigator", name: "A", among: ["B"] }]);
+    expect(added.claims).toEqual([{ type: "Investigator", name: "A", among: ["B"] }]);
+  });
 });

@@ -321,12 +321,6 @@ function InvestigatorBody({
       <RoleSelect script={doc.script} value={claim.role} onChange={(v) => onChange({ ...claim, role: v })} allowEmpty />
       <span>Among</span>
       <MultiPlayerSelect players={doc.players} value={claim.among} onChange={(v) => onChange({ ...claim, among: v })} />
-      <span>Registers (Spy/Recluse confusion)</span>
-      <input
-        type="checkbox"
-        checked={claim.registers ?? true}
-        onChange={(e) => onChange({ ...claim, registers: e.target.checked })}
-      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} defaultValue="night_2" />
     </div>

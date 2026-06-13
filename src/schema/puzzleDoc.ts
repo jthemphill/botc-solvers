@@ -47,7 +47,6 @@ export interface InvestigatorClaim extends BaseClaim {
   readonly minionRole?: string;
   readonly role?: string;
   readonly among: readonly string[];
-  readonly registers?: boolean;
 }
 
 export interface LibrarianClaim extends BaseClaim {

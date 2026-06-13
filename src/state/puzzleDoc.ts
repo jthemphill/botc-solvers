@@ -134,6 +134,10 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
 }
 
 function normalizeClaim(claim: Claim): Claim {
+  if (claim.type === "Investigator") {
+    const { registers: _registers, ...normalized } = claim as Claim & { readonly registers?: boolean };
+    return normalized;
+  }
   if (claim.type === "Knight" && claim.noDemonAmong.length > KNIGHT_NO_DEMON_AMONG_MAX) {
     return { ...claim, noDemonAmong: claim.noDemonAmong.slice(0, KNIGHT_NO_DEMON_AMONG_MAX) };
   }
