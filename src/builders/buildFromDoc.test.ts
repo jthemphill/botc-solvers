@@ -69,4 +69,36 @@ describe("buildFromDoc", () => {
 
     expect(new Set(worlds.map((world) => world.actualRole("You")))).toEqual(new Set(["Drunk", "Investigator"]));
   });
+
+  test("custom info statements and forbidden roles constrain the model", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Sage", "Imp"],
+        setup: "none",
+        fixedRoles: [{ name: "A", roles: ["Sage"] }],
+        forbiddenRoles: [{ name: "B", roles: ["Sage"] }],
+        claims: [
+          {
+            type: "Sage",
+            name: "A",
+            info: [{ timing: "night_1", expression: "B.role == Imp" }],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("A")).toBe("Sage");
+    expect(worlds[0]?.actualRole("B")).toBe("Imp");
+  });
+
+  test("puzzle-34-the-vortox-conjecture.json parses and solves", async () => {
+    const doc = loadDoc("puzzle-34-the-vortox-conjecture.json");
+    const worlds = await buildFromDoc(doc, backend).solveAll();
+
+    expect(worlds.length).toBeGreaterThan(0);
+  });
 });

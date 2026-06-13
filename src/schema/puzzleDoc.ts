@@ -6,12 +6,18 @@ export interface PuzzleDoc {
   readonly setup?: "standard" | "none";
   readonly uniqueCharacters?: boolean;
   readonly fixedRoles?: readonly FixedRoleConstraint[];
+  readonly forbiddenRoles?: readonly ForbiddenRoleConstraint[];
   readonly claims: readonly Claim[];
 }
 
 export const KNIGHT_NO_DEMON_AMONG_MAX = 2;
 
 export interface FixedRoleConstraint {
+  readonly name: string;
+  readonly roles: readonly string[];
+}
+
+export interface ForbiddenRoleConstraint {
   readonly name: string;
   readonly roles: readonly string[];
 }
@@ -40,6 +46,14 @@ export type Claim =
 interface BaseClaim {
   readonly name: string;
   readonly timing?: string;
+  readonly info?: readonly CustomInfoStatementDoc[];
+}
+
+export interface CustomInfoStatementDoc {
+  readonly timing?: string;
+  readonly text?: string;
+  readonly expression?: string;
+  readonly vortoxAffected?: boolean;
 }
 
 export interface InvestigatorClaim extends BaseClaim {

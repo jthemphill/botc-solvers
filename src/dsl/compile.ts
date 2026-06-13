@@ -1,6 +1,6 @@
 import { CharacterType, type RoleClass } from "../model/core";
 import { Chef } from "../model/characters";
-import type { BoolLike, BoolVar, BOTCModel } from "../model/model";
+import type { BoolLike, BoolVar, BOTCModel, Timing } from "../model/model";
 import type { AstCall, AstNode, AstPath } from "./ast";
 import { DslError, lex } from "./lex";
 import { parse } from "./parse";
@@ -247,7 +247,25 @@ class Compiler {
     if (a.kind === "playerRole" && b.kind === "role") return this.game.actualIs(a.player, b.name);
     if (a.kind === "playerAlignment" && b.kind === "alignment")
       return b.value === "Evil" ? this.game.isEvil(a.player) : this.game.isGood(a.player);
+    if (a.kind === "playerAlignment" && b.kind === "playerAlignment")
+      return this.game.anyOf(
+        [
+          this.game.allOf([this.game.isGood(a.player), this.game.isGood(b.player)], this.freshName("both_good")),
+          this.game.allOf([this.game.isEvil(a.player), this.game.isEvil(b.player)], this.freshName("both_evil")),
+        ],
+        this.freshName("same_alignment"),
+      );
     if (a.kind === "playerType" && b.kind === "type") return this.game.hasCharacterType(a.player, b.value);
+    if (a.kind === "playerType" && b.kind === "playerType")
+      return this.game.anyOf(
+        Object.values(CharacterType).map((type) =>
+          this.game.allOf(
+            [this.game.hasCharacterType(a.player, type), this.game.hasCharacterType(b.player, type)],
+            this.freshName(`both_${type}`),
+          ),
+        ),
+        this.freshName("same_type"),
+      );
     if (a.kind === "player" && b.kind === "player")
       return this.game.constantBool(a.name === b.name, this.freshName("player_eq"));
     if (a.kind === "role" && b.kind === "role")
@@ -268,6 +286,44 @@ class Compiler {
   }
 
   private evalCall(node: AstCall, env: ReadonlyMap<string, DslValue>): DslValue {
+    if (node.name === "role_count") {
+      if (node.args.length < 3 || node.args.length % 2 !== 1)
+        throw new DslError(`role_count() takes (n, player, role, ...)`, node.span);
+      const countArg = node.args[0] as AstCall["args"][number];
+      if (countArg.name !== undefined) throw new DslError(`role_count's first argument is positional`, countArg.span);
+      const countVal = this.evalNode(countArg.value, env);
+      if (countVal.kind !== "number") throw new DslError(`role_count expects a number first`, countArg.span);
+      const literals: BoolLike[] = [];
+      for (let index = 1; index < node.args.length; index += 2) {
+        const playerArg = node.args[index] as AstCall["args"][number];
+        const roleArg = node.args[index + 1] as AstCall["args"][number];
+        if (playerArg.name !== undefined || roleArg.name !== undefined)
+          throw new DslError(`role_count pair arguments are positional`, playerArg.span);
+        const player = this.evalNode(playerArg.value, env);
+        const role = this.evalNode(roleArg.value, env);
+        if (player.kind !== "player") throw new DslError(`role_count expected a player`, player.span);
+        if (role.kind !== "role") throw new DslError(`role_count expected a role`, role.span);
+        literals.push(this.game.actualIs(player.name, role.name));
+      }
+      return {
+        kind: "bool",
+        value: this.game.boolSumEquals(literals, countVal.value, this.freshName(`role_count_${countVal.value}`)),
+        span: node.span,
+      };
+    }
+    if (node.name === "malfunctions") {
+      if (node.args.length !== 2) throw new DslError(`malfunctions() takes (timing, n)`, node.span);
+      const timingArg = node.args[0] as AstCall["args"][number];
+      const countArg = node.args[1] as AstCall["args"][number];
+      const timing = this.expectTimingArg(timingArg);
+      const countVal = this.evalNode(countArg.value, env);
+      if (countVal.kind !== "number") throw new DslError(`malfunctions expects a number second`, countArg.span);
+      return {
+        kind: "bool",
+        value: this.game.malfunctionCountAt(timing, countVal.value, this.freshName(`malfunctions_${timing}`)),
+        span: node.span,
+      };
+    }
     if (node.name === "chef") {
       if (node.args.length === 0 || node.args.length > 2)
         throw new DslError(`chef() takes (n) or (n, registers: bool)`, node.span);
@@ -289,6 +345,14 @@ class Compiler {
       return { kind: "bool", value: bv, span: node.span };
     }
     throw new DslError(`Unknown function '${node.name}'`, node.nameSpan);
+  }
+
+  private expectTimingArg(arg: AstCall["args"][number]): Timing {
+    if (arg.name !== undefined) throw new DslError(`Timing argument is positional`, arg.span);
+    const value = arg.value;
+    if (value.kind !== "path" || value.fields.length > 0) throw new DslError(`Expected timing identifier`, arg.span);
+    if (!/^(night|day)_[1-9][0-9]*$/.test(value.root)) throw new DslError(`Expected timing identifier`, arg.span);
+    return value.root as Timing;
   }
 
   private expectBool(v: DslValue): { kind: "bool"; value: BoolLike; span: Span } {

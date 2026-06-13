@@ -66,4 +66,38 @@ describe("validatePuzzleDoc", () => {
 
     expect(doc.claims[0]).toEqual({ type: "Investigator", name: "You", among: ["A"] });
   });
+
+  test("accepts custom info statements and forbidden roles", () => {
+    const doc = validatePuzzleDoc({
+      ...baseDoc,
+      players: ["You", "A"],
+      script: ["Savant", "Imp"],
+      forbiddenRoles: [{ name: "You", roles: ["Imp"] }],
+      claims: [
+        {
+          type: "Savant",
+          name: "You",
+          info: [
+            {
+              timing: "night_1",
+              text: "A is the Imp",
+              expression: "A.role == Imp",
+              vortoxAffected: true,
+            },
+          ],
+          statements: [{ options: ["true", "false"] }],
+        },
+      ],
+    });
+
+    expect(doc.forbiddenRoles).toEqual([{ name: "You", roles: ["Imp"] }]);
+    expect(doc.claims[0]?.info).toEqual([
+      {
+        timing: "night_1",
+        text: "A is the Imp",
+        expression: "A.role == Imp",
+        vortoxAffected: true,
+      },
+    ]);
+  });
 });

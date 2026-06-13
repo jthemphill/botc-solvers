@@ -20,18 +20,19 @@ describe("puzzle document reducer", () => {
     expect(withClaim.script).toContain("Poisoner");
   });
 
-  test("setScript cannot remove roles referenced by claims or fixed roles", () => {
+  test("setScript cannot remove roles referenced by claims or role constraints", () => {
     const doc: PuzzleDoc = {
       version: 1,
       players: ["A", "B", "C"],
       script: ["Imp", "Juggler", "Savant"],
       fixedRoles: [{ name: "A", roles: ["Savant"] }],
+      forbiddenRoles: [{ name: "C", roles: ["Vortox"] }],
       claims: [{ type: "Juggler", name: "B", guesses: { A: "Imp" } }],
     };
 
     const next = reducer(doc, { type: "setScript", script: ["Drunk"] });
 
-    expect(next.script).toEqual(["Drunk", "Juggler", "Imp", "Savant"]);
+    expect(next.script).toEqual(["Drunk", "Juggler", "Imp", "Savant", "Vortox"]);
   });
 
   test("savant DSL role identifiers protect matching script roles", () => {
@@ -55,12 +56,33 @@ describe("puzzle document reducer", () => {
     expect(loaded.script).toContain("No Dashii");
   });
 
+  test("custom info DSL role identifiers protect matching script roles", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B"],
+      script: [],
+      claims: [
+        {
+          type: "Sage",
+          name: "A",
+          info: [{ timing: "night_1", expression: "B.role == `No Dashii`" }],
+        },
+      ],
+    };
+
+    const loaded = reducer(doc, { type: "load", doc });
+
+    expect(loaded.script).toContain("Sage");
+    expect(loaded.script).toContain("No Dashii");
+  });
+
   test("setPlayerCount removes affected player references", () => {
     const doc: PuzzleDoc = {
       version: 1,
       players: ["A", "B", "C"],
       script: ["Investigator"],
       fixedRoles: [{ name: "C", roles: ["Investigator"] }],
+      forbiddenRoles: [{ name: "C", roles: ["Imp"] }],
       claims: [{ type: "Investigator", name: "A", among: ["B", "C"] }],
     };
 
@@ -68,6 +90,7 @@ describe("puzzle document reducer", () => {
 
     expect(next.players).toEqual(["A", "B"]);
     expect(next.fixedRoles).toEqual([]);
+    expect(next.forbiddenRoles).toEqual([]);
     expect(next.claims).toEqual([{ type: "Investigator", name: "A", among: ["B"] }]);
   });
 

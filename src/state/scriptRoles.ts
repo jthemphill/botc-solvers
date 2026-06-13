@@ -21,6 +21,7 @@ export function protectedScriptRoles(doc: PuzzleDoc): string[] {
   return mergeRoleNames([
     ...doc.claims.flatMap(claimScriptRoles),
     ...(doc.fixedRoles ?? []).flatMap((fixedRole) => fixedRole.roles),
+    ...(doc.forbiddenRoles ?? []).flatMap((forbiddenRole) => forbiddenRole.roles),
   ]);
 }
 
@@ -42,7 +43,10 @@ export function withProtectedScript(doc: PuzzleDoc): PuzzleDoc {
 }
 
 export function claimScriptRoles(claim: Claim): string[] {
-  const roles = [claimTypeRoleName(claim.type)];
+  const roles = [
+    claimTypeRoleName(claim.type),
+    ...(claim.info ?? []).flatMap((info) => extractDslRoleNames(info.expression ?? "")),
+  ];
 
   switch (claim.type) {
     case "Investigator":

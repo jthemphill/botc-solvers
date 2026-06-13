@@ -17,6 +17,7 @@ import {
   Undertaker,
   VillageIdiot,
   Washerwoman,
+  type InfoClaimBuilder,
   type Role,
 } from "../model/characters";
 import type { Timing } from "../model/model";
@@ -31,7 +32,7 @@ function timingOf(t: string | undefined): Timing | undefined {
 
 export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Role {
   const timing = timingOf(claim.timing);
-  const base = { name: claim.name, timing };
+  const base = { name: claim.name, timing, infoClaims: customInfoClaims(claim, ctx) };
 
   switch (claim.type) {
     case "Investigator":
@@ -131,6 +132,24 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
       return new klass({ ...base });
     }
   }
+}
+
+function customInfoClaims(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): InfoClaimBuilder[] {
+  return (claim.info ?? []).flatMap((info, index) => {
+    const expression = info.expression?.trim();
+    if (!expression) return [];
+    return [
+      {
+        timing: timingOf(info.timing),
+        vortoxAffected: info.vortoxAffected,
+        learned: (game) =>
+          compile(expression, game, {
+            ...ctx,
+            nameRoot: `${slug(claim.name)}_custom_info_${index + 1}`,
+          }),
+      },
+    ];
+  });
 }
 
 function slug(value: string): string {

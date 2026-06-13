@@ -49,7 +49,12 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
   const title = input["title"] === undefined ? undefined : expectString(input["title"], "$.title");
   const uniqueCharacters =
     input["uniqueCharacters"] === undefined ? undefined : expectBool(input["uniqueCharacters"], "$.uniqueCharacters");
-  const fixedRoles = input["fixedRoles"] === undefined ? undefined : validateFixedRoles(input["fixedRoles"]);
+  const fixedRoles =
+    input["fixedRoles"] === undefined ? undefined : validateRoleConstraints(input["fixedRoles"], "$.fixedRoles");
+  const forbiddenRoles =
+    input["forbiddenRoles"] === undefined
+      ? undefined
+      : validateRoleConstraints(input["forbiddenRoles"], "$.forbiddenRoles");
 
   return {
     version: 1,
@@ -59,14 +64,15 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
     setup,
     uniqueCharacters,
     fixedRoles,
+    forbiddenRoles,
     claims: validatedClaims,
   };
 }
 
-function validateFixedRoles(v: unknown): PuzzleDoc["fixedRoles"] {
-  if (!Array.isArray(v)) throw new ValidationError(`Expected array`, "$.fixedRoles");
+function validateRoleConstraints(v: unknown, pathRoot: string): PuzzleDoc["fixedRoles"] {
+  if (!Array.isArray(v)) throw new ValidationError(`Expected array`, pathRoot);
   return v.map((entry, i) => {
-    const path = `$.fixedRoles[${i}]`;
+    const path = `${pathRoot}[${i}]`;
     if (!isObject(entry)) throw new ValidationError(`Expected object`, path);
     return {
       name: expectString(entry["name"], `${path}.name`),
@@ -82,7 +88,8 @@ function validateClaim(input: unknown, path: string): Claim {
     throw new ValidationError(`Unsupported claim type '${type}'`, `${path}.type`);
   const name = expectString(input["name"], `${path}.name`);
   const timing = input["timing"] === undefined ? undefined : expectString(input["timing"], `${path}.timing`);
-  const base = { name, timing };
+  const info = input["info"] === undefined ? undefined : validateCustomInfo(input["info"], `${path}.info`);
+  const base = { name, timing, info };
 
   switch (type as Claim["type"]) {
     case "Investigator":
@@ -277,4 +284,22 @@ function validateClaim(input: unknown, path: string): Claim {
     default:
       return { ...base, type: type as Claim["type"] } as Claim;
   }
+}
+
+function validateCustomInfo(input: unknown, path: string): Claim["info"] {
+  if (!Array.isArray(input)) throw new ValidationError(`Expected array`, path);
+  return input.map((entry, index) => {
+    const entryPath = `${path}[${index}]`;
+    if (!isObject(entry)) throw new ValidationError(`Expected object`, entryPath);
+    return {
+      timing: entry["timing"] === undefined ? undefined : expectString(entry["timing"], `${entryPath}.timing`),
+      text: entry["text"] === undefined ? undefined : expectString(entry["text"], `${entryPath}.text`),
+      expression:
+        entry["expression"] === undefined ? undefined : expectString(entry["expression"], `${entryPath}.expression`),
+      vortoxAffected:
+        entry["vortoxAffected"] === undefined
+          ? undefined
+          : expectBool(entry["vortoxAffected"], `${entryPath}.vortoxAffected`),
+    };
+  });
 }

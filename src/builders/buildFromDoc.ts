@@ -19,10 +19,23 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
       game.setPossibleActualRoles(fixedRole.name, fixedRole.roles.map(resolveRoleRef));
     }
   }
+  for (const forbiddenRole of doc.forbiddenRoles ?? []) {
+    if (forbiddenRole.name) {
+      for (const role of forbiddenRole.roles) game.fixNotActual(forbiddenRole.name, resolveRoleRef(role));
+    }
+  }
   const ctx = { players: doc.players, script: doc.script };
-  applyClaims(
-    game,
-    doc.claims.map((c) => buildClaim(c, ctx)),
-  );
+  const ordinaryClaims = doc.claims
+    .filter((claim) => !usesMalfunctionCount(claim))
+    .map((claim) => buildClaim(claim, ctx));
+  const malfunctionCountClaims = doc.claims
+    .filter((claim) => usesMalfunctionCount(claim))
+    .map((claim) => buildClaim(claim, ctx));
+  applyClaims(game, ordinaryClaims);
+  applyClaims(game, malfunctionCountClaims);
   return game;
+}
+
+function usesMalfunctionCount(claim: PuzzleDoc["claims"][number]): boolean {
+  return claim.info?.some((info) => info.expression?.includes("malfunctions(")) ?? false;
 }

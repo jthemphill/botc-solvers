@@ -1,5 +1,5 @@
 import type { Dispatch } from "react";
-import type { FixedRoleConstraint, PuzzleDoc } from "../schema/puzzleDoc";
+import type { FixedRoleConstraint, ForbiddenRoleConstraint, PuzzleDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
 
 interface Props {
@@ -9,27 +9,70 @@ interface Props {
 
 export function FixedRolesEditor({ doc, dispatch }: Props) {
   const fixedRoles = doc.fixedRoles ?? [];
+  const forbiddenRoles = doc.forbiddenRoles ?? [];
 
   const setFixedRoles = (next: readonly FixedRoleConstraint[]) => {
     dispatch({ type: "setFixedRoles", fixedRoles: next.length === 0 ? undefined : next });
   };
 
+  const setForbiddenRoles = (next: readonly ForbiddenRoleConstraint[]) => {
+    dispatch({ type: "setForbiddenRoles", forbiddenRoles: next.length === 0 ? undefined : next });
+  };
+
+  return (
+    <section className="panel">
+      <h3>Role constraints (optional)</h3>
+      <RoleConstraintList
+        doc={doc}
+        constraints={fixedRoles}
+        roleLabel="Possible roles"
+        addLabel="+ Add fixed role"
+        emptyRole={doc.script[0] === undefined ? [] : [doc.script[0]]}
+        setConstraints={setFixedRoles}
+      />
+      <RoleConstraintList
+        doc={doc}
+        constraints={forbiddenRoles}
+        roleLabel="Excluded roles"
+        addLabel="+ Add excluded role"
+        emptyRole={[]}
+        setConstraints={setForbiddenRoles}
+      />
+    </section>
+  );
+}
+
+function RoleConstraintList<T extends FixedRoleConstraint | ForbiddenRoleConstraint>({
+  doc,
+  constraints,
+  roleLabel,
+  addLabel,
+  emptyRole,
+  setConstraints,
+}: {
+  doc: PuzzleDoc;
+  constraints: readonly T[];
+  roleLabel: string;
+  addLabel: string;
+  emptyRole: readonly string[];
+  setConstraints: (next: readonly T[]) => void;
+}) {
   const updateFixedRole = (index: number, fixedRole: FixedRoleConstraint) => {
-    setFixedRoles(fixedRoles.map((existing, i) => (i === index ? fixedRole : existing)));
+    setConstraints(constraints.map((existing, i) => (i === index ? (fixedRole as T) : existing)));
   };
 
   const addFixedRole = () => {
-    setFixedRoles([
-      ...fixedRoles,
+    setConstraints([
+      ...constraints,
       {
         name: doc.players[0] ?? "",
-        roles: doc.script[0] === undefined ? [] : [doc.script[0]],
-      },
+        roles: emptyRole,
+      } as T,
     ]);
   };
 
   const removeFixedRole = (index: number) => {
-    setFixedRoles(fixedRoles.filter((_, i) => i !== index));
+    setConstraints(constraints.filter((_, i) => i !== index));
   };
 
   const toggleRole = (fixedRole: FixedRoleConstraint, role: string, checked: boolean): FixedRoleConstraint => ({
@@ -38,14 +81,15 @@ export function FixedRolesEditor({ doc, dispatch }: Props) {
   });
 
   return (
-    <section className="panel">
-      <h3>Fixed roles (optional)</h3>
-      {fixedRoles.map((fixedRole, index) => {
+    <>
+      {constraints.map((fixedRole, index) => {
         const selected = new Set(fixedRole.roles);
         return (
-          <div key={index} className="claim-block">
+          <div key={`${roleLabel}-${index}`} className="claim-block">
             <header>
-              <strong>Constraint {index + 1}</strong>
+              <strong>
+                {roleLabel} constraint {index + 1}
+              </strong>
               <button onClick={() => removeFixedRole(index)}>Remove</button>
             </header>
             <div className="field-grid">
@@ -61,7 +105,7 @@ export function FixedRolesEditor({ doc, dispatch }: Props) {
                   </option>
                 ))}
               </select>
-              <span>Possible roles</span>
+              <span>{roleLabel}</span>
               <div className="script-grid">
                 {doc.script.map((role) => (
                   <label key={role}>
@@ -79,8 +123,8 @@ export function FixedRolesEditor({ doc, dispatch }: Props) {
         );
       })}
       <button onClick={addFixedRole} disabled={doc.players.length === 0 || doc.script.length === 0}>
-        + Add fixed role
+        {addLabel}
       </button>
-    </section>
+    </>
   );
 }

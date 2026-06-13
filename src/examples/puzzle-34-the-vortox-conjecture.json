@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "title": "Puzzle 34 - The Vortox Conjecture",
+  "players": ["Sula", "Sarah", "Josh", "Aoife", "You", "Fraser", "Steph"],
+  "script": [
+    "No Dashii",
+    "Vortox",
+    "Witch",
+    "Artist",
+    "Clockmaker",
+    "Juggler",
+    "Mathematician",
+    "Sage",
+    "Seamstress",
+    "Snake Charmer"
+  ],
+  "fixedRoles": [{ "name": "You", "roles": ["Mathematician"] }],
+  "forbiddenRoles": [
+    { "name": "Steph", "roles": ["No Dashii", "Vortox"] },
+    { "name": "Aoife", "roles": ["No Dashii", "Vortox"] },
+    { "name": "Fraser", "roles": ["No Dashii", "Vortox"] },
+    { "name": "You", "roles": ["No Dashii", "Vortox"] }
+  ],
+  "claims": [
+    {
+      "type": "Clockmaker",
+      "name": "Sula",
+      "info": [
+        {
+          "timing": "night_1",
+          "text": "Demon is 3 steps from the Witch",
+          "expression": "some d: players | d.type == Demon && (d.left.left.left.role == Witch || d.right.right.right.role == Witch)",
+          "vortoxAffected": true
+        }
+      ]
+    },
+    {
+      "type": "Seamstress",
+      "name": "Sarah",
+      "timing": "night_1",
+      "among": ["Steph", "Aoife"],
+      "info": [
+        {
+          "timing": "night_1",
+          "text": "Steph and Aoife are the same alignment",
+          "expression": "Steph.alignment == Aoife.alignment",
+          "vortoxAffected": true
+        }
+      ]
+    },
+    {
+      "type": "Juggler",
+      "name": "Josh",
+      "timing": "night_2",
+      "guesses": { "Steph": "Artist", "Sula": "Clockmaker" },
+      "info": [
+        {
+          "timing": "night_2",
+          "text": "0 correct: Steph as Artist, Sula as Clockmaker",
+          "expression": "role_count(0, Steph, Artist, Sula, Clockmaker)",
+          "vortoxAffected": true
+        }
+      ]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Aoife",
+      "info": [
+        {
+          "timing": "night_1",
+          "text": "Josh is not the Demon",
+          "expression": "Josh.type != Demon"
+        }
+      ]
+    },
+    {
+      "type": "Mathematician",
+      "name": "You",
+      "info": [
+        {
+          "timing": "night_1",
+          "text": "1 ability malfunctioned",
+          "expression": "malfunctions(night_1, 1)",
+          "vortoxAffected": true
+        },
+        {
+          "timing": "night_2",
+          "text": "0 abilities malfunctioned",
+          "expression": "malfunctions(night_2, 0)",
+          "vortoxAffected": true
+        }
+      ]
+    },
+    {
+      "type": "Sage",
+      "name": "Fraser",
+      "timing": "night_2",
+      "info": [
+        {
+          "timing": "night_2",
+          "text": "Sarah or Josh is the Demon",
+          "expression": "Sarah.type == Demon || Josh.type == Demon",
+          "vortoxAffected": true
+        }
+      ]
+    },
+    {
+      "type": "Artist",
+      "name": "Steph",
+      "timing": "day_1",
+      "info": [
+        {
+          "timing": "night_2",
+          "text": "Aoife is the No Dashii",
+          "expression": "Aoife.role == `No Dashii`",
+          "vortoxAffected": true
+        }
+      ]
+    }
+  ]
+}

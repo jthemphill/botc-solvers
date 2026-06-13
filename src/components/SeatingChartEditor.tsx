@@ -333,14 +333,20 @@ function calloutPosition(index: number, count: number): CSSProperties {
   if (count === 0) return {};
   const angle = -90 + (index * 360) / count;
   const radians = (angle * Math.PI) / 180;
-  const radius = 49;
+  const radiusX = 50;
+  const radiusY = 50;
   return {
-    left: `${50 + Math.cos(radians) * radius}%`,
-    top: `${50 + Math.sin(radians) * radius}%`,
+    left: `${50 + Math.cos(radians) * radiusX}%`,
+    top: `${50 + Math.sin(radians) * radiusY}%`,
   };
 }
 
 function claimSummary(claim: Claim): string {
+  const customInfo = (claim.info ?? [])
+    .map((info) => info.text?.trim() || info.expression?.trim())
+    .filter((text): text is string => Boolean(text));
+  if (customInfo.length > 0) return customInfo.join("; ");
+
   switch (claim.type) {
     case "Chef":
       return `${claim.count} adjacent evil pair${claim.count === 1 ? "" : "s"}`;

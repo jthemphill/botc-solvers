@@ -18,4 +18,14 @@ describe("puzzle catalog", () => {
     expect(ids.has("puzzle-30-the-babel-fish-is-a-dead-giveaway-left")).toBe(true);
     expect(ids.has("puzzle-30-the-babel-fish-is-a-dead-giveaway-right")).toBe(true);
   });
+
+  test("uses hand-authored custom info for puzzle 34", () => {
+    const puzzle34 = PUZZLE_EXAMPLES.find((example) => example.id === "puzzle-34-the-vortox-conjecture");
+    const doc = validatePuzzleDoc(puzzle34?.data);
+
+    expect(doc.claims.flatMap((claim) => claim.info ?? []).map((info) => info.text)).toContain(
+      "Demon is 3 steps from the Witch",
+    );
+    expect(doc.forbiddenRoles).toContainEqual({ name: "Steph", roles: ["No Dashii", "Vortox"] });
+  });
 });

@@ -247,13 +247,18 @@ summary {
   text-align: center;
 }
 
+.puzzle-title-editor label {
+  width: min(100%, 46rem);
+}
+
 .puzzle-number {
   font-weight: 750;
   color: var(--muted-ink);
 }
 
 .title-input {
-  width: min(100%, 34rem);
+  box-sizing: border-box;
+  width: 100%;
   border: 0;
   border-bottom: 3px solid var(--paper-line);
   border-radius: 0;
@@ -261,7 +266,7 @@ summary {
   padding: 0 0.6rem 0.18rem;
   text-align: center;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-size: 2.75rem;
   font-weight: 800;
   line-height: 1.05;
 }
@@ -371,7 +376,7 @@ summary {
 
 .claim-callout {
   position: absolute;
-  z-index: 2;
+  z-index: 4;
   width: clamp(7.8rem, 11vw, 10rem);
   min-height: 3.25rem;
   transform: translate(-50%, -50%);
