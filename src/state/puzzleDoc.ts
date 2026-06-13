@@ -55,13 +55,13 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
     case "Empath":
       return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
     case "Undertaker":
-      return { ...claim, name, player: remap(claim.player) };
+      return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
     case "Dreamer":
-      return { ...claim, name, player: remap(claim.player) };
+      return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
     case "Steward":
-      return { ...claim, name, goodPlayer: remap(claim.goodPlayer) };
+      return { ...claim, name, goodPlayer: claim.goodPlayer ? remap(claim.goodPlayer) : claim.goodPlayer };
     case "Seamstress":
-      return { ...claim, name, among: [remap(claim.among[0]), remap(claim.among[1])] };
+      return { ...claim, name, among: claim.among.map(remap) };
     case "Juggler": {
       const guesses: Record<string, string> = {};
       for (const [p, r] of Object.entries(claim.guesses)) guesses[remap(p)] = r;
@@ -108,21 +108,21 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
     case "Empath":
       return { ...claim, player: claim.player === name ? undefined : claim.player };
     case "Steward":
-      return claim.goodPlayer === name ? { ...claim, goodPlayer: "" } : claim;
+      return claim.goodPlayer === name ? { ...claim, goodPlayer: undefined } : claim;
     case "Juggler": {
       const guesses: Record<string, string> = {};
       for (const [p, r] of Object.entries(claim.guesses)) if (p !== name) guesses[p] = r;
       return { ...claim, guesses };
     }
     case "Seamstress":
-      return claim.among.includes(name) ? { ...claim, among: ["", ""] as const } : claim;
+      return claim.among.includes(name) ? { ...claim, among: [] } : claim;
     case "FortuneTeller":
       return { ...claim, checks: claim.checks.filter((c) => c.left !== name && c.right !== name) };
     case "VillageIdiot":
       return { ...claim, checks: claim.checks.filter((c) => c.player !== name) };
     case "Dreamer":
     case "Undertaker":
-      return claim.player === name ? { ...claim, player: "" } : claim;
+      return claim.player === name ? { ...claim, player: undefined } : claim;
     case "Balloonist":
       return {
         ...claim,

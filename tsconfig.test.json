@@ -4,7 +4,9 @@
     "composite": true,
     "lib": ["ES2022"],
     "types": ["bun-types"],
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "vendor/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.json", "tests/**/*.ts", "vendor/**/*.ts"]
 }

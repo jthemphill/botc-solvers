@@ -378,7 +378,12 @@ function WasherwomanBody({
   return (
     <div className="field-grid">
       <span>Role</span>
-      <RoleSelect script={doc.script} value={claim.role} onChange={(v) => onChange({ ...claim, role: v })} />
+      <RoleSelect
+        script={doc.script}
+        value={claim.role}
+        onChange={(v) => onChange({ ...claim, role: v || undefined })}
+        allowEmpty
+      />
       <span>Among</span>
       <MultiPlayerSelect players={doc.players} value={claim.among} onChange={(v) => onChange({ ...claim, among: v })} />
       <span>Registers</span>
@@ -399,8 +404,8 @@ function ChefBody({ claim, onChange }: { claim: ChefClaim; onChange: (c: Claim) 
       <span>Count</span>
       <input
         type="number"
-        value={claim.count}
-        onChange={(e) => onChange({ ...claim, count: Number(e.target.value) })}
+        value={claim.count ?? ""}
+        onChange={(e) => onChange({ ...claim, count: e.target.value === "" ? undefined : Number(e.target.value) })}
       />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
@@ -414,8 +419,8 @@ function EmpathBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: EmpathCla
       <span>Count</span>
       <input
         type="number"
-        value={claim.count}
-        onChange={(e) => onChange({ ...claim, count: Number(e.target.value) })}
+        value={claim.count ?? ""}
+        onChange={(e) => onChange({ ...claim, count: e.target.value === "" ? undefined : Number(e.target.value) })}
       />
       <span>Player (override)</span>
       <PlayerSelect
@@ -502,9 +507,18 @@ function UndertakerBody({
   return (
     <div className="field-grid">
       <span>Executed player</span>
-      <PlayerSelect players={doc.players} value={claim.player} onChange={(v) => onChange({ ...claim, player: v })} />
+      <PlayerSelect
+        players={doc.players}
+        value={claim.player}
+        onChange={(v) => onChange({ ...claim, player: v || undefined })}
+      />
       <span>Role learned</span>
-      <RoleSelect script={doc.script} value={claim.role} onChange={(v) => onChange({ ...claim, role: v })} />
+      <RoleSelect
+        script={doc.script}
+        value={claim.role}
+        onChange={(v) => onChange({ ...claim, role: v || undefined })}
+        allowEmpty
+      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} defaultValue="night_2" />
     </div>
@@ -531,7 +545,7 @@ function StewardBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: StewardC
       <PlayerSelect
         players={doc.players}
         value={claim.goodPlayer}
-        onChange={(v) => onChange({ ...claim, goodPlayer: v })}
+        onChange={(v) => onChange({ ...claim, goodPlayer: v || undefined })}
       />
     </div>
   );
@@ -566,18 +580,18 @@ function SeamstressBody({
       <PlayerSelect
         players={doc.players}
         value={claim.among[0]}
-        onChange={(v) => onChange({ ...claim, among: [v, claim.among[1]] as const })}
+        onChange={(v) => onChange({ ...claim, among: [v, claim.among[1] ?? ""] })}
       />
       <span>Right</span>
       <PlayerSelect
         players={doc.players}
         value={claim.among[1]}
-        onChange={(v) => onChange({ ...claim, among: [claim.among[0], v] as const })}
+        onChange={(v) => onChange({ ...claim, among: [claim.among[0] ?? "", v] })}
       />
       <span>Same alignment</span>
       <input
         type="checkbox"
-        checked={claim.aligned}
+        checked={claim.aligned ?? true}
         onChange={(e) => onChange({ ...claim, aligned: e.target.checked })}
       />
       <span>Timing</span>
@@ -657,7 +671,7 @@ function ShugenjaBody({ claim, onChange }: { claim: ShugenjaClaim; onChange: (c:
     <div className="field-grid">
       <span>Evil direction</span>
       <select
-        value={claim.evilDirection}
+        value={claim.evilDirection ?? "clockwise"}
         onChange={(e) => onChange({ ...claim, evilDirection: e.target.value as ShugenjaClaim["evilDirection"] })}
       >
         <option value="clockwise">clockwise</option>
@@ -675,7 +689,7 @@ function ClockmakerBody({ claim, onChange }: { claim: ClockmakerClaim; onChange:
       <span>Demon next to minion</span>
       <input
         type="checkbox"
-        checked={claim.demonNextToMinion}
+        checked={claim.demonNextToMinion ?? true}
         onChange={(e) => onChange({ ...claim, demonNextToMinion: e.target.checked })}
       />
       <span>Timing</span>

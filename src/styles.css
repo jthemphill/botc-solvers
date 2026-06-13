@@ -173,7 +173,7 @@ summary {
 }
 
 .toolbar-button-row,
-.example-button-row,
+.example-picker-row,
 .chrome-actions,
 .row {
   display: flex;
@@ -182,18 +182,25 @@ summary {
   align-items: center;
 }
 
-.example-button-row {
+.example-picker-row {
   min-width: 0;
 }
 
-.example-button-row span {
+.example-picker-row label {
+  display: flex;
+  min-width: min(22rem, 100%);
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.example-picker-row span {
   color: var(--muted-ink);
   font-size: 0.85rem;
 }
 
-.example-button-row button {
+.example-picker-row select {
+  width: min(24rem, 100%);
   min-height: 2rem;
-  padding: 0.23rem 0.5rem;
   font-size: 0.82rem;
 }
 

@@ -1,0 +1,3005 @@
+[
+  {
+    "id": "puzzle-01-sober-savant",
+    "label": "Puzzle 1 - Sober Savant",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 1 - Sober Savant",
+      "players": ["Oscar", "Matt", "Anna", "You", "Tim", "Sula"],
+      "script": ["Imp", "Scarlet Woman", "Drunk", "Investigator", "Knight", "Noble", "Savant", "Seamstress", "Steward"],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Savant"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Investigator",
+          "name": "Oscar",
+          "minionRole": "Scarlet Woman",
+          "among": ["Anna", "Sula"]
+        },
+        {
+          "type": "Noble",
+          "name": "Matt",
+          "oneEvilAmong": ["Tim", "Oscar", "Sula"],
+          "among": []
+        },
+        {
+          "type": "Seamstress",
+          "name": "Anna",
+          "timing": "night_1",
+          "among": ["Oscar", "Sula"],
+          "aligned": false
+        },
+        {
+          "type": "Savant",
+          "name": "You",
+          "timing": "day_1",
+          "statements": []
+        },
+        {
+          "type": "Savant",
+          "name": "You",
+          "timing": "day_2",
+          "statements": []
+        },
+        {
+          "type": "Savant",
+          "name": "You",
+          "timing": "day_3",
+          "statements": []
+        },
+        {
+          "type": "Knight",
+          "name": "Tim",
+          "noDemonAmong": ["Anna", "Sula"]
+        },
+        {
+          "type": "Steward",
+          "name": "Sula",
+          "goodPlayer": "Matt"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-02-come-fly-with-me",
+    "label": "Puzzle 2 - Come Fly With Me",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 2 - Come Fly With Me",
+      "players": ["Sarah", "Matthew", "Anna", "Sula", "You", "Steph", "Fraser", "Tim"],
+      "script": [
+        "Leviathan",
+        "Goblin",
+        "Drunk",
+        "Saint",
+        "Balloonist",
+        "Clockmaker",
+        "Fortune Teller",
+        "Investigator",
+        "Juggler",
+        "Knight",
+        "Seamstress"
+      ],
+      "claims": [
+        {
+          "type": "Investigator",
+          "name": "Sarah",
+          "role": "Goblin",
+          "among": ["Matthew", "Fraser"]
+        },
+        {
+          "type": "Juggler",
+          "name": "Matthew",
+          "timing": "night_2",
+          "guesses": {
+            "Steph": "Knight",
+            "Sarah": "Leviathan",
+            "Anna": "Goblin",
+            "Sula": "Goblin",
+            "You": "Seamstress"
+          },
+          "correctCount": 2
+        },
+        {
+          "type": "Clockmaker",
+          "name": "Anna",
+          "demonNextToMinion": true
+        },
+        {
+          "type": "Balloonist",
+          "name": "Sula",
+          "differentCharacterTypePairs": [
+            ["Tim", "Matthew"],
+            ["Matthew", "Steph"]
+          ]
+        },
+        {
+          "type": "Seamstress",
+          "name": "You",
+          "timing": "night_1",
+          "among": ["Matthew", "Sula"],
+          "aligned": true
+        },
+        {
+          "type": "Knight",
+          "name": "Steph",
+          "noDemonAmong": ["Tim", "Sula"]
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Fraser",
+          "checks": [
+            {
+              "left": "Sarah",
+              "right": "Anna",
+              "yes": false
+            },
+            {
+              "left": "You",
+              "right": "Fraser",
+              "yes": false
+            },
+            {
+              "left": "Steph",
+              "right": "Sarah",
+              "yes": false
+            }
+          ]
+        },
+        {
+          "type": "Saint",
+          "name": "Tim"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-03a-not-throwing-away-my-shot",
+    "label": "Puzzle 3a - Not Throwing Away My Shot",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 3a - Not Throwing Away My Shot",
+      "players": ["Sula", "Matthew", "Oscar", "Josh", "You", "Aoife", "Tom"],
+      "script": [
+        "Imp",
+        "Baron",
+        "Spy",
+        "Poisoner",
+        "Scarlet Woman",
+        "Drunk",
+        "Recluse",
+        "Chef",
+        "Empath",
+        "Investigator",
+        "Librarian",
+        "Slayer",
+        "Washerwoman"
+      ],
+      "claims": [
+        {
+          "type": "Investigator",
+          "name": "Sula",
+          "role": "Baron",
+          "among": ["You", "Aoife"]
+        },
+        {
+          "type": "Washerwoman",
+          "name": "Matthew",
+          "role": "Librarian",
+          "among": ["Aoife", "Oscar"]
+        },
+        {
+          "type": "Librarian",
+          "name": "Oscar",
+          "outsiderCount": 0,
+          "among": []
+        },
+        {
+          "type": "Empath",
+          "name": "Josh",
+          "count": 0
+        },
+        {
+          "type": "Slayer",
+          "name": "You",
+          "timing": "day_1"
+        },
+        {
+          "type": "Chef",
+          "name": "Aoife",
+          "count": 0
+        },
+        {
+          "type": "Recluse",
+          "name": "Tom"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-03b-not-throwing-away-my-shot",
+    "label": "Puzzle 3b - Not Throwing Away My Shot",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 3b - Not Throwing Away My Shot",
+      "players": ["Dan", "Anna", "Matt", "Fraser", "You", "Tim", "Sarah", "Hannah"],
+      "script": [
+        "Imp",
+        "Baron",
+        "Spy",
+        "Poisoner",
+        "Scarlet Woman",
+        "Drunk",
+        "Recluse",
+        "Saint",
+        "Chef",
+        "Empath",
+        "Investigator",
+        "Librarian",
+        "Slayer",
+        "Washerwoman"
+      ],
+      "claims": [
+        {
+          "type": "Chef",
+          "name": "Dan",
+          "count": 0
+        },
+        {
+          "type": "Recluse",
+          "name": "Anna"
+        },
+        {
+          "type": "Washerwoman",
+          "name": "Matt",
+          "role": "Librarian",
+          "among": ["Tim", "Dan"]
+        },
+        {
+          "type": "Empath",
+          "name": "Fraser",
+          "count": 0
+        },
+        {
+          "type": "Slayer",
+          "name": "You",
+          "timing": "day_1"
+        },
+        {
+          "type": "Librarian",
+          "name": "Tim",
+          "role": "Drunk",
+          "among": ["You", "Hannah"]
+        },
+        {
+          "type": "Investigator",
+          "name": "Sarah",
+          "role": "Scarlet Woman",
+          "among": ["Tim", "Fraser"]
+        },
+        {
+          "type": "Saint",
+          "name": "Hannah"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-04-the-many-headed-monster",
+    "label": "Puzzle 4 - The Many Headed Monster",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 4 - The Many Headed Monster",
+      "players": ["Sarah", "Tim", "Matt", "Hannah", "You", "Anna", "Dan", "Fraser"],
+      "script": [
+        "Lord of Typhon",
+        "Marionette",
+        "Poisoner",
+        "Drunk",
+        "Recluse",
+        "Investigator",
+        "Librarian",
+        "Fortune Teller",
+        "Juggler",
+        "Dreamer",
+        "Empath",
+        "Undertaker"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Investigator", "Drunk", "Marionette"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Librarian",
+          "name": "Sarah",
+          "timing": "night_1",
+          "role": "Drunk",
+          "among": ["You", "Hannah"],
+          "registers": false
+        },
+        {
+          "type": "Recluse",
+          "name": "Tim"
+        },
+        {
+          "type": "Juggler",
+          "name": "Matt",
+          "timing": "night_2",
+          "guesses": {
+            "You": "Investigator",
+            "Dan": "Lord of Typhon",
+            "Tim": "Recluse",
+            "Hannah": "Dreamer"
+          },
+          "correctCount": 1
+        },
+        {
+          "type": "Dreamer",
+          "name": "Hannah",
+          "timing": "night_1",
+          "player": "You",
+          "roles": ["Investigator", "Lord of Typhon"]
+        },
+        {
+          "type": "Investigator",
+          "name": "You",
+          "timing": "night_1",
+          "role": "Marionette",
+          "among": ["Matt", "Hannah"],
+          "registers": false
+        },
+        {
+          "type": "Empath",
+          "name": "Anna",
+          "timing": "night_1",
+          "count": 2
+        },
+        {
+          "type": "Undertaker",
+          "name": "Dan",
+          "timing": "night_2",
+          "player": "Anna",
+          "role": "Empath"
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Fraser",
+          "checks": [
+            {
+              "left": "Anna",
+              "right": "Tim",
+              "yes": true,
+              "demonRole": "Lord of Typhon",
+              "registers": true,
+              "timing": "night_1"
+            },
+            {
+              "left": "You",
+              "right": "Fraser",
+              "yes": false,
+              "demonRole": "Lord of Typhon",
+              "registers": true,
+              "timing": "night_2"
+            },
+            {
+              "left": "You",
+              "right": "Sarah",
+              "yes": true,
+              "demonRole": "Lord of Typhon",
+              "registers": true,
+              "timing": "night_3"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-05a-you-only-guess-twice",
+    "label": "Puzzle 5a - You Only Guess Twice",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 5a - You Only Guess Twice",
+      "players": ["Matt", "Anna", "Hannah", "Oscar", "You", "Dan", "Tom"],
+      "script": [
+        "Leviathan",
+        "Goblin",
+        "Drunk",
+        "Alsaahir",
+        "Empath",
+        "Investigator",
+        "Knight",
+        "Noble",
+        "Seamstress",
+        "Steward"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Alsaahir"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Investigator",
+          "name": "Matt",
+          "role": "Goblin",
+          "among": ["Anna", "Oscar"]
+        },
+        {
+          "type": "Empath",
+          "name": "Anna",
+          "count": 1
+        },
+        {
+          "type": "Steward",
+          "name": "Hannah",
+          "goodPlayer": "Tom"
+        },
+        {
+          "type": "Seamstress",
+          "name": "Oscar",
+          "timing": "night_1",
+          "among": ["Tom", "Hannah"],
+          "aligned": false
+        },
+        {
+          "type": "Alsaahir",
+          "name": "You"
+        },
+        {
+          "type": "Noble",
+          "name": "Dan",
+          "oneEvilAmong": ["Tom", "Anna", "Hannah"],
+          "among": []
+        },
+        {
+          "type": "Knight",
+          "name": "Tom",
+          "noDemonAmong": ["Anna", "Dan"]
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-05b-you-only-guess-twice",
+    "label": "Puzzle 5b - You Only Guess Twice",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 5b - You Only Guess Twice",
+      "players": ["Matthew", "Steph", "Aoife", "Fraser", "You", "Sarah", "Tim"],
+      "script": [
+        "Leviathan",
+        "Goblin",
+        "Drunk",
+        "Empath",
+        "Investigator",
+        "Juggler",
+        "Knight",
+        "Noble",
+        "Seamstress",
+        "Steward"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Juggler"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Steward",
+          "name": "Matthew",
+          "goodPlayer": "You"
+        },
+        {
+          "type": "Investigator",
+          "name": "Steph",
+          "role": "Goblin",
+          "among": ["Sarah", "Fraser"]
+        },
+        {
+          "type": "Noble",
+          "name": "Aoife",
+          "oneEvilAmong": ["Sarah", "Tim", "Matthew"],
+          "among": []
+        },
+        {
+          "type": "Knight",
+          "name": "Fraser",
+          "noDemonAmong": ["You", "Steph"]
+        },
+        {
+          "type": "Juggler",
+          "name": "You",
+          "timing": "night_2",
+          "guesses": {}
+        },
+        {
+          "type": "Empath",
+          "name": "Sarah",
+          "count": 0
+        },
+        {
+          "type": "Seamstress",
+          "name": "Tim",
+          "timing": "night_1",
+          "among": ["You", "Fraser"],
+          "aligned": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-06-super-marionette-bros",
+    "label": "Puzzle 6 - Super Marionette Bros",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 6 - Super Marionette Bros",
+      "players": ["Aoife", "Sula", "Steph", "Fraser", "Matthew", "You", "Sarah", "Tim", "Dan"],
+      "script": [
+        "Pukka",
+        "No Dashii",
+        "Vortox",
+        "Marionette",
+        "Drunk",
+        "Saint",
+        "Empath",
+        "Investigator",
+        "Juggler",
+        "Knight",
+        "Librarian",
+        "Noble",
+        "Seamstress",
+        "Steward"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Librarian", "Drunk", "Marionette"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Investigator",
+          "name": "Aoife",
+          "role": "Marionette",
+          "among": ["Dan", "Matthew"]
+        },
+        {
+          "type": "Juggler",
+          "name": "Sula",
+          "timing": "night_2",
+          "guesses": {
+            "You": "Librarian",
+            "Tim": "Marionette",
+            "Dan": "Vortox",
+            "Fraser": "Drunk",
+            "Matthew": "Pukka"
+          },
+          "correctCount": 2
+        },
+        {
+          "type": "Knight",
+          "name": "Steph",
+          "noDemonAmong": ["Sarah", "Dan"]
+        },
+        {
+          "type": "Empath",
+          "name": "Fraser",
+          "count": 0
+        },
+        {
+          "type": "Steward",
+          "name": "Matthew",
+          "goodPlayer": "Dan"
+        },
+        {
+          "type": "Librarian",
+          "name": "You",
+          "role": "Drunk",
+          "among": ["Sula", "Fraser"]
+        },
+        {
+          "type": "Saint",
+          "name": "Sarah"
+        },
+        {
+          "type": "Noble",
+          "name": "Tim",
+          "oneEvilAmong": ["Aoife", "Sula", "Fraser"],
+          "among": []
+        },
+        {
+          "type": "Seamstress",
+          "name": "Dan",
+          "timing": "night_1",
+          "among": ["Aoife", "Tim"],
+          "aligned": false
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-07-the-savant-strikes-back",
+    "label": "Puzzle 7 - The Savant Strikes Back",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 7 - The Savant Strikes Back",
+      "players": ["Anna", "Aoife", "Steph", "Tim", "You", "Fraser", "Sarah", "Oscar"],
+      "script": [
+        "Leviathan",
+        "Goblin",
+        "Mutant",
+        "Drunk",
+        "Dreamer",
+        "Fortune Teller",
+        "Investigator",
+        "Juggler",
+        "Savant",
+        "Shugenja",
+        "Village Idiot"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Savant"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Juggler",
+          "name": "Anna",
+          "timing": "night_2",
+          "guesses": {
+            "You": "Savant",
+            "Tim": "Village Idiot"
+          },
+          "correctCount": 1
+        },
+        {
+          "type": "Shugenja",
+          "name": "Aoife",
+          "evilDirection": "anticlockwise"
+        },
+        {
+          "type": "Dreamer",
+          "name": "Steph",
+          "roles": []
+        },
+        {
+          "type": "VillageIdiot",
+          "name": "Tim",
+          "checks": [
+            {
+              "player": "Anna",
+              "good": true
+            },
+            {
+              "player": "Sarah",
+              "good": true
+            },
+            {
+              "player": "You",
+              "good": true
+            }
+          ]
+        },
+        {
+          "type": "Savant",
+          "name": "You",
+          "timing": "day_1",
+          "statements": []
+        },
+        {
+          "type": "VillageIdiot",
+          "name": "Fraser",
+          "checks": [
+            {
+              "player": "Sarah",
+              "good": true
+            },
+            {
+              "player": "Aoife",
+              "good": true
+            },
+            {
+              "player": "You",
+              "good": true
+            }
+          ]
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Sarah",
+          "checks": []
+        },
+        {
+          "type": "Investigator",
+          "name": "Oscar",
+          "role": "Goblin",
+          "among": ["Fraser", "Steph"]
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-08-the-stitch-up",
+    "label": "Puzzle 8 - The Stitch Up",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 8 - The Stitch Up",
+      "players": ["Anna", "Tim", "Matthew", "Fraser", "You", "Josh", "Steph"],
+      "script": ["Imp", "Poisoner", "Drunk", "Seamstress"],
+      "claims": [
+        {
+          "type": "Seamstress",
+          "name": "Anna",
+          "timing": "night_1",
+          "among": ["Josh", "Matthew"],
+          "aligned": false
+        },
+        {
+          "type": "Seamstress",
+          "name": "Tim",
+          "timing": "night_1",
+          "among": ["You", "Josh"],
+          "aligned": false
+        },
+        {
+          "type": "Seamstress",
+          "name": "Matthew",
+          "timing": "night_1",
+          "among": ["Steph", "Fraser"],
+          "aligned": false
+        },
+        {
+          "type": "Seamstress",
+          "name": "Fraser",
+          "timing": "night_1",
+          "among": ["Steph", "Anna"],
+          "aligned": false
+        },
+        {
+          "type": "Seamstress",
+          "name": "You",
+          "timing": "night_1",
+          "among": ["Anna", "Matthew"],
+          "aligned": false
+        },
+        {
+          "type": "Seamstress",
+          "name": "Josh",
+          "timing": "night_1",
+          "among": ["Anna", "Tim"],
+          "aligned": false
+        },
+        {
+          "type": "Seamstress",
+          "name": "Steph",
+          "timing": "night_1",
+          "among": ["Tim", "Matthew"],
+          "aligned": false
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-09-the-new-acrobat",
+    "label": "Puzzle 9 - The New Acrobat",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 9 - The New Acrobat",
+      "players": ["Josh", "Anna", "Sula", "Hannah", "You", "Fraser", "Oscar"],
+      "script": [
+        "Imp",
+        "Po",
+        "Goblin",
+        "Drunk",
+        "Acrobat",
+        "Balloonist",
+        "Gambler",
+        "Gossip",
+        "Juggler",
+        "Knight",
+        "Steward"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Acrobat", "Drunk"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Knight",
+          "name": "Josh",
+          "noDemonAmong": ["Fraser", "Oscar"]
+        },
+        {
+          "type": "Gambler",
+          "name": "Anna"
+        },
+        {
+          "type": "Juggler",
+          "name": "Sula",
+          "timing": "night_2",
+          "guesses": {}
+        },
+        {
+          "type": "Steward",
+          "name": "Hannah",
+          "goodPlayer": "Oscar"
+        },
+        {
+          "type": "Acrobat",
+          "name": "You"
+        },
+        {
+          "type": "Balloonist",
+          "name": "Fraser",
+          "differentCharacterTypePairs": [
+            ["Oscar", "Anna"],
+            ["Anna", "You"]
+          ]
+        },
+        {
+          "type": "Gossip",
+          "name": "Oscar",
+          "timing": "day_1"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-10-dont-overcook-it",
+    "label": "Puzzle 10 - Dont Overcook It",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 10 - Dont Overcook It",
+      "players": ["Tom", "Sula", "Fraser", "Josh", "You", "Matthew", "Dan"],
+      "script": [
+        "Imp",
+        "Poisoner",
+        "Spy",
+        "Baron",
+        "Scarlet Woman",
+        "Drunk",
+        "Recluse",
+        "Chef",
+        "Fortune Teller",
+        "Ravenkeeper",
+        "Slayer",
+        "Undertaker",
+        "Washerwoman"
+      ],
+      "claims": [
+        {
+          "type": "FortuneTeller",
+          "name": "Tom",
+          "checks": []
+        },
+        {
+          "type": "Chef",
+          "name": "Sula",
+          "timing": "night_1",
+          "count": 0
+        },
+        {
+          "type": "Recluse",
+          "name": "Fraser"
+        },
+        {
+          "type": "Washerwoman",
+          "name": "Josh",
+          "timing": "night_1",
+          "role": "Undertaker",
+          "among": ["Dan", "Sula"]
+        },
+        {
+          "type": "Slayer",
+          "name": "You",
+          "timing": "day_1"
+        },
+        {
+          "type": "Ravenkeeper",
+          "name": "Matthew",
+          "timing": "night_2"
+        },
+        {
+          "type": "Undertaker",
+          "name": "Dan",
+          "timing": "night_2",
+          "player": "Josh",
+          "role": "Poisoner"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-11-false-is-the-new-black",
+    "label": "Puzzle 11 - False Is The New Black",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 11 - False Is The New Black",
+      "players": ["Matthew", "Anna", "Aoife", "Hannah", "You", "Sula", "Sarah", "Tom"],
+      "script": [
+        "Vortox",
+        "Cerenovus",
+        "Pit-Hag",
+        "Mutant",
+        "Sweetheart",
+        "Artist",
+        "Clockmaker",
+        "Dreamer",
+        "Philosopher",
+        "Sage",
+        "Seamstress",
+        "Snake Charmer"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Clockmaker"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Artist",
+          "name": "Matthew",
+          "timing": "day_1"
+        },
+        {
+          "type": "Sage",
+          "name": "Anna",
+          "timing": "night_2"
+        },
+        {
+          "type": "Snake Charmer",
+          "name": "Aoife"
+        },
+        {
+          "type": "Artist",
+          "name": "Hannah",
+          "timing": "day_1"
+        },
+        {
+          "type": "Clockmaker",
+          "name": "You"
+        },
+        {
+          "type": "Snake Charmer",
+          "name": "Sula"
+        },
+        {
+          "type": "Dreamer",
+          "name": "Sarah",
+          "roles": []
+        },
+        {
+          "type": "Sweetheart",
+          "name": "Tom"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-12a-thunderstruck",
+    "label": "Puzzle 12a - Thunderstruck",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 12a - Thunderstruck",
+      "players": ["Hannah", "Sarah", "Jasmine", "You", "Tim", "Fraser"],
+      "script": [
+        "Vortox",
+        "Spy",
+        "Scarlet Woman",
+        "Lunatic",
+        "Clockmaker",
+        "Courtier",
+        "Dreamer",
+        "Empath",
+        "Mayor",
+        "Slayer"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Dreamer"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Slayer",
+          "name": "Hannah",
+          "timing": "day_1"
+        },
+        {
+          "type": "Courtier",
+          "name": "Sarah"
+        },
+        {
+          "type": "Mayor",
+          "name": "Jasmine"
+        },
+        {
+          "type": "Dreamer",
+          "name": "You",
+          "roles": []
+        },
+        {
+          "type": "Clockmaker",
+          "name": "Tim"
+        },
+        {
+          "type": "Empath",
+          "name": "Fraser"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-12b-thunderstruck",
+    "label": "Puzzle 12b - Thunderstruck",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 12b - Thunderstruck",
+      "players": ["Fraser", "Tom", "Aoife", "Steph", "You", "Oscar", "Anna", "Josh"],
+      "script": [
+        "Vortox",
+        "Spy",
+        "Scarlet Woman",
+        "Lunatic",
+        "Clockmaker",
+        "Courtier",
+        "Dreamer",
+        "Empath",
+        "Investigator",
+        "Librarian",
+        "Mayor",
+        "Slayer"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Librarian"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Slayer",
+          "name": "Fraser",
+          "timing": "day_1"
+        },
+        {
+          "type": "Dreamer",
+          "name": "Tom",
+          "roles": []
+        },
+        {
+          "type": "Clockmaker",
+          "name": "Aoife"
+        },
+        {
+          "type": "Courtier",
+          "name": "Steph"
+        },
+        {
+          "type": "Librarian",
+          "name": "You",
+          "among": []
+        },
+        {
+          "type": "Investigator",
+          "name": "Oscar",
+          "among": []
+        },
+        {
+          "type": "Empath",
+          "name": "Anna"
+        },
+        {
+          "type": "Mayor",
+          "name": "Josh"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-13-clockblocking",
+    "label": "Puzzle 13 - Clockblocking",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 13 - Clockblocking",
+      "players": ["Tim", "Sarah", "Fraser", "Aoife", "You", "Jasmine", "Oscar"],
+      "script": [
+        "Imp",
+        "Poisoner",
+        "Spy",
+        "Baron",
+        "Scarlet Woman",
+        "Drunk",
+        "Recluse",
+        "Clockmaker",
+        "Fortune Teller",
+        "Investigator",
+        "Librarian",
+        "Ravenkeeper",
+        "Slayer"
+      ],
+      "claims": [
+        {
+          "type": "Ravenkeeper",
+          "name": "Tim",
+          "timing": "night_2"
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Sarah",
+          "checks": [
+            {
+              "left": "You",
+              "right": "Oscar",
+              "yes": false,
+              "demonRole": "Imp",
+              "registers": true,
+              "timing": "night_1"
+            },
+            {
+              "left": "You",
+              "right": "Jasmine",
+              "yes": false,
+              "demonRole": "Imp",
+              "registers": true,
+              "timing": "night_2"
+            }
+          ]
+        },
+        {
+          "type": "Slayer",
+          "name": "Fraser",
+          "timing": "day_1"
+        },
+        {
+          "type": "Recluse",
+          "name": "Aoife"
+        },
+        {
+          "type": "Investigator",
+          "name": "You",
+          "timing": "night_1",
+          "role": "Scarlet Woman",
+          "among": ["Sarah", "Aoife"]
+        },
+        {
+          "type": "Clockmaker",
+          "name": "Jasmine"
+        },
+        {
+          "type": "Librarian",
+          "name": "Oscar",
+          "timing": "night_1",
+          "outsiderCount": 0,
+          "among": []
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-14-new-super-marionette-bros",
+    "label": "Puzzle 14 - New Super Marionette Bros",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 14 - New Super Marionette Bros",
+      "players": ["Brett", "Rob", "Lav", "Lydia", "You", "Danielle", "Gwilym"],
+      "script": [
+        "Imp",
+        "Poisoner",
+        "Spy",
+        "Scarlet Woman",
+        "Marionette",
+        "Drunk",
+        "Chef",
+        "Empath",
+        "Fortune Teller",
+        "Investigator",
+        "Slayer",
+        "Undertaker",
+        "Washerwoman"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Slayer", "Marionette"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "FortuneTeller",
+          "name": "Brett",
+          "checks": [
+            {
+              "left": "Danielle",
+              "right": "Gwilym",
+              "yes": false,
+              "demonRole": "Imp",
+              "registers": true,
+              "timing": "night_1"
+            }
+          ]
+        },
+        {
+          "type": "Empath",
+          "name": "Rob"
+        },
+        {
+          "type": "Chef",
+          "name": "Lav",
+          "timing": "night_1",
+          "count": 1
+        },
+        {
+          "type": "Investigator",
+          "name": "Lydia",
+          "timing": "night_1",
+          "role": "Marionette",
+          "among": ["You", "Danielle"]
+        },
+        {
+          "type": "Slayer",
+          "name": "You",
+          "timing": "day_1"
+        },
+        {
+          "type": "Washerwoman",
+          "name": "Danielle",
+          "timing": "night_1",
+          "role": "Empath",
+          "among": ["Rob", "Lav"]
+        },
+        {
+          "type": "Undertaker",
+          "name": "Gwilym",
+          "timing": "night_2",
+          "player": "You",
+          "role": "Slayer"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-15-wake-up-and-choose-violets",
+    "label": "Puzzle 15 - Wake Up And Choose Violets",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 15 - Wake Up And Choose Violets",
+      "players": ["Fraser", "Aoife", "Adam", "Jasmine", "You", "Oscar", "Sarah", "Hannah"],
+      "script": [
+        "No Dashii",
+        "Vortox",
+        "Evil Twin",
+        "Mutant",
+        "Klutz",
+        "Artist",
+        "Clockmaker",
+        "Juggler",
+        "Savant",
+        "Seamstress",
+        "Snake Charmer"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Savant"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Clockmaker",
+          "name": "Fraser"
+        },
+        {
+          "type": "Seamstress",
+          "name": "Aoife",
+          "timing": "night_1",
+          "among": ["Oscar", "Hannah"]
+        },
+        {
+          "type": "Artist",
+          "name": "Adam",
+          "timing": "day_1"
+        },
+        {
+          "type": "Snake Charmer",
+          "name": "Jasmine"
+        },
+        {
+          "type": "Savant",
+          "name": "You",
+          "timing": "day_1",
+          "statements": []
+        },
+        {
+          "type": "Klutz",
+          "name": "Oscar"
+        },
+        {
+          "type": "Juggler",
+          "name": "Sarah",
+          "timing": "night_2",
+          "guesses": {
+            "You": "Savant",
+            "Hannah": "Snake Charmer",
+            "Fraser": "Clockmaker",
+            "Aoife": "Seamstress",
+            "Jasmine": "Snake Charmer"
+          }
+        },
+        {
+          "type": "Snake Charmer",
+          "name": "Hannah"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-16-who-watches-the-watchmen",
+    "label": "Puzzle 16 - Who Watches The Watchmen",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 16 - Who Watches The Watchmen",
+      "players": ["Oscar", "Hannah", "Sarah", "Tim", "You", "Olivia", "Jasmine", "Fraser"],
+      "script": [
+        "Imp",
+        "Baron",
+        "Poisoner",
+        "Scarlet Woman",
+        "Spy",
+        "Drunk",
+        "Recluse",
+        "Saint",
+        "Chef",
+        "Empath",
+        "Fortune Teller",
+        "Investigator",
+        "Nightwatchman",
+        "Washerwoman"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Saint"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Recluse",
+          "name": "Oscar"
+        },
+        {
+          "type": "Washerwoman",
+          "name": "Hannah",
+          "timing": "night_1",
+          "role": "Chef",
+          "among": ["Oscar", "Tim"]
+        },
+        {
+          "type": "Investigator",
+          "name": "Sarah",
+          "timing": "night_1",
+          "role": "Poisoner",
+          "among": ["Olivia", "Hannah"]
+        },
+        {
+          "type": "Chef",
+          "name": "Tim",
+          "timing": "night_1",
+          "count": 1
+        },
+        {
+          "type": "Saint",
+          "name": "You"
+        },
+        {
+          "type": "Empath",
+          "name": "Olivia"
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Jasmine",
+          "checks": [
+            {
+              "left": "Hannah",
+              "right": "Tim",
+              "yes": false,
+              "demonRole": "Imp",
+              "registers": true,
+              "timing": "night_1"
+            },
+            {
+              "left": "Olivia",
+              "right": "Tim",
+              "yes": false,
+              "demonRole": "Imp",
+              "registers": true,
+              "timing": "night_2"
+            },
+            {
+              "left": "Sarah",
+              "right": "Jasmine",
+              "yes": false,
+              "demonRole": "Imp",
+              "registers": true,
+              "timing": "night_3"
+            }
+          ]
+        },
+        {
+          "type": "Nightwatchman",
+          "name": "Fraser"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-17-the-missing-piece",
+    "label": "Puzzle 17 - The Missing Piece",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 17 - The Missing Piece",
+      "players": ["Sarah", "Sula", "Hannah", "Tom", "You", "Adam", "Steph", "Fraser"],
+      "script": [
+        "Imp",
+        "Scarlet Woman",
+        "Puzzlemaster",
+        "Chef",
+        "Empath",
+        "Fortune Teller",
+        "Investigator",
+        "Slayer",
+        "Undertaker",
+        "Washerwoman"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Puzzlemaster"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Undertaker",
+          "name": "Sarah",
+          "timing": "night_2"
+        },
+        {
+          "type": "Washerwoman",
+          "name": "Sula",
+          "role": "Undertaker",
+          "among": ["Sarah", "Hannah"]
+        },
+        {
+          "type": "Investigator",
+          "name": "Hannah",
+          "role": "Scarlet Woman",
+          "among": ["Fraser", "Sarah"]
+        },
+        {
+          "type": "Slayer",
+          "name": "Tom",
+          "timing": "day_3"
+        },
+        {
+          "type": "Puzzlemaster",
+          "name": "You"
+        },
+        {
+          "type": "Chef",
+          "name": "Adam",
+          "count": 0,
+          "registers": false
+        },
+        {
+          "type": "Empath",
+          "name": "Steph"
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Fraser",
+          "checks": []
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-18-x-and-the-city",
+    "label": "Puzzle 18 - X And The City",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 18 - X And The City",
+      "players": ["Aoife", "Tim", "Olivia", "Sarah", "You", "Steph", "Fraser", "Dan"],
+      "script": [
+        "Leviathan",
+        "Xaan",
+        "Drunk",
+        "Saint",
+        "Recluse",
+        "Balloonist",
+        "Fortune Teller",
+        "Investigator",
+        "Juggler",
+        "Librarian",
+        "Snake Charmer"
+      ],
+      "claims": [
+        {
+          "type": "Balloonist",
+          "name": "Aoife",
+          "differentCharacterTypePairs": []
+        },
+        {
+          "type": "Saint",
+          "name": "Tim"
+        },
+        {
+          "type": "Investigator",
+          "name": "Olivia",
+          "among": []
+        },
+        {
+          "type": "Recluse",
+          "name": "Sarah"
+        },
+        {
+          "type": "Librarian",
+          "name": "You",
+          "among": []
+        },
+        {
+          "type": "Juggler",
+          "name": "Steph",
+          "timing": "night_2",
+          "guesses": {}
+        },
+        {
+          "type": "Snake Charmer",
+          "name": "Fraser"
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Dan",
+          "checks": []
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-19-he-could-be-you-he-could-be-me",
+    "label": "Puzzle 19 - He Could Be You He Could Be Me",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 19 - He Could Be You He Could Be Me",
+      "players": ["Olivia", "Matt", "Sula", "Aoife", "You", "Fraser", "Oscar", "Jasmine"],
+      "script": [
+        "Imp",
+        "Baron",
+        "Poisoner",
+        "Scarlet Woman",
+        "Spy",
+        "Drunk",
+        "Recluse",
+        "Saint",
+        "Empath",
+        "Librarian",
+        "Ravenkeeper",
+        "Slayer",
+        "Undertaker",
+        "Washerwoman"
+      ],
+      "claims": [
+        {
+          "type": "Undertaker",
+          "name": "Olivia"
+        },
+        {
+          "type": "Ravenkeeper",
+          "name": "Matt",
+          "timing": "night_2"
+        },
+        {
+          "type": "Washerwoman",
+          "name": "Sula",
+          "timing": "night_1",
+          "role": "Undertaker",
+          "among": ["Fraser", "Olivia"]
+        },
+        {
+          "type": "Empath",
+          "name": "Aoife"
+        },
+        {
+          "type": "Librarian",
+          "name": "You",
+          "timing": "night_1",
+          "role": "Drunk",
+          "among": ["Fraser", "Matt"]
+        },
+        {
+          "type": "Saint",
+          "name": "Fraser"
+        },
+        {
+          "type": "Recluse",
+          "name": "Oscar"
+        },
+        {
+          "type": "Slayer",
+          "name": "Jasmine",
+          "timing": "day_1"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-20-the-three-wise-men",
+    "label": "Puzzle 20 - The Three Wise Men",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 20 - The Three Wise Men",
+      "players": ["Melchior", "Mary", "Balthazar", "Gabriel", "You", "Caspar", "Joseph"],
+      "script": [
+        "Imp",
+        "Baron",
+        "Poisoner",
+        "Scarlet Woman",
+        "Spy",
+        "Drunk",
+        "Saint",
+        "Investigator",
+        "Ravenkeeper",
+        "Village Idiot",
+        "Virgin"
+      ],
+      "claims": [
+        {
+          "type": "VillageIdiot",
+          "name": "Melchior",
+          "checks": []
+        },
+        {
+          "type": "Virgin",
+          "name": "Mary"
+        },
+        {
+          "type": "VillageIdiot",
+          "name": "Balthazar",
+          "checks": []
+        },
+        {
+          "type": "Ravenkeeper",
+          "name": "Gabriel",
+          "timing": "night_2"
+        },
+        {
+          "type": "Investigator",
+          "name": "You",
+          "timing": "night_1",
+          "role": "Baron",
+          "among": ["Mary", "Gabriel"]
+        },
+        {
+          "type": "VillageIdiot",
+          "name": "Caspar",
+          "checks": []
+        },
+        {
+          "type": "Saint",
+          "name": "Joseph"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-21-eight-jugglers-juggling",
+    "label": "Puzzle 21 - Eight Jugglers Juggling",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 21 - Eight Jugglers Juggling",
+      "players": ["Tim", "Matt", "Olivia", "Oscar", "You", "Fraser", "Aoife", "Josh"],
+      "script": ["Leviathan", "Goblin", "Drunk", "Juggler"],
+      "claims": [
+        {
+          "type": "Juggler",
+          "name": "Tim",
+          "timing": "night_2",
+          "guesses": {
+            "You": "Leviathan",
+            "Josh": "Juggler"
+          },
+          "correctCount": 0
+        },
+        {
+          "type": "Juggler",
+          "name": "Matt",
+          "timing": "night_2",
+          "guesses": {
+            "Josh": "Goblin",
+            "Tim": "Juggler"
+          },
+          "correctCount": 0
+        },
+        {
+          "type": "Juggler",
+          "name": "Olivia",
+          "timing": "night_2",
+          "guesses": {
+            "You": "Juggler",
+            "Aoife": "Drunk"
+          },
+          "correctCount": 2
+        },
+        {
+          "type": "Juggler",
+          "name": "Oscar",
+          "timing": "night_2",
+          "guesses": {
+            "Josh": "Goblin",
+            "Matt": "Juggler"
+          },
+          "correctCount": 0
+        },
+        {
+          "type": "Juggler",
+          "name": "You",
+          "timing": "night_2",
+          "guesses": {
+            "Matt": "Goblin",
+            "Oscar": "Goblin"
+          },
+          "correctCount": 0
+        },
+        {
+          "type": "Juggler",
+          "name": "Fraser",
+          "timing": "night_2",
+          "guesses": {
+            "Olivia": "Juggler",
+            "Oscar": "Drunk"
+          },
+          "correctCount": 1
+        },
+        {
+          "type": "Juggler",
+          "name": "Aoife",
+          "timing": "night_2",
+          "guesses": {
+            "Olivia": "Leviathan",
+            "Oscar": "Leviathan"
+          },
+          "correctCount": 0
+        },
+        {
+          "type": "Juggler",
+          "name": "Josh",
+          "timing": "night_2",
+          "guesses": {
+            "Tim": "Goblin",
+            "Oscar": "Juggler"
+          },
+          "correctCount": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-22-one-in-the-chamber",
+    "label": "Puzzle 22 - One In The Chamber",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 22 - One In The Chamber",
+      "players": ["Tim", "Fraser", "Oscar", "Steph", "You", "Anna", "Aoife", "Sarah"],
+      "script": [
+        "Imp",
+        "Baron",
+        "Poisoner",
+        "Scarlet Woman",
+        "Spy",
+        "Drunk",
+        "Recluse",
+        "Saint",
+        "Chambermaid",
+        "Investigator",
+        "Librarian",
+        "Ravenkeeper",
+        "Slayer",
+        "Washerwoman"
+      ],
+      "claims": [
+        {
+          "type": "Saint",
+          "name": "Tim"
+        },
+        {
+          "type": "Recluse",
+          "name": "Fraser"
+        },
+        {
+          "type": "Librarian",
+          "name": "Oscar",
+          "timing": "night_1",
+          "role": "Drunk",
+          "among": ["You", "Sarah"]
+        },
+        {
+          "type": "Washerwoman",
+          "name": "Steph",
+          "timing": "night_1",
+          "role": "Chambermaid",
+          "among": ["You", "Aoife"]
+        },
+        {
+          "type": "Chambermaid",
+          "name": "You"
+        },
+        {
+          "type": "Investigator",
+          "name": "Anna",
+          "timing": "night_1",
+          "role": "Baron",
+          "among": ["Aoife", "Steph"]
+        },
+        {
+          "type": "Slayer",
+          "name": "Aoife",
+          "timing": "day_1"
+        },
+        {
+          "type": "Ravenkeeper",
+          "name": "Sarah",
+          "timing": "night_2"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-23-goblincore",
+    "label": "Puzzle 23 - Goblincore",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 23 - Goblincore",
+      "players": ["Aoife", "Fraser", "Tom", "Sula", "You", "Hannah", "Matt", "Tim"],
+      "script": [
+        "Imp",
+        "Goblin",
+        "Lunatic",
+        "Chef",
+        "Fortune Teller",
+        "Investigator",
+        "Librarian",
+        "Ravenkeeper",
+        "Slayer",
+        "Washerwoman"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Chef"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Ravenkeeper",
+          "name": "Aoife",
+          "timing": "night_2"
+        },
+        {
+          "type": "Goblin",
+          "name": "Fraser"
+        },
+        {
+          "type": "Librarian",
+          "name": "Tom",
+          "role": "Lunatic",
+          "among": ["Matt", "Fraser"]
+        },
+        {
+          "type": "Slayer",
+          "name": "Sula",
+          "timing": "day_1"
+        },
+        {
+          "type": "Chef",
+          "name": "You",
+          "count": 0,
+          "registers": false
+        },
+        {
+          "type": "Washerwoman",
+          "name": "Hannah",
+          "role": "Librarian",
+          "among": ["Tom", "Sula"]
+        },
+        {
+          "type": "Investigator",
+          "name": "Matt",
+          "role": "Goblin",
+          "among": ["Aoife", "Fraser"]
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Tim",
+          "checks": []
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-24-the-ultimate-blunder",
+    "label": "Puzzle 24 - The Ultimate Blunder",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 24 - The Ultimate Blunder",
+      "players": ["Sula", "Oscar", "Adam", "Josh", "You", "Olivia", "Steph", "Fraser"],
+      "script": [
+        "Imp",
+        "Poisoner",
+        "Drunk",
+        "Klutz",
+        "Chef",
+        "Empath",
+        "Fortune Teller",
+        "Investigator",
+        "Librarian",
+        "Virgin",
+        "Washerwoman"
+      ],
+      "claims": [
+        {
+          "type": "Virgin",
+          "name": "Sula"
+        },
+        {
+          "type": "Librarian",
+          "name": "Oscar",
+          "timing": "night_1",
+          "role": "Klutz",
+          "among": ["You", "Olivia"]
+        },
+        {
+          "type": "Chef",
+          "name": "Adam",
+          "timing": "night_1",
+          "count": 1
+        },
+        {
+          "type": "Empath",
+          "name": "Josh"
+        },
+        {
+          "type": "Investigator",
+          "name": "You",
+          "timing": "night_1",
+          "role": "Poisoner",
+          "among": ["Olivia", "Josh"]
+        },
+        {
+          "type": "Klutz",
+          "name": "Olivia"
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Steph",
+          "checks": []
+        },
+        {
+          "type": "Washerwoman",
+          "name": "Fraser",
+          "timing": "night_1",
+          "role": "Virgin",
+          "among": ["Olivia", "Sula"]
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-26-a-major-problem",
+    "label": "Puzzle 26 - A Major Problem",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 26 - A Major Problem",
+      "players": ["Matthew", "Josh", "Sula", "Fraser", "You", "Olivia", "Dan", "Tom"],
+      "script": [
+        "Imp",
+        "Baron",
+        "Poisoner",
+        "Scarlet Woman",
+        "Spy",
+        "Drunk",
+        "Recluse",
+        "Saint",
+        "Chef",
+        "Empath",
+        "Librarian",
+        "Slayer",
+        "Soldier",
+        "Undertaker"
+      ],
+      "claims": [
+        {
+          "type": "Librarian",
+          "name": "Matthew",
+          "timing": "night_1",
+          "role": "Drunk",
+          "among": ["You", "Josh"]
+        },
+        {
+          "type": "Soldier",
+          "name": "Josh"
+        },
+        {
+          "type": "Undertaker",
+          "name": "Sula"
+        },
+        {
+          "type": "Chef",
+          "name": "Fraser",
+          "timing": "night_1",
+          "count": 2
+        },
+        {
+          "type": "Empath",
+          "name": "You",
+          "timing": "night_1",
+          "count": 0
+        },
+        {
+          "type": "Saint",
+          "name": "Olivia"
+        },
+        {
+          "type": "Slayer",
+          "name": "Dan",
+          "timing": "day_1"
+        },
+        {
+          "type": "Recluse",
+          "name": "Tom"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-27-is-this-a-legion-game",
+    "label": "Puzzle 27 - Is This A Legion Game",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 27 - Is This A Legion Game",
+      "players": ["Sarah", "Tom", "Aoife", "Hannah", "You", "Fraser", "Adam"],
+      "script": ["Imp", "Poisoner", "Empath", "Fortune Teller", "Investigator", "Legionary", "Washerwoman"],
+      "claims": [
+        {
+          "type": "Legionary",
+          "name": "Sarah"
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Tom",
+          "checks": [
+            {
+              "left": "You",
+              "right": "Fraser",
+              "yes": false,
+              "demonRole": "Imp",
+              "timing": "night_1"
+            }
+          ]
+        },
+        {
+          "type": "Empath",
+          "name": "Aoife"
+        },
+        {
+          "type": "Legionary",
+          "name": "Hannah"
+        },
+        {
+          "type": "Washerwoman",
+          "name": "You",
+          "among": []
+        },
+        {
+          "type": "Legionary",
+          "name": "Fraser"
+        },
+        {
+          "type": "Investigator",
+          "name": "Adam",
+          "timing": "night_1",
+          "role": "Poisoner",
+          "among": ["Tom", "Aoife"]
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-28-a-study-in-scarlet",
+    "label": "Puzzle 28 - A Study In Scarlet",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 28 - A Study In Scarlet",
+      "players": ["Adam", "Oscar", "Olivia", "Sarah", "You", "Matt", "Fraser", "Aoife"],
+      "script": [
+        "Pukka",
+        "No Dashii",
+        "Scarlet Woman",
+        "Drunk",
+        "Chambermaid",
+        "Clockmaker",
+        "Empath",
+        "Fortune Teller",
+        "Juggler",
+        "Librarian",
+        "Oracle",
+        "Undertaker"
+      ],
+      "claims": [
+        {
+          "type": "Clockmaker",
+          "name": "Adam"
+        },
+        {
+          "type": "Empath",
+          "name": "Oscar"
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Olivia",
+          "checks": []
+        },
+        {
+          "type": "Oracle",
+          "name": "Sarah"
+        },
+        {
+          "type": "Chambermaid",
+          "name": "You"
+        },
+        {
+          "type": "Juggler",
+          "name": "Matt",
+          "timing": "night_1",
+          "guesses": {
+            "Fraser": "Undertaker",
+            "Oscar": "No Dashii"
+          },
+          "correctCount": 2
+        },
+        {
+          "type": "Undertaker",
+          "name": "Fraser"
+        },
+        {
+          "type": "Librarian",
+          "name": "Aoife",
+          "timing": "night_1",
+          "role": "Drunk",
+          "among": ["Matt", "Adam"]
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-29-a-dreamer-im-not-the-only-one",
+    "label": "Puzzle 29 - A Dreamer Im Not The Only One",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 29 - A Dreamer Im Not The Only One",
+      "players": ["Sula", "Steph", "Hannah", "Fraser", "You", "Jasmine", "Adam", "Sarah"],
+      "script": ["Imp", "Poisoner", "Drunk", "Dreamer"],
+      "claims": [
+        {
+          "type": "Dreamer",
+          "name": "Sula",
+          "roles": []
+        },
+        {
+          "type": "Dreamer",
+          "name": "Steph",
+          "roles": []
+        },
+        {
+          "type": "Dreamer",
+          "name": "Hannah",
+          "roles": []
+        },
+        {
+          "type": "Dreamer",
+          "name": "Fraser",
+          "roles": []
+        },
+        {
+          "type": "Dreamer",
+          "name": "You",
+          "roles": []
+        },
+        {
+          "type": "Dreamer",
+          "name": "Jasmine",
+          "roles": []
+        },
+        {
+          "type": "Dreamer",
+          "name": "Adam",
+          "roles": []
+        },
+        {
+          "type": "Dreamer",
+          "name": "Sarah",
+          "roles": []
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-30-the-babel-fish-is-a-dead-giveaway-left",
+    "label": "Puzzle 30 - The Babel Fish Is A Dead Giveaway (left game)",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 30 - The Babel Fish Is A Dead Giveaway (left game)",
+      "players": ["Sarah", "Max", "Erika", "Lav", "Oli", "Callum"],
+      "script": ["Imp", "Spy", "Drunk", "Artist", "Atheist", "Clockmaker", "Knight", "Noble", "Seamstress"],
+      "claims": [
+        {
+          "type": "Seamstress",
+          "name": "Sarah",
+          "timing": "night_1",
+          "among": []
+        },
+        {
+          "type": "Artist",
+          "name": "Max",
+          "timing": "day_1"
+        },
+        {
+          "type": "Noble",
+          "name": "Erika",
+          "oneEvilAmong": [],
+          "among": []
+        },
+        {
+          "type": "Clockmaker",
+          "name": "Lav"
+        },
+        {
+          "type": "Atheist",
+          "name": "Oli"
+        },
+        {
+          "type": "Knight",
+          "name": "Callum",
+          "noDemonAmong": []
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-30-the-babel-fish-is-a-dead-giveaway-right",
+    "label": "Puzzle 30 - The Babel Fish Is A Dead Giveaway (right game)",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 30 - The Babel Fish Is A Dead Giveaway (right game)",
+      "players": ["Ben", "Owen", "Lydia", "Finn", "Louisa", "Shan"],
+      "script": ["Imp", "Spy", "Drunk", "Artist", "Atheist", "Clockmaker", "Knight", "Noble", "Seamstress"],
+      "claims": [
+        {
+          "type": "Clockmaker",
+          "name": "Ben"
+        },
+        {
+          "type": "Noble",
+          "name": "Owen",
+          "oneEvilAmong": [],
+          "among": []
+        },
+        {
+          "type": "Seamstress",
+          "name": "Lydia",
+          "timing": "night_1",
+          "among": []
+        },
+        {
+          "type": "Atheist",
+          "name": "Finn"
+        },
+        {
+          "type": "Knight",
+          "name": "Louisa",
+          "noDemonAmong": []
+        },
+        {
+          "type": "Artist",
+          "name": "Shan",
+          "timing": "day_1"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-31-no-your-other-left",
+    "label": "Puzzle 31 - No Your Other Left",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 31 - No Your Other Left",
+      "players": ["Adam", "Fraser", "Sarah", "Olivia", "You", "Aoife", "Tim"],
+      "script": [
+        "Imp",
+        "Poisoner",
+        "Spy",
+        "Baron",
+        "Scarlet Woman",
+        "Drunk",
+        "Chef",
+        "Empath",
+        "Fortune Teller",
+        "Investigator",
+        "Ravenkeeper",
+        "Recluse",
+        "Undertaker"
+      ],
+      "claims": [
+        {
+          "type": "Investigator",
+          "name": "Adam",
+          "timing": "night_1",
+          "role": "Spy",
+          "among": ["Aoife", "Fraser"]
+        },
+        {
+          "type": "Recluse",
+          "name": "Fraser"
+        },
+        {
+          "type": "Undertaker",
+          "name": "Sarah",
+          "timing": "night_2",
+          "player": "You",
+          "role": "Spy"
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Olivia",
+          "checks": []
+        },
+        {
+          "type": "Chef",
+          "name": "You"
+        },
+        {
+          "type": "Empath",
+          "name": "Aoife"
+        },
+        {
+          "type": "Ravenkeeper",
+          "name": "Tim",
+          "timing": "night_2"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-32-prepare-for-juggle-and-make-it-double",
+    "label": "Puzzle 32 - Prepare For Juggle And Make It Double",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 32 - Prepare For Juggle And Make It Double",
+      "players": ["Dan", "Fraser", "Jasmine", "Tim", "You", "Matthew", "Olivia", "Sula"],
+      "script": [
+        "Imp",
+        "Baron",
+        "Poisoner",
+        "Drunk",
+        "Dreamer",
+        "Empath",
+        "Fortune Teller",
+        "Juggler",
+        "Recluse",
+        "Saint",
+        "Undertaker"
+      ],
+      "claims": [
+        {
+          "type": "Juggler",
+          "name": "Dan",
+          "timing": "night_2",
+          "guesses": {
+            "You": "Dreamer",
+            "Fraser": "Poisoner",
+            "Tim": "Baron"
+          },
+          "correctCount": 0
+        },
+        {
+          "type": "Saint",
+          "name": "Fraser"
+        },
+        {
+          "type": "Undertaker",
+          "name": "Jasmine"
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Tim",
+          "checks": []
+        },
+        {
+          "type": "Dreamer",
+          "name": "You",
+          "timing": "night_1",
+          "player": "Sula",
+          "roles": ["Drunk", "Imp"]
+        },
+        {
+          "type": "Juggler",
+          "name": "Matthew",
+          "timing": "night_2",
+          "guesses": {
+            "You": "Imp",
+            "Dan": "Drunk",
+            "Jasmine": "Baron",
+            "Tim": "Fortune Teller"
+          },
+          "correctCount": 0
+        },
+        {
+          "type": "Recluse",
+          "name": "Olivia"
+        },
+        {
+          "type": "Empath",
+          "name": "Sula"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-33-twice-is-coincidence-thrice-is-proof",
+    "label": "Puzzle 33 - Twice Is Coincidence Thrice Is Proof",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 33 - Twice Is Coincidence Thrice Is Proof",
+      "players": ["Tom", "Oscar", "Sula", "Fraser", "You", "Olivia", "Jasmine", "Hannah"],
+      "script": [
+        "Imp",
+        "Baron",
+        "Poisoner",
+        "Spy",
+        "Scarlet Woman",
+        "Drunk",
+        "Empath",
+        "Fortune Teller",
+        "Investigator",
+        "Librarian",
+        "Ravenkeeper",
+        "Recluse",
+        "Saint",
+        "Washerwoman"
+      ],
+      "claims": [
+        {
+          "type": "Librarian",
+          "name": "Tom",
+          "timing": "night_1",
+          "role": "Saint",
+          "among": ["Olivia", "Sula"]
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Oscar",
+          "checks": []
+        },
+        {
+          "type": "Saint",
+          "name": "Sula"
+        },
+        {
+          "type": "Investigator",
+          "name": "Fraser",
+          "timing": "night_1",
+          "role": "Poisoner",
+          "among": ["You", "Jasmine"]
+        },
+        {
+          "type": "Empath",
+          "name": "You"
+        },
+        {
+          "type": "Recluse",
+          "name": "Olivia"
+        },
+        {
+          "type": "Ravenkeeper",
+          "name": "Jasmine",
+          "timing": "night_2"
+        },
+        {
+          "type": "Washerwoman",
+          "name": "Hannah",
+          "timing": "night_1",
+          "role": "Investigator",
+          "among": ["Sula", "Fraser"]
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-34-the-vortox-conjecture",
+    "label": "Puzzle 34 - The Vortox Conjecture",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 34 - The Vortox Conjecture",
+      "players": ["Sula", "Sarah", "Josh", "Aoife", "You", "Fraser", "Steph"],
+      "script": [
+        "No Dashii",
+        "Vortox",
+        "Witch",
+        "Artist",
+        "Clockmaker",
+        "Juggler",
+        "Mathematician",
+        "Sage",
+        "Seamstress",
+        "Snake Charmer"
+      ],
+      "fixedRoles": [
+        {
+          "name": "You",
+          "roles": ["Mathematician"]
+        }
+      ],
+      "claims": [
+        {
+          "type": "Clockmaker",
+          "name": "Sula"
+        },
+        {
+          "type": "Seamstress",
+          "name": "Sarah",
+          "timing": "night_1",
+          "among": []
+        },
+        {
+          "type": "Juggler",
+          "name": "Josh",
+          "timing": "night_2",
+          "guesses": {}
+        },
+        {
+          "type": "Snake Charmer",
+          "name": "Aoife"
+        },
+        {
+          "type": "Mathematician",
+          "name": "You"
+        },
+        {
+          "type": "Sage",
+          "name": "Fraser",
+          "timing": "night_2"
+        },
+        {
+          "type": "Artist",
+          "name": "Steph",
+          "timing": "day_1"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-35-typhon-season",
+    "label": "Puzzle 35 - Typhon Season",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 35 - Typhon Season",
+      "players": ["Oscar", "Olivia", "Sarah", "Jasmine", "You", "Tim", "Sula", "Fraser"],
+      "script": [
+        "Imp",
+        "Lord of Typhon",
+        "Poisoner",
+        "Spy",
+        "Drunk",
+        "Saint",
+        "Clockmaker",
+        "Empath",
+        "Fortune Teller",
+        "Investigator",
+        "Librarian",
+        "Ravenkeeper",
+        "Undertaker"
+      ],
+      "claims": [
+        {
+          "type": "Ravenkeeper",
+          "name": "Oscar",
+          "timing": "night_2"
+        },
+        {
+          "type": "Saint",
+          "name": "Olivia"
+        },
+        {
+          "type": "Investigator",
+          "name": "Sarah",
+          "among": []
+        },
+        {
+          "type": "Empath",
+          "name": "Jasmine"
+        },
+        {
+          "type": "Librarian",
+          "name": "You",
+          "among": []
+        },
+        {
+          "type": "Clockmaker",
+          "name": "Tim"
+        },
+        {
+          "type": "Undertaker",
+          "name": "Sula"
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Fraser",
+          "checks": []
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-36-what-is-your-weapon-of-choice",
+    "label": "Puzzle 36 - What Is Your Weapon Of Choice",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 36 - What Is Your Weapon Of Choice",
+      "players": ["Sula", "Olivia", "Fraser", "Oscar", "You", "Steph", "Adam", "Josh"],
+      "script": [
+        "Imp",
+        "Baron",
+        "Poisoner",
+        "Spy",
+        "Scarlet Woman",
+        "Drunk",
+        "Recluse",
+        "Saint",
+        "Empath",
+        "Fortune Teller",
+        "Investigator",
+        "Ravenkeeper",
+        "Slayer"
+      ],
+      "claims": [
+        {
+          "type": "Investigator",
+          "name": "Sula",
+          "timing": "night_1",
+          "role": "Spy",
+          "among": ["Steph", "Josh"]
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Olivia",
+          "checks": []
+        },
+        {
+          "type": "Recluse",
+          "name": "Fraser"
+        },
+        {
+          "type": "Slayer",
+          "name": "Oscar",
+          "timing": "day_1"
+        },
+        {
+          "type": "Empath",
+          "name": "You"
+        },
+        {
+          "type": "Saint",
+          "name": "Steph"
+        },
+        {
+          "type": "Slayer",
+          "name": "Adam",
+          "timing": "day_1"
+        },
+        {
+          "type": "Ravenkeeper",
+          "name": "Josh",
+          "timing": "night_2"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-37-new-super-marionette-bros-u",
+    "label": "Puzzle 37 - New Super Marionette Bros U",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 37 - New Super Marionette Bros U",
+      "players": ["Sula", "Aoife", "Fraser", "Jasmine", "You", "Matt", "Steph", "Adam"],
+      "script": [
+        "Imp",
+        "Poisoner",
+        "Spy",
+        "Scarlet Woman",
+        "Marionette",
+        "Drunk",
+        "Chef",
+        "Empath",
+        "Fortune Teller",
+        "Librarian",
+        "Ravenkeeper",
+        "Undertaker",
+        "Washerwoman"
+      ],
+      "claims": [
+        {
+          "type": "Librarian",
+          "name": "Sula",
+          "timing": "night_1",
+          "role": "Drunk",
+          "among": ["Jasmine", "Steph"]
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Aoife",
+          "checks": []
+        },
+        {
+          "type": "Empath",
+          "name": "Fraser"
+        },
+        {
+          "type": "Imp",
+          "name": "Jasmine"
+        },
+        {
+          "type": "Undertaker",
+          "name": "You"
+        },
+        {
+          "type": "Washerwoman",
+          "name": "Matt",
+          "timing": "night_1",
+          "role": "Undertaker",
+          "among": ["You", "Fraser"]
+        },
+        {
+          "type": "Chef",
+          "name": "Steph"
+        },
+        {
+          "type": "Ravenkeeper",
+          "name": "Adam",
+          "timing": "night_2"
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-38-snakes-on-a-plane",
+    "label": "Puzzle 38 - Snakes On A Plane",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 38 - Snakes On A Plane",
+      "players": ["Tim", "Fraser", "Sula", "Matt", "You", "Hannah", "Dan", "Adam"],
+      "script": [
+        "Imp",
+        "Baron",
+        "Poisoner",
+        "Spy",
+        "Scarlet Woman",
+        "Drunk",
+        "Recluse",
+        "Saint",
+        "Empath",
+        "Fortune Teller",
+        "Investigator",
+        "Ravenkeeper",
+        "Snake Charmer"
+      ],
+      "claims": [
+        {
+          "type": "Snake Charmer",
+          "name": "Tim"
+        },
+        {
+          "type": "Snake Charmer",
+          "name": "Fraser"
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Sula",
+          "checks": []
+        },
+        {
+          "type": "Saint",
+          "name": "Matt"
+        },
+        {
+          "type": "Recluse",
+          "name": "You"
+        },
+        {
+          "type": "Empath",
+          "name": "Hannah"
+        },
+        {
+          "type": "Ravenkeeper",
+          "name": "Dan",
+          "timing": "night_2"
+        },
+        {
+          "type": "Investigator",
+          "name": "Adam",
+          "timing": "night_1",
+          "role": "Baron",
+          "among": ["Tim", "Sula"]
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-39-squid-game",
+    "label": "Puzzle 39 - Squid Game",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 39 - Squid Game",
+      "players": ["Fraser", "Tom", "Sula", "Hannah", "You", "Jasmine", "Matt", "Aoife"],
+      "script": [
+        "No Dashii",
+        "Witch",
+        "Mutant",
+        "Klutz",
+        "Artist",
+        "Juggler",
+        "Mathematician",
+        "Oracle",
+        "Philosopher",
+        "Sage",
+        "Seamstress"
+      ],
+      "claims": [
+        {
+          "type": "Sage",
+          "name": "Fraser",
+          "timing": "night_2"
+        },
+        {
+          "type": "Artist",
+          "name": "Tom",
+          "timing": "day_1"
+        },
+        {
+          "type": "Mathematician",
+          "name": "Sula"
+        },
+        {
+          "type": "Klutz",
+          "name": "Hannah"
+        },
+        {
+          "type": "Oracle",
+          "name": "You"
+        },
+        {
+          "type": "Juggler",
+          "name": "Jasmine",
+          "timing": "night_2",
+          "guesses": {
+            "You": "Witch",
+            "Aoife": "Witch",
+            "Tom": "Witch",
+            "Fraser": "Sage",
+            "Hannah": "Klutz"
+          },
+          "correctCount": 3
+        },
+        {
+          "type": "Philosopher",
+          "name": "Matt"
+        },
+        {
+          "type": "Seamstress",
+          "name": "Aoife",
+          "timing": "night_1",
+          "among": ["Matt", "Hannah"],
+          "aligned": false
+        }
+      ]
+    }
+  },
+  {
+    "id": "puzzle-40-nine-lives",
+    "label": "Puzzle 40 - Nine Lives",
+    "doc": {
+      "version": 1,
+      "title": "Puzzle 40 - Nine Lives",
+      "players": ["Hannah", "Fraser", "Tim", "Josh", "Adam", "You", "Matthew", "Steph", "Jasmine"],
+      "script": [
+        "Imp",
+        "Baron",
+        "Poisoner",
+        "Spy",
+        "Scarlet Woman",
+        "Butler",
+        "Drunk",
+        "Recluse",
+        "Saint",
+        "Empath",
+        "Fortune Teller",
+        "Investigator",
+        "Librarian",
+        "Slayer",
+        "Washerwoman"
+      ],
+      "claims": [
+        {
+          "type": "Saint",
+          "name": "Hannah"
+        },
+        {
+          "type": "Librarian",
+          "name": "Fraser",
+          "timing": "night_1",
+          "role": "Drunk",
+          "among": ["Jasmine", "Hannah"]
+        },
+        {
+          "type": "Empath",
+          "name": "Tim"
+        },
+        {
+          "type": "Butler",
+          "name": "Josh"
+        },
+        {
+          "type": "Slayer",
+          "name": "Adam",
+          "timing": "day_1"
+        },
+        {
+          "type": "Investigator",
+          "name": "You",
+          "timing": "night_1",
+          "role": "Scarlet Woman",
+          "among": ["Steph", "Fraser"]
+        },
+        {
+          "type": "FortuneTeller",
+          "name": "Matthew",
+          "checks": []
+        },
+        {
+          "type": "Recluse",
+          "name": "Steph"
+        },
+        {
+          "type": "Washerwoman",
+          "name": "Jasmine",
+          "timing": "night_1",
+          "role": "Empath",
+          "among": ["Tim", "Adam"]
+        }
+      ]
+    }
+  }
+]

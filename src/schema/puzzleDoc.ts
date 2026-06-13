@@ -59,20 +59,20 @@ export interface LibrarianClaim extends BaseClaim {
 
 export interface WasherwomanClaim extends BaseClaim {
   readonly type: "Washerwoman";
-  readonly role: string;
+  readonly role?: string;
   readonly among: readonly string[];
   readonly registers?: boolean;
 }
 
 export interface ChefClaim extends BaseClaim {
   readonly type: "Chef";
-  readonly count: number;
+  readonly count?: number;
   readonly registers?: boolean;
 }
 
 export interface EmpathClaim extends BaseClaim {
   readonly type: "Empath";
-  readonly count: number;
+  readonly count?: number;
   readonly player?: string;
 }
 
@@ -92,8 +92,8 @@ export interface FortuneTellerClaim extends BaseClaim {
 
 export interface UndertakerClaim extends BaseClaim {
   readonly type: "Undertaker";
-  readonly player: string;
-  readonly role: string;
+  readonly player?: string;
+  readonly role?: string;
 }
 
 export interface NobleClaim extends BaseClaim {
@@ -105,7 +105,7 @@ export interface NobleClaim extends BaseClaim {
 
 export interface StewardClaim extends BaseClaim {
   readonly type: "Steward";
-  readonly goodPlayer: string;
+  readonly goodPlayer?: string;
 }
 
 export interface KnightClaim extends BaseClaim {
@@ -115,8 +115,8 @@ export interface KnightClaim extends BaseClaim {
 
 export interface SeamstressClaim extends BaseClaim {
   readonly type: "Seamstress";
-  readonly among: readonly [string, string];
-  readonly aligned: boolean;
+  readonly among: readonly string[];
+  readonly aligned?: boolean;
 }
 
 export interface JugglerClaim extends BaseClaim {
@@ -127,18 +127,18 @@ export interface JugglerClaim extends BaseClaim {
 
 export interface DreamerClaim extends BaseClaim {
   readonly type: "Dreamer";
-  readonly player: string;
+  readonly player?: string;
   readonly roles: readonly string[];
 }
 
 export interface ShugenjaClaim extends BaseClaim {
   readonly type: "Shugenja";
-  readonly evilDirection: "clockwise" | "anticlockwise";
+  readonly evilDirection?: "clockwise" | "anticlockwise";
 }
 
 export interface ClockmakerClaim extends BaseClaim {
   readonly type: "Clockmaker";
-  readonly demonNextToMinion: boolean;
+  readonly demonNextToMinion?: boolean;
 }
 
 export interface VillageIdiotCheckDoc {
@@ -162,35 +162,67 @@ export interface SavantStatementDoc {
 
 export interface SavantClaim extends BaseClaim {
   readonly type: "Savant";
-  readonly statements: readonly [SavantStatementDoc];
+  readonly statements: readonly SavantStatementDoc[];
 }
+
+export const BARE_CLAIM_TYPES = [
+  "Acrobat",
+  "Alsaahir",
+  "Artist",
+  "Atheist",
+  "Baron",
+  "Butler",
+  "Cerenovus",
+  "Chambermaid",
+  "Courtier",
+  "Damsel",
+  "Drunk",
+  "Evil Twin",
+  "Gambler",
+  "Goblin",
+  "Gossip",
+  "Imp",
+  "Klutz",
+  "Legionary",
+  "Leviathan",
+  "Lord of Typhon",
+  "Lunatic",
+  "Marionette",
+  "Mathematician",
+  "Mayor",
+  "Mutant",
+  "Nightwatchman",
+  "No Dashii",
+  "Oracle",
+  "Philosopher",
+  "Pit-Hag",
+  "Po",
+  "Poisoner",
+  "Pukka",
+  "Puzzlemaster",
+  "Ravenkeeper",
+  "Recluse",
+  "Sage",
+  "Saint",
+  "Scarlet Woman",
+  "Slayer",
+  "Snake Charmer",
+  "Soldier",
+  "Spy",
+  "Sweetheart",
+  "Virgin",
+  "Vortox",
+  "Witch",
+  "Xaan",
+] as const;
+
+export type BareClaimType = (typeof BARE_CLAIM_TYPES)[number];
 
 export interface BareClaim extends BaseClaim {
-  readonly type:
-    | "Recluse"
-    | "Mayor"
-    | "Soldier"
-    | "Saint"
-    | "Acrobat"
-    | "Slayer"
-    | "Virgin"
-    | "Mathematician"
-    | "Sage"
-    | "Gossip"
-    | "Gambler"
-    | "Atheist"
-    | "Alsaahir"
-    | "Artist"
-    | "Klutz"
-    | "Puzzlemaster"
-    | "Mutant"
-    | "Sweetheart"
-    | "Butler"
-    | "Drunk"
-    | "Lunatic";
+  readonly type: BareClaimType;
 }
 
-export const SUPPORTED_CLAIM_TYPES = new Set<Claim["type"]>([
+export const STRUCTURED_CLAIM_TYPES = [
   "Investigator",
   "Librarian",
   "Washerwoman",
@@ -209,25 +241,6 @@ export const SUPPORTED_CLAIM_TYPES = new Set<Claim["type"]>([
   "VillageIdiot",
   "Balloonist",
   "Savant",
-  "Recluse",
-  "Mayor",
-  "Soldier",
-  "Saint",
-  "Acrobat",
-  "Slayer",
-  "Virgin",
-  "Mathematician",
-  "Sage",
-  "Gossip",
-  "Gambler",
-  "Atheist",
-  "Alsaahir",
-  "Artist",
-  "Klutz",
-  "Puzzlemaster",
-  "Mutant",
-  "Sweetheart",
-  "Butler",
-  "Drunk",
-  "Lunatic",
-]);
+] as const satisfies readonly Claim["type"][];
+
+export const SUPPORTED_CLAIM_TYPES = new Set<Claim["type"]>([...STRUCTURED_CLAIM_TYPES, ...BARE_CLAIM_TYPES]);

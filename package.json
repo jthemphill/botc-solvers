@@ -11,6 +11,7 @@
     "test:e2e": "playwright test",
     "playwright:install": "playwright install chromium",
     "typecheck": "bunx tsc --build tsconfig.json --pretty false",
+    "generate:puzzle-catalog": "bun run scripts/generate-puzzle-catalog.ts",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
