@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState, type CSSProperties, type Dispatch, type DragEvent } from "react";
+import { useEffect, useState, type CSSProperties, type Dispatch, type DragEvent } from "react";
 import { CharacterType } from "../model/core";
 import { ROLE_CLASSES } from "../model/roleRegistry";
 import { roleEmoji, roleEmojiLabel } from "../model/roleEmoji";
 import type { Claim, PuzzleDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
-import { ALL_ROLE_NAMES, protectedScriptRoles } from "../state/scriptRoles";
+import { isHiddenScriptRole } from "../state/scriptRoles";
 import { CLAIM_TYPES, ClaimBody, makeEmptyClaim } from "./ClaimsEditor";
 
 interface Props {
@@ -197,8 +197,6 @@ export function SelectedPlayerWorkbench({ doc, dispatch, selectedIndex, onSelect
 
   return (
     <div className="draw-workbench">
-      <RolePalette doc={doc} dispatch={dispatch} />
-
       <section className="panel selected-player-panel">
         {selectedName === undefined ? (
           <p>Add players to start drawing the puzzle.</p>
@@ -279,73 +277,8 @@ export function SelectedPlayerWorkbench({ doc, dispatch, selectedIndex, onSelect
   );
 }
 
-function RolePalette({ doc, dispatch }: Props) {
-  const protectedRoles = useMemo(() => new Set(protectedScriptRoles(doc)), [doc]);
-  const paletteRoles = useMemo(() => {
-    const preferred = [
-      "Librarian",
-      "Investigator",
-      "Empath",
-      "Chef",
-      "Ravenkeeper",
-      "Imp",
-      "Poisoner",
-      "Scarlet Woman",
-      "Baron",
-      "Drunk",
-    ];
-    return uniqueRoleList([...doc.script, ...preferred, ...ALL_ROLE_NAMES]).slice(0, 12);
-  }, [doc.script]);
-
-  const toggleRole = (role: string) => {
-    const selected = doc.script.includes(role);
-    if (selected && protectedRoles.has(role)) return;
-    dispatch({
-      type: "setScript",
-      script: selected ? doc.script.filter((entry) => entry !== role) : [...doc.script, role],
-    });
-  };
-
-  return (
-    <section className="panel role-palette-panel">
-      <header className="panel-heading-row">
-        <div>
-          <h3>Role Palette</h3>
-          <span>Click stamps to add or remove script roles.</span>
-        </div>
-      </header>
-      <div className="role-palette">
-        {paletteRoles.map((role) => {
-          const selected = doc.script.includes(role);
-          const locked = selected && protectedRoles.has(role);
-          return (
-            <button
-              key={role}
-              type="button"
-              className={`role-stamp${selected ? " selected" : ""}`}
-              onClick={() => toggleRole(role)}
-              disabled={locked}
-              title={locked ? "Used by a claim or fixed role" : role}
-            >
-              <span aria-hidden="true">{roleEmoji(role) ?? "?"}</span>
-              <small>{role}</small>
-            </button>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
 function HiddenRolesTray({ roles }: { roles: readonly string[] }) {
-  const hiddenRoles = roles.filter((role) => {
-    const characterType = ROLE_CLASSES.get(role)?.characterType;
-    return (
-      characterType === CharacterType.Outsider ||
-      characterType === CharacterType.Minion ||
-      characterType === CharacterType.Demon
-    );
-  });
+  const hiddenRoles = roles.filter(isHiddenScriptRole);
 
   return (
     <section className="panel hidden-role-tray">
@@ -480,12 +413,4 @@ function countScriptRoles(script: readonly string[]): Record<CharacterType, numb
     if (characterType !== undefined) counts[characterType] += 1;
   }
   return counts;
-}
-
-function uniqueRoleList(roles: readonly string[]): string[] {
-  const result: string[] = [];
-  for (const role of roles) {
-    if (ROLE_CLASSES.has(role) && !result.includes(role)) result.push(role);
-  }
-  return result;
 }

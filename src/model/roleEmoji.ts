@@ -13,6 +13,7 @@ const ROLE_EMOJI_ENTRIES = [
   ["Chef", "🧑‍🍳"],
   ["Clockmaker", "🕰️"],
   ["Courtier", "🍷"],
+  ["Damsel", "🕯️"],
   ["Dreamer", "💭"],
   ["Drunk", "🍺"],
   ["Empath", "💗"],

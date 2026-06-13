@@ -559,6 +559,10 @@ summary {
   gap: 0.65rem;
 }
 
+.script-role-palette {
+  grid-template-columns: repeat(auto-fit, minmax(5.6rem, 7rem));
+}
+
 .role-stamp {
   display: grid;
   min-height: 5.8rem;
@@ -592,6 +596,51 @@ summary {
   background: radial-gradient(circle at 38% 28%, rgba(255, 255, 255, 0.95), rgba(221, 239, 248, 0.9) 62%, #d8edf7);
 }
 
+.role-stamp.locked {
+  opacity: 0.64;
+}
+
+.role-stamp em {
+  color: var(--muted-ink);
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 760;
+  line-height: 1;
+}
+
+.hidden-role-search {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) auto;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.hidden-role-search input {
+  min-width: 0;
+  width: 100%;
+}
+
+.hidden-role-results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.hidden-role-result {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.hidden-role-result span {
+  line-height: 1;
+}
+
+.palette-empty {
+  color: var(--muted-ink);
+}
+
 .selected-player-grid {
   grid-template-columns: minmax(5.2rem, 0.28fr) minmax(0, 1fr);
 }
@@ -602,8 +651,7 @@ summary {
   gap: 0.5rem;
 }
 
-.selected-claims,
-.hidden-role-groups {
+.selected-claims {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -654,19 +702,11 @@ summary {
   gap: 0.45rem 0.75rem;
 }
 
-.script-grid.compact {
-  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
-}
-
 .script-grid label,
 .field-grid label {
   display: inline-flex;
   gap: 0.35rem;
   align-items: center;
-}
-
-.protected-role {
-  opacity: 0.7;
 }
 
 .hidden-role-slots {
@@ -922,5 +962,9 @@ summary {
 
   .role-palette {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .hidden-role-search {
+    grid-template-columns: 1fr;
   }
 }
