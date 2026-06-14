@@ -6,6 +6,12 @@ test("loads puzzle 34 with structured role clues", async ({ page }) => {
   await page.getByLabel("Load example puzzle").selectOption("puzzle-34-the-vortox-conjecture");
 
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 34 - The Vortox Conjecture");
+  const setupSummary = page.getByLabel("Puzzle setup summary");
+  await expect(setupSummary.getByLabel("5 Townsfolk")).toBeVisible();
+  await expect(setupSummary.getByLabel("0 Outsider")).toBeVisible();
+  await expect(setupSummary.getByLabel("1 Minion")).toBeVisible();
+  await expect(setupSummary.getByLabel("1 Demon")).toBeVisible();
+  await expect(setupSummary).toContainText("7 players · 1 demon · 1 minion · 0 outsider");
   await expect(page.getByRole("button", { name: /Demon 3 steps from Minion/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Steph and Aoife are same/ })).toBeVisible();
   await expect(

@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties, type Dispatch, type DragEvent 
 import { CharacterType } from "../model/core";
 import { ROLE_CLASSES } from "../model/roleRegistry";
 import { roleEmoji, roleEmojiLabel } from "../model/roleEmoji";
+import { standardSetupCounts } from "../model/setup";
 import type { Claim, PuzzleDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
 import { isHiddenScriptRole } from "../state/scriptRoles";
@@ -35,7 +36,7 @@ export function SeatingChartEditor({ doc, dispatch }: Props) {
 export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedProps) {
   const players = doc.players;
   const selectedName = players[selectedIndex];
-  const roleCounts = countScriptRoles(doc.script);
+  const setupCounts = countSetupRoles(doc);
   const [draggedIndex, setDraggedIndex] = useState<number | undefined>(undefined);
 
   useEffect(() => {
@@ -154,16 +155,16 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
           <span>Use the workbench to add role stamps and claims.</span>
         </div>
         <div className="rules-summary">
-          <h3>Rules</h3>
+          <h3>Setup</h3>
           <div className="rule-token-row">
-            <RuleToken label="Townsfolk" count={roleCounts.townsfolk} />
-            <RuleToken label="Outsider" count={roleCounts.outsider} />
-            <RuleToken label="Minion" count={roleCounts.minion} tone="evil" />
-            <RuleToken label="Demon" count={roleCounts.demon} tone="evil" />
+            <RuleToken label="Townsfolk" count={setupCounts.townsfolk} />
+            <RuleToken label="Outsider" count={setupCounts.outsider} />
+            <RuleToken label="Minion" count={setupCounts.minion} tone="evil" />
+            <RuleToken label="Demon" count={setupCounts.demon} tone="evil" />
           </div>
         </div>
         <div className="sheet-footnote">
-          {players.length} players · {roleCounts.demon} demon · {roleCounts.minion} minion · {roleCounts.outsider}{" "}
+          {players.length} players · {setupCounts.demon} demon · {setupCounts.minion} minion · {setupCounts.outsider}{" "}
           outsider
         </div>
       </div>
@@ -307,7 +308,7 @@ function HiddenRolesTray({ roles }: { roles: readonly string[] }) {
 
 function RuleToken({ label, count, tone = "good" }: { label: string; count: number; tone?: "good" | "evil" }) {
   return (
-    <div className={`rule-token ${tone}`}>
+    <div className={`rule-token ${tone}`} aria-label={`${count} ${label}`}>
       <strong>{count}</strong>
       <span>{label}</span>
     </div>
@@ -431,6 +432,15 @@ function timingLabel(timing: string): string {
   const [, period, number] = match;
   if (period === undefined || number === undefined) return timing;
   return `${period[0]?.toUpperCase()}${period.slice(1)} ${number}`;
+}
+
+function countSetupRoles(doc: PuzzleDoc): Record<CharacterType, number> {
+  if (doc.setup === "none") return countScriptRoles(doc.script);
+  try {
+    return { ...standardSetupCounts(doc.players.length) };
+  } catch {
+    return countScriptRoles(doc.script);
+  }
 }
 
 function countScriptRoles(script: readonly string[]): Record<CharacterType, number> {
