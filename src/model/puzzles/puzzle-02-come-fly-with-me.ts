@@ -27,7 +27,7 @@ export const PLAYERS = [
     guesses: { Steph: Knight, Sarah: Leviathan, Anna: Goblin, Sula: Goblin, You: Seamstress },
     correctCount: 2,
   }),
-  new Clockmaker({ name: "Anna", demonNextToMinion: true }),
+  new Clockmaker({ name: "Anna", distance: 1 }),
   new Balloonist({
     name: "Sula",
     differentCharacterTypePairs: [

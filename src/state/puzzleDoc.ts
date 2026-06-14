@@ -59,6 +59,10 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
       return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
     case "Dreamer":
       return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
+    case "Sage":
+      return { ...claim, name, demonAmong: claim.demonAmong ? remapArr(claim.demonAmong) : claim.demonAmong };
+    case "Snake Charmer":
+      return { ...claim, name, checked: claim.checked ? remap(claim.checked) : claim.checked };
     case "Steward":
       return { ...claim, name, goodPlayer: claim.goodPlayer ? remap(claim.goodPlayer) : claim.goodPlayer };
     case "Seamstress":
@@ -124,6 +128,10 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
     case "Dreamer":
     case "Undertaker":
       return claim.player === name ? { ...claim, player: undefined } : claim;
+    case "Sage":
+      return { ...claim, demonAmong: stripArr(claim.demonAmong) };
+    case "Snake Charmer":
+      return claim.checked === name ? { ...claim, checked: undefined } : claim;
     case "Balloonist":
       return {
         ...claim,

@@ -37,5 +37,6 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
 }
 
 function usesMalfunctionCount(claim: PuzzleDoc["claims"][number]): boolean {
+  if (claim.type === "Mathematician" && (claim.malfunctions?.length ?? 0) > 0) return true;
   return claim.info?.some((info) => info.expression?.includes("malfunctions(")) ?? false;
 }

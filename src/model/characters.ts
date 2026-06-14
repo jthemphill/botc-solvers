@@ -30,6 +30,7 @@ export interface InfoClaim {
 export interface RoleBaseOptions {
   readonly name: string;
   readonly timing?: Timing;
+  readonly vortoxAffected?: boolean;
   readonly infoClaims?: readonly InfoClaimBuilder[];
 }
 
@@ -148,6 +149,7 @@ export abstract class Role {
   readonly maxCopies?: number;
   readonly name: string;
   readonly timing?: Timing;
+  readonly vortoxAffected?: boolean;
   readonly infoClaims: readonly InfoClaim[];
 
   constructor(nameOrOptions: string | RoleBaseOptions, options: TimedOptions = {}) {
@@ -160,6 +162,7 @@ export abstract class Role {
     this.characterType = cls.characterType;
     this.maxCopies = cls.maxCopies;
     this.timing = resolvedTiming;
+    this.vortoxAffected = typeof nameOrOptions === "string" ? undefined : nameOrOptions.vortoxAffected;
     this.infoClaims = typeof nameOrOptions === "string" ? [] : (nameOrOptions.infoClaims ?? []).map(normalizeInfoClaim);
   }
 
@@ -265,7 +268,7 @@ export abstract class Role {
     this.applyInfoClaimBuilders(
       game,
       cls,
-      learned === undefined ? this.infoClaims : [{ learned }, ...this.infoClaims],
+      learned === undefined ? this.infoClaims : [{ learned, vortoxAffected: this.vortoxAffected }, ...this.infoClaims],
       options,
     );
   }
@@ -471,6 +474,34 @@ export class Mathematician extends Role {
   static readonly roleName = "Mathematician";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly malfunctions: readonly { readonly timing: Timing; readonly count: number }[];
+  constructor(
+    options: RoleBaseOptions & {
+      readonly malfunctions?: readonly { readonly timing: Timing; readonly count: number }[];
+    },
+  ) {
+    super(options);
+    this.malfunctions = options.malfunctions ?? [];
+  }
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Mathematician, options);
+    this.applyInfoClaimBuilders(
+      game,
+      Mathematician,
+      this.malfunctions.map((entry) => ({
+        timing: entry.timing,
+        vortoxAffected: this.vortoxAffected,
+        learned: (model: BOTCModel) =>
+          model.malfunctionCountAt(
+            entry.timing,
+            entry.count,
+            claimName(this.name, Mathematician, `${entry.timing}_${entry.count}_malfunctions`),
+          ),
+      })),
+      options,
+    );
+    this.applyInfoClaimBuilders(game, Mathematician, this.infoClaims, options);
+  }
 }
 
 export class Gossip extends Role {
@@ -489,12 +520,37 @@ export class Sage extends Role {
   static readonly roleName = "Sage";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly demonAmong: readonly string[];
+  constructor(options: RoleBaseOptions & { readonly demonAmong?: readonly string[] }) {
+    super(options);
+    this.demonAmong = options.demonAmong ?? [];
+  }
+  override learnedInfo(game: BOTCModel): BoolLike | undefined {
+    return this.demonAmong.length === 0
+      ? undefined
+      : game.anyOf(
+          this.demonAmong.map((player) => game.isDemon(player)),
+          claimName(this.name, Sage, "demon_among"),
+        );
+  }
 }
 
 export class SnakeCharmer extends Role {
   static readonly roleName = "Snake Charmer";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly checked?: string;
+  readonly demon?: boolean;
+  constructor(options: RoleBaseOptions & { readonly checked?: string; readonly demon?: boolean }) {
+    super(options);
+    this.checked = options.checked;
+    this.demon = options.demon;
+  }
+  override learnedInfo(game: BOTCModel): BoolLike | undefined {
+    if (this.checked === undefined || this.demon === undefined) return undefined;
+    const checkedIsDemon = game.isDemon(this.checked);
+    return this.demon ? checkedIsDemon : game.not(checkedIsDemon, claimName(this.name, SnakeCharmer, "not_demon"));
+  }
 }
 export class Soldier extends Role {
   static readonly roleName = "Soldier";
@@ -575,38 +631,55 @@ export class Clockmaker extends Role {
   static readonly roleName = "Clockmaker";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
-  readonly demonNextToMinion?: boolean;
+  readonly distance?: number;
   constructor(
     options: RoleBaseOptions & {
-      readonly demonNextToMinion?: boolean;
+      readonly distance?: number;
     },
   ) {
     super(options);
-    this.demonNextToMinion = options.demonNextToMinion;
+    this.distance = options.distance;
   }
   static learnsDemonNextToMinion(game: BOTCModel, name: string): BoolVar {
+    return Clockmaker.learnsDemonMinionDistance(game, 1, name);
+  }
+  static learnsDemonMinionDistance(game: BOTCModel, distance: number, name: string): BoolVar {
     return game.anyOf(
-      [
-        ...game
-          .adjacentPairs()
-          .map(([left, right]) =>
-            game.allOf([game.isDemon(left), game.isMinion(right)], `${left}_${right}_demon_minion_neighbors`),
-          ),
-        ...game
-          .adjacentPairs()
-          .map(([left, right]) =>
-            game.allOf([game.isMinion(left), game.isDemon(right)], `${left}_${right}_minion_demon_neighbors`),
-          ),
-      ],
+      game.players.map((demon, demonIndex) => {
+        const minionsAtDistance = game.players.flatMap((minion, minionIndex) =>
+          Clockmaker.seatingDistance(game.players.length, demonIndex, minionIndex) === distance
+            ? [game.isMinion(minion)]
+            : [],
+        );
+        const closerSeatsAreNotMinions = game.players.flatMap((minion, minionIndex) =>
+          Clockmaker.seatingDistance(game.players.length, demonIndex, minionIndex) < distance
+            ? [game.isMinion(minion).not()]
+            : [],
+        );
+        return game.allOf(
+          [
+            game.isDemon(demon),
+            game.anyOf(minionsAtDistance, `${demon}_minion_${distance}_steps_away`),
+            ...closerSeatsAreNotMinions,
+          ],
+          `${demon}_nearest_minion_${distance}_steps_away`,
+        );
+      }),
       name,
     );
   }
+  private static seatingDistance(playerCount: number, leftIndex: number, rightIndex: number): number {
+    const clockwise = (rightIndex - leftIndex + playerCount) % playerCount;
+    return Math.min(clockwise, playerCount - clockwise);
+  }
   override learnedInfo(game: BOTCModel): BoolLike | undefined {
-    if (this.demonNextToMinion === undefined) return undefined;
-    const claim = Clockmaker.learnsDemonNextToMinion(game, claimName(this.name, Clockmaker, "demon_next_to_minion"));
-    return this.demonNextToMinion
-      ? claim
-      : game.not(claim, claimName(this.name, Clockmaker, "demon_not_next_to_minion"));
+    if (this.distance !== undefined)
+      return Clockmaker.learnsDemonMinionDistance(
+        game,
+        this.distance,
+        claimName(this.name, Clockmaker, `demon_${this.distance}_from_minion`),
+      );
+    return undefined;
   }
 }
 
@@ -740,7 +813,7 @@ export class FortuneTeller extends Role {
       this.applyInfoClaimBuilders(
         game,
         FortuneTeller,
-        [{ learned, timing: check.timing ?? night(index + 1) }],
+        [{ learned, timing: check.timing ?? night(index + 1), vortoxAffected: this.vortoxAffected }],
         options,
       );
     });

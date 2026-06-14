@@ -9,10 +9,13 @@ import {
   Juggler,
   Knight,
   Librarian,
+  Mathematician,
   Noble,
+  Sage,
   Savant,
   Seamstress,
   Shugenja,
+  SnakeCharmer,
   Steward,
   Undertaker,
   VillageIdiot,
@@ -32,7 +35,12 @@ function timingOf(t: string | undefined): Timing | undefined {
 
 export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Role {
   const timing = timingOf(claim.timing);
-  const base = { name: claim.name, timing, infoClaims: customInfoClaims(claim, ctx) };
+  const base = {
+    name: claim.name,
+    timing,
+    vortoxAffected: claim.vortoxAffected,
+    infoClaims: customInfoClaims(claim, ctx),
+  };
 
   switch (claim.type) {
     case "Investigator":
@@ -102,7 +110,19 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
     case "Shugenja":
       return new Shugenja({ ...base, evilDirection: claim.evilDirection });
     case "Clockmaker":
-      return new Clockmaker({ ...base, demonNextToMinion: claim.demonNextToMinion });
+      return new Clockmaker({ ...base, distance: claim.distance });
+    case "Mathematician":
+      return new Mathematician({
+        ...base,
+        malfunctions: claim.malfunctions?.map((entry) => ({
+          timing: timingOf(entry.timing) as Timing,
+          count: entry.count,
+        })),
+      });
+    case "Sage":
+      return new Sage({ ...base, demonAmong: claim.demonAmong });
+    case "Snake Charmer":
+      return new SnakeCharmer({ ...base, checked: claim.checked, demon: claim.demon });
     case "VillageIdiot":
       return new VillageIdiot({
         ...base,

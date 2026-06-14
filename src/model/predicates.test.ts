@@ -4,7 +4,9 @@ import { CharacterType } from "./core";
 import { formatSolution, forcedRole } from "./display";
 import { BOTCModel } from "./model";
 import {
+  Baron,
   Chef,
+  Clockmaker,
   Drunk,
   Empath,
   FortuneTeller,
@@ -218,6 +220,31 @@ describe("predicates and helpers", () => {
     game.addTruth(Chef.learnsCount(game, 1, "chef"));
     game.addTruth(Empath.learnsCount(game, "D", 1, "empath"));
     expect(await game.solveAll()).toHaveLength(1);
+
+    const clockmakerScript = script(Imp, ScarletWoman, Baron, Clockmaker, Chef);
+    const nearestTwo = new BOTCModel(["Demon", "Townsfolk", "Minion A", "Minion B", "Clockmaker"], {
+      characters: clockmakerScript,
+      backend,
+    });
+    nearestTwo.fixActual("Demon", Imp);
+    nearestTwo.fixActual("Townsfolk", Chef);
+    nearestTwo.fixActual("Minion A", ScarletWoman);
+    nearestTwo.fixActual("Minion B", Baron);
+    nearestTwo.fixActual("Clockmaker", Clockmaker);
+    nearestTwo.addTruth(Clockmaker.learnsDemonMinionDistance(nearestTwo, 2, "clockmaker_two"));
+    expect(await nearestTwo.solveAll({ limit: 1 })).toHaveLength(1);
+
+    const closerMinion = new BOTCModel(["Demon", "Minion A", "Townsfolk", "Minion B", "Clockmaker"], {
+      characters: clockmakerScript,
+      backend,
+    });
+    closerMinion.fixActual("Demon", Imp);
+    closerMinion.fixActual("Minion A", ScarletWoman);
+    closerMinion.fixActual("Townsfolk", Chef);
+    closerMinion.fixActual("Minion B", Baron);
+    closerMinion.fixActual("Clockmaker", Clockmaker);
+    closerMinion.addTruth(Clockmaker.learnsDemonMinionDistance(closerMinion, 2, "clockmaker_two"));
+    expect(await closerMinion.solveAll({ limit: 1 })).toEqual([]);
 
     const claims = [
       new Savant({

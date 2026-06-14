@@ -343,7 +343,7 @@ function calloutPosition(index: number, count: number): CSSProperties {
 
 function claimSummary(claim: Claim): string {
   const customInfo = (claim.info ?? [])
-    .map((info) => info.text?.trim() || info.expression?.trim())
+    .map((info) => info.expression?.trim())
     .filter((text): text is string => Boolean(text));
   if (customInfo.length > 0) return customInfo.join("; ");
 
@@ -376,7 +376,7 @@ function claimSummary(claim: Claim): string {
     case "Knight":
       return `${formatList(claim.noDemonAmong)} not Demon`;
     case "Seamstress":
-      return `${formatList(claim.among)} are ${claim.aligned ? "same" : "different"}`;
+      return `${formatPair(claim.among)} are ${claim.aligned ? "same" : "different"}`;
     case "Juggler":
       return `${Object.keys(claim.guesses).length} guesses, ${claim.correctCount ?? "?"} correct`;
     case "Dreamer":
@@ -384,7 +384,19 @@ function claimSummary(claim: Claim): string {
     case "Shugenja":
       return `Evil is ${claim.evilDirection}`;
     case "Clockmaker":
-      return claim.demonNextToMinion ? "Demon next to Minion" : "Demon not next to Minion";
+      return claim.distance === undefined
+        ? "No Clockmaker number"
+        : `Demon ${claim.distance} step${claim.distance === 1 ? "" : "s"} from Minion`;
+    case "Mathematician":
+      return (claim.malfunctions ?? []).length === 0
+        ? "No malfunction counts"
+        : (claim.malfunctions ?? [])
+            .map((entry) => `${entry.count} malfunction${entry.count === 1 ? "" : "s"} (${timingLabel(entry.timing)})`)
+            .join("; ");
+    case "Sage":
+      return `${formatList(claim.demonAmong ?? [])} is Demon`;
+    case "Snake Charmer":
+      return claim.checked ? `${claim.checked} is ${claim.demon ? "" : "not "}Demon` : "No check yet";
     case "VillageIdiot": {
       const check = claim.checks[0];
       if (check === undefined) return "No checks yet";
@@ -405,6 +417,20 @@ function formatList(values: readonly string[]): string {
   if (visible.length === 1) return visible[0] as string;
   if (visible.length === 2) return `${visible[0]} or ${visible[1]}`;
   return `${visible.slice(0, -1).join(", ")}, or ${visible[visible.length - 1]}`;
+}
+
+function formatPair(values: readonly string[]): string {
+  const visible = values.filter(Boolean);
+  if (visible.length === 2) return `${visible[0]} and ${visible[1]}`;
+  return formatList(values);
+}
+
+function timingLabel(timing: string): string {
+  const match = /^(night|day)_(\d+)$/.exec(timing);
+  if (match === null) return timing;
+  const [, period, number] = match;
+  if (period === undefined || number === undefined) return timing;
+  return `${period[0]?.toUpperCase()}${period.slice(1)} ${number}`;
 }
 
 function countScriptRoles(script: readonly string[]): Record<CharacterType, number> {

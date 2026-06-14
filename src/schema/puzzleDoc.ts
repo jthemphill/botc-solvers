@@ -38,6 +38,9 @@ export type Claim =
   | DreamerClaim
   | ShugenjaClaim
   | ClockmakerClaim
+  | MathematicianClaim
+  | SageClaim
+  | SnakeCharmerClaim
   | VillageIdiotClaim
   | BalloonistClaim
   | SavantClaim
@@ -46,12 +49,12 @@ export type Claim =
 interface BaseClaim {
   readonly name: string;
   readonly timing?: string;
+  readonly vortoxAffected?: boolean;
   readonly info?: readonly CustomInfoStatementDoc[];
 }
 
 export interface CustomInfoStatementDoc {
   readonly timing?: string;
-  readonly text?: string;
   readonly expression?: string;
   readonly vortoxAffected?: boolean;
 }
@@ -152,7 +155,28 @@ export interface ShugenjaClaim extends BaseClaim {
 
 export interface ClockmakerClaim extends BaseClaim {
   readonly type: "Clockmaker";
-  readonly demonNextToMinion?: boolean;
+  readonly distance?: number;
+}
+
+export interface MathematicianCountDoc {
+  readonly timing: string;
+  readonly count: number;
+}
+
+export interface MathematicianClaim extends BaseClaim {
+  readonly type: "Mathematician";
+  readonly malfunctions?: readonly MathematicianCountDoc[];
+}
+
+export interface SageClaim extends BaseClaim {
+  readonly type: "Sage";
+  readonly demonAmong?: readonly string[];
+}
+
+export interface SnakeCharmerClaim extends BaseClaim {
+  readonly type: "Snake Charmer";
+  readonly checked?: string;
+  readonly demon?: boolean;
 }
 
 export interface VillageIdiotCheckDoc {
@@ -202,7 +226,6 @@ export const BARE_CLAIM_TYPES = [
   "Lord of Typhon",
   "Lunatic",
   "Marionette",
-  "Mathematician",
   "Mayor",
   "Mutant",
   "Nightwatchman",
@@ -216,11 +239,9 @@ export const BARE_CLAIM_TYPES = [
   "Puzzlemaster",
   "Ravenkeeper",
   "Recluse",
-  "Sage",
   "Saint",
   "Scarlet Woman",
   "Slayer",
-  "Snake Charmer",
   "Soldier",
   "Spy",
   "Sweetheart",
@@ -252,6 +273,9 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Dreamer",
   "Shugenja",
   "Clockmaker",
+  "Mathematician",
+  "Sage",
+  "Snake Charmer",
   "VillageIdiot",
   "Balloonist",
   "Savant",

@@ -80,7 +80,6 @@ describe("validatePuzzleDoc", () => {
           info: [
             {
               timing: "night_1",
-              text: "A is the Imp",
               expression: "A.role == Imp",
               vortoxAffected: true,
             },
@@ -94,10 +93,30 @@ describe("validatePuzzleDoc", () => {
     expect(doc.claims[0]?.info).toEqual([
       {
         timing: "night_1",
-        text: "A is the Imp",
         expression: "A.role == Imp",
         vortoxAffected: true,
       },
+    ]);
+  });
+
+  test("accepts standard role info fields", () => {
+    const doc = validatePuzzleDoc({
+      ...baseDoc,
+      players: ["You", "A", "B"],
+      script: ["Clockmaker", "Mathematician", "Sage", "Snake Charmer"],
+      claims: [
+        { type: "Clockmaker", name: "You", distance: 3, vortoxAffected: true },
+        { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
+        { type: "Sage", name: "You", demonAmong: ["A", "B"] },
+        { type: "Snake Charmer", name: "You", checked: "A", demon: false },
+      ],
+    });
+
+    expect(doc.claims).toEqual([
+      { type: "Clockmaker", name: "You", distance: 3, vortoxAffected: true },
+      { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
+      { type: "Sage", name: "You", demonAmong: ["A", "B"] },
+      { type: "Snake Charmer", name: "You", checked: "A", demon: false },
     ]);
   });
 });

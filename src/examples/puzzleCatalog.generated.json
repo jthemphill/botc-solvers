@@ -107,7 +107,7 @@
         {
           "type": "Clockmaker",
           "name": "Anna",
-          "demonNextToMinion": true
+          "distance": 1
         },
         {
           "type": "Balloonist",

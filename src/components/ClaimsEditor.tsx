@@ -16,11 +16,14 @@ import type {
   JugglerClaim,
   KnightClaim,
   LibrarianClaim,
+  MathematicianClaim,
   NobleClaim,
   PuzzleDoc,
+  SageClaim,
   SavantClaim,
   SeamstressClaim,
   ShugenjaClaim,
+  SnakeCharmerClaim,
   StewardClaim,
   UndertakerClaim,
   VillageIdiotClaim,
@@ -126,7 +129,13 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
     case "Shugenja":
       return { type: "Shugenja", name, evilDirection: "clockwise" };
     case "Clockmaker":
-      return { type: "Clockmaker", name, demonNextToMinion: true };
+      return { type: "Clockmaker", name, distance: 1 };
+    case "Mathematician":
+      return { type: "Mathematician", name, malfunctions: [{ timing: "night_1", count: 0 }] };
+    case "Sage":
+      return { type: "Sage", name, demonAmong: [] };
+    case "Snake Charmer":
+      return { type: "Snake Charmer", name, checked: "", demon: false };
     case "VillageIdiot":
       return { type: "VillageIdiot", name, checks: [] };
     case "Balloonist":
@@ -285,6 +294,12 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         return <ShugenjaBody claim={claim} onChange={onChange} />;
       case "Clockmaker":
         return <ClockmakerBody claim={claim} onChange={onChange} />;
+      case "Mathematician":
+        return <MathematicianBody claim={claim} onChange={onChange} />;
+      case "Sage":
+        return <SageBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Snake Charmer":
+        return <SnakeCharmerBody doc={doc} claim={claim} onChange={onChange} />;
       case "VillageIdiot":
         return <VillageIdiotBody doc={doc} claim={claim} onChange={onChange} />;
       case "Balloonist":
@@ -304,8 +319,48 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
   return (
     <>
       {body}
+      <StandardInfoOptions claim={claim} onChange={onChange} />
       <CustomInfoEditor claim={claim} onChange={onChange} />
     </>
+  );
+}
+
+function hasStandardInfo(claim: Claim): boolean {
+  switch (claim.type) {
+    case "Chef":
+    case "Empath":
+      return claim.count !== undefined;
+    case "Clockmaker":
+      return claim.distance !== undefined;
+    case "Juggler":
+      return claim.correctCount !== undefined;
+    case "Mathematician":
+      return (claim.malfunctions?.length ?? 0) > 0;
+    case "Sage":
+      return (claim.demonAmong?.length ?? 0) > 0;
+    case "Seamstress":
+      return claim.aligned !== undefined;
+    case "Snake Charmer":
+      return claim.checked !== undefined && claim.checked !== "" && claim.demon !== undefined;
+    default:
+      return claim.vortoxAffected !== undefined;
+  }
+}
+
+function StandardInfoOptions({ claim, onChange }: { claim: Claim; onChange: (c: Claim) => void }) {
+  if (!hasStandardInfo(claim)) return null;
+  return (
+    <div className="field-grid">
+      <span>Vortox affected</span>
+      <label>
+        <input
+          type="checkbox"
+          checked={claim.vortoxAffected ?? false}
+          onChange={(event) => onChange({ ...claim, vortoxAffected: event.target.checked } as Claim)}
+        />
+        false info under Vortox
+      </label>
+    </div>
   );
 }
 
@@ -332,7 +387,7 @@ function CustomInfoEditor({ claim, onChange }: { claim: Claim; onChange: (c: Cla
     setInfo(info.filter((_, i) => i !== index));
   };
   const addInfo = () => {
-    setInfo([...info, { timing: claim.timing ?? "night_1", text: "", expression: "" }]);
+    setInfo([...info, { timing: claim.timing ?? "night_1", expression: "" }]);
   };
 
   return (
@@ -349,12 +404,6 @@ function CustomInfoEditor({ claim, onChange }: { claim: Claim; onChange: (c: Cla
           <div key={index} className="field-grid">
             <span>Timing</span>
             <TimingField value={entry.timing} onChange={(timing) => updateInfo(index, { ...entry, timing })} />
-            <span>Text</span>
-            <input
-              type="text"
-              value={entry.text ?? ""}
-              onChange={(event) => updateInfo(index, { ...entry, text: event.target.value })}
-            />
             <span>Expression</span>
             <div>
               <textarea
@@ -778,14 +827,97 @@ function ShugenjaBody({ claim, onChange }: { claim: ShugenjaClaim; onChange: (c:
 function ClockmakerBody({ claim, onChange }: { claim: ClockmakerClaim; onChange: (c: Claim) => void }) {
   return (
     <div className="field-grid">
-      <span>Demon next to minion</span>
+      <span>Demon-minion distance</span>
+      <input
+        type="number"
+        min={1}
+        value={claim.distance ?? ""}
+        onChange={(e) => onChange({ ...claim, distance: e.target.value === "" ? undefined : Number(e.target.value) })}
+      />
+      <span>Timing</span>
+      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+    </div>
+  );
+}
+
+function MathematicianBody({ claim, onChange }: { claim: MathematicianClaim; onChange: (c: Claim) => void }) {
+  const counts = claim.malfunctions ?? [];
+  const setCount = (index: number, next: (typeof counts)[number]) => {
+    onChange({ ...claim, malfunctions: counts.map((entry, i) => (i === index ? next : entry)) });
+  };
+  const removeCount = (index: number) => {
+    onChange({ ...claim, malfunctions: counts.filter((_, i) => i !== index) });
+  };
+  const addCount = () => {
+    onChange({ ...claim, malfunctions: [...counts, { timing: `night_${counts.length + 1}`, count: 0 }] });
+  };
+  return (
+    <div>
+      {counts.map((entry, index) => (
+        <div key={index} className="field-grid">
+          <span>Timing</span>
+          <TimingField
+            value={entry.timing}
+            onChange={(timing) => setCount(index, { ...entry, timing: timing ?? "night_1" })}
+          />
+          <span>Malfunctions</span>
+          <input
+            type="number"
+            min={0}
+            value={entry.count}
+            onChange={(event) => setCount(index, { ...entry, count: Number(event.target.value) })}
+          />
+          <span />
+          <button type="button" onClick={() => removeCount(index)}>
+            Remove count
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addCount}>
+        + Add count
+      </button>
+    </div>
+  );
+}
+
+function SageBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SageClaim; onChange: (c: Claim) => void }) {
+  return (
+    <div className="field-grid">
+      <span>Demon among</span>
+      <MultiPlayerSelect
+        players={doc.players}
+        value={claim.demonAmong ?? []}
+        maxSelections={2}
+        onChange={(demonAmong) => onChange({ ...claim, demonAmong })}
+      />
+      <span>Timing</span>
+      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+    </div>
+  );
+}
+
+function SnakeCharmerBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: SnakeCharmerClaim;
+  onChange: (c: Claim) => void;
+}) {
+  return (
+    <div className="field-grid">
+      <span>Checked player</span>
+      <PlayerSelect
+        players={doc.players}
+        value={claim.checked}
+        onChange={(checked) => onChange({ ...claim, checked })}
+      />
+      <span>Is Demon</span>
       <select
-        value={claim.demonNextToMinion === undefined ? "" : claim.demonNextToMinion ? "yes" : "no"}
-        onChange={(e) =>
-          onChange({
-            ...claim,
-            demonNextToMinion: e.target.value === "" ? undefined : e.target.value === "yes",
-          })
+        value={claim.demon === undefined ? "" : claim.demon ? "yes" : "no"}
+        onChange={(event) =>
+          onChange({ ...claim, demon: event.target.value === "" ? undefined : event.target.value === "yes" })
         }
       >
         <option value="">-</option>
@@ -793,7 +925,7 @@ function ClockmakerBody({ claim, onChange }: { claim: ClockmakerClaim; onChange:
         <option value="no">no</option>
       </select>
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
     </div>
   );
 }

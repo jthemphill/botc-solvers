@@ -25,84 +25,46 @@
     {
       "type": "Clockmaker",
       "name": "Sula",
-      "info": [
-        {
-          "timing": "night_1",
-          "text": "Demon is 3 steps from the Witch",
-          "expression": "some d: players | d.type == Demon && (d.left.left.left.role == Witch || d.right.right.right.role == Witch)",
-          "vortoxAffected": true
-        }
-      ]
+      "distance": 3,
+      "vortoxAffected": true
     },
     {
       "type": "Seamstress",
       "name": "Sarah",
       "timing": "night_1",
       "among": ["Steph", "Aoife"],
-      "info": [
-        {
-          "timing": "night_1",
-          "text": "Steph and Aoife are the same alignment",
-          "expression": "Steph.alignment == Aoife.alignment",
-          "vortoxAffected": true
-        }
-      ]
+      "aligned": true,
+      "vortoxAffected": true
     },
     {
       "type": "Juggler",
       "name": "Josh",
       "timing": "night_2",
       "guesses": { "Steph": "Artist", "Sula": "Clockmaker" },
-      "info": [
-        {
-          "timing": "night_2",
-          "text": "0 correct: Steph as Artist, Sula as Clockmaker",
-          "expression": "role_count(0, Steph, Artist, Sula, Clockmaker)",
-          "vortoxAffected": true
-        }
-      ]
+      "correctCount": 0,
+      "vortoxAffected": true
     },
     {
       "type": "Snake Charmer",
       "name": "Aoife",
-      "info": [
-        {
-          "timing": "night_1",
-          "text": "Josh is not the Demon",
-          "expression": "Josh.type != Demon"
-        }
-      ]
+      "checked": "Josh",
+      "demon": false
     },
     {
       "type": "Mathematician",
       "name": "You",
-      "info": [
-        {
-          "timing": "night_1",
-          "text": "1 ability malfunctioned",
-          "expression": "malfunctions(night_1, 1)",
-          "vortoxAffected": true
-        },
-        {
-          "timing": "night_2",
-          "text": "0 abilities malfunctioned",
-          "expression": "malfunctions(night_2, 0)",
-          "vortoxAffected": true
-        }
-      ]
+      "malfunctions": [
+        { "timing": "night_1", "count": 1 },
+        { "timing": "night_2", "count": 0 }
+      ],
+      "vortoxAffected": true
     },
     {
       "type": "Sage",
       "name": "Fraser",
       "timing": "night_2",
-      "info": [
-        {
-          "timing": "night_2",
-          "text": "Sarah or Josh is the Demon",
-          "expression": "Sarah.type == Demon || Josh.type == Demon",
-          "vortoxAffected": true
-        }
-      ]
+      "demonAmong": ["Sarah", "Josh"],
+      "vortoxAffected": true
     },
     {
       "type": "Artist",
@@ -111,7 +73,6 @@
       "info": [
         {
           "timing": "night_2",
-          "text": "Aoife is the No Dashii",
           "expression": "Aoife.role == `No Dashii`",
           "vortoxAffected": true
         }

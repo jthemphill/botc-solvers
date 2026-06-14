@@ -157,7 +157,11 @@ function serializeClaim(role: Role): Claim {
     case "Shugenja":
       return clean({ ...base, type: "Shugenja", evilDirection: source["evilDirection"] }) as Claim;
     case "Clockmaker":
-      return clean({ ...base, type: "Clockmaker", demonNextToMinion: source["demonNextToMinion"] }) as Claim;
+      return clean({
+        ...base,
+        type: "Clockmaker",
+        distance: source["distance"],
+      }) as Claim;
     case "Village Idiot":
       return clean({
         ...base,
