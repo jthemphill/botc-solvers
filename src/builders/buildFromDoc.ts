@@ -1,4 +1,5 @@
 import { applyClaims } from "../model/characters";
+import { CharacterType, roleCharacterType } from "../model/core";
 import type { BOTCModel } from "../model/model";
 import type { SatBackend } from "../model/sat";
 import { buildPuzzleModel, type PuzzleSpec } from "../model/setup";
@@ -24,6 +25,7 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
       for (const role of forbiddenRole.roles) game.fixNotActual(forbiddenRole.name, resolveRoleRef(role));
     }
   }
+  applyTimelineConstraints(game, doc);
   const ctx = { players: doc.players, script: doc.script };
   const ordinaryClaims = doc.claims
     .filter((claim) => !usesMalfunctionCount(claim))
@@ -34,6 +36,18 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
   applyClaims(game, ordinaryClaims);
   applyClaims(game, malfunctionCountClaims);
   return game;
+}
+
+function applyTimelineConstraints(game: BOTCModel, doc: PuzzleDoc): void {
+  const deathEvents = (doc.timeline ?? []).filter((event) => event.type === "execution" || event.type === "nightKill");
+  if (deathEvents.length === 0) return;
+
+  const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
+  for (const event of deathEvents) {
+    for (const player of event.players) {
+      for (const demonRole of demonRoles) game.fixNotActual(player, demonRole);
+    }
+  }
 }
 
 function usesMalfunctionCount(claim: PuzzleDoc["claims"][number]): boolean {

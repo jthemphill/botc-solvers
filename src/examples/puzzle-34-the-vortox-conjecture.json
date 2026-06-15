@@ -15,11 +15,9 @@
     "Snake Charmer"
   ],
   "fixedRoles": [{ "name": "You", "roles": ["Mathematician"] }],
-  "forbiddenRoles": [
-    { "name": "Steph", "roles": ["No Dashii", "Vortox"] },
-    { "name": "Aoife", "roles": ["No Dashii", "Vortox"] },
-    { "name": "Fraser", "roles": ["No Dashii", "Vortox"] },
-    { "name": "You", "roles": ["No Dashii", "Vortox"] }
+  "timeline": [
+    { "timing": "day_1", "type": "execution", "players": ["Steph"] },
+    { "timing": "night_2", "type": "nightKill", "players": ["Aoife", "Fraser", "You"] }
   ],
   "claims": [
     {

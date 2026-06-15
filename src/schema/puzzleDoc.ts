@@ -7,6 +7,7 @@ export interface PuzzleDoc {
   readonly uniqueCharacters?: boolean;
   readonly fixedRoles?: readonly FixedRoleConstraint[];
   readonly forbiddenRoles?: readonly ForbiddenRoleConstraint[];
+  readonly timeline?: readonly TimelineEventDoc[];
   readonly claims: readonly Claim[];
 }
 
@@ -20,6 +21,14 @@ export interface FixedRoleConstraint {
 export interface ForbiddenRoleConstraint {
   readonly name: string;
   readonly roles: readonly string[];
+}
+
+export type TimelineEventType = "execution" | "nightKill";
+
+export interface TimelineEventDoc {
+  readonly timing: string;
+  readonly type: TimelineEventType;
+  readonly players: readonly string[];
 }
 
 export type Claim =

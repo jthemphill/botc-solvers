@@ -3,7 +3,7 @@ import { CharacterType } from "../model/core";
 import { ROLE_CLASSES } from "../model/roleRegistry";
 import { roleEmoji, roleEmojiLabel } from "../model/roleEmoji";
 import { standardSetupCounts } from "../model/setup";
-import type { Claim, PuzzleDoc } from "../schema/puzzleDoc";
+import type { Claim, PuzzleDoc, TimelineEventDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
 import { isHiddenScriptRole } from "../state/scriptRoles";
 import { CLAIM_TYPES, ClaimBody, makeEmptyClaim } from "./ClaimsEditor";
@@ -88,13 +88,16 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
           const roleClaims = claimIndexesForPlayer(doc, player);
           const roleLabels = roleClaims.map(([claim]) => roleEmojiLabel(claim.type));
           const primaryClaim = roleClaims[0]?.[0];
+          const deathMarker = deathMarkerForPlayer(doc.timeline, player);
+          const deathClass = deathMarker === undefined ? undefined : deathMarkerClass(deathMarker);
+          const deathLabel = deathMarker === undefined ? "" : `, ${deathMarkerLabel(deathMarker)}`;
           return (
             <button
               key={player}
               type="button"
-              className={`seat-button${index === selectedIndex ? " selected" : ""}${
-                index === draggedIndex ? " dragging" : ""
-              }`}
+              className={`seat-button${deathClass === undefined ? "" : ` death-${deathClass}`}${
+                index === selectedIndex ? " selected" : ""
+              }${index === draggedIndex ? " dragging" : ""}`}
               style={seatPosition(index, players.length)}
               draggable
               onDragStart={(event) => startSeatDrag(event, index)}
@@ -103,12 +106,18 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
               onDragEnd={() => setDraggedIndex(undefined)}
               onClick={() => onSelect(index)}
               aria-pressed={index === selectedIndex}
-              aria-label={`Seat ${index + 1}: ${player}. Drag to reorder seats.`}
+              aria-label={`Seat ${index + 1}: ${player}${deathLabel}. Drag to reorder seats.`}
             >
+              {deathClass !== undefined && <span className={`seat-shroud ${deathClass}`} aria-hidden="true" />}
               <span className="seat-token-icon" aria-hidden="true">
                 {roleEmoji(primaryClaim?.type) ?? index + 1}
               </span>
-              <span>{player}</span>
+              <span className="seat-player-name">{player}</span>
+              {deathClass !== undefined && (
+                <span className={`seat-death-badge ${deathClass}`} aria-hidden="true">
+                  {deathMarker === "execution" ? "X" : "N"}
+                </span>
+              )}
               <small
                 className="seat-role-claims"
                 aria-label={roleLabels.length === 0 ? "No claims" : `Claims: ${roleLabels.join(", ")}`}
@@ -149,25 +158,11 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
 
       <div className="sheet-divider" />
 
-      <div className="rules-strip" aria-label="Puzzle setup summary">
-        <div className="notes-box">
-          <strong>Notes</strong>
-          <span>Use the workbench to add role stamps and claims.</span>
-        </div>
-        <div className="rules-summary">
-          <h3>Setup</h3>
-          <div className="rule-token-row">
-            <RuleToken label="Townsfolk" count={setupCounts.townsfolk} />
-            <RuleToken label="Outsider" count={setupCounts.outsider} />
-            <RuleToken label="Minion" count={setupCounts.minion} tone="evil" />
-            <RuleToken label="Demon" count={setupCounts.demon} tone="evil" />
-          </div>
-        </div>
-        <div className="sheet-footnote">
-          {players.length} players · {setupCounts.demon} demon · {setupCounts.minion} minion · {setupCounts.outsider}{" "}
-          outsider
-        </div>
-      </div>
+      {doc.timeline !== undefined && doc.timeline.length > 0 ? (
+        <TimelineStrip timeline={doc.timeline} />
+      ) : (
+        <SetupStrip playerCount={players.length} setupCounts={setupCounts} />
+      )}
     </div>
   );
 }
@@ -315,8 +310,89 @@ function RuleToken({ label, count, tone = "good" }: { label: string; count: numb
   );
 }
 
+function SetupStrip({ playerCount, setupCounts }: { playerCount: number; setupCounts: Record<CharacterType, number> }) {
+  return (
+    <div className="rules-strip" aria-label="Puzzle setup summary">
+      <div className="notes-box">
+        <strong>Notes</strong>
+        <span>Use the workbench to add role stamps and claims.</span>
+      </div>
+      <div className="rules-summary">
+        <h3>Setup</h3>
+        <div className="rule-token-row">
+          <RuleToken label="Townsfolk" count={setupCounts.townsfolk} />
+          <RuleToken label="Outsider" count={setupCounts.outsider} />
+          <RuleToken label="Minion" count={setupCounts.minion} tone="evil" />
+          <RuleToken label="Demon" count={setupCounts.demon} tone="evil" />
+        </div>
+      </div>
+      <div className="sheet-footnote">
+        {playerCount} players · {setupCounts.demon} demon · {setupCounts.minion} minion · {setupCounts.outsider}{" "}
+        outsider
+      </div>
+    </div>
+  );
+}
+
+function TimelineStrip({ timeline }: { timeline: readonly TimelineEventDoc[] }) {
+  const deathCount = timeline.reduce((sum, event) => sum + event.players.length, 0);
+  return (
+    <div className="timeline-strip" aria-label="Puzzle timeline">
+      <div className="notes-box timeline-legend">
+        <strong>Timeline</strong>
+        <span>Execution · Night deaths</span>
+      </div>
+      <ol className="timeline-event-list">
+        {timeline.map((event, index) => {
+          const deathClass = deathMarkerClass(event.type);
+          return (
+            <li
+              key={`${event.timing}-${event.type}-${index}`}
+              className={`timeline-event ${deathClass}`}
+              aria-label={`${timingLabel(event.timing)} ${timelineEventAction(event)}: ${event.players.join(", ")}`}
+            >
+              <span className={`timeline-node ${deathClass}`} aria-hidden="true">
+                {event.type === "execution" ? "X" : "N"}
+              </span>
+              <div>
+                <strong>
+                  {compactTimingLabel(event.timing)} {timelineEventAction(event)}
+                </strong>
+                <span>{formatList(event.players)}</span>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      <div className="sheet-footnote">
+        {deathCount} death{deathCount === 1 ? "" : "s"} tracked
+      </div>
+    </div>
+  );
+}
+
 function claimIndexesForPlayer(doc: PuzzleDoc, player: string): Array<[Claim, number]> {
   return doc.claims.flatMap((claim, index) => (claim.name === player ? [[claim, index] as [Claim, number]] : []));
+}
+
+function deathMarkerForPlayer(timeline: PuzzleDoc["timeline"], player: string): TimelineEventDoc["type"] | undefined {
+  const events = timeline ?? [];
+  if (events.some((event) => event.type === "execution" && event.players.includes(player))) return "execution";
+  if (events.some((event) => event.type === "nightKill" && event.players.includes(player))) return "nightKill";
+  return undefined;
+}
+
+function deathMarkerClass(type: TimelineEventDoc["type"]): "execution" | "night-kill" {
+  return type === "execution" ? "execution" : "night-kill";
+}
+
+function deathMarkerLabel(type: TimelineEventDoc["type"]): string {
+  return type === "execution" ? "executed" : "killed at night";
+}
+
+function timelineEventAction(event: TimelineEventDoc): string {
+  if (event.type === "execution") return "Execution";
+  return event.players.length === 1 ? "Death" : "Deaths";
 }
 
 function seatPosition(index: number, count: number): CSSProperties {
@@ -432,6 +508,14 @@ function timingLabel(timing: string): string {
   const [, period, number] = match;
   if (period === undefined || number === undefined) return timing;
   return `${period[0]?.toUpperCase()}${period.slice(1)} ${number}`;
+}
+
+function compactTimingLabel(timing: string): string {
+  const match = /^(night|day)_(\d+)$/.exec(timing);
+  if (match === null) return timing;
+  const [, period, number] = match;
+  if (period === undefined || number === undefined) return timing;
+  return `${period[0]?.toUpperCase()}${number}`;
 }
 
 function countSetupRoles(doc: PuzzleDoc): Record<CharacterType, number> {

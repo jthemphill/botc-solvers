@@ -83,6 +83,10 @@ describe("puzzle document reducer", () => {
       script: ["Investigator"],
       fixedRoles: [{ name: "C", roles: ["Investigator"] }],
       forbiddenRoles: [{ name: "C", roles: ["Imp"] }],
+      timeline: [
+        { timing: "day_1", type: "execution", players: ["B"] },
+        { timing: "night_2", type: "nightKill", players: ["C"] },
+      ],
       claims: [{ type: "Investigator", name: "A", among: ["B", "C"] }],
     };
 
@@ -91,7 +95,38 @@ describe("puzzle document reducer", () => {
     expect(next.players).toEqual(["A", "B"]);
     expect(next.fixedRoles).toEqual([]);
     expect(next.forbiddenRoles).toEqual([]);
+    expect(next.timeline).toEqual([{ timing: "day_1", type: "execution", players: ["B"] }]);
     expect(next.claims).toEqual([{ type: "Investigator", name: "A", among: ["B"] }]);
+  });
+
+  test("renamePlayer updates timeline references", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B"],
+      script: [],
+      timeline: [{ timing: "day_1", type: "execution", players: ["B"] }],
+      claims: [],
+    };
+
+    const next = reducer(doc, { type: "renamePlayer", index: 1, name: "Bea" });
+
+    expect(next.players).toEqual(["A", "Bea"]);
+    expect(next.timeline).toEqual([{ timing: "day_1", type: "execution", players: ["Bea"] }]);
+  });
+
+  test("removePlayer removes empty timeline events", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B"],
+      script: [],
+      timeline: [{ timing: "night_2", type: "nightKill", players: ["B"] }],
+      claims: [],
+    };
+
+    const next = reducer(doc, { type: "removePlayer", index: 1 });
+
+    expect(next.players).toEqual(["A"]);
+    expect(next.timeline).toEqual([]);
   });
 
   test("movePlayerTo reorders players without changing claims", () => {

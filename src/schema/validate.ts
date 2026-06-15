@@ -1,4 +1,10 @@
-import { KNIGHT_NO_DEMON_AMONG_MAX, type Claim, type PuzzleDoc, SUPPORTED_CLAIM_TYPES } from "./puzzleDoc";
+import {
+  KNIGHT_NO_DEMON_AMONG_MAX,
+  type Claim,
+  type PuzzleDoc,
+  SUPPORTED_CLAIM_TYPES,
+  type TimelineEventDoc,
+} from "./puzzleDoc";
 
 export class ValidationError extends Error {
   constructor(
@@ -55,6 +61,7 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
     input["forbiddenRoles"] === undefined
       ? undefined
       : validateRoleConstraints(input["forbiddenRoles"], "$.forbiddenRoles");
+  const timeline = input["timeline"] === undefined ? undefined : validateTimeline(input["timeline"], "$.timeline");
 
   return {
     version: 1,
@@ -65,6 +72,7 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
     uniqueCharacters,
     fixedRoles,
     forbiddenRoles,
+    timeline,
     claims: validatedClaims,
   };
 }
@@ -77,6 +85,23 @@ function validateRoleConstraints(v: unknown, pathRoot: string): PuzzleDoc["fixed
     return {
       name: expectString(entry["name"], `${path}.name`),
       roles: expectStringArray(entry["roles"], `${path}.roles`),
+    };
+  });
+}
+
+function validateTimeline(v: unknown, pathRoot: string): TimelineEventDoc[] {
+  if (!Array.isArray(v)) throw new ValidationError(`Expected array`, pathRoot);
+  return v.map((entry, i) => {
+    const path = `${pathRoot}[${i}]`;
+    if (!isObject(entry)) throw new ValidationError(`Expected object`, path);
+    const type = expectString(entry["type"], `${path}.type`);
+    if (type !== "execution" && type !== "nightKill") {
+      throw new ValidationError(`Timeline event type must be "execution" or "nightKill"`, `${path}.type`);
+    }
+    return {
+      timing: expectString(entry["timing"], `${path}.timing`),
+      type,
+      players: expectStringArray(entry["players"], `${path}.players`),
     };
   });
 }

@@ -349,13 +349,49 @@ summary {
   cursor: grabbing;
 }
 
+.seat-button.death-execution {
+  border-color: var(--red-ink);
+  box-shadow:
+    0 9px 20px rgba(37, 27, 17, 0.18),
+    0 0 0 4px rgba(165, 43, 43, 0.18);
+}
+
+.seat-button.death-night-kill {
+  border-color: #305f8f;
+  box-shadow:
+    0 9px 20px rgba(37, 27, 17, 0.18),
+    0 0 0 4px rgba(48, 95, 143, 0.18);
+}
+
+.seat-shroud {
+  position: absolute;
+  inset: -0.18rem;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.seat-shroud.execution {
+  background: linear-gradient(145deg, transparent 0 48%, rgba(165, 43, 43, 0.3) 49% 100%);
+  box-shadow: inset 0 -1.2rem 1.6rem rgba(165, 43, 43, 0.22);
+}
+
+.seat-shroud.night-kill {
+  background: linear-gradient(145deg, transparent 0 48%, rgba(48, 95, 143, 0.3) 49% 100%);
+  box-shadow: inset 0 -1.2rem 1.6rem rgba(48, 95, 143, 0.22);
+}
+
 .seat-token-icon {
+  position: relative;
+  z-index: 1;
   color: var(--blue-ink);
   font-size: clamp(1.35rem, 2.4vw, 2.35rem);
   line-height: 1;
 }
 
-.seat-button > span:not(.seat-token-icon) {
+.seat-player-name {
+  position: relative;
+  z-index: 1;
   max-width: 82%;
   overflow-wrap: anywhere;
   font-size: clamp(0.9rem, 1.25vw, 1.15rem);
@@ -364,6 +400,8 @@ summary {
 }
 
 .seat-role-claims {
+  position: relative;
+  z-index: 1;
   display: flex;
   max-width: 72%;
   justify-content: center;
@@ -372,6 +410,32 @@ summary {
   color: var(--muted-ink);
   font-size: 0.72rem;
   white-space: nowrap;
+}
+
+.seat-death-badge {
+  position: absolute;
+  top: 0.18rem;
+  right: 0.28rem;
+  z-index: 2;
+  display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border: 1.5px solid rgba(255, 252, 244, 0.9);
+  border-radius: 50%;
+  color: #fffaf0;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(37, 27, 17, 0.22);
+}
+
+.seat-death-badge.execution {
+  background: var(--red-ink);
+}
+
+.seat-death-badge.night-kill {
+  background: #305f8f;
 }
 
 .claim-callout {
@@ -489,6 +553,78 @@ summary {
 .sheet-footnote {
   justify-self: end;
   align-self: end;
+  font-weight: 650;
+}
+
+.timeline-strip {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.32fr) minmax(20rem, 1fr) minmax(10rem, 0.35fr);
+  gap: 1.2rem;
+  align-items: center;
+  padding: 1rem 0 0;
+}
+
+.timeline-event-list {
+  display: flex;
+  justify-content: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline-event {
+  display: grid;
+  grid-template-columns: auto minmax(8rem, 1fr);
+  gap: 0.65rem;
+  align-items: center;
+  min-width: min(100%, 14rem);
+  border: 1.5px solid var(--paper-line);
+  border-radius: 8px;
+  background: rgba(255, 252, 244, 0.76);
+  padding: 0.65rem 0.75rem;
+}
+
+.timeline-event.execution {
+  border-color: rgba(165, 43, 43, 0.72);
+}
+
+.timeline-event.night-kill {
+  border-color: rgba(48, 95, 143, 0.72);
+}
+
+.timeline-node {
+  display: grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  border-radius: 50%;
+  color: #fffaf0;
+  font-weight: 900;
+}
+
+.timeline-node.execution {
+  background: var(--red-ink);
+}
+
+.timeline-node.night-kill {
+  background: #305f8f;
+}
+
+.timeline-event div {
+  display: grid;
+  gap: 0.16rem;
+}
+
+.timeline-event strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+}
+
+.timeline-event span:not(.timeline-node) {
+  color: var(--muted-ink);
+  font-size: 0.86rem;
   font-weight: 650;
 }
 
@@ -948,6 +1084,10 @@ summary {
     grid-template-columns: 1fr;
   }
 
+  .timeline-strip {
+    grid-template-columns: 1fr;
+  }
+
   .sheet-footnote {
     justify-self: start;
   }
@@ -972,7 +1112,7 @@ summary {
     min-height: 4.9rem;
   }
 
-  .seat-button > span:not(.seat-token-icon) {
+  .seat-player-name {
     font-size: 0.8rem;
   }
 

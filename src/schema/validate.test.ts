@@ -97,6 +97,34 @@ describe("validatePuzzleDoc", () => {
     ]);
   });
 
+  test("accepts timeline events", () => {
+    const doc = validatePuzzleDoc({
+      ...baseDoc,
+      players: ["You", "A"],
+      script: ["Savant", "Imp"],
+      timeline: [
+        { timing: "day_1", type: "execution", players: ["A"] },
+        { timing: "night_2", type: "nightKill", players: ["You"] },
+      ],
+      claims: [{ type: "Savant", name: "You", statements: [{ options: ["true", "false"] }] }],
+    });
+
+    expect(doc.timeline).toEqual([
+      { timing: "day_1", type: "execution", players: ["A"] },
+      { timing: "night_2", type: "nightKill", players: ["You"] },
+    ]);
+  });
+
+  test("rejects unknown timeline event types", () => {
+    expect(() =>
+      validatePuzzleDoc({
+        ...baseDoc,
+        timeline: [{ timing: "day_1", type: "death", players: ["You"] }],
+        claims: [],
+      }),
+    ).toThrow('Timeline event type must be "execution" or "nightKill"');
+  });
+
   test("accepts standard role info fields", () => {
     const doc = validatePuzzleDoc({
       ...baseDoc,

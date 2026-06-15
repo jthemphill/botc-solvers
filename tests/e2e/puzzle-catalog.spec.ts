@@ -6,12 +6,18 @@ test("loads puzzle 34 with structured role clues", async ({ page }) => {
   await page.getByLabel("Load example puzzle").selectOption("puzzle-34-the-vortox-conjecture");
 
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 34 - The Vortox Conjecture");
-  const setupSummary = page.getByLabel("Puzzle setup summary");
-  await expect(setupSummary.getByLabel("5 Townsfolk")).toBeVisible();
-  await expect(setupSummary.getByLabel("0 Outsider")).toBeVisible();
-  await expect(setupSummary.getByLabel("1 Minion")).toBeVisible();
-  await expect(setupSummary.getByLabel("1 Demon")).toBeVisible();
-  await expect(setupSummary).toContainText("7 players · 1 demon · 1 minion · 0 outsider");
+  await expect(page.getByLabel("Puzzle setup summary")).toHaveCount(0);
+  const timeline = page.getByLabel("Puzzle timeline");
+  await expect(timeline).toContainText("D1 Execution");
+  await expect(timeline).toContainText("Steph");
+  await expect(timeline).toContainText("N2 Deaths");
+  await expect(timeline).toContainText("Aoife, Fraser, or You");
+  const stephSeat = page.getByRole("button", { name: /Seat 7: Steph, executed/ });
+  await expect(stephSeat.locator(".seat-death-badge.execution")).toHaveText("X");
+  await expect(stephSeat).toHaveCSS("border-top-color", "rgb(165, 43, 43)");
+  const youSeat = page.getByRole("button", { name: /Seat 5: You, killed at night/ });
+  await expect(youSeat.locator(".seat-death-badge.night-kill")).toHaveText("N");
+  await expect(youSeat).toHaveCSS("border-top-color", "rgb(48, 95, 143)");
   await expect(page.getByRole("button", { name: /Demon 3 steps from Minion/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Steph and Aoife are same/ })).toBeVisible();
   await expect(

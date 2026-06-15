@@ -34,6 +34,9 @@ describe("puzzle catalog", () => {
       ],
     });
     expect(doc.claims.flatMap((claim) => claim.info ?? []).map((info) => "text" in info)).not.toContain(true);
-    expect(doc.forbiddenRoles).toContainEqual({ name: "Steph", roles: ["No Dashii", "Vortox"] });
+    expect(doc.timeline).toEqual([
+      { timing: "day_1", type: "execution", players: ["Steph"] },
+      { timing: "night_2", type: "nightKill", players: ["Aoife", "Fraser", "You"] },
+    ]);
   });
 });

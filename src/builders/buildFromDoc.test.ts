@@ -95,6 +95,24 @@ describe("buildFromDoc", () => {
     expect(worlds[0]?.actualRole("B")).toBe("Imp");
   });
 
+  test("timeline deaths exclude players from script demon roles", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Imp", "Sage"],
+        setup: "none",
+        uniqueCharacters: true,
+        timeline: [{ timing: "night_2", type: "nightKill", players: ["B"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds.length).toBeGreaterThan(0);
+    expect(new Set(worlds.map((world) => world.actualRole("B")))).not.toContain("Imp");
+  });
+
   test("puzzle-34-the-vortox-conjecture.json parses and solves", async () => {
     const doc = loadDoc("puzzle-34-the-vortox-conjecture.json");
     const worlds = await buildFromDoc(doc, backend).solveAll();
