@@ -3,6 +3,7 @@
   "title": "Puzzle 21 - Eight Jugglers Juggling",
   "players": ["Tim", "Matt", "Olivia", "Oscar", "You", "Fraser", "Aoife", "Josh"],
   "script": ["Leviathan", "Goblin", "Drunk", "Juggler"],
+  "uniqueCharacters": false,
   "claims": [
     {
       "type": "Juggler",

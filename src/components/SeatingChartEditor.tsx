@@ -530,7 +530,7 @@ function compactTimingLabel(timing: string): string {
 }
 
 function countSetupRoles(doc: PuzzleDoc): Record<CharacterType, number> {
-  if (doc.setup === "none") return countScriptRoles(doc.script);
+  if (doc.setup === "none" || doc.setup === "atheist") return countScriptRoles(doc.script);
   try {
     return { ...standardSetupCounts(doc.players.length) };
   } catch {

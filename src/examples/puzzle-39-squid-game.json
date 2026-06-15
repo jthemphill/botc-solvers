@@ -53,7 +53,8 @@
     },
     {
       "type": "Philosopher",
-      "name": "Matt"
+      "name": "Matt",
+      "extraPossibleActualRoles": ["Mutant"]
     },
     {
       "type": "Seamstress",

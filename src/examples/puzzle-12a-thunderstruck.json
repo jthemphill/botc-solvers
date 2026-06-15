@@ -20,11 +20,25 @@
       "roles": ["Dreamer"]
     }
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "doomsayerDeath",
+      "players": ["Tim"]
+    },
+    {
+      "timing": "day_1",
+      "type": "doomsayerDeath",
+      "players": ["Sarah"]
+    }
+  ],
   "claims": [
     {
       "type": "Slayer",
       "name": "Hannah",
-      "timing": "day_1"
+      "timing": "day_1",
+      "target": "Fraser",
+      "killed": false
     },
     {
       "type": "Courtier",
@@ -37,15 +51,19 @@
     {
       "type": "Dreamer",
       "name": "You",
-      "roles": []
+      "player": "Sarah",
+      "roles": ["Lunatic", "Scarlet Woman"]
     },
     {
       "type": "Clockmaker",
-      "name": "Tim"
+      "name": "Tim",
+      "distance": 2
     },
     {
       "type": "Empath",
-      "name": "Fraser"
+      "name": "Fraser",
+      "extraPossibleActualRoles": ["Lunatic"],
+      "count": 0
     }
   ]
 }

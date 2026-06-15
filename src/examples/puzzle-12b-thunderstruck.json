@@ -22,20 +22,41 @@
       "roles": ["Librarian"]
     }
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "doomsayerDeath",
+      "players": ["Josh"]
+    },
+    {
+      "timing": "day_1",
+      "type": "doomsayerDeath",
+      "players": ["Oscar"]
+    },
+    {
+      "timing": "day_1",
+      "type": "doomsayerDeath",
+      "players": ["Aoife"]
+    }
+  ],
   "claims": [
     {
       "type": "Slayer",
       "name": "Fraser",
-      "timing": "day_1"
+      "timing": "day_1",
+      "target": "Steph",
+      "killed": false
     },
     {
       "type": "Dreamer",
       "name": "Tom",
-      "roles": []
+      "player": "Steph",
+      "roles": ["Lunatic", "Spy"]
     },
     {
       "type": "Clockmaker",
-      "name": "Aoife"
+      "name": "Aoife",
+      "distance": 3
     },
     {
       "type": "Courtier",
@@ -44,16 +65,20 @@
     {
       "type": "Librarian",
       "name": "You",
-      "among": []
+      "role": "Lunatic",
+      "among": ["Fraser", "Steph"]
     },
     {
       "type": "Investigator",
       "name": "Oscar",
-      "among": []
+      "role": "Spy",
+      "among": ["Josh", "Fraser"]
     },
     {
       "type": "Empath",
-      "name": "Anna"
+      "name": "Anna",
+      "extraPossibleActualRoles": ["Lunatic"],
+      "count": 1
     },
     {
       "type": "Mayor",

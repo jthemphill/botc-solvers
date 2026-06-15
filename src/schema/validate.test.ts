@@ -105,6 +105,7 @@ describe("validatePuzzleDoc", () => {
       timeline: [
         { timing: "day_1", type: "nominationDeath", players: ["You"] },
         { timing: "day_1", type: "execution", players: ["A"] },
+        { timing: "day_1", type: "doomsayerDeath", players: ["A"] },
         { timing: "night_2", type: "nightKill", players: ["A"] },
       ],
       claims: [{ type: "Savant", name: "You", statements: [{ options: ["true", "false"] }] }],
@@ -113,6 +114,7 @@ describe("validatePuzzleDoc", () => {
     expect(doc.timeline).toEqual([
       { timing: "day_1", type: "nominationDeath", players: ["You"] },
       { timing: "day_1", type: "execution", players: ["A"] },
+      { timing: "day_1", type: "doomsayerDeath", players: ["A"] },
       { timing: "night_2", type: "nightKill", players: ["A"] },
     ]);
   });
@@ -124,7 +126,7 @@ describe("validatePuzzleDoc", () => {
         timeline: [{ timing: "day_1", type: "death", players: ["You"] }],
         claims: [],
       }),
-    ).toThrow('Timeline event type must be "nominationDeath", "execution", or "nightKill"');
+    ).toThrow('Timeline event type must be "nominationDeath", "execution", "nightKill", or "doomsayerDeath"');
   });
 
   test("accepts standard role info fields", () => {
