@@ -30,7 +30,6 @@ export interface InfoClaim {
 export interface RoleBaseOptions {
   readonly name: string;
   readonly timing?: Timing;
-  readonly vortoxAffected?: boolean;
   readonly infoClaims?: readonly InfoClaimBuilder[];
 }
 
@@ -149,7 +148,6 @@ export abstract class Role {
   readonly maxCopies?: number;
   readonly name: string;
   readonly timing?: Timing;
-  readonly vortoxAffected?: boolean;
   readonly infoClaims: readonly InfoClaim[];
 
   constructor(nameOrOptions: string | RoleBaseOptions, options: TimedOptions = {}) {
@@ -162,7 +160,6 @@ export abstract class Role {
     this.characterType = cls.characterType;
     this.maxCopies = cls.maxCopies;
     this.timing = resolvedTiming;
-    this.vortoxAffected = typeof nameOrOptions === "string" ? undefined : nameOrOptions.vortoxAffected;
     this.infoClaims = typeof nameOrOptions === "string" ? [] : (nameOrOptions.infoClaims ?? []).map(normalizeInfoClaim);
   }
 
@@ -268,7 +265,7 @@ export abstract class Role {
     this.applyInfoClaimBuilders(
       game,
       cls,
-      learned === undefined ? this.infoClaims : [{ learned, vortoxAffected: this.vortoxAffected }, ...this.infoClaims],
+      learned === undefined ? this.infoClaims : [{ learned }, ...this.infoClaims],
       options,
     );
   }
@@ -490,7 +487,6 @@ export class Mathematician extends Role {
       Mathematician,
       this.malfunctions.map((entry) => ({
         timing: entry.timing,
-        vortoxAffected: this.vortoxAffected,
         learned: (model: BOTCModel) =>
           model.malfunctionCountAt(
             entry.timing,
@@ -813,7 +809,7 @@ export class FortuneTeller extends Role {
       this.applyInfoClaimBuilders(
         game,
         FortuneTeller,
-        [{ learned, timing: check.timing ?? night(index + 1), vortoxAffected: this.vortoxAffected }],
+        [{ learned, timing: check.timing ?? night(index + 1) }],
         options,
       );
     });

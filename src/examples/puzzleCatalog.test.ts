@@ -25,14 +25,13 @@ describe("puzzle catalog", () => {
     const clockmaker = doc.claims.find((claim) => claim.type === "Clockmaker");
     const mathematician = doc.claims.find((claim) => claim.type === "Mathematician");
 
-    expect(clockmaker).toMatchObject({ type: "Clockmaker", distance: 3, vortoxAffected: true });
+    expect(clockmaker).toMatchObject({ type: "Clockmaker", distance: 3 });
     expect(mathematician).toMatchObject({
       type: "Mathematician",
       malfunctions: [
         { timing: "night_1", count: 1 },
         { timing: "night_2", count: 0 },
       ],
-      vortoxAffected: true,
     });
     expect(doc.claims.flatMap((claim) => claim.info ?? []).map((info) => "text" in info)).not.toContain(true);
     expect(doc.forbiddenRoles).toContainEqual({ name: "Steph", roles: ["No Dashii", "Vortox"] });

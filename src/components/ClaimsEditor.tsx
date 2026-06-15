@@ -319,48 +319,8 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
   return (
     <>
       {body}
-      <StandardInfoOptions claim={claim} onChange={onChange} />
       <CustomInfoEditor claim={claim} onChange={onChange} />
     </>
-  );
-}
-
-function hasStandardInfo(claim: Claim): boolean {
-  switch (claim.type) {
-    case "Chef":
-    case "Empath":
-      return claim.count !== undefined;
-    case "Clockmaker":
-      return claim.distance !== undefined;
-    case "Juggler":
-      return claim.correctCount !== undefined;
-    case "Mathematician":
-      return (claim.malfunctions?.length ?? 0) > 0;
-    case "Sage":
-      return (claim.demonAmong?.length ?? 0) > 0;
-    case "Seamstress":
-      return claim.aligned !== undefined;
-    case "Snake Charmer":
-      return claim.checked !== undefined && claim.checked !== "" && claim.demon !== undefined;
-    default:
-      return claim.vortoxAffected !== undefined;
-  }
-}
-
-function StandardInfoOptions({ claim, onChange }: { claim: Claim; onChange: (c: Claim) => void }) {
-  if (!hasStandardInfo(claim)) return null;
-  return (
-    <div className="field-grid">
-      <span>Vortox affected</span>
-      <label>
-        <input
-          type="checkbox"
-          checked={claim.vortoxAffected ?? false}
-          onChange={(event) => onChange({ ...claim, vortoxAffected: event.target.checked } as Claim)}
-        />
-        false info under Vortox
-      </label>
-    </div>
   );
 }
 
@@ -412,15 +372,6 @@ function CustomInfoEditor({ claim, onChange }: { claim: Claim; onChange: (c: Cla
               />
               {expressionError && <div className="error">{expressionError}</div>}
             </div>
-            <span>Vortox affected</span>
-            <label>
-              <input
-                type="checkbox"
-                checked={entry.vortoxAffected ?? false}
-                onChange={(event) => updateInfo(index, { ...entry, vortoxAffected: event.target.checked })}
-              />
-              false info under Vortox
-            </label>
             <span />
             <button type="button" onClick={() => removeInfo(index)}>
               Remove info

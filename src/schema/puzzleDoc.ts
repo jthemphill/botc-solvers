@@ -49,14 +49,12 @@ export type Claim =
 interface BaseClaim {
   readonly name: string;
   readonly timing?: string;
-  readonly vortoxAffected?: boolean;
   readonly info?: readonly CustomInfoStatementDoc[];
 }
 
 export interface CustomInfoStatementDoc {
   readonly timing?: string;
   readonly expression?: string;
-  readonly vortoxAffected?: boolean;
 }
 
 export interface InvestigatorClaim extends BaseClaim {

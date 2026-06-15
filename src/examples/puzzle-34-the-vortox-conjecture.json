@@ -25,24 +25,21 @@
     {
       "type": "Clockmaker",
       "name": "Sula",
-      "distance": 3,
-      "vortoxAffected": true
+      "distance": 3
     },
     {
       "type": "Seamstress",
       "name": "Sarah",
       "timing": "night_1",
       "among": ["Steph", "Aoife"],
-      "aligned": true,
-      "vortoxAffected": true
+      "aligned": true
     },
     {
       "type": "Juggler",
       "name": "Josh",
       "timing": "night_2",
       "guesses": { "Steph": "Artist", "Sula": "Clockmaker" },
-      "correctCount": 0,
-      "vortoxAffected": true
+      "correctCount": 0
     },
     {
       "type": "Snake Charmer",
@@ -56,15 +53,13 @@
       "malfunctions": [
         { "timing": "night_1", "count": 1 },
         { "timing": "night_2", "count": 0 }
-      ],
-      "vortoxAffected": true
+      ]
     },
     {
       "type": "Sage",
       "name": "Fraser",
       "timing": "night_2",
-      "demonAmong": ["Sarah", "Josh"],
-      "vortoxAffected": true
+      "demonAmong": ["Sarah", "Josh"]
     },
     {
       "type": "Artist",
@@ -73,8 +68,7 @@
       "info": [
         {
           "timing": "night_2",
-          "expression": "Aoife.role == `No Dashii`",
-          "vortoxAffected": true
+          "expression": "Aoife.role == `No Dashii`"
         }
       ]
     }

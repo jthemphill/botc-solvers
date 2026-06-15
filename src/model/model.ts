@@ -721,9 +721,10 @@ export class BOTCModel {
       [activeRole, healthy],
       `${claim.player}_${roleRef}_${claimTimingName}_sober_healthy_claim`,
     );
-    this.recordInfoMalfunctions(claim.player, roleRef, claimTiming, activeRole, claim.vortoxAffected ?? false);
+    const vortoxAffected = this.infoClaimAffectedByVortox(roleRef) || (claim.vortoxAffected ?? false);
+    this.recordInfoMalfunctions(claim.player, roleRef, claimTiming, activeRole, vortoxAffected);
 
-    if (!(claim.vortoxAffected ?? false) || !this.characters.has(roleName("Vortox"))) {
+    if (!vortoxAffected || !this.characters.has(roleName("Vortox"))) {
       this.addImplication(activeHealthy, claim.learned);
       return;
     }
@@ -739,6 +740,17 @@ export class BOTCModel {
       this.allOf([activeHealthy, this.roleInPlay("Vortox")], `${claim.player}_${roleRef}_${claimTimingName}_vortox`),
       this.not(claim.learned, `${claim.player}_${roleRef}_${claimTimingName}_vortox_false`),
     );
+  }
+
+  private infoClaimAffectedByVortox(roleRef: string): boolean {
+    if (roleRef === "Snake Charmer") return false;
+    const role = this.characters.get(roleRef);
+    if (role === undefined) return false;
+    try {
+      return roleCharacterType(role) === CharacterType.Townsfolk;
+    } catch {
+      return false;
+    }
   }
 
   addNoDashiiInfoClaim(

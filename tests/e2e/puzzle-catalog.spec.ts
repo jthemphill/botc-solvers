@@ -23,6 +23,7 @@ test("loads puzzle 34 with structured role clues", async ({ page }) => {
   await expect(page.getByText("Demon-minion distance").first()).toBeVisible();
   await expect(page.getByText("Malfunctions").first()).toBeVisible();
   await expect(page.getByText("Aoife.role == `No Dashii`").first()).toBeVisible();
+  await expect(page.getByText("false info under Vortox")).toHaveCount(0);
 
   await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   await page.locator(".solve-panel").getByRole("button", { name: "Solve" }).click();

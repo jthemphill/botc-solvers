@@ -38,7 +38,6 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
   const base = {
     name: claim.name,
     timing,
-    vortoxAffected: claim.vortoxAffected,
     infoClaims: customInfoClaims(claim, ctx),
   };
 
@@ -161,7 +160,6 @@ function customInfoClaims(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Info
     return [
       {
         timing: timingOf(info.timing),
-        vortoxAffected: info.vortoxAffected,
         learned: (game) =>
           compile(expression, game, {
             ...ctx,

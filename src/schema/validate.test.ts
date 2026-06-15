@@ -81,7 +81,6 @@ describe("validatePuzzleDoc", () => {
             {
               timing: "night_1",
               expression: "A.role == Imp",
-              vortoxAffected: true,
             },
           ],
           statements: [{ options: ["true", "false"] }],
@@ -94,7 +93,6 @@ describe("validatePuzzleDoc", () => {
       {
         timing: "night_1",
         expression: "A.role == Imp",
-        vortoxAffected: true,
       },
     ]);
   });
@@ -105,7 +103,7 @@ describe("validatePuzzleDoc", () => {
       players: ["You", "A", "B"],
       script: ["Clockmaker", "Mathematician", "Sage", "Snake Charmer"],
       claims: [
-        { type: "Clockmaker", name: "You", distance: 3, vortoxAffected: true },
+        { type: "Clockmaker", name: "You", distance: 3 },
         { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
         { type: "Sage", name: "You", demonAmong: ["A", "B"] },
         { type: "Snake Charmer", name: "You", checked: "A", demon: false },
@@ -113,7 +111,7 @@ describe("validatePuzzleDoc", () => {
     });
 
     expect(doc.claims).toEqual([
-      { type: "Clockmaker", name: "You", distance: 3, vortoxAffected: true },
+      { type: "Clockmaker", name: "You", distance: 3 },
       { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
       { type: "Sage", name: "You", demonAmong: ["A", "B"] },
       { type: "Snake Charmer", name: "You", checked: "A", demon: false },

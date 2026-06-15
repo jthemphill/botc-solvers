@@ -88,10 +88,8 @@ function validateClaim(input: unknown, path: string): Claim {
     throw new ValidationError(`Unsupported claim type '${type}'`, `${path}.type`);
   const name = expectString(input["name"], `${path}.name`);
   const timing = input["timing"] === undefined ? undefined : expectString(input["timing"], `${path}.timing`);
-  const vortoxAffected =
-    input["vortoxAffected"] === undefined ? undefined : expectBool(input["vortoxAffected"], `${path}.vortoxAffected`);
   const info = input["info"] === undefined ? undefined : validateCustomInfo(input["info"], `${path}.info`);
-  const base = { name, timing, vortoxAffected, info };
+  const base = { name, timing, info };
 
   switch (type as Claim["type"]) {
     case "Investigator":
@@ -318,10 +316,6 @@ function validateCustomInfo(input: unknown, path: string): Claim["info"] {
       timing: entry["timing"] === undefined ? undefined : expectString(entry["timing"], `${entryPath}.timing`),
       expression:
         entry["expression"] === undefined ? undefined : expectString(entry["expression"], `${entryPath}.expression`),
-      vortoxAffected:
-        entry["vortoxAffected"] === undefined
-          ? undefined
-          : expectBool(entry["vortoxAffected"], `${entryPath}.vortoxAffected`),
     };
   });
 }
