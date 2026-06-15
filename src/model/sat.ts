@@ -17,6 +17,11 @@ export interface SatBackend {
 
 interface KissatEmscriptenModule {
   calledRun?: boolean;
+  _kissat_add(solverPtr: number, literalOrZero: number): void;
+  _kissat_init(): number;
+  _kissat_release(solverPtr: number): void;
+  _kissat_solve(solverPtr: number): number;
+  _kissat_value(solverPtr: number, variable: number): number;
   ccall(ident: string, returnType: "number", argTypes: readonly string[], args: readonly (number | string)[]): number;
   ccall(ident: string, returnType: null, argTypes: readonly string[], args: readonly (number | string)[]): null;
 }
@@ -25,7 +30,7 @@ class KissatSolver {
   private readonly solverPtr: number;
 
   constructor(private readonly runtime: KissatEmscriptenModule) {
-    this.solverPtr = runtime.ccall("kissat_init", "number", [], []);
+    this.solverPtr = runtime._kissat_init();
     this.setOption("quiet", 1);
   }
 
@@ -35,24 +40,26 @@ class KissatSolver {
   }
 
   solve(): boolean | undefined {
-    const result = this.runtime.ccall("kissat_solve", "number", ["number"], [this.solverPtr]);
+    const result = this.runtime._kissat_solve(this.solverPtr);
     if (result === 10) return true;
     if (result === 20) return false;
     return undefined;
   }
 
-  model(vars: readonly number[]): readonly number[] {
-    return vars.map((variable) =>
-      this.runtime.ccall("kissat_value", "number", ["number", "number"], [this.solverPtr, variable]),
-    );
+  positiveModel(variableCount: number): ReadonlySet<number> {
+    const model = new Set<number>();
+    for (let variable = 1; variable <= variableCount; variable += 1) {
+      if (this.runtime._kissat_value(this.solverPtr, variable) > 0) model.add(variable);
+    }
+    return model;
   }
 
   release(): void {
-    this.runtime.ccall("kissat_release", null, ["number"], [this.solverPtr]);
+    this.runtime._kissat_release(this.solverPtr);
   }
 
   private add(literalOrZero: number): void {
-    this.runtime.ccall("kissat_add", null, ["number", "number"], [this.solverPtr, literalOrZero]);
+    this.runtime._kissat_add(this.solverPtr, literalOrZero);
   }
 
   private setOption(name: string, value: number): void {
@@ -81,12 +88,7 @@ export class KissatBackend implements SatBackend {
       for (const clause of problem.clauses) solver.addClause(clause);
       const sat = solver.solve();
       if (sat !== true) return { sat: false };
-      const vars = Array.from({ length: problem.variableCount }, (_, index) => index + 1);
-      const model = new Set<number>();
-      for (const value of solver.model(vars)) {
-        if (value > 0) model.add(value);
-      }
-      return { sat: true, model };
+      return { sat: true, model: solver.positiveModel(problem.variableCount) };
     } finally {
       solver.release();
     }
