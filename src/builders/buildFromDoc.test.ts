@@ -16,7 +16,7 @@ describe("buildFromDoc", () => {
     backend = await KissatBackend.create();
   });
 
-  test("puzzle-01-sober-savant.json solves to 1 world matching the TS puzzle", async () => {
+  test("puzzle-01-sober-savant.json solves to 1 world", async () => {
     const doc = loadDoc("puzzle-01-sober-savant.json");
     const worlds = await buildFromDoc(doc, backend).solveAll();
     expect(worlds).toHaveLength(1);
@@ -68,5 +68,55 @@ describe("buildFromDoc", () => {
     ).solveAll();
 
     expect(new Set(worlds.map((world) => world.actualRole("You")))).toEqual(new Set(["Drunk", "Investigator"]));
+  });
+
+  test("custom info statements and forbidden roles constrain the model", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Sage", "Imp"],
+        setup: "none",
+        fixedRoles: [{ name: "A", roles: ["Sage"] }],
+        forbiddenRoles: [{ name: "B", roles: ["Sage"] }],
+        claims: [
+          {
+            type: "Sage",
+            name: "A",
+            info: [{ timing: "night_1", expression: "B.role == Imp" }],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("A")).toBe("Sage");
+    expect(worlds[0]?.actualRole("B")).toBe("Imp");
+  });
+
+  test("timeline deaths exclude players from script demon roles", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Imp", "Sage"],
+        setup: "none",
+        uniqueCharacters: true,
+        timeline: [{ timing: "night_2", type: "nightKill", players: ["B"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds.length).toBeGreaterThan(0);
+    expect(new Set(worlds.map((world) => world.actualRole("B")))).not.toContain("Imp");
+  });
+
+  test("puzzle-34-the-vortox-conjecture.json parses and solves", async () => {
+    const doc = loadDoc("puzzle-34-the-vortox-conjecture.json");
+    const worlds = await buildFromDoc(doc, backend).solveAll();
+
+    expect(worlds.length).toBeGreaterThan(0);
   });
 });

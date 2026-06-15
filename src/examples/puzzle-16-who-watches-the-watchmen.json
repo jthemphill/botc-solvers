@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "title": "Puzzle 16 - Who Watches The Watchmen",
+  "players": ["Oscar", "Hannah", "Sarah", "Tim", "You", "Olivia", "Jasmine", "Fraser"],
+  "script": [
+    "Imp",
+    "Baron",
+    "Poisoner",
+    "Scarlet Woman",
+    "Spy",
+    "Drunk",
+    "Recluse",
+    "Saint",
+    "Chef",
+    "Empath",
+    "Fortune Teller",
+    "Investigator",
+    "Nightwatchman",
+    "Washerwoman"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Saint"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Recluse",
+      "name": "Oscar"
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Hannah",
+      "timing": "night_1",
+      "role": "Chef",
+      "among": ["Oscar", "Tim"]
+    },
+    {
+      "type": "Investigator",
+      "name": "Sarah",
+      "timing": "night_1",
+      "role": "Poisoner",
+      "among": ["Olivia", "Hannah"]
+    },
+    {
+      "type": "Chef",
+      "name": "Tim",
+      "timing": "night_1",
+      "count": 1
+    },
+    {
+      "type": "Saint",
+      "name": "You"
+    },
+    {
+      "type": "Empath",
+      "name": "Olivia"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Jasmine",
+      "checks": [
+        {
+          "left": "Hannah",
+          "right": "Tim",
+          "yes": false,
+          "demonRole": "Imp",
+          "registers": true,
+          "timing": "night_1"
+        },
+        {
+          "left": "Olivia",
+          "right": "Tim",
+          "yes": false,
+          "demonRole": "Imp",
+          "registers": true,
+          "timing": "night_2"
+        },
+        {
+          "left": "Sarah",
+          "right": "Jasmine",
+          "yes": false,
+          "demonRole": "Imp",
+          "registers": true,
+          "timing": "night_3"
+        }
+      ]
+    },
+    {
+      "type": "Nightwatchman",
+      "name": "Fraser"
+    }
+  ]
+}

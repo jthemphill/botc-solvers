@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "title": "Puzzle 13 - Clockblocking",
+  "players": ["Tim", "Sarah", "Fraser", "Aoife", "You", "Jasmine", "Oscar"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Spy",
+    "Baron",
+    "Scarlet Woman",
+    "Drunk",
+    "Recluse",
+    "Clockmaker",
+    "Fortune Teller",
+    "Investigator",
+    "Librarian",
+    "Ravenkeeper",
+    "Slayer"
+  ],
+  "claims": [
+    {
+      "type": "Ravenkeeper",
+      "name": "Tim",
+      "timing": "night_2"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Sarah",
+      "checks": [
+        {
+          "left": "You",
+          "right": "Oscar",
+          "yes": false,
+          "demonRole": "Imp",
+          "registers": true,
+          "timing": "night_1"
+        },
+        {
+          "left": "You",
+          "right": "Jasmine",
+          "yes": false,
+          "demonRole": "Imp",
+          "registers": true,
+          "timing": "night_2"
+        }
+      ]
+    },
+    {
+      "type": "Slayer",
+      "name": "Fraser",
+      "timing": "day_1"
+    },
+    {
+      "type": "Recluse",
+      "name": "Aoife"
+    },
+    {
+      "type": "Investigator",
+      "name": "You",
+      "timing": "night_1",
+      "role": "Scarlet Woman",
+      "among": ["Sarah", "Aoife"]
+    },
+    {
+      "type": "Clockmaker",
+      "name": "Jasmine"
+    },
+    {
+      "type": "Librarian",
+      "name": "Oscar",
+      "timing": "night_1",
+      "outsiderCount": 0,
+      "among": []
+    }
+  ]
+}

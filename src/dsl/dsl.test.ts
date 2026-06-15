@@ -110,6 +110,23 @@ describe("DSL", () => {
     expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
   });
 
+  test("custom info helpers compile into constraints", async () => {
+    const game = buildPuzzleModel({ players: ["A", "B"], characters: [Savant, Imp], setup: false }, backend);
+    const ctx: CompileCtx = {
+      players: ["A", "B"],
+      script: ["Savant", "Imp"],
+      nameRoot: "custom_info_helpers",
+    };
+
+    game.fixActual("A", Savant);
+    game.fixActual("B", Imp);
+    game.addTruth(compile("A.alignment != B.alignment", game, ctx) as BoolLike);
+    game.addTruth(compile("role_count(2, A, Savant, B, Imp)", game, ctx) as BoolLike);
+    game.addTruth(compile("malfunctions(night_1, 0)", game, ctx) as BoolLike);
+
+    expect(await game.solveAll()).toHaveLength(1);
+  });
+
   test("each DSL statement matches its hand-coded counterpart under the puzzle-01 model", async () => {
     // Build the puzzle-01 game so the Savant statement is true exactly when the DSL form is.
     const buildBaseGame = (): BOTCModel => {

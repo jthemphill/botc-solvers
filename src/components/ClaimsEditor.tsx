@@ -6,6 +6,7 @@ import type {
   BalloonistClaim,
   Claim,
   ClockmakerClaim,
+  CustomInfoStatementDoc,
   ChefClaim,
   DreamerClaim,
   EmpathClaim,
@@ -15,11 +16,14 @@ import type {
   JugglerClaim,
   KnightClaim,
   LibrarianClaim,
+  MathematicianClaim,
   NobleClaim,
   PuzzleDoc,
+  SageClaim,
   SavantClaim,
   SeamstressClaim,
   ShugenjaClaim,
+  SnakeCharmerClaim,
   StewardClaim,
   UndertakerClaim,
   VillageIdiotClaim,
@@ -125,7 +129,13 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
     case "Shugenja":
       return { type: "Shugenja", name, evilDirection: "clockwise" };
     case "Clockmaker":
-      return { type: "Clockmaker", name, demonNextToMinion: true };
+      return { type: "Clockmaker", name, distance: 1 };
+    case "Mathematician":
+      return { type: "Mathematician", name, malfunctions: [{ timing: "night_1", count: 0 }] };
+    case "Sage":
+      return { type: "Sage", name, demonAmong: [] };
+    case "Snake Charmer":
+      return { type: "Snake Charmer", name, checked: "", demon: false };
     case "VillageIdiot":
       return { type: "VillageIdiot", name, checks: [] };
     case "Balloonist":
@@ -252,51 +262,125 @@ function PlayerSelect({
 }
 
 export function ClaimBody({ doc, claim, onChange }: BodyProps) {
-  switch (claim.type) {
-    case "Investigator":
-      return <InvestigatorBody doc={doc} claim={claim} onChange={onChange} />;
-    case "Librarian":
-      return <LibrarianBody doc={doc} claim={claim} onChange={onChange} />;
-    case "Washerwoman":
-      return <WasherwomanBody doc={doc} claim={claim} onChange={onChange} />;
-    case "Chef":
-      return <ChefBody claim={claim} onChange={onChange} />;
-    case "Empath":
-      return <EmpathBody doc={doc} claim={claim} onChange={onChange} />;
-    case "FortuneTeller":
-      return <FortuneTellerBody doc={doc} claim={claim} onChange={onChange} />;
-    case "Undertaker":
-      return <UndertakerBody doc={doc} claim={claim} onChange={onChange} />;
-    case "Noble":
-      return <NobleBody doc={doc} claim={claim} onChange={onChange} />;
-    case "Steward":
-      return <StewardBody doc={doc} claim={claim} onChange={onChange} />;
-    case "Knight":
-      return <KnightBody doc={doc} claim={claim} onChange={onChange} />;
-    case "Seamstress":
-      return <SeamstressBody doc={doc} claim={claim} onChange={onChange} />;
-    case "Juggler":
-      return <JugglerBody doc={doc} claim={claim} onChange={onChange} />;
-    case "Dreamer":
-      return <DreamerBody doc={doc} claim={claim} onChange={onChange} />;
-    case "Shugenja":
-      return <ShugenjaBody claim={claim} onChange={onChange} />;
-    case "Clockmaker":
-      return <ClockmakerBody claim={claim} onChange={onChange} />;
-    case "VillageIdiot":
-      return <VillageIdiotBody doc={doc} claim={claim} onChange={onChange} />;
-    case "Balloonist":
-      return <BalloonistBody doc={doc} claim={claim} onChange={onChange} />;
-    case "Savant":
-      return <SavantBody doc={doc} claim={claim} onChange={onChange} />;
-    default:
-      return (
-        <div className="field-grid">
-          <span>Timing</span>
-          <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t } as Claim)} />
-        </div>
-      );
+  const body = (() => {
+    switch (claim.type) {
+      case "Investigator":
+        return <InvestigatorBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Librarian":
+        return <LibrarianBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Washerwoman":
+        return <WasherwomanBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Chef":
+        return <ChefBody claim={claim} onChange={onChange} />;
+      case "Empath":
+        return <EmpathBody doc={doc} claim={claim} onChange={onChange} />;
+      case "FortuneTeller":
+        return <FortuneTellerBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Undertaker":
+        return <UndertakerBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Noble":
+        return <NobleBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Steward":
+        return <StewardBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Knight":
+        return <KnightBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Seamstress":
+        return <SeamstressBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Juggler":
+        return <JugglerBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Dreamer":
+        return <DreamerBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Shugenja":
+        return <ShugenjaBody claim={claim} onChange={onChange} />;
+      case "Clockmaker":
+        return <ClockmakerBody claim={claim} onChange={onChange} />;
+      case "Mathematician":
+        return <MathematicianBody claim={claim} onChange={onChange} />;
+      case "Sage":
+        return <SageBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Snake Charmer":
+        return <SnakeCharmerBody doc={doc} claim={claim} onChange={onChange} />;
+      case "VillageIdiot":
+        return <VillageIdiotBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Balloonist":
+        return <BalloonistBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Savant":
+        return <SavantBody doc={doc} claim={claim} onChange={onChange} />;
+      default:
+        return (
+          <div className="field-grid">
+            <span>Timing</span>
+            <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t } as Claim)} />
+          </div>
+        );
+    }
+  })();
+
+  return (
+    <>
+      {body}
+      <CustomInfoEditor claim={claim} onChange={onChange} />
+    </>
+  );
+}
+
+function validateDslExpression(src: string): string | undefined {
+  if (!src.trim()) return undefined;
+  try {
+    parse(lex(src));
+    return undefined;
+  } catch (e) {
+    if (e instanceof DslError) return `${e.message} (col ${e.span.start + 1})`;
+    return e instanceof Error ? e.message : String(e);
   }
+}
+
+function CustomInfoEditor({ claim, onChange }: { claim: Claim; onChange: (c: Claim) => void }) {
+  const info = claim.info ?? [];
+  const setInfo = (next: readonly CustomInfoStatementDoc[]) => {
+    onChange({ ...claim, info: next.length === 0 ? undefined : next } as Claim);
+  };
+  const updateInfo = (index: number, next: CustomInfoStatementDoc) => {
+    setInfo(info.map((entry, i) => (i === index ? next : entry)));
+  };
+  const removeInfo = (index: number) => {
+    setInfo(info.filter((_, i) => i !== index));
+  };
+  const addInfo = () => {
+    setInfo([...info, { timing: claim.timing ?? "night_1", expression: "" }]);
+  };
+
+  return (
+    <div className="statement-block">
+      <header className="row">
+        <strong>Info</strong>
+        <button type="button" onClick={addInfo}>
+          + Add info
+        </button>
+      </header>
+      {info.map((entry, index) => {
+        const expressionError = validateDslExpression(entry.expression ?? "");
+        return (
+          <div key={index} className="field-grid">
+            <span>Timing</span>
+            <TimingField value={entry.timing} onChange={(timing) => updateInfo(index, { ...entry, timing })} />
+            <span>Expression</span>
+            <div>
+              <textarea
+                value={entry.expression ?? ""}
+                onChange={(event) => updateInfo(index, { ...entry, expression: event.target.value })}
+              />
+              {expressionError && <div className="error">{expressionError}</div>}
+            </div>
+            <span />
+            <button type="button" onClick={() => removeInfo(index)}>
+              Remove info
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function InvestigatorBody({
@@ -378,7 +462,12 @@ function WasherwomanBody({
   return (
     <div className="field-grid">
       <span>Role</span>
-      <RoleSelect script={doc.script} value={claim.role} onChange={(v) => onChange({ ...claim, role: v })} />
+      <RoleSelect
+        script={doc.script}
+        value={claim.role}
+        onChange={(v) => onChange({ ...claim, role: v || undefined })}
+        allowEmpty
+      />
       <span>Among</span>
       <MultiPlayerSelect players={doc.players} value={claim.among} onChange={(v) => onChange({ ...claim, among: v })} />
       <span>Registers</span>
@@ -399,8 +488,8 @@ function ChefBody({ claim, onChange }: { claim: ChefClaim; onChange: (c: Claim) 
       <span>Count</span>
       <input
         type="number"
-        value={claim.count}
-        onChange={(e) => onChange({ ...claim, count: Number(e.target.value) })}
+        value={claim.count ?? ""}
+        onChange={(e) => onChange({ ...claim, count: e.target.value === "" ? undefined : Number(e.target.value) })}
       />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
@@ -414,8 +503,8 @@ function EmpathBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: EmpathCla
       <span>Count</span>
       <input
         type="number"
-        value={claim.count}
-        onChange={(e) => onChange({ ...claim, count: Number(e.target.value) })}
+        value={claim.count ?? ""}
+        onChange={(e) => onChange({ ...claim, count: e.target.value === "" ? undefined : Number(e.target.value) })}
       />
       <span>Player (override)</span>
       <PlayerSelect
@@ -502,9 +591,18 @@ function UndertakerBody({
   return (
     <div className="field-grid">
       <span>Executed player</span>
-      <PlayerSelect players={doc.players} value={claim.player} onChange={(v) => onChange({ ...claim, player: v })} />
+      <PlayerSelect
+        players={doc.players}
+        value={claim.player}
+        onChange={(v) => onChange({ ...claim, player: v || undefined })}
+      />
       <span>Role learned</span>
-      <RoleSelect script={doc.script} value={claim.role} onChange={(v) => onChange({ ...claim, role: v })} />
+      <RoleSelect
+        script={doc.script}
+        value={claim.role}
+        onChange={(v) => onChange({ ...claim, role: v || undefined })}
+        allowEmpty
+      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} defaultValue="night_2" />
     </div>
@@ -531,7 +629,7 @@ function StewardBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: StewardC
       <PlayerSelect
         players={doc.players}
         value={claim.goodPlayer}
-        onChange={(v) => onChange({ ...claim, goodPlayer: v })}
+        onChange={(v) => onChange({ ...claim, goodPlayer: v || undefined })}
       />
     </div>
   );
@@ -566,20 +664,28 @@ function SeamstressBody({
       <PlayerSelect
         players={doc.players}
         value={claim.among[0]}
-        onChange={(v) => onChange({ ...claim, among: [v, claim.among[1]] as const })}
+        onChange={(v) => onChange({ ...claim, among: [v, claim.among[1] ?? ""] })}
       />
       <span>Right</span>
       <PlayerSelect
         players={doc.players}
         value={claim.among[1]}
-        onChange={(v) => onChange({ ...claim, among: [claim.among[0], v] as const })}
+        onChange={(v) => onChange({ ...claim, among: [claim.among[0] ?? "", v] })}
       />
       <span>Same alignment</span>
-      <input
-        type="checkbox"
-        checked={claim.aligned}
-        onChange={(e) => onChange({ ...claim, aligned: e.target.checked })}
-      />
+      <select
+        value={claim.aligned === undefined ? "" : claim.aligned ? "same" : "different"}
+        onChange={(e) =>
+          onChange({
+            ...claim,
+            aligned: e.target.value === "" ? undefined : e.target.value === "same",
+          })
+        }
+      >
+        <option value="">-</option>
+        <option value="same">same</option>
+        <option value="different">different</option>
+      </select>
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
@@ -657,7 +763,7 @@ function ShugenjaBody({ claim, onChange }: { claim: ShugenjaClaim; onChange: (c:
     <div className="field-grid">
       <span>Evil direction</span>
       <select
-        value={claim.evilDirection}
+        value={claim.evilDirection ?? "clockwise"}
         onChange={(e) => onChange({ ...claim, evilDirection: e.target.value as ShugenjaClaim["evilDirection"] })}
       >
         <option value="clockwise">clockwise</option>
@@ -672,14 +778,105 @@ function ShugenjaBody({ claim, onChange }: { claim: ShugenjaClaim; onChange: (c:
 function ClockmakerBody({ claim, onChange }: { claim: ClockmakerClaim; onChange: (c: Claim) => void }) {
   return (
     <div className="field-grid">
-      <span>Demon next to minion</span>
+      <span>Demon-minion distance</span>
       <input
-        type="checkbox"
-        checked={claim.demonNextToMinion}
-        onChange={(e) => onChange({ ...claim, demonNextToMinion: e.target.checked })}
+        type="number"
+        min={1}
+        value={claim.distance ?? ""}
+        onChange={(e) => onChange({ ...claim, distance: e.target.value === "" ? undefined : Number(e.target.value) })}
       />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+    </div>
+  );
+}
+
+function MathematicianBody({ claim, onChange }: { claim: MathematicianClaim; onChange: (c: Claim) => void }) {
+  const counts = claim.malfunctions ?? [];
+  const setCount = (index: number, next: (typeof counts)[number]) => {
+    onChange({ ...claim, malfunctions: counts.map((entry, i) => (i === index ? next : entry)) });
+  };
+  const removeCount = (index: number) => {
+    onChange({ ...claim, malfunctions: counts.filter((_, i) => i !== index) });
+  };
+  const addCount = () => {
+    onChange({ ...claim, malfunctions: [...counts, { timing: `night_${counts.length + 1}`, count: 0 }] });
+  };
+  return (
+    <div>
+      {counts.map((entry, index) => (
+        <div key={index} className="field-grid">
+          <span>Timing</span>
+          <TimingField
+            value={entry.timing}
+            onChange={(timing) => setCount(index, { ...entry, timing: timing ?? "night_1" })}
+          />
+          <span>Malfunctions</span>
+          <input
+            type="number"
+            min={0}
+            value={entry.count}
+            onChange={(event) => setCount(index, { ...entry, count: Number(event.target.value) })}
+          />
+          <span />
+          <button type="button" onClick={() => removeCount(index)}>
+            Remove count
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addCount}>
+        + Add count
+      </button>
+    </div>
+  );
+}
+
+function SageBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SageClaim; onChange: (c: Claim) => void }) {
+  return (
+    <div className="field-grid">
+      <span>Demon among</span>
+      <MultiPlayerSelect
+        players={doc.players}
+        value={claim.demonAmong ?? []}
+        maxSelections={2}
+        onChange={(demonAmong) => onChange({ ...claim, demonAmong })}
+      />
+      <span>Timing</span>
+      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+    </div>
+  );
+}
+
+function SnakeCharmerBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: SnakeCharmerClaim;
+  onChange: (c: Claim) => void;
+}) {
+  return (
+    <div className="field-grid">
+      <span>Checked player</span>
+      <PlayerSelect
+        players={doc.players}
+        value={claim.checked}
+        onChange={(checked) => onChange({ ...claim, checked })}
+      />
+      <span>Is Demon</span>
+      <select
+        value={claim.demon === undefined ? "" : claim.demon ? "yes" : "no"}
+        onChange={(event) =>
+          onChange({ ...claim, demon: event.target.value === "" ? undefined : event.target.value === "yes" })
+        }
+      >
+        <option value="">-</option>
+        <option value="yes">yes</option>
+        <option value="no">no</option>
+      </select>
+      <span>Timing</span>
+      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
     </div>
   );
 }

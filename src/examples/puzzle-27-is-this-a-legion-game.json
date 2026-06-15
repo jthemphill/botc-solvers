@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "title": "Puzzle 27 - Is This A Legion Game",
+  "players": ["Sarah", "Tom", "Aoife", "Hannah", "You", "Fraser", "Adam"],
+  "script": ["Imp", "Poisoner", "Empath", "Fortune Teller", "Investigator", "Legionary", "Washerwoman"],
+  "claims": [
+    {
+      "type": "Legionary",
+      "name": "Sarah"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Tom",
+      "checks": [
+        {
+          "left": "You",
+          "right": "Fraser",
+          "yes": false,
+          "demonRole": "Imp",
+          "timing": "night_1"
+        }
+      ]
+    },
+    {
+      "type": "Empath",
+      "name": "Aoife"
+    },
+    {
+      "type": "Legionary",
+      "name": "Hannah"
+    },
+    {
+      "type": "Washerwoman",
+      "name": "You",
+      "among": []
+    },
+    {
+      "type": "Legionary",
+      "name": "Fraser"
+    },
+    {
+      "type": "Investigator",
+      "name": "Adam",
+      "timing": "night_1",
+      "role": "Poisoner",
+      "among": ["Tom", "Aoife"]
+    }
+  ]
+}

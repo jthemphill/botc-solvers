@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "title": "Puzzle 12a - Thunderstruck",
+  "players": ["Hannah", "Sarah", "Jasmine", "You", "Tim", "Fraser"],
+  "script": [
+    "Vortox",
+    "Spy",
+    "Scarlet Woman",
+    "Lunatic",
+    "Clockmaker",
+    "Courtier",
+    "Dreamer",
+    "Empath",
+    "Mayor",
+    "Slayer"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Dreamer"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Slayer",
+      "name": "Hannah",
+      "timing": "day_1"
+    },
+    {
+      "type": "Courtier",
+      "name": "Sarah"
+    },
+    {
+      "type": "Mayor",
+      "name": "Jasmine"
+    },
+    {
+      "type": "Dreamer",
+      "name": "You",
+      "roles": []
+    },
+    {
+      "type": "Clockmaker",
+      "name": "Tim"
+    },
+    {
+      "type": "Empath",
+      "name": "Fraser"
+    }
+  ]
+}

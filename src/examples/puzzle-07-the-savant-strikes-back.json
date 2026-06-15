@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "title": "Puzzle 7 - The Savant Strikes Back",
+  "players": ["Anna", "Aoife", "Steph", "Tim", "You", "Fraser", "Sarah", "Oscar"],
+  "script": [
+    "Leviathan",
+    "Goblin",
+    "Mutant",
+    "Drunk",
+    "Dreamer",
+    "Fortune Teller",
+    "Investigator",
+    "Juggler",
+    "Savant",
+    "Shugenja",
+    "Village Idiot"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Savant"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Juggler",
+      "name": "Anna",
+      "timing": "night_2",
+      "guesses": {
+        "You": "Savant",
+        "Tim": "Village Idiot"
+      },
+      "correctCount": 1
+    },
+    {
+      "type": "Shugenja",
+      "name": "Aoife",
+      "evilDirection": "anticlockwise"
+    },
+    {
+      "type": "Dreamer",
+      "name": "Steph",
+      "roles": []
+    },
+    {
+      "type": "VillageIdiot",
+      "name": "Tim",
+      "checks": [
+        {
+          "player": "Anna",
+          "good": true
+        },
+        {
+          "player": "Sarah",
+          "good": true
+        },
+        {
+          "player": "You",
+          "good": true
+        }
+      ]
+    },
+    {
+      "type": "Savant",
+      "name": "You",
+      "timing": "day_1",
+      "statements": []
+    },
+    {
+      "type": "VillageIdiot",
+      "name": "Fraser",
+      "checks": [
+        {
+          "player": "Sarah",
+          "good": true
+        },
+        {
+          "player": "Aoife",
+          "good": true
+        },
+        {
+          "player": "You",
+          "good": true
+        }
+      ]
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Sarah",
+      "checks": []
+    },
+    {
+      "type": "Investigator",
+      "name": "Oscar",
+      "role": "Goblin",
+      "among": ["Fraser", "Steph"]
+    }
+  ]
+}

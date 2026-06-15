@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Puzzle 17 - The Missing Piece",
+  "players": ["Sarah", "Sula", "Hannah", "Tom", "You", "Adam", "Steph", "Fraser"],
+  "script": [
+    "Imp",
+    "Scarlet Woman",
+    "Puzzlemaster",
+    "Chef",
+    "Empath",
+    "Fortune Teller",
+    "Investigator",
+    "Slayer",
+    "Undertaker",
+    "Washerwoman"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Puzzlemaster"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Undertaker",
+      "name": "Sarah",
+      "timing": "night_2"
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Sula",
+      "role": "Undertaker",
+      "among": ["Sarah", "Hannah"]
+    },
+    {
+      "type": "Investigator",
+      "name": "Hannah",
+      "role": "Scarlet Woman",
+      "among": ["Fraser", "Sarah"]
+    },
+    {
+      "type": "Slayer",
+      "name": "Tom",
+      "timing": "day_3"
+    },
+    {
+      "type": "Puzzlemaster",
+      "name": "You"
+    },
+    {
+      "type": "Chef",
+      "name": "Adam",
+      "count": 0,
+      "registers": false
+    },
+    {
+      "type": "Empath",
+      "name": "Steph"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Fraser",
+      "checks": []
+    }
+  ]
+}

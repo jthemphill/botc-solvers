@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "title": "Puzzle 35 - Typhon Season",
+  "players": ["Oscar", "Olivia", "Sarah", "Jasmine", "You", "Tim", "Sula", "Fraser"],
+  "script": [
+    "Imp",
+    "Lord of Typhon",
+    "Poisoner",
+    "Spy",
+    "Drunk",
+    "Saint",
+    "Clockmaker",
+    "Empath",
+    "Fortune Teller",
+    "Investigator",
+    "Librarian",
+    "Ravenkeeper",
+    "Undertaker"
+  ],
+  "claims": [
+    {
+      "type": "Ravenkeeper",
+      "name": "Oscar",
+      "timing": "night_2"
+    },
+    {
+      "type": "Saint",
+      "name": "Olivia"
+    },
+    {
+      "type": "Investigator",
+      "name": "Sarah",
+      "among": []
+    },
+    {
+      "type": "Empath",
+      "name": "Jasmine"
+    },
+    {
+      "type": "Librarian",
+      "name": "You",
+      "among": []
+    },
+    {
+      "type": "Clockmaker",
+      "name": "Tim"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Sula"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Fraser",
+      "checks": []
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "title": "Puzzle 24 - The Ultimate Blunder",
+  "players": ["Sula", "Oscar", "Adam", "Josh", "You", "Olivia", "Steph", "Fraser"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Drunk",
+    "Klutz",
+    "Chef",
+    "Empath",
+    "Fortune Teller",
+    "Investigator",
+    "Librarian",
+    "Virgin",
+    "Washerwoman"
+  ],
+  "claims": [
+    {
+      "type": "Virgin",
+      "name": "Sula"
+    },
+    {
+      "type": "Librarian",
+      "name": "Oscar",
+      "timing": "night_1",
+      "role": "Klutz",
+      "among": ["You", "Olivia"]
+    },
+    {
+      "type": "Chef",
+      "name": "Adam",
+      "timing": "night_1",
+      "count": 1
+    },
+    {
+      "type": "Empath",
+      "name": "Josh"
+    },
+    {
+      "type": "Investigator",
+      "name": "You",
+      "timing": "night_1",
+      "role": "Poisoner",
+      "among": ["Olivia", "Josh"]
+    },
+    {
+      "type": "Klutz",
+      "name": "Olivia"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Steph",
+      "checks": []
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Fraser",
+      "timing": "night_1",
+      "role": "Virgin",
+      "among": ["Olivia", "Sula"]
+    }
+  ]
+}

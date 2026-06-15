@@ -173,7 +173,7 @@ summary {
 }
 
 .toolbar-button-row,
-.example-button-row,
+.example-picker-row,
 .chrome-actions,
 .row {
   display: flex;
@@ -182,18 +182,25 @@ summary {
   align-items: center;
 }
 
-.example-button-row {
+.example-picker-row {
   min-width: 0;
 }
 
-.example-button-row span {
+.example-picker-row label {
+  display: flex;
+  min-width: min(22rem, 100%);
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.example-picker-row span {
   color: var(--muted-ink);
   font-size: 0.85rem;
 }
 
-.example-button-row button {
+.example-picker-row select {
+  width: min(24rem, 100%);
   min-height: 2rem;
-  padding: 0.23rem 0.5rem;
   font-size: 0.82rem;
 }
 
@@ -240,13 +247,18 @@ summary {
   text-align: center;
 }
 
+.puzzle-title-editor label {
+  width: min(100%, 46rem);
+}
+
 .puzzle-number {
   font-weight: 750;
   color: var(--muted-ink);
 }
 
 .title-input {
-  width: min(100%, 34rem);
+  box-sizing: border-box;
+  width: 100%;
   border: 0;
   border-bottom: 3px solid var(--paper-line);
   border-radius: 0;
@@ -254,7 +266,7 @@ summary {
   padding: 0 0.6rem 0.18rem;
   text-align: center;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-size: 2.75rem;
   font-weight: 800;
   line-height: 1.05;
 }
@@ -323,6 +335,8 @@ summary {
     0 8px 18px rgba(37, 27, 17, 0.16),
     0 0 0 0 rgba(14, 119, 169, 0);
   cursor: grab;
+  isolation: isolate;
+  overflow: visible;
 }
 
 .seat-button.selected {
@@ -337,13 +351,78 @@ summary {
   cursor: grabbing;
 }
 
+.seat-button.death-nomination-death {
+  --death-color: #b55f20;
+  --death-rgb: 181, 95, 32;
+}
+
+.seat-button.death-execution {
+  --death-color: var(--red-ink);
+  --death-rgb: 165, 43, 43;
+}
+
+.seat-button.death-night-kill {
+  --death-color: #305f8f;
+  --death-rgb: 48, 95, 143;
+}
+
+.seat-button.death-nomination-death,
+.seat-button.death-execution,
+.seat-button.death-night-kill {
+  border-color: var(--death-color);
+  box-shadow:
+    0 10px 22px rgba(37, 27, 17, 0.2),
+    0 0 0 5px rgba(var(--death-rgb), 0.2);
+}
+
+.seat-shroud {
+  position: absolute;
+  inset: 5% 4% -0.1rem;
+  z-index: 0;
+  border-radius: 50%;
+  clip-path: polygon(0 42%, 18% 52%, 38% 45%, 58% 55%, 78% 47%, 100% 55%, 100% 100%, 0 100%);
+  background:
+    radial-gradient(circle at 50% 72%, rgba(255, 252, 244, 0.18), transparent 38%),
+    linear-gradient(150deg, rgba(var(--death-rgb), 0.3), rgba(var(--death-rgb), 0.74));
+  box-shadow:
+    inset 0 0.55rem 0.7rem rgba(255, 252, 244, 0.2),
+    inset 0 -1.4rem 1.8rem rgba(37, 27, 17, 0.2);
+  opacity: 0.96;
+  pointer-events: none;
+}
+
+.seat-shroud::before {
+  content: "";
+  position: absolute;
+  top: 39%;
+  left: 9%;
+  right: 9%;
+  height: 0.38rem;
+  border-radius: 999px;
+  background: rgba(var(--death-rgb), 0.88);
+  box-shadow: 0 2px 4px rgba(37, 27, 17, 0.18);
+  transform: rotate(-5deg);
+}
+
+.seat-shroud::after {
+  content: "";
+  position: absolute;
+  inset: 48% 0 0;
+  background: repeating-linear-gradient(90deg, transparent 0 0.74rem, rgba(255, 252, 244, 0.18) 0.74rem 0.82rem);
+  opacity: 0.8;
+}
+
 .seat-token-icon {
+  position: relative;
+  z-index: 1;
   color: var(--blue-ink);
   font-size: clamp(1.35rem, 2.4vw, 2.35rem);
   line-height: 1;
 }
 
-.seat-button > span:not(.seat-token-icon) {
+.seat-player-name {
+  position: relative;
+  z-index: 1;
   max-width: 82%;
   overflow-wrap: anywhere;
   font-size: clamp(0.9rem, 1.25vw, 1.15rem);
@@ -352,6 +431,8 @@ summary {
 }
 
 .seat-role-claims {
+  position: relative;
+  z-index: 1;
   display: flex;
   max-width: 72%;
   justify-content: center;
@@ -362,9 +443,39 @@ summary {
   white-space: nowrap;
 }
 
+.seat-death-badge {
+  position: absolute;
+  top: 0.18rem;
+  right: 0.28rem;
+  z-index: 2;
+  display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border: 1.5px solid rgba(255, 252, 244, 0.9);
+  border-radius: 50%;
+  color: #fffaf0;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(37, 27, 17, 0.22);
+}
+
+.seat-death-badge.execution {
+  background: var(--red-ink);
+}
+
+.seat-death-badge.nomination-death {
+  background: #b55f20;
+}
+
+.seat-death-badge.night-kill {
+  background: #305f8f;
+}
+
 .claim-callout {
   position: absolute;
-  z-index: 2;
+  z-index: 4;
   width: clamp(7.8rem, 11vw, 10rem);
   min-height: 3.25rem;
   transform: translate(-50%, -50%);
@@ -477,6 +588,126 @@ summary {
 .sheet-footnote {
   justify-self: end;
   align-self: end;
+  font-weight: 650;
+}
+
+.timeline-strip {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.28fr) minmax(20rem, 1fr) minmax(8rem, 0.28fr);
+  gap: 1.2rem;
+  align-items: center;
+  padding: 1rem 0 0;
+}
+
+.timeline-legend {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 5.5rem;
+  align-content: center;
+  border-left: 0.35rem solid var(--red-ink);
+  padding: 0.75rem 0.9rem;
+  background: linear-gradient(90deg, rgba(165, 43, 43, 0.1), transparent 78%), rgba(255, 252, 244, 0.46);
+}
+
+.timeline-legend strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.3rem;
+}
+
+.timeline-legend span {
+  color: var(--muted-ink);
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+
+.timeline-event-list {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline-event-list::before {
+  content: "";
+  position: absolute;
+  top: 1.35rem;
+  left: 9%;
+  right: 9%;
+  height: 0.22rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #b55f20, var(--red-ink), #305f8f);
+  box-shadow: 0 1px 0 rgba(255, 252, 244, 0.78);
+}
+
+.timeline-event {
+  --death-color: var(--paper-line);
+  --death-rgb: 32, 26, 21;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  gap: 0.48rem;
+  min-width: min(100%, 14rem);
+  padding: 0;
+  text-align: center;
+}
+
+.timeline-event.nomination-death {
+  --death-color: #b55f20;
+  --death-rgb: 181, 95, 32;
+}
+
+.timeline-event.execution {
+  --death-color: var(--red-ink);
+  --death-rgb: 165, 43, 43;
+}
+
+.timeline-event.night-kill {
+  --death-color: #305f8f;
+  --death-rgb: 48, 95, 143;
+}
+
+.timeline-node {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 3px solid #fffaf0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, rgba(255, 252, 244, 0.3), transparent 32%), var(--death-color);
+  color: #fffaf0;
+  font-size: 1.05rem;
+  font-weight: 900;
+  box-shadow:
+    0 4px 10px rgba(37, 27, 17, 0.22),
+    0 0 0 4px rgba(var(--death-rgb), 0.16);
+}
+
+.timeline-event div {
+  display: grid;
+  width: 100%;
+  min-height: 4.25rem;
+  align-content: center;
+  gap: 0.18rem;
+  border: 1.5px solid rgba(var(--death-rgb), 0.7);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(var(--death-rgb), 0.09), transparent 48%), rgba(255, 252, 244, 0.82);
+  padding: 0.55rem 0.7rem;
+  box-shadow: 0 4px 10px rgba(37, 27, 17, 0.08);
+}
+
+.timeline-event strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.98rem;
+}
+
+.timeline-event span:not(.timeline-node) {
+  color: var(--muted-ink);
+  font-size: 0.86rem;
   font-weight: 650;
 }
 
@@ -781,7 +1012,15 @@ summary {
   justify-items: center;
   gap: 0.18rem;
   min-width: 0;
+  padding: 0.35rem 0.25rem;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
   text-align: center;
+}
+
+.solution-token.lying {
+  border-color: var(--red-ink);
+  background: rgba(165, 43, 43, 0.07);
 }
 
 .solution-role {
@@ -928,6 +1167,10 @@ summary {
     grid-template-columns: 1fr;
   }
 
+  .timeline-strip {
+    grid-template-columns: 1fr;
+  }
+
   .sheet-footnote {
     justify-self: start;
   }
@@ -952,7 +1195,7 @@ summary {
     min-height: 4.9rem;
   }
 
-  .seat-button > span:not(.seat-token-icon) {
+  .seat-player-name {
     font-size: 0.8rem;
   }
 

@@ -4,7 +4,10 @@ import { CharacterType } from "./core";
 import { formatSolution, forcedRole } from "./display";
 import { BOTCModel } from "./model";
 import {
+  Artist,
+  Baron,
   Chef,
+  Clockmaker,
   Drunk,
   Empath,
   FortuneTeller,
@@ -20,8 +23,11 @@ import {
   Savant,
   ScarletWoman,
   Seamstress,
+  SnakeCharmer,
   Spy,
   VillageIdiot,
+  Vortox,
+  Witch,
   applyClaims,
   script,
 } from "./characters";
@@ -219,6 +225,31 @@ describe("predicates and helpers", () => {
     game.addTruth(Empath.learnsCount(game, "D", 1, "empath"));
     expect(await game.solveAll()).toHaveLength(1);
 
+    const clockmakerScript = script(Imp, ScarletWoman, Baron, Clockmaker, Chef);
+    const nearestTwo = new BOTCModel(["Demon", "Townsfolk", "Minion A", "Minion B", "Clockmaker"], {
+      characters: clockmakerScript,
+      backend,
+    });
+    nearestTwo.fixActual("Demon", Imp);
+    nearestTwo.fixActual("Townsfolk", Chef);
+    nearestTwo.fixActual("Minion A", ScarletWoman);
+    nearestTwo.fixActual("Minion B", Baron);
+    nearestTwo.fixActual("Clockmaker", Clockmaker);
+    nearestTwo.addTruth(Clockmaker.learnsDemonMinionDistance(nearestTwo, 2, "clockmaker_two"));
+    expect(await nearestTwo.solveAll({ limit: 1 })).toHaveLength(1);
+
+    const closerMinion = new BOTCModel(["Demon", "Minion A", "Townsfolk", "Minion B", "Clockmaker"], {
+      characters: clockmakerScript,
+      backend,
+    });
+    closerMinion.fixActual("Demon", Imp);
+    closerMinion.fixActual("Minion A", ScarletWoman);
+    closerMinion.fixActual("Townsfolk", Chef);
+    closerMinion.fixActual("Minion B", Baron);
+    closerMinion.fixActual("Clockmaker", Clockmaker);
+    closerMinion.addTruth(Clockmaker.learnsDemonMinionDistance(closerMinion, 2, "clockmaker_two"));
+    expect(await closerMinion.solveAll({ limit: 1 })).toEqual([]);
+
     const claims = [
       new Savant({
         timing: "day_1",
@@ -236,6 +267,37 @@ describe("predicates and helpers", () => {
     savant.fixActual("B", Imp);
     savant.fixActual("C", Imp);
     expect(await savant.solveAll({ limit: 1 })).toEqual([]);
+  });
+
+  test("Vortox automatically falsifies Townsfolk information except Snake Charmer", async () => {
+    const characters = script(Vortox, Witch, Clockmaker, Artist, SnakeCharmer);
+    const makeGame = () => {
+      const game = new BOTCModel(["Clockmaker", "Demon", "Minion", "Artist", "Snake Charmer"], {
+        characters,
+        backend,
+      });
+      game.fixActual("Clockmaker", Clockmaker);
+      game.fixActual("Demon", Vortox);
+      game.fixActual("Minion", Witch);
+      game.fixActual("Artist", Artist);
+      game.fixActual("Snake Charmer", SnakeCharmer);
+      return game;
+    };
+
+    const falseClockmakerInfo = makeGame();
+    applyClaims(falseClockmakerInfo, [
+      new Clockmaker({ name: "Clockmaker", distance: 2 }),
+      new SnakeCharmer({ name: "Snake Charmer", checked: "Demon", demon: true }),
+    ]);
+    expect(await falseClockmakerInfo.solveAll({ limit: 1 })).toHaveLength(1);
+
+    const trueClockmakerInfo = makeGame();
+    applyClaims(trueClockmakerInfo, [new Clockmaker({ name: "Clockmaker", distance: 1 })]);
+    expect(await trueClockmakerInfo.solveAll({ limit: 1 })).toEqual([]);
+
+    const falseSnakeCharmerCheck = makeGame();
+    applyClaims(falseSnakeCharmerCheck, [new SnakeCharmer({ name: "Snake Charmer", checked: "Demon", demon: false })]);
+    expect(await falseSnakeCharmerCheck.solveAll({ limit: 1 })).toEqual([]);
   });
 
   test("village idiot can have up to three copies under default uniqueness", async () => {

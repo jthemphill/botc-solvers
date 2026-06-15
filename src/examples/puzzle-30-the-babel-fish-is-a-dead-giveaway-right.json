@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "title": "Puzzle 30 - The Babel Fish Is A Dead Giveaway (right game)",
+  "players": ["Ben", "Owen", "Lydia", "Finn", "Louisa", "Shan"],
+  "script": ["Imp", "Spy", "Drunk", "Artist", "Atheist", "Clockmaker", "Knight", "Noble", "Seamstress"],
+  "claims": [
+    {
+      "type": "Clockmaker",
+      "name": "Ben"
+    },
+    {
+      "type": "Noble",
+      "name": "Owen",
+      "oneEvilAmong": [],
+      "among": []
+    },
+    {
+      "type": "Seamstress",
+      "name": "Lydia",
+      "timing": "night_1",
+      "among": []
+    },
+    {
+      "type": "Atheist",
+      "name": "Finn"
+    },
+    {
+      "type": "Knight",
+      "name": "Louisa",
+      "noDemonAmong": []
+    },
+    {
+      "type": "Artist",
+      "name": "Shan",
+      "timing": "day_1"
+    }
+  ]
+}

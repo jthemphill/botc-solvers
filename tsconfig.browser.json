@@ -9,5 +9,5 @@
     "allowSyntheticDefaultImports": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.json", "vendor/**/*.ts"],
-  "exclude": ["src/model/puzzles/**/*.ts", "src/**/*.test.ts", "src/**/*.test.tsx"]
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }

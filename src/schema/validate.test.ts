@@ -66,4 +66,85 @@ describe("validatePuzzleDoc", () => {
 
     expect(doc.claims[0]).toEqual({ type: "Investigator", name: "You", among: ["A"] });
   });
+
+  test("accepts custom info statements and forbidden roles", () => {
+    const doc = validatePuzzleDoc({
+      ...baseDoc,
+      players: ["You", "A"],
+      script: ["Savant", "Imp"],
+      forbiddenRoles: [{ name: "You", roles: ["Imp"] }],
+      claims: [
+        {
+          type: "Savant",
+          name: "You",
+          info: [
+            {
+              timing: "night_1",
+              expression: "A.role == Imp",
+            },
+          ],
+          statements: [{ options: ["true", "false"] }],
+        },
+      ],
+    });
+
+    expect(doc.forbiddenRoles).toEqual([{ name: "You", roles: ["Imp"] }]);
+    expect(doc.claims[0]?.info).toEqual([
+      {
+        timing: "night_1",
+        expression: "A.role == Imp",
+      },
+    ]);
+  });
+
+  test("accepts timeline events", () => {
+    const doc = validatePuzzleDoc({
+      ...baseDoc,
+      players: ["You", "A"],
+      script: ["Savant", "Imp"],
+      timeline: [
+        { timing: "day_1", type: "nominationDeath", players: ["You"] },
+        { timing: "day_1", type: "execution", players: ["A"] },
+        { timing: "night_2", type: "nightKill", players: ["A"] },
+      ],
+      claims: [{ type: "Savant", name: "You", statements: [{ options: ["true", "false"] }] }],
+    });
+
+    expect(doc.timeline).toEqual([
+      { timing: "day_1", type: "nominationDeath", players: ["You"] },
+      { timing: "day_1", type: "execution", players: ["A"] },
+      { timing: "night_2", type: "nightKill", players: ["A"] },
+    ]);
+  });
+
+  test("rejects unknown timeline event types", () => {
+    expect(() =>
+      validatePuzzleDoc({
+        ...baseDoc,
+        timeline: [{ timing: "day_1", type: "death", players: ["You"] }],
+        claims: [],
+      }),
+    ).toThrow('Timeline event type must be "nominationDeath", "execution", or "nightKill"');
+  });
+
+  test("accepts standard role info fields", () => {
+    const doc = validatePuzzleDoc({
+      ...baseDoc,
+      players: ["You", "A", "B"],
+      script: ["Clockmaker", "Mathematician", "Sage", "Snake Charmer"],
+      claims: [
+        { type: "Clockmaker", name: "You", distance: 3 },
+        { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
+        { type: "Sage", name: "You", demonAmong: ["A", "B"] },
+        { type: "Snake Charmer", name: "You", checked: "A", demon: false },
+      ],
+    });
+
+    expect(doc.claims).toEqual([
+      { type: "Clockmaker", name: "You", distance: 3 },
+      { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
+      { type: "Sage", name: "You", demonAmong: ["A", "B"] },
+      { type: "Snake Charmer", name: "You", checked: "A", demon: false },
+    ]);
+  });
 });

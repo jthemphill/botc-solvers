@@ -1,84 +1,45 @@
 import {
-  Acrobat,
-  Alsaahir,
-  Artist,
-  Atheist,
   Balloonist,
-  Butler,
   Chef,
   Clockmaker,
   Dreamer,
-  Drunk,
   Empath,
   FortuneTeller,
-  Gambler,
-  Gossip,
   Investigator,
   Juggler,
-  Klutz,
   Knight,
   Librarian,
-  Lunatic,
   Mathematician,
-  Mayor,
-  Mutant,
   Noble,
-  Puzzlemaster,
-  Recluse,
   Sage,
-  Saint,
   Savant,
   Seamstress,
   Shugenja,
-  Shugenja as _Shugenja,
-  Slayer,
-  Soldier,
+  SnakeCharmer,
   Steward,
-  Sweetheart,
   Undertaker,
   VillageIdiot,
-  Virgin,
   Washerwoman,
+  type InfoClaimBuilder,
   type Role,
 } from "../model/characters";
 import type { Timing } from "../model/model";
 import { compile, type CompileCtx } from "../dsl/compile";
 import type { Claim } from "../schema/puzzleDoc";
 import { resolveRoleRef } from "./roleRef";
-
-void _Shugenja; // keep Shugenja import even if not directly used below
+import { roleByName } from "../model/roleRegistry";
 
 function timingOf(t: string | undefined): Timing | undefined {
   return t as Timing | undefined;
 }
 
-const BARE_CLASSES: Record<string, new (opts: { name: string; timing?: Timing }) => Role> = {
-  Recluse,
-  Mayor,
-  Soldier,
-  Saint,
-  Acrobat,
-  Slayer,
-  Virgin,
-  Mathematician,
-  Sage,
-  Gossip,
-  Gambler,
-  Atheist,
-  Alsaahir,
-  Artist,
-  Klutz,
-  Puzzlemaster,
-  Mutant,
-  Sweetheart,
-  Butler,
-  Drunk,
-  Lunatic,
-};
-
 export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Role {
   const timing = timingOf(claim.timing);
-  const base = { name: claim.name, timing };
+  const base = {
+    name: claim.name,
+    timing,
+    infoClaims: customInfoClaims(claim, ctx),
+  };
 
   switch (claim.type) {
     case "Investigator":
@@ -99,7 +60,7 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
     case "Washerwoman":
       return new Washerwoman({
         ...base,
-        role: resolveRoleRef(claim.role),
+        role: claim.role ? resolveRoleRef(claim.role) : undefined,
         among: claim.among,
         registers: claim.registers,
       });
@@ -120,7 +81,11 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
         })),
       });
     case "Undertaker":
-      return new Undertaker({ ...base, player: claim.player, role: resolveRoleRef(claim.role) });
+      return new Undertaker({
+        ...base,
+        player: claim.player,
+        role: claim.role ? resolveRoleRef(claim.role) : undefined,
+      });
     case "Noble":
       return new Noble({
         ...base,
@@ -144,7 +109,19 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
     case "Shugenja":
       return new Shugenja({ ...base, evilDirection: claim.evilDirection });
     case "Clockmaker":
-      return new Clockmaker({ ...base, demonNextToMinion: claim.demonNextToMinion });
+      return new Clockmaker({ ...base, distance: claim.distance });
+    case "Mathematician":
+      return new Mathematician({
+        ...base,
+        malfunctions: claim.malfunctions?.map((entry) => ({
+          timing: timingOf(entry.timing) as Timing,
+          count: entry.count,
+        })),
+      });
+    case "Sage":
+      return new Sage({ ...base, demonAmong: claim.demonAmong });
+    case "Snake Charmer":
+      return new SnakeCharmer({ ...base, checked: claim.checked, demon: claim.demon });
     case "VillageIdiot":
       return new VillageIdiot({
         ...base,
@@ -170,11 +147,27 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
         ),
       });
     default: {
-      const klass = BARE_CLASSES[claim.type];
-      if (klass === undefined) throw new Error(`Unsupported claim type: ${claim.type}`);
+      const klass = roleByName(claim.type) as unknown as new (opts: { name: string; timing?: Timing }) => Role;
       return new klass({ ...base });
     }
   }
+}
+
+function customInfoClaims(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): InfoClaimBuilder[] {
+  return (claim.info ?? []).flatMap((info, index) => {
+    const expression = info.expression?.trim();
+    if (!expression) return [];
+    return [
+      {
+        timing: timingOf(info.timing),
+        learned: (game) =>
+          compile(expression, game, {
+            ...ctx,
+            nameRoot: `${slug(claim.name)}_custom_info_${index + 1}`,
+          }),
+      },
+    ];
+  });
 }
 
 function slug(value: string): string {

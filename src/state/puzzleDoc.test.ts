@@ -20,18 +20,19 @@ describe("puzzle document reducer", () => {
     expect(withClaim.script).toContain("Poisoner");
   });
 
-  test("setScript cannot remove roles referenced by claims or fixed roles", () => {
+  test("setScript cannot remove roles referenced by claims or role constraints", () => {
     const doc: PuzzleDoc = {
       version: 1,
       players: ["A", "B", "C"],
       script: ["Imp", "Juggler", "Savant"],
       fixedRoles: [{ name: "A", roles: ["Savant"] }],
+      forbiddenRoles: [{ name: "C", roles: ["Vortox"] }],
       claims: [{ type: "Juggler", name: "B", guesses: { A: "Imp" } }],
     };
 
     const next = reducer(doc, { type: "setScript", script: ["Drunk"] });
 
-    expect(next.script).toEqual(["Drunk", "Juggler", "Imp", "Savant"]);
+    expect(next.script).toEqual(["Drunk", "Juggler", "Imp", "Savant", "Vortox"]);
   });
 
   test("savant DSL role identifiers protect matching script roles", () => {
@@ -55,12 +56,37 @@ describe("puzzle document reducer", () => {
     expect(loaded.script).toContain("No Dashii");
   });
 
+  test("custom info DSL role identifiers protect matching script roles", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B"],
+      script: [],
+      claims: [
+        {
+          type: "Sage",
+          name: "A",
+          info: [{ timing: "night_1", expression: "B.role == `No Dashii`" }],
+        },
+      ],
+    };
+
+    const loaded = reducer(doc, { type: "load", doc });
+
+    expect(loaded.script).toContain("Sage");
+    expect(loaded.script).toContain("No Dashii");
+  });
+
   test("setPlayerCount removes affected player references", () => {
     const doc: PuzzleDoc = {
       version: 1,
       players: ["A", "B", "C"],
       script: ["Investigator"],
       fixedRoles: [{ name: "C", roles: ["Investigator"] }],
+      forbiddenRoles: [{ name: "C", roles: ["Imp"] }],
+      timeline: [
+        { timing: "day_1", type: "execution", players: ["B"] },
+        { timing: "night_2", type: "nightKill", players: ["C"] },
+      ],
       claims: [{ type: "Investigator", name: "A", among: ["B", "C"] }],
     };
 
@@ -68,7 +94,39 @@ describe("puzzle document reducer", () => {
 
     expect(next.players).toEqual(["A", "B"]);
     expect(next.fixedRoles).toEqual([]);
+    expect(next.forbiddenRoles).toEqual([]);
+    expect(next.timeline).toEqual([{ timing: "day_1", type: "execution", players: ["B"] }]);
     expect(next.claims).toEqual([{ type: "Investigator", name: "A", among: ["B"] }]);
+  });
+
+  test("renamePlayer updates timeline references", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B"],
+      script: [],
+      timeline: [{ timing: "day_1", type: "execution", players: ["B"] }],
+      claims: [],
+    };
+
+    const next = reducer(doc, { type: "renamePlayer", index: 1, name: "Bea" });
+
+    expect(next.players).toEqual(["A", "Bea"]);
+    expect(next.timeline).toEqual([{ timing: "day_1", type: "execution", players: ["Bea"] }]);
+  });
+
+  test("removePlayer removes empty timeline events", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B"],
+      script: [],
+      timeline: [{ timing: "night_2", type: "nightKill", players: ["B"] }],
+      claims: [],
+    };
+
+    const next = reducer(doc, { type: "removePlayer", index: 1 });
+
+    expect(next.players).toEqual(["A"]);
+    expect(next.timeline).toEqual([]);
   });
 
   test("movePlayerTo reorders players without changing claims", () => {

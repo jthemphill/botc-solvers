@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "title": "Puzzle 6 - Super Marionette Bros",
+  "players": ["Aoife", "Sula", "Steph", "Fraser", "Matthew", "You", "Sarah", "Tim", "Dan"],
+  "script": [
+    "Pukka",
+    "No Dashii",
+    "Vortox",
+    "Marionette",
+    "Drunk",
+    "Saint",
+    "Empath",
+    "Investigator",
+    "Juggler",
+    "Knight",
+    "Librarian",
+    "Noble",
+    "Seamstress",
+    "Steward"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Librarian", "Drunk", "Marionette"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Investigator",
+      "name": "Aoife",
+      "role": "Marionette",
+      "among": ["Dan", "Matthew"]
+    },
+    {
+      "type": "Juggler",
+      "name": "Sula",
+      "timing": "night_2",
+      "guesses": {
+        "You": "Librarian",
+        "Tim": "Marionette",
+        "Dan": "Vortox",
+        "Fraser": "Drunk",
+        "Matthew": "Pukka"
+      },
+      "correctCount": 2
+    },
+    {
+      "type": "Knight",
+      "name": "Steph",
+      "noDemonAmong": ["Sarah", "Dan"]
+    },
+    {
+      "type": "Empath",
+      "name": "Fraser",
+      "count": 0
+    },
+    {
+      "type": "Steward",
+      "name": "Matthew",
+      "goodPlayer": "Dan"
+    },
+    {
+      "type": "Librarian",
+      "name": "You",
+      "role": "Drunk",
+      "among": ["Sula", "Fraser"]
+    },
+    {
+      "type": "Saint",
+      "name": "Sarah"
+    },
+    {
+      "type": "Noble",
+      "name": "Tim",
+      "oneEvilAmong": ["Aoife", "Sula", "Fraser"],
+      "among": []
+    },
+    {
+      "type": "Seamstress",
+      "name": "Dan",
+      "timing": "night_1",
+      "among": ["Aoife", "Tim"],
+      "aligned": false
+    }
+  ]
+}

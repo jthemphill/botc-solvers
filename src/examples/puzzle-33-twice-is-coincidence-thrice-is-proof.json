@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Puzzle 33 - Twice Is Coincidence Thrice Is Proof",
+  "players": ["Tom", "Oscar", "Sula", "Fraser", "You", "Olivia", "Jasmine", "Hannah"],
+  "script": [
+    "Imp",
+    "Baron",
+    "Poisoner",
+    "Spy",
+    "Scarlet Woman",
+    "Drunk",
+    "Empath",
+    "Fortune Teller",
+    "Investigator",
+    "Librarian",
+    "Ravenkeeper",
+    "Recluse",
+    "Saint",
+    "Washerwoman"
+  ],
+  "claims": [
+    {
+      "type": "Librarian",
+      "name": "Tom",
+      "timing": "night_1",
+      "role": "Saint",
+      "among": ["Olivia", "Sula"]
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Oscar",
+      "checks": []
+    },
+    {
+      "type": "Saint",
+      "name": "Sula"
+    },
+    {
+      "type": "Investigator",
+      "name": "Fraser",
+      "timing": "night_1",
+      "role": "Poisoner",
+      "among": ["You", "Jasmine"]
+    },
+    {
+      "type": "Empath",
+      "name": "You"
+    },
+    {
+      "type": "Recluse",
+      "name": "Olivia"
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Jasmine",
+      "timing": "night_2"
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Hannah",
+      "timing": "night_1",
+      "role": "Investigator",
+      "among": ["Sula", "Fraser"]
+    }
+  ]
+}

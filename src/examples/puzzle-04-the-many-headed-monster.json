@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "title": "Puzzle 4 - The Many Headed Monster",
+  "players": ["Sarah", "Tim", "Matt", "Hannah", "You", "Anna", "Dan", "Fraser"],
+  "script": [
+    "Lord of Typhon",
+    "Marionette",
+    "Poisoner",
+    "Drunk",
+    "Recluse",
+    "Investigator",
+    "Librarian",
+    "Fortune Teller",
+    "Juggler",
+    "Dreamer",
+    "Empath",
+    "Undertaker"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Investigator", "Drunk", "Marionette"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Librarian",
+      "name": "Sarah",
+      "timing": "night_1",
+      "role": "Drunk",
+      "among": ["You", "Hannah"],
+      "registers": false
+    },
+    {
+      "type": "Recluse",
+      "name": "Tim"
+    },
+    {
+      "type": "Juggler",
+      "name": "Matt",
+      "timing": "night_2",
+      "guesses": {
+        "You": "Investigator",
+        "Dan": "Lord of Typhon",
+        "Tim": "Recluse",
+        "Hannah": "Dreamer"
+      },
+      "correctCount": 1
+    },
+    {
+      "type": "Dreamer",
+      "name": "Hannah",
+      "timing": "night_1",
+      "player": "You",
+      "roles": ["Investigator", "Lord of Typhon"]
+    },
+    {
+      "type": "Investigator",
+      "name": "You",
+      "timing": "night_1",
+      "role": "Marionette",
+      "among": ["Matt", "Hannah"],
+      "registers": false
+    },
+    {
+      "type": "Empath",
+      "name": "Anna",
+      "timing": "night_1",
+      "count": 2
+    },
+    {
+      "type": "Undertaker",
+      "name": "Dan",
+      "timing": "night_2",
+      "player": "Anna",
+      "role": "Empath"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Fraser",
+      "checks": [
+        {
+          "left": "Anna",
+          "right": "Tim",
+          "yes": true,
+          "demonRole": "Lord of Typhon",
+          "registers": true,
+          "timing": "night_1"
+        },
+        {
+          "left": "You",
+          "right": "Fraser",
+          "yes": false,
+          "demonRole": "Lord of Typhon",
+          "registers": true,
+          "timing": "night_2"
+        },
+        {
+          "left": "You",
+          "right": "Sarah",
+          "yes": true,
+          "demonRole": "Lord of Typhon",
+          "registers": true,
+          "timing": "night_3"
+        }
+      ]
+    }
+  ]
+}

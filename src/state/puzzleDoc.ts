@@ -12,6 +12,7 @@ export type PuzzleAction =
   | { type: "movePlayerTo"; fromIndex: number; toIndex: number }
   | { type: "setScript"; script: readonly string[] }
   | { type: "setFixedRoles"; fixedRoles: PuzzleDoc["fixedRoles"] }
+  | { type: "setForbiddenRoles"; forbiddenRoles: PuzzleDoc["forbiddenRoles"] }
   | { type: "addClaim"; claim: Claim }
   | { type: "updateClaim"; index: number; claim: Claim }
   | { type: "removeClaim"; index: number };
@@ -55,13 +56,17 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
     case "Empath":
       return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
     case "Undertaker":
-      return { ...claim, name, player: remap(claim.player) };
+      return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
     case "Dreamer":
-      return { ...claim, name, player: remap(claim.player) };
+      return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
+    case "Sage":
+      return { ...claim, name, demonAmong: claim.demonAmong ? remapArr(claim.demonAmong) : claim.demonAmong };
+    case "Snake Charmer":
+      return { ...claim, name, checked: claim.checked ? remap(claim.checked) : claim.checked };
     case "Steward":
-      return { ...claim, name, goodPlayer: remap(claim.goodPlayer) };
+      return { ...claim, name, goodPlayer: claim.goodPlayer ? remap(claim.goodPlayer) : claim.goodPlayer };
     case "Seamstress":
-      return { ...claim, name, among: [remap(claim.among[0]), remap(claim.among[1])] };
+      return { ...claim, name, among: claim.among.map(remap) };
     case "Juggler": {
       const guesses: Record<string, string> = {};
       for (const [p, r] of Object.entries(claim.guesses)) guesses[remap(p)] = r;
@@ -108,21 +113,25 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
     case "Empath":
       return { ...claim, player: claim.player === name ? undefined : claim.player };
     case "Steward":
-      return claim.goodPlayer === name ? { ...claim, goodPlayer: "" } : claim;
+      return claim.goodPlayer === name ? { ...claim, goodPlayer: undefined } : claim;
     case "Juggler": {
       const guesses: Record<string, string> = {};
       for (const [p, r] of Object.entries(claim.guesses)) if (p !== name) guesses[p] = r;
       return { ...claim, guesses };
     }
     case "Seamstress":
-      return claim.among.includes(name) ? { ...claim, among: ["", ""] as const } : claim;
+      return claim.among.includes(name) ? { ...claim, among: [] } : claim;
     case "FortuneTeller":
       return { ...claim, checks: claim.checks.filter((c) => c.left !== name && c.right !== name) };
     case "VillageIdiot":
       return { ...claim, checks: claim.checks.filter((c) => c.player !== name) };
     case "Dreamer":
     case "Undertaker":
-      return claim.player === name ? { ...claim, player: "" } : claim;
+      return claim.player === name ? { ...claim, player: undefined } : claim;
+    case "Sage":
+      return { ...claim, demonAmong: stripArr(claim.demonAmong) };
+    case "Snake Charmer":
+      return claim.checked === name ? { ...claim, checked: undefined } : claim;
     case "Balloonist":
       return {
         ...claim,
@@ -131,6 +140,22 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
     default:
       return claim;
   }
+}
+
+function rewriteTimelineName(timeline: PuzzleDoc["timeline"], oldName: string, newName: string): PuzzleDoc["timeline"] {
+  return timeline?.map((event) => ({
+    ...event,
+    players: event.players.map((player) => (player === oldName ? newName : player)),
+  }));
+}
+
+function removeTimelineNames(timeline: PuzzleDoc["timeline"], removed: ReadonlySet<string>): PuzzleDoc["timeline"] {
+  return timeline
+    ?.map((event) => ({
+      ...event,
+      players: event.players.filter((player) => !removed.has(player)),
+    }))
+    .filter((event) => event.players.length > 0);
 }
 
 function normalizeClaim(claim: Claim): Claim {
@@ -174,7 +199,9 @@ export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
         return next === undefined ? [] : [next];
       });
       const fixedRoles = state.fixedRoles?.filter((fixedRole) => !removed.has(fixedRole.name));
-      return { ...state, players, claims, fixedRoles };
+      const forbiddenRoles = state.forbiddenRoles?.filter((forbiddenRole) => !removed.has(forbiddenRole.name));
+      const timeline = removeTimelineNames(state.timeline, removed);
+      return { ...state, players, claims, fixedRoles, forbiddenRoles, timeline };
     }
     case "addPlayer":
       if (!action.name || state.players.includes(action.name)) return state;
@@ -191,7 +218,9 @@ export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
         return next === undefined ? [] : [next];
       });
       const fixedRoles = state.fixedRoles?.filter((fixedRole) => fixedRole.name !== name);
-      return { ...state, players, claims, fixedRoles };
+      const forbiddenRoles = state.forbiddenRoles?.filter((forbiddenRole) => forbiddenRole.name !== name);
+      const timeline = removeTimelineNames(state.timeline, new Set([name]));
+      return { ...state, players, claims, fixedRoles, forbiddenRoles, timeline };
     }
     case "renamePlayer": {
       const oldName = state.players[action.index];
@@ -201,7 +230,11 @@ export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
       const fixedRoles = state.fixedRoles?.map((fixedRole) =>
         fixedRole.name === oldName ? { ...fixedRole, name: action.name } : fixedRole,
       );
-      return { ...state, players, claims, fixedRoles };
+      const forbiddenRoles = state.forbiddenRoles?.map((forbiddenRole) =>
+        forbiddenRole.name === oldName ? { ...forbiddenRole, name: action.name } : forbiddenRole,
+      );
+      const timeline = rewriteTimelineName(state.timeline, oldName, action.name);
+      return { ...state, players, claims, fixedRoles, forbiddenRoles, timeline };
     }
     case "movePlayer": {
       const dir = action.direction === "up" ? -1 : 1;
@@ -237,6 +270,8 @@ export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
     }
     case "setFixedRoles":
       return withProtectedScript({ ...state, fixedRoles: action.fixedRoles });
+    case "setForbiddenRoles":
+      return withProtectedScript({ ...state, forbiddenRoles: action.forbiddenRoles });
     case "addClaim":
       return withProtectedScript({ ...state, claims: [...state.claims, normalizeClaim(action.claim)] });
     case "updateClaim": {

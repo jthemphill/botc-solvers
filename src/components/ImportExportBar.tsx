@@ -1,18 +1,8 @@
 import { useRef, type Dispatch } from "react";
+import { PUZZLE_EXAMPLES } from "../examples/puzzleCatalog";
 import type { PuzzleDoc } from "../schema/puzzleDoc";
 import { validatePuzzleDoc } from "../schema/validate";
 import type { PuzzleAction } from "../state/puzzleDoc";
-import puzzle01 from "../examples/puzzle-01-sober-savant.json";
-import puzzle05a from "../examples/puzzle-05a-you-only-guess-twice.json";
-import puzzle05b from "../examples/puzzle-05b-you-only-guess-twice.json";
-import puzzleIntro from "../examples/puzzle-intro-chef-empath.json";
-
-const EXAMPLES: Array<{ label: string; data: unknown }> = [
-  { label: "Intro — Chef + Empath", data: puzzleIntro },
-  { label: "Puzzle 1 — Sober Savant", data: puzzle01 },
-  { label: "Puzzle 5a — You Only Guess Twice", data: puzzle05a },
-  { label: "Puzzle 5b — You Only Guess Twice", data: puzzle05b },
-];
 
 interface Props {
   doc: PuzzleDoc;
@@ -71,13 +61,25 @@ export function ImportExportBar({ doc, dispatch, onError }: Props) {
         />
         <button onClick={exportFile}>Export JSON</button>
       </div>
-      <div className="example-button-row">
-        <span>Examples:</span>
-        {EXAMPLES.map((ex) => (
-          <button key={ex.label} onClick={() => importData(ex.data)}>
-            {ex.label}
-          </button>
-        ))}
+      <div className="example-picker-row">
+        <label>
+          <span>Examples</span>
+          <select
+            aria-label="Load example puzzle"
+            value=""
+            onChange={(e) => {
+              const example = PUZZLE_EXAMPLES.find((entry) => entry.id === e.target.value);
+              if (example !== undefined) importData(example.data);
+            }}
+          >
+            <option value="">Load puzzle...</option>
+            {PUZZLE_EXAMPLES.map((example) => (
+              <option key={example.id} value={example.id}>
+                {example.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
     </section>
   );
