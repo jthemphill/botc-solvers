@@ -9,7 +9,7 @@ describe("puzzle catalog", () => {
     }
   });
 
-  test("includes the generated puzzle set without Clockdoku", () => {
+  test("includes the JSON puzzle set without Clockdoku", () => {
     const ids = new Set(PUZZLE_EXAMPLES.map((example) => example.id));
 
     expect(ids.has("intro")).toBe(true);

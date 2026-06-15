@@ -16,7 +16,7 @@ describe("buildFromDoc", () => {
     backend = await KissatBackend.create();
   });
 
-  test("puzzle-01-sober-savant.json solves to 1 world matching the TS puzzle", async () => {
+  test("puzzle-01-sober-savant.json solves to 1 world", async () => {
     const doc = loadDoc("puzzle-01-sober-savant.json");
     const worlds = await buildFromDoc(doc, backend).solveAll();
     expect(worlds).toHaveLength(1);
