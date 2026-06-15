@@ -62,6 +62,13 @@ function expectedSolutionCount(id: string): number | undefined {
   return INTENTIONALLY_NON_UNIQUE_SOLUTION_COUNTS[id] ?? KNOWN_INCOMPLETE_JSON_SOLUTION_COUNTS[id];
 }
 
+const PUZZLE_SOLUTION_CASES = PUZZLE_EXAMPLES.flatMap((example) => {
+  if (example.id === "intro") return [];
+  const expectedCount = expectedSolutionCount(example.id);
+  if (expectedCount === undefined) return [];
+  return [{ id: example.id, data: example.data, expectedCount }];
+});
+
 describe("JSON puzzle solutions", () => {
   let backend: SatBackend;
 
@@ -80,16 +87,14 @@ describe("JSON puzzle solutions", () => {
     );
   });
 
-  test("numbered JSON puzzle solution counts come from JSON docs", async () => {
-    for (const example of PUZZLE_EXAMPLES) {
-      if (example.id === "intro") continue;
-      const expectedCount = expectedSolutionCount(example.id);
-      if (expectedCount === undefined) throw new Error(`Missing expected solution count for ${example.id}.`);
-
-      const doc = validatePuzzleDoc(example.data);
+  test.each(PUZZLE_SOLUTION_CASES)(
+    "$id solution count comes from JSON doc",
+    async ({ id, data, expectedCount }) => {
+      const doc = validatePuzzleDoc(data);
       const worlds = await buildFromDoc(doc, backend).solveAll();
 
-      expect(worlds, example.id).toHaveLength(expectedCount);
-    }
-  }, 60_000);
+      expect(worlds, id).toHaveLength(expectedCount);
+    },
+    60_000,
+  );
 });
