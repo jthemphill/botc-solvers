@@ -16,8 +16,9 @@
   ],
   "fixedRoles": [{ "name": "You", "roles": ["Mathematician"] }],
   "timeline": [
-    { "timing": "day_1", "type": "execution", "players": ["Steph"] },
-    { "timing": "night_2", "type": "nightKill", "players": ["Aoife", "Fraser", "You"] }
+    { "timing": "day_1", "type": "nominationDeath", "players": ["Steph"] },
+    { "timing": "day_1", "type": "execution", "players": ["Aoife"] },
+    { "timing": "night_2", "type": "nightKill", "players": ["Fraser"] }
   ],
   "claims": [
     {

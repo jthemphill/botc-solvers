@@ -129,7 +129,7 @@ export function buildModel(backend: SatBackend): BOTCModel {
   const game = buildPuzzleModel(PUZZLE, backend);
   game.fixActual("You", Mathematician);
 
-  for (const deadBeforeNightTwo of ["Steph", "Aoife", "Fraser", "You"]) {
+  for (const deadBeforeNightTwo of ["Steph", "Aoife", "Fraser"]) {
     game.fixNotActual(deadBeforeNightTwo, NoDashii);
     game.fixNotActual(deadBeforeNightTwo, Vortox);
   }

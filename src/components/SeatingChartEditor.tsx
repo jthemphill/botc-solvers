@@ -113,9 +113,9 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
                 {roleEmoji(primaryClaim?.type) ?? index + 1}
               </span>
               <span className="seat-player-name">{player}</span>
-              {deathClass !== undefined && (
+              {deathMarker !== undefined && deathClass !== undefined && (
                 <span className={`seat-death-badge ${deathClass}`} aria-hidden="true">
-                  {deathMarker === "execution" ? "X" : "N"}
+                  {timelineEventGlyph(deathMarker)}
                 </span>
               )}
               <small
@@ -338,9 +338,9 @@ function TimelineStrip({ timeline }: { timeline: readonly TimelineEventDoc[] }) 
   const deathCount = timeline.reduce((sum, event) => sum + event.players.length, 0);
   return (
     <div className="timeline-strip" aria-label="Puzzle timeline">
-      <div className="notes-box timeline-legend">
+      <div className="timeline-legend">
         <strong>Timeline</strong>
-        <span>Execution · Night deaths</span>
+        <span>Deaths and executions</span>
       </div>
       <ol className="timeline-event-list">
         {timeline.map((event, index) => {
@@ -352,7 +352,7 @@ function TimelineStrip({ timeline }: { timeline: readonly TimelineEventDoc[] }) 
               aria-label={`${timingLabel(event.timing)} ${timelineEventAction(event)}: ${event.players.join(", ")}`}
             >
               <span className={`timeline-node ${deathClass}`} aria-hidden="true">
-                {event.type === "execution" ? "X" : "N"}
+                {timelineEventGlyph(event.type)}
               </span>
               <div>
                 <strong>
@@ -377,22 +377,33 @@ function claimIndexesForPlayer(doc: PuzzleDoc, player: string): Array<[Claim, nu
 
 function deathMarkerForPlayer(timeline: PuzzleDoc["timeline"], player: string): TimelineEventDoc["type"] | undefined {
   const events = timeline ?? [];
+  if (events.some((event) => event.type === "nominationDeath" && event.players.includes(player)))
+    return "nominationDeath";
   if (events.some((event) => event.type === "execution" && event.players.includes(player))) return "execution";
   if (events.some((event) => event.type === "nightKill" && event.players.includes(player))) return "nightKill";
   return undefined;
 }
 
-function deathMarkerClass(type: TimelineEventDoc["type"]): "execution" | "night-kill" {
+function deathMarkerClass(type: TimelineEventDoc["type"]): "nomination-death" | "execution" | "night-kill" {
+  if (type === "nominationDeath") return "nomination-death";
   return type === "execution" ? "execution" : "night-kill";
 }
 
 function deathMarkerLabel(type: TimelineEventDoc["type"]): string {
+  if (type === "nominationDeath") return "died while nominating";
   return type === "execution" ? "executed" : "killed at night";
 }
 
 function timelineEventAction(event: TimelineEventDoc): string {
+  if (event.type === "nominationDeath") return "Nomination Death";
   if (event.type === "execution") return "Execution";
-  return event.players.length === 1 ? "Death" : "Deaths";
+  return event.players.length === 1 ? "Night Death" : "Night Deaths";
+}
+
+function timelineEventGlyph(type: TimelineEventDoc["type"]): string {
+  if (type === "nominationDeath") return "!";
+  if (type === "execution") return "X";
+  return "N";
 }
 
 function seatPosition(index: number, count: number): CSSProperties {

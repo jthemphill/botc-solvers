@@ -35,8 +35,9 @@ describe("puzzle catalog", () => {
     });
     expect(doc.claims.flatMap((claim) => claim.info ?? []).map((info) => "text" in info)).not.toContain(true);
     expect(doc.timeline).toEqual([
-      { timing: "day_1", type: "execution", players: ["Steph"] },
-      { timing: "night_2", type: "nightKill", players: ["Aoife", "Fraser", "You"] },
+      { timing: "day_1", type: "nominationDeath", players: ["Steph"] },
+      { timing: "day_1", type: "execution", players: ["Aoife"] },
+      { timing: "night_2", type: "nightKill", players: ["Fraser"] },
     ]);
   });
 });

@@ -95,8 +95,11 @@ function validateTimeline(v: unknown, pathRoot: string): TimelineEventDoc[] {
     const path = `${pathRoot}[${i}]`;
     if (!isObject(entry)) throw new ValidationError(`Expected object`, path);
     const type = expectString(entry["type"], `${path}.type`);
-    if (type !== "execution" && type !== "nightKill") {
-      throw new ValidationError(`Timeline event type must be "execution" or "nightKill"`, `${path}.type`);
+    if (type !== "nominationDeath" && type !== "execution" && type !== "nightKill") {
+      throw new ValidationError(
+        `Timeline event type must be "nominationDeath", "execution", or "nightKill"`,
+        `${path}.type`,
+      );
     }
     return {
       timing: expectString(entry["timing"], `${path}.timing`),

@@ -39,7 +39,7 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
 }
 
 function applyTimelineConstraints(game: BOTCModel, doc: PuzzleDoc): void {
-  const deathEvents = (doc.timeline ?? []).filter((event) => event.type === "execution" || event.type === "nightKill");
+  const deathEvents = doc.timeline ?? [];
   if (deathEvents.length === 0) return;
 
   const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
