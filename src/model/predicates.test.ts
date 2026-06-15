@@ -70,6 +70,38 @@ describe("predicates and helpers", () => {
     expect(await invalid.solveAll({ limit: 1 })).toEqual([]);
   });
 
+  test("evil role claims exclude the exact apparent evil role", async () => {
+    const valid = new BOTCModel(["A", "B", "C"], { characters: script(Imp, ScarletWoman, Chef), backend });
+    valid.addRoleClaim({ player: "A", apparentRole: "Imp" });
+    valid.fixActual("A", ScarletWoman);
+    valid.fixActual("B", Imp);
+    valid.fixActual("C", Chef);
+    expect(await valid.solveAll({ limit: 1 })).toHaveLength(1);
+
+    const invalid = new BOTCModel(["A", "B", "C"], { characters: script(Imp, ScarletWoman, Chef), backend });
+    invalid.addRoleClaim({ player: "A", apparentRole: "Imp" });
+    invalid.fixActual("A", Imp);
+    invalid.fixActual("B", ScarletWoman);
+    invalid.fixActual("C", Chef);
+    expect(await invalid.solveAll({ limit: 1 })).toEqual([]);
+  });
+
+  test("actual Drunk is an info malfunction source", async () => {
+    const drunk = new BOTCModel(["A", "B", "C"], { characters: script(Imp, Drunk, Empath, Chef), backend });
+    drunk.fixActual("A", Drunk);
+    drunk.fixActual("B", Imp);
+    drunk.fixActual("C", Chef);
+    applyClaims(drunk, [new Empath({ name: "A", count: 0 })]);
+    expect(await drunk.solveAll({ limit: 1 })).toHaveLength(1);
+
+    const sober = new BOTCModel(["A", "B", "C"], { characters: script(Imp, Drunk, Empath), backend });
+    sober.fixActual("A", Empath);
+    sober.fixActual("B", Imp);
+    sober.fixActual("C", Drunk);
+    applyClaims(sober, [new Empath({ name: "A", count: 0 })]);
+    expect(await sober.solveAll({ limit: 1 })).toEqual([]);
+  });
+
   test("poisoning is scoped and truthful claims use matching timing", async () => {
     const game = new BOTCModel(["A", "B", "C"], { characters: POISON_CHARACTERS, backend });
     game.fixActual("A", "Poisoner");
@@ -197,6 +229,28 @@ describe("predicates and helpers", () => {
       }),
     ]);
     expect(await recurringInfo.solveAll({ limit: 1 })).toHaveLength(1);
+  });
+
+  test("Fortune Teller checks share a single red herring", async () => {
+    const game = new BOTCModel(["FT", "Red", "Demon", "Other"], {
+      characters: script(FortuneTeller, Imp, Chef, Investigator),
+      backend,
+    });
+    game.fixActual("FT", FortuneTeller);
+    game.fixActual("Red", Chef);
+    game.fixActual("Demon", Imp);
+    game.fixActual("Other", Investigator);
+    applyClaims(game, [
+      new FortuneTeller({
+        name: "FT",
+        checks: [
+          { left: "Red", right: "Other", yes: true },
+          { left: "FT", right: "Other", yes: false },
+        ],
+      }),
+    ]);
+
+    expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
   });
 
   test("ambiguous one-shot information requires explicit timing", () => {

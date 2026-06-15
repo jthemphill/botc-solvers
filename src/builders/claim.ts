@@ -8,17 +8,22 @@ import {
   Investigator,
   Juggler,
   Knight,
+  Legionary,
   Librarian,
   Mathematician,
   Noble,
+  Nightwatchman,
+  Ravenkeeper,
   Sage,
   Savant,
   Seamstress,
   Shugenja,
+  Slayer,
   SnakeCharmer,
   Steward,
   Undertaker,
   VillageIdiot,
+  Virgin,
   Washerwoman,
   type InfoClaimBuilder,
   type Role,
@@ -38,6 +43,7 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
   const base = {
     name: claim.name,
     timing,
+    extraPossibleActualRoles: claim.extraPossibleActualRoles?.map(resolveRoleRef),
     infoClaims: customInfoClaims(claim, ctx),
   };
 
@@ -67,7 +73,7 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
     case "Chef":
       return new Chef({ ...base, count: claim.count, registers: claim.registers });
     case "Empath":
-      return new Empath({ ...base, count: claim.count, player: claim.player });
+      return new Empath({ ...base, count: claim.count, player: claim.player, neighbors: claim.neighbors });
     case "FortuneTeller":
       return new FortuneTeller({
         ...base,
@@ -85,6 +91,15 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
         ...base,
         player: claim.player,
         role: claim.role ? resolveRoleRef(claim.role) : undefined,
+      });
+    case "Legionary":
+      return new Legionary({
+        ...base,
+        counts: claim.counts?.map((entry) => ({
+          count: entry.count,
+          timing: timingOf(entry.timing),
+          alivePlayers: entry.alivePlayers,
+        })),
       });
     case "Noble":
       return new Noble({
@@ -118,15 +133,25 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
           count: entry.count,
         })),
       });
+    case "Ravenkeeper":
+      return new Ravenkeeper({
+        ...base,
+        player: claim.player,
+        role: claim.role ? resolveRoleRef(claim.role) : undefined,
+      });
     case "Sage":
       return new Sage({ ...base, demonAmong: claim.demonAmong });
+    case "Slayer":
+      return new Slayer({ ...base, target: claim.target, killed: claim.killed });
     case "Snake Charmer":
       return new SnakeCharmer({ ...base, checked: claim.checked, demon: claim.demon });
     case "VillageIdiot":
       return new VillageIdiot({
         ...base,
-        checks: claim.checks.map((c) => ({ player: c.player, good: c.good })),
+        checks: claim.checks.map((c) => ({ player: c.player, good: c.good, timing: timingOf(c.timing) })),
       });
+    case "Virgin":
+      return new Virgin({ ...base, nominator: claim.nominator, executed: claim.executed });
     case "Balloonist":
       return new Balloonist({
         ...base,
@@ -146,6 +171,8 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
             ),
         ),
       });
+    case "Nightwatchman":
+      return new Nightwatchman({ ...base, chosen: claim.chosen, learned: claim.learned });
     default: {
       const klass = roleByName(claim.type) as unknown as new (opts: { name: string; timing?: Timing }) => Role;
       return new klass({ ...base });

@@ -17,6 +17,35 @@
     "Ravenkeeper",
     "Slayer"
   ],
+  "uniqueCharacters": false,
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Empath", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Josh"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Oscar"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightKill",
+      "players": ["Olivia"]
+    }
+  ],
   "claims": [
     {
       "type": "Investigator",
@@ -28,7 +57,24 @@
     {
       "type": "FortuneTeller",
       "name": "Olivia",
-      "checks": []
+      "checks": [
+        {
+          "left": "Josh",
+          "right": "Oscar",
+          "yes": false,
+          "demonRole": "Imp",
+          "registers": true,
+          "timing": "night_1"
+        },
+        {
+          "left": "Adam",
+          "right": "Oscar",
+          "yes": false,
+          "demonRole": "Imp",
+          "registers": true,
+          "timing": "night_2"
+        }
+      ]
     },
     {
       "type": "Recluse",
@@ -37,11 +83,15 @@
     {
       "type": "Slayer",
       "name": "Oscar",
-      "timing": "day_1"
+      "timing": "day_2",
+      "target": "Steph",
+      "killed": false
     },
     {
       "type": "Empath",
-      "name": "You"
+      "name": "You",
+      "timing": "night_1",
+      "count": 1
     },
     {
       "type": "Saint",
@@ -50,12 +100,16 @@
     {
       "type": "Slayer",
       "name": "Adam",
-      "timing": "day_1"
+      "timing": "day_3",
+      "target": "Sula",
+      "killed": false
     },
     {
       "type": "Ravenkeeper",
       "name": "Josh",
-      "timing": "night_2"
+      "timing": "night_2",
+      "player": "Adam",
+      "role": "Scarlet Woman"
     }
   ]
 }

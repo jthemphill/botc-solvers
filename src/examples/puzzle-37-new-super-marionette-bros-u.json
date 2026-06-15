@@ -17,6 +17,29 @@
     "Undertaker",
     "Washerwoman"
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Matt"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Adam"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Aoife"]
+    }
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Undertaker", "Drunk", "Marionette"]
+    }
+  ],
   "claims": [
     {
       "type": "Librarian",
@@ -28,11 +51,42 @@
     {
       "type": "FortuneTeller",
       "name": "Aoife",
-      "checks": []
+      "checks": [
+        {
+          "left": "You",
+          "right": "Jasmine",
+          "yes": true,
+          "demonRole": "Imp",
+          "registers": true,
+          "timing": "night_1"
+        },
+        {
+          "left": "Jasmine",
+          "right": "Sula",
+          "yes": false,
+          "demonRole": "Imp",
+          "registers": true,
+          "timing": "night_2"
+        }
+      ]
     },
     {
       "type": "Empath",
-      "name": "Fraser"
+      "name": "Fraser",
+      "timing": "night_1",
+      "count": 1
+    },
+    {
+      "type": "Empath",
+      "name": "Fraser",
+      "timing": "night_2",
+      "count": 1
+    },
+    {
+      "type": "Empath",
+      "name": "Fraser",
+      "timing": "night_3",
+      "count": 1
     },
     {
       "type": "Imp",
@@ -40,7 +94,17 @@
     },
     {
       "type": "Undertaker",
-      "name": "You"
+      "name": "You",
+      "timing": "night_2",
+      "player": "Matt",
+      "role": "Scarlet Woman"
+    },
+    {
+      "type": "Undertaker",
+      "name": "You",
+      "timing": "night_3",
+      "player": "Aoife",
+      "role": "Marionette"
     },
     {
       "type": "Washerwoman",
@@ -51,12 +115,19 @@
     },
     {
       "type": "Chef",
-      "name": "Steph"
+      "name": "Steph",
+      "timing": "night_1",
+      "count": 1
     },
     {
       "type": "Ravenkeeper",
       "name": "Adam",
-      "timing": "night_2"
+      "timing": "night_2",
+      "info": [
+        {
+          "expression": "Fraser.role == Empath"
+        }
+      ]
     }
   ]
 }

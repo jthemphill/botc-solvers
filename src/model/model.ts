@@ -257,14 +257,15 @@ export class BOTCModel {
       [...this.characters.entries()]
         .filter(([, character]) => roleAlignment(character) === Alignment.Evil)
         .map(([role]) => role);
+    const claimedRole = this.characters.get(apparentRole) as RoleRef;
+    const claimedEvil = roleAlignment(claimedRole) === Alignment.Evil;
     const possibleRoles = [
-      apparentRole,
-      ...evilRoles.map(roleName),
+      ...(claimedEvil ? [] : [apparentRole]),
+      ...evilRoles.map(roleName).filter((role) => !claimedEvil || role !== apparentRole),
       ...(options.extraPossibleActualRoles ?? []).map(roleName),
     ];
     const drunkRole = roleName(options.drunkRole ?? "Drunk");
-    const claimedTownsfolk =
-      roleCharacterType(this.characters.get(apparentRole) as RoleRef) === CharacterType.Townsfolk;
+    const claimedTownsfolk = roleCharacterType(claimedRole) === CharacterType.Townsfolk;
     if (claimedTownsfolk && this.characters.has(drunkRole)) possibleRoles.push(drunkRole);
     this.setPossibleActualRoles(claim.player, possibleRoles);
     if (claimedTownsfolk && this.characters.has(drunkRole))
@@ -356,6 +357,26 @@ export class BOTCModel {
     for (const player of this.players) if (excluded.has(player)) this.addFalse(this.globalDrunk(player));
   }
 
+  addVillageIdiotDrunking(options: { readonly villageIdiotRole?: RoleRef } = {}): void {
+    const villageIdiotRole = roleName(options.villageIdiotRole ?? "Village Idiot");
+    this.checkRole(villageIdiotRole);
+    this.hasGlobalDrunkSource = true;
+
+    const villageIdiotPlayers = this.players.map((player) => this.actualIs(player, villageIdiotRole));
+    const atLeastTwoVillageIdiots = this.anyOf(
+      combinations(villageIdiotPlayers, 2).map((pair, index) =>
+        this.allOf(pair, `village_idiot_pair_${index + 1}_in_play`),
+      ),
+      "at_least_two_village_idiots_in_play",
+    );
+    const drunkPlayers = this.players.map((player) => this.globalDrunk(player));
+
+    for (const player of this.players)
+      this.addImplication(this.globalDrunk(player), this.actualIs(player, villageIdiotRole));
+    this.addEnforcedExactlyN(drunkPlayers, 1, atLeastTwoVillageIdiots);
+    this.addEnforcedExactlyN(drunkPlayers, 0, atLeastTwoVillageIdiots.not());
+  }
+
   addPoisonerEffect(
     timing: Timing,
     options: { readonly poisonerRole?: RoleRef; readonly activeIf?: BoolLike | boolean } = {},
@@ -381,6 +402,39 @@ export class BOTCModel {
     }
     this.addEnforcedExactlyN(poisoned, 1, poisonerActive);
     this.addEnforcedExactlyN(poisoned, 0, poisonerActive.not());
+  }
+
+  addXaanEffect(
+    timing: Timing,
+    options: { readonly xaanRole?: RoleRef; readonly activeIf?: BoolLike | boolean } = {},
+  ): void {
+    const poisonTiming = timing;
+    this.poisonSourceTimingKeys.add(poisonTiming);
+    this.poisonTimingKeys.add(poisonTiming);
+    const xaanRole = options.xaanRole ?? "Xaan";
+    const xaanInPlay = this.roleInPlay(xaanRole);
+    let xaanActive: BoolVar;
+    if (options.activeIf === undefined) {
+      xaanActive = xaanInPlay;
+    } else if (typeof options.activeIf === "boolean") {
+      xaanActive = this.allOf(
+        [xaanInPlay, this.constantBool(options.activeIf, `${poisonTiming}_${roleName(xaanRole)}_active_if`)],
+        `${poisonTiming}_${roleName(xaanRole)}_active`,
+      );
+    } else {
+      xaanActive = this.allOf([xaanInPlay, options.activeIf], `${poisonTiming}_${roleName(xaanRole)}_active`);
+    }
+
+    for (const player of this.players) {
+      const poisoned = this.poisoned(player, timing);
+      const townsfolk = this.isTownsfolk(player);
+      this.addImplication(this.allOf([xaanActive, townsfolk], `${poisonTiming}_${player}_xaan_poisoned`), poisoned);
+      this.addImplication(
+        this.allOf([xaanActive, townsfolk.not()], `${poisonTiming}_${player}_xaan_not_townsfolk`),
+        poisoned.not(),
+      );
+      this.addImplication(xaanActive.not(), poisoned.not());
+    }
   }
 
   allowPoisonAt(timing?: Timing): void {
@@ -600,7 +654,9 @@ export class BOTCModel {
   }
 
   isDrunkAt(player: string, timing: Timing): BoolVar {
-    return this.anyOf([this.drunk(player, timing), this.globalDrunk(player)], `${player}_drunk_at_${timing}`);
+    const sources: BoolLike[] = [this.drunk(player, timing), this.globalDrunk(player)];
+    if (this.characters.has("Drunk")) sources.push(this.actualIs(player, "Drunk"));
+    return this.anyOf(sources, `${player}_drunk_at_${timing}`);
   }
 
   soberAndHealthy(player: string, timing: Timing): BoolVar {

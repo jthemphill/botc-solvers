@@ -15,11 +15,27 @@
     "Librarian",
     "Snake Charmer"
   ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Librarian", "Drunk"]
+    }
+  ],
   "claims": [
     {
       "type": "Balloonist",
       "name": "Aoife",
-      "differentCharacterTypePairs": []
+      "differentCharacterTypePairs": [],
+      "info": [
+        {
+          "timing": "night_2",
+          "expression": "Olivia.type != Aoife.type"
+        },
+        {
+          "timing": "night_3",
+          "expression": "You.type != Aoife.type"
+        }
+      ]
     },
     {
       "type": "Saint",
@@ -28,7 +44,8 @@
     {
       "type": "Investigator",
       "name": "Olivia",
-      "among": []
+      "role": "Xaan",
+      "among": ["Fraser", "Aoife"]
     },
     {
       "type": "Recluse",
@@ -37,22 +54,67 @@
     {
       "type": "Librarian",
       "name": "You",
-      "among": []
+      "role": "Drunk",
+      "among": ["Aoife", "Tim"]
     },
     {
       "type": "Juggler",
       "name": "Steph",
       "timing": "night_2",
-      "guesses": {}
+      "guesses": {
+        "Fraser": "Leviathan",
+        "Aoife": "Balloonist",
+        "Tim": "Xaan"
+      },
+      "correctCount": 2
     },
     {
       "type": "Snake Charmer",
-      "name": "Fraser"
+      "name": "Fraser",
+      "info": [
+        {
+          "timing": "night_1",
+          "expression": "Olivia.role != Leviathan"
+        },
+        {
+          "timing": "night_2",
+          "expression": "Steph.role != Leviathan"
+        },
+        {
+          "timing": "night_3",
+          "expression": "Aoife.role != Leviathan"
+        }
+      ]
     },
     {
       "type": "FortuneTeller",
       "name": "Dan",
-      "checks": []
+      "checks": [
+        {
+          "left": "Tim",
+          "right": "Sarah",
+          "yes": false,
+          "demonRole": "Leviathan",
+          "registers": true,
+          "timing": "night_1"
+        },
+        {
+          "left": "Steph",
+          "right": "Aoife",
+          "yes": false,
+          "demonRole": "Leviathan",
+          "registers": true,
+          "timing": "night_2"
+        },
+        {
+          "left": "Fraser",
+          "right": "Olivia",
+          "yes": false,
+          "demonRole": "Leviathan",
+          "registers": true,
+          "timing": "night_3"
+        }
+      ]
     }
   ]
 }

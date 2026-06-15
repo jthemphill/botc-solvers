@@ -3,7 +3,7 @@ export interface PuzzleDoc {
   readonly title?: string;
   readonly players: readonly string[];
   readonly script: readonly string[];
-  readonly setup?: "standard" | "none";
+  readonly setup?: "standard" | "none" | "atheist";
   readonly uniqueCharacters?: boolean;
   readonly fixedRoles?: readonly FixedRoleConstraint[];
   readonly forbiddenRoles?: readonly ForbiddenRoleConstraint[];
@@ -23,7 +23,7 @@ export interface ForbiddenRoleConstraint {
   readonly roles: readonly string[];
 }
 
-export type TimelineEventType = "nominationDeath" | "execution" | "nightKill";
+export type TimelineEventType = "nominationDeath" | "execution" | "nightKill" | "doomsayerDeath";
 
 export interface TimelineEventDoc {
   readonly timing: string;
@@ -39,6 +39,7 @@ export type Claim =
   | EmpathClaim
   | FortuneTellerClaim
   | UndertakerClaim
+  | LegionaryClaim
   | NobleClaim
   | StewardClaim
   | KnightClaim
@@ -48,16 +49,21 @@ export type Claim =
   | ShugenjaClaim
   | ClockmakerClaim
   | MathematicianClaim
+  | RavenkeeperClaim
   | SageClaim
+  | SlayerClaim
   | SnakeCharmerClaim
   | VillageIdiotClaim
+  | VirginClaim
   | BalloonistClaim
   | SavantClaim
+  | NightwatchmanClaim
   | BareClaim;
 
 interface BaseClaim {
   readonly name: string;
   readonly timing?: string;
+  readonly extraPossibleActualRoles?: readonly string[];
   readonly info?: readonly CustomInfoStatementDoc[];
 }
 
@@ -98,6 +104,7 @@ export interface EmpathClaim extends BaseClaim {
   readonly type: "Empath";
   readonly count?: number;
   readonly player?: string;
+  readonly neighbors?: readonly [string, string];
 }
 
 export interface FortuneTellerCheckDoc {
@@ -118,6 +125,17 @@ export interface UndertakerClaim extends BaseClaim {
   readonly type: "Undertaker";
   readonly player?: string;
   readonly role?: string;
+}
+
+export interface LegionaryCountDoc {
+  readonly count: number;
+  readonly timing?: string;
+  readonly alivePlayers?: readonly string[];
+}
+
+export interface LegionaryClaim extends BaseClaim {
+  readonly type: "Legionary";
+  readonly counts?: readonly LegionaryCountDoc[];
 }
 
 export interface NobleClaim extends BaseClaim {
@@ -175,9 +193,21 @@ export interface MathematicianClaim extends BaseClaim {
   readonly malfunctions?: readonly MathematicianCountDoc[];
 }
 
+export interface RavenkeeperClaim extends BaseClaim {
+  readonly type: "Ravenkeeper";
+  readonly player?: string;
+  readonly role?: string;
+}
+
 export interface SageClaim extends BaseClaim {
   readonly type: "Sage";
   readonly demonAmong?: readonly string[];
+}
+
+export interface SlayerClaim extends BaseClaim {
+  readonly type: "Slayer";
+  readonly target?: string;
+  readonly killed?: boolean;
 }
 
 export interface SnakeCharmerClaim extends BaseClaim {
@@ -189,11 +219,18 @@ export interface SnakeCharmerClaim extends BaseClaim {
 export interface VillageIdiotCheckDoc {
   readonly player: string;
   readonly good: boolean;
+  readonly timing?: string;
 }
 
 export interface VillageIdiotClaim extends BaseClaim {
   readonly type: "VillageIdiot";
   readonly checks: readonly VillageIdiotCheckDoc[];
+}
+
+export interface VirginClaim extends BaseClaim {
+  readonly type: "Virgin";
+  readonly nominator?: string;
+  readonly executed?: boolean;
 }
 
 export interface BalloonistClaim extends BaseClaim {
@@ -208,6 +245,12 @@ export interface SavantStatementDoc {
 export interface SavantClaim extends BaseClaim {
   readonly type: "Savant";
   readonly statements: readonly SavantStatementDoc[];
+}
+
+export interface NightwatchmanClaim extends BaseClaim {
+  readonly type: "Nightwatchman";
+  readonly chosen?: string;
+  readonly learned?: boolean;
 }
 
 export const BARE_CLAIM_TYPES = [
@@ -228,14 +271,12 @@ export const BARE_CLAIM_TYPES = [
   "Gossip",
   "Imp",
   "Klutz",
-  "Legionary",
   "Leviathan",
   "Lord of Typhon",
   "Lunatic",
   "Marionette",
   "Mayor",
   "Mutant",
-  "Nightwatchman",
   "No Dashii",
   "Oracle",
   "Philosopher",
@@ -244,15 +285,12 @@ export const BARE_CLAIM_TYPES = [
   "Poisoner",
   "Pukka",
   "Puzzlemaster",
-  "Ravenkeeper",
   "Recluse",
   "Saint",
   "Scarlet Woman",
-  "Slayer",
   "Soldier",
   "Spy",
   "Sweetheart",
-  "Virgin",
   "Vortox",
   "Witch",
   "Xaan",
@@ -272,6 +310,7 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Empath",
   "FortuneTeller",
   "Undertaker",
+  "Legionary",
   "Noble",
   "Steward",
   "Knight",
@@ -281,11 +320,15 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Shugenja",
   "Clockmaker",
   "Mathematician",
+  "Ravenkeeper",
   "Sage",
+  "Slayer",
   "Snake Charmer",
   "VillageIdiot",
+  "Virgin",
   "Balloonist",
   "Savant",
+  "Nightwatchman",
 ] as const satisfies readonly Claim["type"][];
 
 export const SUPPORTED_CLAIM_TYPES = new Set<Claim["type"]>([...STRUCTURED_CLAIM_TYPES, ...BARE_CLAIM_TYPES]);

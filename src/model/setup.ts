@@ -167,9 +167,40 @@ export function applyStandardSetup(game: BOTCModel): void {
   const baseCounts = standardSetupCounts(game.players.length);
   const scriptRoleNames = new Set([...game.characters.keys()]);
   const modifiers = STANDARD_SETUP_MODIFIERS.filter((modifier) => scriptRoleNames.has(modifier.roleName));
+  const lordOfTyphonInScript = scriptRoleNames.has("Lord of Typhon");
+  const xaanInScript = scriptRoleNames.has("Xaan");
+  if (scriptRoleNames.has("Marionette")) enforceMarionetteNeighborsDemon(game);
 
+  if (!lordOfTyphonInScript && !xaanInScript) return applyStandardSetupBranches(game, baseCounts, modifiers);
+
+  if (xaanInScript && !lordOfTyphonInScript) {
+    const xaanInPlay = game.roleInPlay("Xaan");
+    applyStandardSetupBranches(game, baseCounts, modifiers, xaanInPlay.not());
+    enforceXaanSetup(game, baseCounts, xaanInPlay);
+    return;
+  }
+
+  const lordOfTyphonInPlay = game.roleInPlay("Lord of Typhon");
+  applyStandardSetupBranches(game, baseCounts, modifiers, lordOfTyphonInPlay.not());
+  enforceLordOfTyphonSetup(game, baseCounts, lordOfTyphonInPlay);
+}
+
+function enforceXaanSetup(game: BOTCModel, baseCounts: StandardSetupCounts, condition: BoolLike): void {
+  const demonPlayers = game.players.map((player) => game.hasCharacterType(player, CharacterType.Demon));
+  const minionPlayers = game.players.map((player) => game.hasCharacterType(player, CharacterType.Minion));
+
+  game.addEnforcedExactlyN(demonPlayers, baseCounts[CharacterType.Demon], condition);
+  game.addEnforcedExactlyN(minionPlayers, baseCounts[CharacterType.Minion], condition);
+}
+
+function applyStandardSetupBranches(
+  game: BOTCModel,
+  baseCounts: StandardSetupCounts,
+  modifiers: readonly SetupModifier[],
+  baseCondition?: BoolLike,
+): void {
   if (modifiers.length === 0) {
-    enforceSetupCounts(game, baseCounts);
+    enforceSetupCounts(game, baseCounts, baseCondition);
     return;
   }
 
@@ -180,13 +211,48 @@ export function applyStandardSetup(game: BOTCModel): void {
   for (let mask = 0; mask < branchCount; mask += 1) {
     const activeModifiers = modifiers.filter((_modifier, index) => (mask & (1 << index)) !== 0);
     const condition = game.allOf(
-      modifiers.map((modifier, index) => {
-        const active = activeVariables.get(modifier.roleName) as BoolLike;
-        return (mask & (1 << index)) !== 0 ? active : negateBoolLike(active);
-      }),
+      [
+        ...(baseCondition === undefined ? [] : [baseCondition]),
+        ...modifiers.map((modifier, index) => {
+          const active = activeVariables.get(modifier.roleName) as BoolLike;
+          return (mask & (1 << index)) !== 0 ? active : negateBoolLike(active);
+        }),
+      ],
       `standard_setup_${activeModifiers.map((modifier) => roleName(modifier.roleName)).join("_") || "base"}`,
     );
     enforceSetupCounts(game, adjustedSetupCounts(baseCounts, activeModifiers), condition);
+  }
+}
+
+function enforceLordOfTyphonSetup(game: BOTCModel, baseCounts: StandardSetupCounts, condition: BoolLike): void {
+  const demonPlayers = game.players.map((player) => game.hasCharacterType(player, CharacterType.Demon));
+  const minionPlayers = game.players.map((player) => game.hasCharacterType(player, CharacterType.Minion));
+  const minionCount = baseCounts[CharacterType.Minion] + 1;
+
+  game.addEnforcedExactlyN(demonPlayers, 1, condition);
+  game.addEnforcedExactlyN(minionPlayers, minionCount, condition);
+  if (minionCount === 2) enforceTwoMinionLordOfTyphonLine(game, condition);
+}
+
+function enforceTwoMinionLordOfTyphonLine(game: BOTCModel, condition: BoolLike): void {
+  for (const player of game.players) {
+    const [left, right] = game.neighbors(player);
+    const playerIsLordOfTyphon = game.allOf(
+      [condition, game.actualIs(player, "Lord of Typhon")],
+      `${player}_lord_of_typhon_line_active`,
+    );
+    game.addImplication(playerIsLordOfTyphon, game.isMinion(left));
+    game.addImplication(playerIsLordOfTyphon, game.isMinion(right));
+  }
+}
+
+function enforceMarionetteNeighborsDemon(game: BOTCModel): void {
+  for (const player of game.players) {
+    const [left, right] = game.neighbors(player);
+    game.addImplication(
+      game.actualIs(player, "Marionette"),
+      game.anyOf([game.isDemon(left), game.isDemon(right)], `${player}_marionette_neighbors_demon`),
+    );
   }
 }
 

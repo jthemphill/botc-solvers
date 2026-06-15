@@ -70,6 +70,28 @@ describe("buildFromDoc", () => {
     expect(new Set(worlds.map((world) => world.actualRole("You")))).toEqual(new Set(["Drunk", "Investigator"]));
   });
 
+  test("claims can opt into extra possible actual roles", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Lunatic", "Empath", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Lunatic"] },
+          { name: "B", roles: ["Empath"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        claims: [{ type: "Empath", name: "A", extraPossibleActualRoles: ["Lunatic"], count: 0 }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("A")).toBe("Lunatic");
+  });
+
   test("custom info statements and forbidden roles constrain the model", async () => {
     const worlds = await buildFromDoc(
       {
@@ -111,6 +133,330 @@ describe("buildFromDoc", () => {
 
     expect(worlds.length).toBeGreaterThan(0);
     expect(new Set(worlds.map((world) => world.actualRole("B")))).not.toContain("Imp");
+  });
+
+  test("Doomsayer deaths do not exclude players from script demon roles", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Imp", "Sage"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Sage"] },
+          { name: "B", roles: ["Imp"] },
+        ],
+        timeline: [{ timing: "day_1", type: "doomsayerDeath", players: ["B"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("B")).toBe("Imp");
+  });
+
+  test("Xaan poisons Townsfolk on the night matching the Outsider count", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C", "D"],
+        script: ["Imp", "Xaan", "Drunk", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Imp"] },
+          { name: "B", roles: ["Xaan"] },
+          { name: "C", roles: ["Drunk"] },
+          { name: "D", roles: ["Chef"] },
+        ],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.isPoisoned("A", "night_1")).toBe(false);
+    expect(worlds[0]?.isPoisoned("B", "night_1")).toBe(false);
+    expect(worlds[0]?.isPoisoned("C", "night_1")).toBe(false);
+    expect(worlds[0]?.isPoisoned("D", "night_1")).toBe(true);
+  });
+
+  test("Atheist setup has no evil team and arbitrary information", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Imp", "Spy", "Atheist", "Artist", "Clockmaker"],
+        setup: "atheist",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Atheist"] },
+          { name: "B", roles: ["Artist"] },
+          { name: "C", roles: ["Clockmaker"] },
+        ],
+        claims: [
+          {
+            type: "Artist",
+            name: "B",
+            timing: "day_1",
+            info: [{ timing: "day_1", expression: "A.role == Imp" }],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.holder("Imp")).toBeUndefined();
+    expect(worlds[0]?.holder("Spy")).toBeUndefined();
+    expect(worlds[0]?.holder("Atheist")).toBe("A");
+  });
+
+  test("timeline deaths stop later Poisoner effects", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Imp", "Poisoner", "Investigator"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Poisoner"] },
+          { name: "B", roles: ["Investigator"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        timeline: [{ timing: "day_1", type: "execution", players: ["A"] }],
+        claims: [
+          {
+            type: "Investigator",
+            name: "B",
+            timing: "night_2",
+            role: "Poisoner",
+            among: ["A", "C"],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.isPoisoned("A", "night_2")).toBe(false);
+    expect(worlds[0]?.isPoisoned("B", "night_2")).toBe(false);
+    expect(worlds[0]?.isPoisoned("C", "night_2")).toBe(false);
+  });
+
+  test("timed Empath claims use living neighbors from the timeline", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C", "D"],
+        script: ["Empath", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: false,
+        fixedRoles: [
+          { name: "A", roles: ["Empath"] },
+          { name: "B", roles: ["Chef"] },
+          { name: "C", roles: ["Imp"] },
+          { name: "D", roles: ["Chef"] },
+        ],
+        timeline: [{ timing: "day_1", type: "execution", players: ["B"] }],
+        claims: [{ type: "Empath", name: "A", timing: "night_2", count: 1 }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("C")).toBe("Imp");
+  });
+
+  test("Nightwatchman learned result constrains sober healthy claims", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Nightwatchman", "Drunk", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [{ name: "A", roles: ["Nightwatchman", "Drunk"] }],
+        forbiddenRoles: [{ name: "B", roles: ["Nightwatchman", "Drunk"] }],
+        claims: [{ type: "Nightwatchman", name: "A", timing: "night_1", chosen: "B", learned: false }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("A")).toBe("Drunk");
+  });
+
+  test("Ravenkeeper learned role constrains sober healthy claims", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Ravenkeeper", "Scarlet Woman", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Ravenkeeper"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        claims: [{ type: "Ravenkeeper", name: "A", timing: "night_2", player: "B", role: "Scarlet Woman" }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("B")).toBe("Scarlet Woman");
+  });
+
+  test("Slayer no-kill claims exclude actual demon targets", async () => {
+    const killedDemonWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Slayer", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Slayer"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Chef"] },
+        ],
+        claims: [{ type: "Slayer", name: "A", timing: "day_1", target: "B", killed: false }],
+      },
+      backend,
+    ).solveAll();
+
+    const livingTownsfolkWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Slayer", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Slayer"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Chef"] },
+        ],
+        claims: [{ type: "Slayer", name: "A", timing: "day_1", target: "C", killed: false }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(killedDemonWorlds).toEqual([]);
+    expect(livingTownsfolkWorlds).toHaveLength(1);
+  });
+
+  test("day Slayer shots use the corresponding night poison state", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C", "D"],
+        script: ["Slayer", "Imp", "Poisoner", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Slayer"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Poisoner"] },
+          { name: "D", roles: ["Chef"] },
+        ],
+        claims: [
+          { type: "Chef", name: "D", timing: "night_1", count: 0 },
+          { type: "Slayer", name: "A", timing: "day_1", target: "B", killed: false },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
+  });
+
+  test("Virgin no-proc claims exclude Townsfolk nominators", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Virgin", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Virgin"] },
+          { name: "B", roles: ["Chef"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        claims: [{ type: "Virgin", name: "A", timing: "day_1", nominator: "B", executed: false }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
+  });
+
+  test("multiple Village Idiots make one real Village Idiot drunk", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Village Idiot", "Imp"],
+        setup: "none",
+        uniqueCharacters: false,
+        fixedRoles: [
+          { name: "A", roles: ["Village Idiot"] },
+          { name: "B", roles: ["Village Idiot"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(2);
+    expect(new Set(worlds.map((world) => (world.isDrunk("A") ? "A" : "B")))).toEqual(new Set(["A", "B"]));
+  });
+
+  test("Legionary counts living evil players before the next living Legionary", async () => {
+    const validWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C", "D"],
+        script: ["Legionary", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: false,
+        fixedRoles: [
+          { name: "A", roles: ["Legionary"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Legionary"] },
+          { name: "D", roles: ["Chef"] },
+        ],
+        claims: [{ type: "Legionary", name: "A", counts: [{ count: 1 }] }],
+      },
+      backend,
+    ).solveAll();
+
+    const invalidWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C", "D"],
+        script: ["Legionary", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: false,
+        fixedRoles: [
+          { name: "A", roles: ["Legionary"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Legionary"] },
+          { name: "D", roles: ["Chef"] },
+        ],
+        claims: [{ type: "Legionary", name: "A", counts: [{ count: 0 }] }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(validWorlds).toHaveLength(1);
+    expect(invalidWorlds).toEqual([]);
   });
 
   test("puzzle-34-the-vortox-conjecture.json parses and solves", async () => {

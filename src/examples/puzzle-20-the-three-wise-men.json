@@ -15,25 +15,66 @@
     "Village Idiot",
     "Virgin"
   ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Investigator", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Gabriel"]
+    }
+  ],
   "claims": [
     {
       "type": "VillageIdiot",
       "name": "Melchior",
-      "checks": []
+      "checks": [
+        {
+          "player": "Balthazar",
+          "good": false
+        },
+        {
+          "player": "Mary",
+          "good": false
+        }
+      ]
     },
     {
       "type": "Virgin",
-      "name": "Mary"
+      "name": "Mary",
+      "timing": "day_1",
+      "nominator": "Balthazar",
+      "executed": false
     },
     {
       "type": "VillageIdiot",
       "name": "Balthazar",
-      "checks": []
+      "checks": [
+        {
+          "player": "Joseph",
+          "good": false
+        },
+        {
+          "player": "Caspar",
+          "good": false
+        }
+      ]
     },
     {
       "type": "Ravenkeeper",
       "name": "Gabriel",
-      "timing": "night_2"
+      "timing": "night_2",
+      "player": "Balthazar",
+      "role": "Drunk"
     },
     {
       "type": "Investigator",
@@ -45,7 +86,16 @@
     {
       "type": "VillageIdiot",
       "name": "Caspar",
-      "checks": []
+      "checks": [
+        {
+          "player": "Mary",
+          "good": false
+        },
+        {
+          "player": "Joseph",
+          "good": false
+        }
+      ]
     },
     {
       "type": "Saint",

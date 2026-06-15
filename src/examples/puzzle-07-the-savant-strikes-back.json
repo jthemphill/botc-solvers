@@ -40,6 +40,7 @@
     {
       "type": "Dreamer",
       "name": "Steph",
+      "extraPossibleActualRoles": ["Mutant"],
       "roles": []
     },
     {

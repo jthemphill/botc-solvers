@@ -16,6 +16,7 @@
     "Seamstress",
     "Snake Charmer"
   ],
+  "uniqueCharacters": false,
   "fixedRoles": [
     {
       "name": "You",

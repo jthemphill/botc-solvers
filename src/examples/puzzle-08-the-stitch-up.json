@@ -3,6 +3,7 @@
   "title": "Puzzle 8 - The Stitch Up",
   "players": ["Anna", "Tim", "Matthew", "Fraser", "You", "Josh", "Steph"],
   "script": ["Imp", "Poisoner", "Drunk", "Seamstress"],
+  "uniqueCharacters": false,
   "claims": [
     {
       "type": "Seamstress",
