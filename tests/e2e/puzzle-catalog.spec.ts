@@ -23,4 +23,15 @@ test("loads puzzle 34 with structured role clues", async ({ page }) => {
   await expect(page.getByText("Demon-minion distance").first()).toBeVisible();
   await expect(page.getByText("Malfunctions").first()).toBeVisible();
   await expect(page.getByText("Aoife.role == `No Dashii`").first()).toBeVisible();
+
+  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
+  await page.locator(".solve-panel").getByRole("button", { name: "Solve" }).click();
+
+  await expect(page.getByText("Satisfying worlds:")).toBeVisible();
+  await expect(page.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  const sula = page.getByLabel("Sula: Vortox, claimed Clockmaker");
+  await expect(sula).toBeVisible();
+  await expect(sula).toContainText("Vortox");
+  await expect(sula).not.toContainText("Clockmaker");
+  await expect(sula).toHaveCSS("border-top-color", "rgb(165, 43, 43)");
 });

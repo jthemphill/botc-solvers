@@ -38,13 +38,21 @@ export function ResultsView({ worlds, players, error }: Props) {
             {players.map((player) => {
               const actual = w.actual.find(([p]) => p === player)?.[1];
               const apparent = w.apparent.find(([p]) => p === player)?.[1];
+              const isLying = actual !== undefined && apparent !== undefined && actual !== apparent;
+              const actualLabel = roleEmojiLabel(actual);
+              const apparentLabel = roleEmojiLabel(apparent);
               return (
-                <div key={player} className="solution-token" title={roleEmojiLabel(actual)}>
+                <div
+                  key={player}
+                  className={`solution-token${isLying ? " lying" : ""}`}
+                  title={isLying ? `Actual: ${actualLabel}; Claimed: ${apparentLabel}` : actualLabel}
+                  aria-label={`${player}: ${actual ?? "Unknown"}${isLying ? `, claimed ${apparent}` : ""}`}
+                >
                   <span className="solution-role" aria-hidden="true">
                     {roleEmoji(actual) ?? "?"}
                   </span>
                   <strong>{player}</strong>
-                  <small>{apparent && apparent !== actual ? roleEmojiLabel(apparent) : roleEmojiLabel(actual)}</small>
+                  <small>{actualLabel}</small>
                   <span className="solution-flags">
                     {w.poisoned.includes(player) && <span>Poisoned</span>}
                     {w.drunk.includes(player) && <span>Drunk</span>}
