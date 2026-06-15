@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "title": "Puzzle 2 - Come Fly With Me",
+  "players": ["Sarah", "Matthew", "Anna", "Sula", "You", "Steph", "Fraser", "Tim"],
+  "script": [
+    "Leviathan",
+    "Goblin",
+    "Drunk",
+    "Saint",
+    "Balloonist",
+    "Clockmaker",
+    "Fortune Teller",
+    "Investigator",
+    "Juggler",
+    "Knight",
+    "Seamstress"
+  ],
+  "claims": [
+    {
+      "type": "Investigator",
+      "name": "Sarah",
+      "role": "Goblin",
+      "among": ["Matthew", "Fraser"]
+    },
+    {
+      "type": "Juggler",
+      "name": "Matthew",
+      "timing": "night_2",
+      "guesses": {
+        "Steph": "Knight",
+        "Sarah": "Leviathan",
+        "Anna": "Goblin",
+        "Sula": "Goblin",
+        "You": "Seamstress"
+      },
+      "correctCount": 2
+    },
+    {
+      "type": "Clockmaker",
+      "name": "Anna",
+      "distance": 1
+    },
+    {
+      "type": "Balloonist",
+      "name": "Sula",
+      "differentCharacterTypePairs": [
+        ["Tim", "Matthew"],
+        ["Matthew", "Steph"]
+      ]
+    },
+    {
+      "type": "Seamstress",
+      "name": "You",
+      "timing": "night_1",
+      "among": ["Matthew", "Sula"],
+      "aligned": true
+    },
+    {
+      "type": "Knight",
+      "name": "Steph",
+      "noDemonAmong": ["Tim", "Sula"]
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Fraser",
+      "checks": [
+        {
+          "left": "Sarah",
+          "right": "Anna",
+          "yes": false
+        },
+        {
+          "left": "You",
+          "right": "Fraser",
+          "yes": false
+        },
+        {
+          "left": "Steph",
+          "right": "Sarah",
+          "yes": false
+        }
+      ]
+    },
+    {
+      "type": "Saint",
+      "name": "Tim"
+    }
+  ]
+}

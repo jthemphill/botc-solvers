@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "title": "Puzzle 26 - A Major Problem",
+  "players": ["Matthew", "Josh", "Sula", "Fraser", "You", "Olivia", "Dan", "Tom"],
+  "script": [
+    "Imp",
+    "Baron",
+    "Poisoner",
+    "Scarlet Woman",
+    "Spy",
+    "Drunk",
+    "Recluse",
+    "Saint",
+    "Chef",
+    "Empath",
+    "Librarian",
+    "Slayer",
+    "Soldier",
+    "Undertaker"
+  ],
+  "claims": [
+    {
+      "type": "Librarian",
+      "name": "Matthew",
+      "timing": "night_1",
+      "role": "Drunk",
+      "among": ["You", "Josh"]
+    },
+    {
+      "type": "Soldier",
+      "name": "Josh"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Sula"
+    },
+    {
+      "type": "Chef",
+      "name": "Fraser",
+      "timing": "night_1",
+      "count": 2
+    },
+    {
+      "type": "Empath",
+      "name": "You",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Saint",
+      "name": "Olivia"
+    },
+    {
+      "type": "Slayer",
+      "name": "Dan",
+      "timing": "day_1"
+    },
+    {
+      "type": "Recluse",
+      "name": "Tom"
+    }
+  ]
+}

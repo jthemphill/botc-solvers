@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "title": "Puzzle 8 - The Stitch Up",
+  "players": ["Anna", "Tim", "Matthew", "Fraser", "You", "Josh", "Steph"],
+  "script": ["Imp", "Poisoner", "Drunk", "Seamstress"],
+  "claims": [
+    {
+      "type": "Seamstress",
+      "name": "Anna",
+      "timing": "night_1",
+      "among": ["Josh", "Matthew"],
+      "aligned": false
+    },
+    {
+      "type": "Seamstress",
+      "name": "Tim",
+      "timing": "night_1",
+      "among": ["You", "Josh"],
+      "aligned": false
+    },
+    {
+      "type": "Seamstress",
+      "name": "Matthew",
+      "timing": "night_1",
+      "among": ["Steph", "Fraser"],
+      "aligned": false
+    },
+    {
+      "type": "Seamstress",
+      "name": "Fraser",
+      "timing": "night_1",
+      "among": ["Steph", "Anna"],
+      "aligned": false
+    },
+    {
+      "type": "Seamstress",
+      "name": "You",
+      "timing": "night_1",
+      "among": ["Anna", "Matthew"],
+      "aligned": false
+    },
+    {
+      "type": "Seamstress",
+      "name": "Josh",
+      "timing": "night_1",
+      "among": ["Anna", "Tim"],
+      "aligned": false
+    },
+    {
+      "type": "Seamstress",
+      "name": "Steph",
+      "timing": "night_1",
+      "among": ["Tim", "Matthew"],
+      "aligned": false
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Claim, FixedRoleConstraint, PuzzleDoc } from "../src/schema/puzzleDoc";
@@ -20,7 +20,9 @@ interface CatalogEntry {
 }
 
 const PUZZLE_DIR = join(import.meta.dir, "..", "src", "model", "puzzles");
-const OUTPUT_PATH = join(import.meta.dir, "..", "src", "examples", "puzzleCatalog.generated.json");
+const EXAMPLES_DIR = join(import.meta.dir, "..", "src", "examples");
+const GENERATED_DOC_DIR = join(EXAMPLES_DIR, "generated");
+const OUTPUT_PATH = join(EXAMPLES_DIR, "puzzleCatalog.generated.ts");
 const OUTPUT_TMP_PATH = `${OUTPUT_PATH}.tmp`;
 
 const SPECIAL_CLAIM_TYPES: Readonly<Record<string, Claim["type"]>> = {
@@ -200,6 +202,19 @@ function labelFromFilename(fileName: string): string {
   return `Puzzle ${number}${suffix} - ${title}`;
 }
 
+function importIdentifier(id: string): string {
+  return `doc_${id.replace(/[^A-Za-z0-9]+/g, "_")}`;
+}
+
+function handAuthoredDocIds(): ReadonlySet<string> {
+  if (!existsSync(EXAMPLES_DIR)) return new Set();
+  return new Set(
+    readdirSync(EXAMPLES_DIR)
+      .filter((fileName) => /^puzzle-\d+[a-z]?-.+\.json$/.test(fileName))
+      .map((fileName) => basename(fileName, ".json")),
+  );
+}
+
 function roleNamesByIdentifier(characters: readonly RoleRef[]): ReadonlyMap<string, string> {
   const entries = characters.map((character) => {
     const name = roleName(character);
@@ -319,6 +334,49 @@ const puzzleFiles = readdirSync(PUZZLE_DIR)
   .sort();
 
 const entries = (await Promise.all(puzzleFiles.map(loadPuzzle))).flat();
-mkdirSync(join(import.meta.dir, "..", "src", "examples"), { recursive: true });
-writeFileSync(OUTPUT_TMP_PATH, `${JSON.stringify(entries, null, 2)}\n`);
+const handAuthoredIds = handAuthoredDocIds();
+
+mkdirSync(GENERATED_DOC_DIR, { recursive: true });
+for (const fileName of readdirSync(GENERATED_DOC_DIR)) {
+  if (fileName.endsWith(".json")) unlinkSync(join(GENERATED_DOC_DIR, fileName));
+}
+
+const imports: string[] = [];
+const catalogLines: string[] = [];
+for (const entry of entries) {
+  const handAuthored = handAuthoredIds.has(entry.id);
+  if (handAuthored) {
+    catalogLines.push(`  {
+    id: ${JSON.stringify(entry.id)},
+    label: ${JSON.stringify(entry.label)},
+  },`);
+    continue;
+  }
+
+  const fileName = `${entry.id}.json`;
+  const importName = importIdentifier(entry.id);
+  writeFileSync(join(GENERATED_DOC_DIR, fileName), `${JSON.stringify(entry.doc, null, 2)}\n`);
+  imports.push(`import ${importName} from "./generated/${fileName}";`);
+  catalogLines.push(`  {
+    id: ${JSON.stringify(entry.id)},
+    label: ${JSON.stringify(entry.label)},
+    data: ${importName},
+  },`);
+}
+
+writeFileSync(
+  OUTPUT_TMP_PATH,
+  `${imports.join("\n")}
+
+export interface GeneratedPuzzleCatalogEntry {
+  readonly id: string;
+  readonly label: string;
+  readonly data?: unknown;
+}
+
+export const GENERATED_PUZZLE_CATALOG = [
+${catalogLines.join("\n")}
+] as const satisfies readonly GeneratedPuzzleCatalogEntry[];
+`,
+);
 renameSync(OUTPUT_TMP_PATH, OUTPUT_PATH);

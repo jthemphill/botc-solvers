@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "title": "Puzzle 23 - Goblincore",
+  "players": ["Aoife", "Fraser", "Tom", "Sula", "You", "Hannah", "Matt", "Tim"],
+  "script": [
+    "Imp",
+    "Goblin",
+    "Lunatic",
+    "Chef",
+    "Fortune Teller",
+    "Investigator",
+    "Librarian",
+    "Ravenkeeper",
+    "Slayer",
+    "Washerwoman"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Chef"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Ravenkeeper",
+      "name": "Aoife",
+      "timing": "night_2"
+    },
+    {
+      "type": "Goblin",
+      "name": "Fraser"
+    },
+    {
+      "type": "Librarian",
+      "name": "Tom",
+      "role": "Lunatic",
+      "among": ["Matt", "Fraser"]
+    },
+    {
+      "type": "Slayer",
+      "name": "Sula",
+      "timing": "day_1"
+    },
+    {
+      "type": "Chef",
+      "name": "You",
+      "count": 0,
+      "registers": false
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Hannah",
+      "role": "Librarian",
+      "among": ["Tom", "Sula"]
+    },
+    {
+      "type": "Investigator",
+      "name": "Matt",
+      "role": "Goblin",
+      "among": ["Aoife", "Fraser"]
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Tim",
+      "checks": []
+    }
+  ]
+}

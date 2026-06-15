@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "title": "Puzzle 11 - False Is The New Black",
+  "players": ["Matthew", "Anna", "Aoife", "Hannah", "You", "Sula", "Sarah", "Tom"],
+  "script": [
+    "Vortox",
+    "Cerenovus",
+    "Pit-Hag",
+    "Mutant",
+    "Sweetheart",
+    "Artist",
+    "Clockmaker",
+    "Dreamer",
+    "Philosopher",
+    "Sage",
+    "Seamstress",
+    "Snake Charmer"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Clockmaker"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Artist",
+      "name": "Matthew",
+      "timing": "day_1"
+    },
+    {
+      "type": "Sage",
+      "name": "Anna",
+      "timing": "night_2"
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Aoife"
+    },
+    {
+      "type": "Artist",
+      "name": "Hannah",
+      "timing": "day_1"
+    },
+    {
+      "type": "Clockmaker",
+      "name": "You"
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Sula"
+    },
+    {
+      "type": "Dreamer",
+      "name": "Sarah",
+      "roles": []
+    },
+    {
+      "type": "Sweetheart",
+      "name": "Tom"
+    }
+  ]
+}

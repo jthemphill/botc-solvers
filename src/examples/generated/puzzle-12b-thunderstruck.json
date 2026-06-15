@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "title": "Puzzle 12b - Thunderstruck",
+  "players": ["Fraser", "Tom", "Aoife", "Steph", "You", "Oscar", "Anna", "Josh"],
+  "script": [
+    "Vortox",
+    "Spy",
+    "Scarlet Woman",
+    "Lunatic",
+    "Clockmaker",
+    "Courtier",
+    "Dreamer",
+    "Empath",
+    "Investigator",
+    "Librarian",
+    "Mayor",
+    "Slayer"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Librarian"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Slayer",
+      "name": "Fraser",
+      "timing": "day_1"
+    },
+    {
+      "type": "Dreamer",
+      "name": "Tom",
+      "roles": []
+    },
+    {
+      "type": "Clockmaker",
+      "name": "Aoife"
+    },
+    {
+      "type": "Courtier",
+      "name": "Steph"
+    },
+    {
+      "type": "Librarian",
+      "name": "You",
+      "among": []
+    },
+    {
+      "type": "Investigator",
+      "name": "Oscar",
+      "among": []
+    },
+    {
+      "type": "Empath",
+      "name": "Anna"
+    },
+    {
+      "type": "Mayor",
+      "name": "Josh"
+    }
+  ]
+}

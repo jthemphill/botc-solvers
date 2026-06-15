@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Puzzle 22 - One In The Chamber",
+  "players": ["Tim", "Fraser", "Oscar", "Steph", "You", "Anna", "Aoife", "Sarah"],
+  "script": [
+    "Imp",
+    "Baron",
+    "Poisoner",
+    "Scarlet Woman",
+    "Spy",
+    "Drunk",
+    "Recluse",
+    "Saint",
+    "Chambermaid",
+    "Investigator",
+    "Librarian",
+    "Ravenkeeper",
+    "Slayer",
+    "Washerwoman"
+  ],
+  "claims": [
+    {
+      "type": "Saint",
+      "name": "Tim"
+    },
+    {
+      "type": "Recluse",
+      "name": "Fraser"
+    },
+    {
+      "type": "Librarian",
+      "name": "Oscar",
+      "timing": "night_1",
+      "role": "Drunk",
+      "among": ["You", "Sarah"]
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Steph",
+      "timing": "night_1",
+      "role": "Chambermaid",
+      "among": ["You", "Aoife"]
+    },
+    {
+      "type": "Chambermaid",
+      "name": "You"
+    },
+    {
+      "type": "Investigator",
+      "name": "Anna",
+      "timing": "night_1",
+      "role": "Baron",
+      "among": ["Aoife", "Steph"]
+    },
+    {
+      "type": "Slayer",
+      "name": "Aoife",
+      "timing": "day_1"
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Sarah",
+      "timing": "night_2"
+    }
+  ]
+}

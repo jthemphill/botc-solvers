@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "title": "Puzzle 36 - What Is Your Weapon Of Choice",
+  "players": ["Sula", "Olivia", "Fraser", "Oscar", "You", "Steph", "Adam", "Josh"],
+  "script": [
+    "Imp",
+    "Baron",
+    "Poisoner",
+    "Spy",
+    "Scarlet Woman",
+    "Drunk",
+    "Recluse",
+    "Saint",
+    "Empath",
+    "Fortune Teller",
+    "Investigator",
+    "Ravenkeeper",
+    "Slayer"
+  ],
+  "claims": [
+    {
+      "type": "Investigator",
+      "name": "Sula",
+      "timing": "night_1",
+      "role": "Spy",
+      "among": ["Steph", "Josh"]
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Olivia",
+      "checks": []
+    },
+    {
+      "type": "Recluse",
+      "name": "Fraser"
+    },
+    {
+      "type": "Slayer",
+      "name": "Oscar",
+      "timing": "day_1"
+    },
+    {
+      "type": "Empath",
+      "name": "You"
+    },
+    {
+      "type": "Saint",
+      "name": "Steph"
+    },
+    {
+      "type": "Slayer",
+      "name": "Adam",
+      "timing": "day_1"
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Josh",
+      "timing": "night_2"
+    }
+  ]
+}

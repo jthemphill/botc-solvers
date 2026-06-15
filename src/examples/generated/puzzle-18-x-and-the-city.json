@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "title": "Puzzle 18 - X And The City",
+  "players": ["Aoife", "Tim", "Olivia", "Sarah", "You", "Steph", "Fraser", "Dan"],
+  "script": [
+    "Leviathan",
+    "Xaan",
+    "Drunk",
+    "Saint",
+    "Recluse",
+    "Balloonist",
+    "Fortune Teller",
+    "Investigator",
+    "Juggler",
+    "Librarian",
+    "Snake Charmer"
+  ],
+  "claims": [
+    {
+      "type": "Balloonist",
+      "name": "Aoife",
+      "differentCharacterTypePairs": []
+    },
+    {
+      "type": "Saint",
+      "name": "Tim"
+    },
+    {
+      "type": "Investigator",
+      "name": "Olivia",
+      "among": []
+    },
+    {
+      "type": "Recluse",
+      "name": "Sarah"
+    },
+    {
+      "type": "Librarian",
+      "name": "You",
+      "among": []
+    },
+    {
+      "type": "Juggler",
+      "name": "Steph",
+      "timing": "night_2",
+      "guesses": {}
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Fraser"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Dan",
+      "checks": []
+    }
+  ]
+}

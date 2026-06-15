@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "title": "Puzzle 38 - Snakes On A Plane",
+  "players": ["Tim", "Fraser", "Sula", "Matt", "You", "Hannah", "Dan", "Adam"],
+  "script": [
+    "Imp",
+    "Baron",
+    "Poisoner",
+    "Spy",
+    "Scarlet Woman",
+    "Drunk",
+    "Recluse",
+    "Saint",
+    "Empath",
+    "Fortune Teller",
+    "Investigator",
+    "Ravenkeeper",
+    "Snake Charmer"
+  ],
+  "claims": [
+    {
+      "type": "Snake Charmer",
+      "name": "Tim"
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Fraser"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Sula",
+      "checks": []
+    },
+    {
+      "type": "Saint",
+      "name": "Matt"
+    },
+    {
+      "type": "Recluse",
+      "name": "You"
+    },
+    {
+      "type": "Empath",
+      "name": "Hannah"
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Dan",
+      "timing": "night_2"
+    },
+    {
+      "type": "Investigator",
+      "name": "Adam",
+      "timing": "night_1",
+      "role": "Baron",
+      "among": ["Tim", "Sula"]
+    }
+  ]
+}

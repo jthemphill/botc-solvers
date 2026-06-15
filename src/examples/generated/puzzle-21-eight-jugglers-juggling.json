@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "title": "Puzzle 21 - Eight Jugglers Juggling",
+  "players": ["Tim", "Matt", "Olivia", "Oscar", "You", "Fraser", "Aoife", "Josh"],
+  "script": ["Leviathan", "Goblin", "Drunk", "Juggler"],
+  "claims": [
+    {
+      "type": "Juggler",
+      "name": "Tim",
+      "timing": "night_2",
+      "guesses": {
+        "You": "Leviathan",
+        "Josh": "Juggler"
+      },
+      "correctCount": 0
+    },
+    {
+      "type": "Juggler",
+      "name": "Matt",
+      "timing": "night_2",
+      "guesses": {
+        "Josh": "Goblin",
+        "Tim": "Juggler"
+      },
+      "correctCount": 0
+    },
+    {
+      "type": "Juggler",
+      "name": "Olivia",
+      "timing": "night_2",
+      "guesses": {
+        "You": "Juggler",
+        "Aoife": "Drunk"
+      },
+      "correctCount": 2
+    },
+    {
+      "type": "Juggler",
+      "name": "Oscar",
+      "timing": "night_2",
+      "guesses": {
+        "Josh": "Goblin",
+        "Matt": "Juggler"
+      },
+      "correctCount": 0
+    },
+    {
+      "type": "Juggler",
+      "name": "You",
+      "timing": "night_2",
+      "guesses": {
+        "Matt": "Goblin",
+        "Oscar": "Goblin"
+      },
+      "correctCount": 0
+    },
+    {
+      "type": "Juggler",
+      "name": "Fraser",
+      "timing": "night_2",
+      "guesses": {
+        "Olivia": "Juggler",
+        "Oscar": "Drunk"
+      },
+      "correctCount": 1
+    },
+    {
+      "type": "Juggler",
+      "name": "Aoife",
+      "timing": "night_2",
+      "guesses": {
+        "Olivia": "Leviathan",
+        "Oscar": "Leviathan"
+      },
+      "correctCount": 0
+    },
+    {
+      "type": "Juggler",
+      "name": "Josh",
+      "timing": "night_2",
+      "guesses": {
+        "Tim": "Goblin",
+        "Oscar": "Juggler"
+      },
+      "correctCount": 1
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "title": "Puzzle 3a - Not Throwing Away My Shot",
+  "players": ["Sula", "Matthew", "Oscar", "Josh", "You", "Aoife", "Tom"],
+  "script": [
+    "Imp",
+    "Baron",
+    "Spy",
+    "Poisoner",
+    "Scarlet Woman",
+    "Drunk",
+    "Recluse",
+    "Chef",
+    "Empath",
+    "Investigator",
+    "Librarian",
+    "Slayer",
+    "Washerwoman"
+  ],
+  "claims": [
+    {
+      "type": "Investigator",
+      "name": "Sula",
+      "role": "Baron",
+      "among": ["You", "Aoife"]
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Matthew",
+      "role": "Librarian",
+      "among": ["Aoife", "Oscar"]
+    },
+    {
+      "type": "Librarian",
+      "name": "Oscar",
+      "outsiderCount": 0,
+      "among": []
+    },
+    {
+      "type": "Empath",
+      "name": "Josh",
+      "count": 0
+    },
+    {
+      "type": "Slayer",
+      "name": "You",
+      "timing": "day_1"
+    },
+    {
+      "type": "Chef",
+      "name": "Aoife",
+      "count": 0
+    },
+    {
+      "type": "Recluse",
+      "name": "Tom"
+    }
+  ]
+}

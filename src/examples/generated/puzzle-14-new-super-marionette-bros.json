@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "title": "Puzzle 14 - New Super Marionette Bros",
+  "players": ["Brett", "Rob", "Lav", "Lydia", "You", "Danielle", "Gwilym"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Spy",
+    "Scarlet Woman",
+    "Marionette",
+    "Drunk",
+    "Chef",
+    "Empath",
+    "Fortune Teller",
+    "Investigator",
+    "Slayer",
+    "Undertaker",
+    "Washerwoman"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Slayer", "Marionette"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "FortuneTeller",
+      "name": "Brett",
+      "checks": [
+        {
+          "left": "Danielle",
+          "right": "Gwilym",
+          "yes": false,
+          "demonRole": "Imp",
+          "registers": true,
+          "timing": "night_1"
+        }
+      ]
+    },
+    {
+      "type": "Empath",
+      "name": "Rob"
+    },
+    {
+      "type": "Chef",
+      "name": "Lav",
+      "timing": "night_1",
+      "count": 1
+    },
+    {
+      "type": "Investigator",
+      "name": "Lydia",
+      "timing": "night_1",
+      "role": "Marionette",
+      "among": ["You", "Danielle"]
+    },
+    {
+      "type": "Slayer",
+      "name": "You",
+      "timing": "day_1"
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Danielle",
+      "timing": "night_1",
+      "role": "Empath",
+      "among": ["Rob", "Lav"]
+    },
+    {
+      "type": "Undertaker",
+      "name": "Gwilym",
+      "timing": "night_2",
+      "player": "You",
+      "role": "Slayer"
+    }
+  ]
+}

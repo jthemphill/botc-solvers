@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "title": "Puzzle 28 - A Study In Scarlet",
+  "players": ["Adam", "Oscar", "Olivia", "Sarah", "You", "Matt", "Fraser", "Aoife"],
+  "script": [
+    "Pukka",
+    "No Dashii",
+    "Scarlet Woman",
+    "Drunk",
+    "Chambermaid",
+    "Clockmaker",
+    "Empath",
+    "Fortune Teller",
+    "Juggler",
+    "Librarian",
+    "Oracle",
+    "Undertaker"
+  ],
+  "claims": [
+    {
+      "type": "Clockmaker",
+      "name": "Adam"
+    },
+    {
+      "type": "Empath",
+      "name": "Oscar"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Olivia",
+      "checks": []
+    },
+    {
+      "type": "Oracle",
+      "name": "Sarah"
+    },
+    {
+      "type": "Chambermaid",
+      "name": "You"
+    },
+    {
+      "type": "Juggler",
+      "name": "Matt",
+      "timing": "night_1",
+      "guesses": {
+        "Fraser": "Undertaker",
+        "Oscar": "No Dashii"
+      },
+      "correctCount": 2
+    },
+    {
+      "type": "Undertaker",
+      "name": "Fraser"
+    },
+    {
+      "type": "Librarian",
+      "name": "Aoife",
+      "timing": "night_1",
+      "role": "Drunk",
+      "among": ["Matt", "Adam"]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "title": "Puzzle 37 - New Super Marionette Bros U",
+  "players": ["Sula", "Aoife", "Fraser", "Jasmine", "You", "Matt", "Steph", "Adam"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Spy",
+    "Scarlet Woman",
+    "Marionette",
+    "Drunk",
+    "Chef",
+    "Empath",
+    "Fortune Teller",
+    "Librarian",
+    "Ravenkeeper",
+    "Undertaker",
+    "Washerwoman"
+  ],
+  "claims": [
+    {
+      "type": "Librarian",
+      "name": "Sula",
+      "timing": "night_1",
+      "role": "Drunk",
+      "among": ["Jasmine", "Steph"]
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Aoife",
+      "checks": []
+    },
+    {
+      "type": "Empath",
+      "name": "Fraser"
+    },
+    {
+      "type": "Imp",
+      "name": "Jasmine"
+    },
+    {
+      "type": "Undertaker",
+      "name": "You"
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Matt",
+      "timing": "night_1",
+      "role": "Undertaker",
+      "among": ["You", "Fraser"]
+    },
+    {
+      "type": "Chef",
+      "name": "Steph"
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Adam",
+      "timing": "night_2"
+    }
+  ]
+}

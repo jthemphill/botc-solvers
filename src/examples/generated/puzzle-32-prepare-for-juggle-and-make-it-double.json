@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "title": "Puzzle 32 - Prepare For Juggle And Make It Double",
+  "players": ["Dan", "Fraser", "Jasmine", "Tim", "You", "Matthew", "Olivia", "Sula"],
+  "script": [
+    "Imp",
+    "Baron",
+    "Poisoner",
+    "Drunk",
+    "Dreamer",
+    "Empath",
+    "Fortune Teller",
+    "Juggler",
+    "Recluse",
+    "Saint",
+    "Undertaker"
+  ],
+  "claims": [
+    {
+      "type": "Juggler",
+      "name": "Dan",
+      "timing": "night_2",
+      "guesses": {
+        "You": "Dreamer",
+        "Fraser": "Poisoner",
+        "Tim": "Baron"
+      },
+      "correctCount": 0
+    },
+    {
+      "type": "Saint",
+      "name": "Fraser"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Jasmine"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Tim",
+      "checks": []
+    },
+    {
+      "type": "Dreamer",
+      "name": "You",
+      "timing": "night_1",
+      "player": "Sula",
+      "roles": ["Drunk", "Imp"]
+    },
+    {
+      "type": "Juggler",
+      "name": "Matthew",
+      "timing": "night_2",
+      "guesses": {
+        "You": "Imp",
+        "Dan": "Drunk",
+        "Jasmine": "Baron",
+        "Tim": "Fortune Teller"
+      },
+      "correctCount": 0
+    },
+    {
+      "type": "Recluse",
+      "name": "Olivia"
+    },
+    {
+      "type": "Empath",
+      "name": "Sula"
+    }
+  ]
+}

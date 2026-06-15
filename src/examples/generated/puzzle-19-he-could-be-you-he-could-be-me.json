@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "title": "Puzzle 19 - He Could Be You He Could Be Me",
+  "players": ["Olivia", "Matt", "Sula", "Aoife", "You", "Fraser", "Oscar", "Jasmine"],
+  "script": [
+    "Imp",
+    "Baron",
+    "Poisoner",
+    "Scarlet Woman",
+    "Spy",
+    "Drunk",
+    "Recluse",
+    "Saint",
+    "Empath",
+    "Librarian",
+    "Ravenkeeper",
+    "Slayer",
+    "Undertaker",
+    "Washerwoman"
+  ],
+  "claims": [
+    {
+      "type": "Undertaker",
+      "name": "Olivia"
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Matt",
+      "timing": "night_2"
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Sula",
+      "timing": "night_1",
+      "role": "Undertaker",
+      "among": ["Fraser", "Olivia"]
+    },
+    {
+      "type": "Empath",
+      "name": "Aoife"
+    },
+    {
+      "type": "Librarian",
+      "name": "You",
+      "timing": "night_1",
+      "role": "Drunk",
+      "among": ["Fraser", "Matt"]
+    },
+    {
+      "type": "Saint",
+      "name": "Fraser"
+    },
+    {
+      "type": "Recluse",
+      "name": "Oscar"
+    },
+    {
+      "type": "Slayer",
+      "name": "Jasmine",
+      "timing": "day_1"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "title": "Puzzle 29 - A Dreamer Im Not The Only One",
+  "players": ["Sula", "Steph", "Hannah", "Fraser", "You", "Jasmine", "Adam", "Sarah"],
+  "script": ["Imp", "Poisoner", "Drunk", "Dreamer"],
+  "claims": [
+    {
+      "type": "Dreamer",
+      "name": "Sula",
+      "roles": []
+    },
+    {
+      "type": "Dreamer",
+      "name": "Steph",
+      "roles": []
+    },
+    {
+      "type": "Dreamer",
+      "name": "Hannah",
+      "roles": []
+    },
+    {
+      "type": "Dreamer",
+      "name": "Fraser",
+      "roles": []
+    },
+    {
+      "type": "Dreamer",
+      "name": "You",
+      "roles": []
+    },
+    {
+      "type": "Dreamer",
+      "name": "Jasmine",
+      "roles": []
+    },
+    {
+      "type": "Dreamer",
+      "name": "Adam",
+      "roles": []
+    },
+    {
+      "type": "Dreamer",
+      "name": "Sarah",
+      "roles": []
+    }
+  ]
+}

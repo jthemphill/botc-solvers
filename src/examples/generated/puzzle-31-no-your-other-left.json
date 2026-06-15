@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "title": "Puzzle 31 - No Your Other Left",
+  "players": ["Adam", "Fraser", "Sarah", "Olivia", "You", "Aoife", "Tim"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Spy",
+    "Baron",
+    "Scarlet Woman",
+    "Drunk",
+    "Chef",
+    "Empath",
+    "Fortune Teller",
+    "Investigator",
+    "Ravenkeeper",
+    "Recluse",
+    "Undertaker"
+  ],
+  "claims": [
+    {
+      "type": "Investigator",
+      "name": "Adam",
+      "timing": "night_1",
+      "role": "Spy",
+      "among": ["Aoife", "Fraser"]
+    },
+    {
+      "type": "Recluse",
+      "name": "Fraser"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Sarah",
+      "timing": "night_2",
+      "player": "You",
+      "role": "Spy"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Olivia",
+      "checks": []
+    },
+    {
+      "type": "Chef",
+      "name": "You"
+    },
+    {
+      "type": "Empath",
+      "name": "Aoife"
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Tim",
+      "timing": "night_2"
+    }
+  ]
+}

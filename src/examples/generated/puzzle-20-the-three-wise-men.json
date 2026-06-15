@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "title": "Puzzle 20 - The Three Wise Men",
+  "players": ["Melchior", "Mary", "Balthazar", "Gabriel", "You", "Caspar", "Joseph"],
+  "script": [
+    "Imp",
+    "Baron",
+    "Poisoner",
+    "Scarlet Woman",
+    "Spy",
+    "Drunk",
+    "Saint",
+    "Investigator",
+    "Ravenkeeper",
+    "Village Idiot",
+    "Virgin"
+  ],
+  "claims": [
+    {
+      "type": "VillageIdiot",
+      "name": "Melchior",
+      "checks": []
+    },
+    {
+      "type": "Virgin",
+      "name": "Mary"
+    },
+    {
+      "type": "VillageIdiot",
+      "name": "Balthazar",
+      "checks": []
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Gabriel",
+      "timing": "night_2"
+    },
+    {
+      "type": "Investigator",
+      "name": "You",
+      "timing": "night_1",
+      "role": "Baron",
+      "among": ["Mary", "Gabriel"]
+    },
+    {
+      "type": "VillageIdiot",
+      "name": "Caspar",
+      "checks": []
+    },
+    {
+      "type": "Saint",
+      "name": "Joseph"
+    }
+  ]
+}

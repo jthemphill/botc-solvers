@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Puzzle 39 - Squid Game",
+  "players": ["Fraser", "Tom", "Sula", "Hannah", "You", "Jasmine", "Matt", "Aoife"],
+  "script": [
+    "No Dashii",
+    "Witch",
+    "Mutant",
+    "Klutz",
+    "Artist",
+    "Juggler",
+    "Mathematician",
+    "Oracle",
+    "Philosopher",
+    "Sage",
+    "Seamstress"
+  ],
+  "claims": [
+    {
+      "type": "Sage",
+      "name": "Fraser",
+      "timing": "night_2"
+    },
+    {
+      "type": "Artist",
+      "name": "Tom",
+      "timing": "day_1"
+    },
+    {
+      "type": "Mathematician",
+      "name": "Sula"
+    },
+    {
+      "type": "Klutz",
+      "name": "Hannah"
+    },
+    {
+      "type": "Oracle",
+      "name": "You"
+    },
+    {
+      "type": "Juggler",
+      "name": "Jasmine",
+      "timing": "night_2",
+      "guesses": {
+        "You": "Witch",
+        "Aoife": "Witch",
+        "Tom": "Witch",
+        "Fraser": "Sage",
+        "Hannah": "Klutz"
+      },
+      "correctCount": 3
+    },
+    {
+      "type": "Philosopher",
+      "name": "Matt"
+    },
+    {
+      "type": "Seamstress",
+      "name": "Aoife",
+      "timing": "night_1",
+      "among": ["Matt", "Hannah"],
+      "aligned": false
+    }
+  ]
+}

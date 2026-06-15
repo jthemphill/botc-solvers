@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "title": "Puzzle 9 - The New Acrobat",
+  "players": ["Josh", "Anna", "Sula", "Hannah", "You", "Fraser", "Oscar"],
+  "script": [
+    "Imp",
+    "Po",
+    "Goblin",
+    "Drunk",
+    "Acrobat",
+    "Balloonist",
+    "Gambler",
+    "Gossip",
+    "Juggler",
+    "Knight",
+    "Steward"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Acrobat", "Drunk"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Knight",
+      "name": "Josh",
+      "noDemonAmong": ["Fraser", "Oscar"]
+    },
+    {
+      "type": "Gambler",
+      "name": "Anna"
+    },
+    {
+      "type": "Juggler",
+      "name": "Sula",
+      "timing": "night_2",
+      "guesses": {}
+    },
+    {
+      "type": "Steward",
+      "name": "Hannah",
+      "goodPlayer": "Oscar"
+    },
+    {
+      "type": "Acrobat",
+      "name": "You"
+    },
+    {
+      "type": "Balloonist",
+      "name": "Fraser",
+      "differentCharacterTypePairs": [
+        ["Oscar", "Anna"],
+        ["Anna", "You"]
+      ]
+    },
+    {
+      "type": "Gossip",
+      "name": "Oscar",
+      "timing": "day_1"
+    }
+  ]
+}

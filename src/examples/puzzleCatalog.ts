@@ -1,20 +1,14 @@
-import generatedCatalog from "./puzzleCatalog.generated.json";
 import puzzle01 from "./puzzle-01-sober-savant.json";
 import puzzle05a from "./puzzle-05a-you-only-guess-twice.json";
 import puzzle05b from "./puzzle-05b-you-only-guess-twice.json";
 import puzzle34 from "./puzzle-34-the-vortox-conjecture.json";
 import puzzleIntro from "./puzzle-intro-chef-empath.json";
+import { GENERATED_PUZZLE_CATALOG, type GeneratedPuzzleCatalogEntry } from "./puzzleCatalog.generated";
 
 export interface PuzzleExample {
   readonly id: string;
   readonly label: string;
   readonly data: unknown;
-}
-
-interface GeneratedCatalogEntry {
-  readonly id: string;
-  readonly label: string;
-  readonly doc: unknown;
 }
 
 const HAND_AUTHORED_DOCS = new Map<string, unknown>([
@@ -33,8 +27,14 @@ function titleOf(data: unknown): string | undefined {
     : undefined;
 }
 
-const generatedExamples = (generatedCatalog as readonly GeneratedCatalogEntry[]).map((entry) => {
-  const data = HAND_AUTHORED_DOCS.get(entry.id) ?? entry.doc;
+function dataForGeneratedEntry(entry: GeneratedPuzzleCatalogEntry): unknown {
+  const data = HAND_AUTHORED_DOCS.get(entry.id) ?? entry.data;
+  if (data === undefined) throw new Error(`No puzzle document found for ${entry.id}.`);
+  return data;
+}
+
+const generatedExamples = GENERATED_PUZZLE_CATALOG.map((entry) => {
+  const data = dataForGeneratedEntry(entry);
   return {
     id: entry.id,
     label: titleOf(data) ?? entry.label,

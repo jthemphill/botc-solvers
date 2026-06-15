@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "title": "Puzzle 40 - Nine Lives",
+  "players": ["Hannah", "Fraser", "Tim", "Josh", "Adam", "You", "Matthew", "Steph", "Jasmine"],
+  "script": [
+    "Imp",
+    "Baron",
+    "Poisoner",
+    "Spy",
+    "Scarlet Woman",
+    "Butler",
+    "Drunk",
+    "Recluse",
+    "Saint",
+    "Empath",
+    "Fortune Teller",
+    "Investigator",
+    "Librarian",
+    "Slayer",
+    "Washerwoman"
+  ],
+  "claims": [
+    {
+      "type": "Saint",
+      "name": "Hannah"
+    },
+    {
+      "type": "Librarian",
+      "name": "Fraser",
+      "timing": "night_1",
+      "role": "Drunk",
+      "among": ["Jasmine", "Hannah"]
+    },
+    {
+      "type": "Empath",
+      "name": "Tim"
+    },
+    {
+      "type": "Butler",
+      "name": "Josh"
+    },
+    {
+      "type": "Slayer",
+      "name": "Adam",
+      "timing": "day_1"
+    },
+    {
+      "type": "Investigator",
+      "name": "You",
+      "timing": "night_1",
+      "role": "Scarlet Woman",
+      "among": ["Steph", "Fraser"]
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Matthew",
+      "checks": []
+    },
+    {
+      "type": "Recluse",
+      "name": "Steph"
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Jasmine",
+      "timing": "night_1",
+      "role": "Empath",
+      "among": ["Tim", "Adam"]
+    }
+  ]
+}
