@@ -24,7 +24,7 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-11-false-is-the-new-black": 60,
   "puzzle-12a-thunderstruck": 17,
   "puzzle-12b-thunderstruck": 41,
-  "puzzle-13-clockblocking": 149,
+  "puzzle-13-clockblocking": 1,
   "puzzle-14-new-super-marionette-bros": 1,
   "puzzle-15-wake-up-and-choose-violets": 60,
   "puzzle-16-who-watches-the-watchmen": 1,
@@ -474,12 +474,12 @@ describe("JSON puzzle solutions", () => {
     expect(new Set(catalogIds)).toEqual(new Set(sourceIds));
   });
 
-  test("puzzle 13 has the largest modeled JSON search space", () => {
+  test("puzzle 24 has the largest modeled JSON search space", () => {
     const [id, count] = Object.entries(JSON_SOLUTION_COUNTS).sort(
       ([leftId, leftCount], [rightId, rightCount]) => rightCount - leftCount || leftId.localeCompare(rightId),
     )[0] as [string, number];
 
-    expect({ id, count }).toEqual({ id: "puzzle-13-clockblocking", count: 149 });
+    expect({ id, count }).toEqual({ id: "puzzle-24-the-ultimate-blunder", count: 132 });
   });
 
   test.each(PUZZLE_SOLUTION_CASES)(
