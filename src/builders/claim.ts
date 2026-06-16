@@ -1,4 +1,5 @@
 import {
+  Acrobat,
   Balloonist,
   Chambermaid,
   Chef,
@@ -6,6 +7,8 @@ import {
   Dreamer,
   Empath,
   FortuneTeller,
+  Gambler,
+  Gossip,
   Investigator,
   Juggler,
   Knight,
@@ -51,6 +54,15 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
   };
 
   switch (claim.type) {
+    case "Acrobat":
+      return new Acrobat({
+        ...base,
+        choices: claim.choices?.map((choice) => ({
+          player: choice.player,
+          timing: timingOf(choice.timing),
+          died: choice.died,
+        })),
+      });
     case "Investigator":
       return new Investigator({
         ...base,
@@ -127,6 +139,29 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
       return new Steward({ ...base, goodPlayer: claim.goodPlayer });
     case "Knight":
       return new Knight({ ...base, noDemonAmong: claim.noDemonAmong });
+    case "Gambler":
+      return new Gambler({
+        ...base,
+        guesses: claim.guesses?.map((guess) => ({
+          player: guess.player,
+          role: resolveRoleRef(guess.role),
+          timing: timingOf(guess.timing),
+          survived: guess.survived,
+        })),
+      });
+    case "Gossip":
+      return new Gossip({
+        ...base,
+        statements: claim.statements?.map((statement, index) => ({
+          timing: timingOf(statement.timing),
+          killed: statement.killed,
+          statement: (game) =>
+            compile(statement.expression, game, {
+              ...ctx,
+              nameRoot: `${slug(claim.name)}_gossip_statement_${index + 1}`,
+            }),
+        })),
+      });
     case "Klutz":
       return new Klutz({ ...base, chosen: claim.chosen, lost: claim.lost });
     case "Seamstress":

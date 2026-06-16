@@ -28,6 +28,7 @@ export type TimelineEventType =
   | "execution"
   | "nightKill"
   | "nightKillBeforeInfo"
+  | "abilityDeath"
   | "doomsayerDeath";
 
 export interface TimelineEventDoc {
@@ -37,6 +38,7 @@ export interface TimelineEventDoc {
 }
 
 export type Claim =
+  | AcrobatClaim
   | InvestigatorClaim
   | LibrarianClaim
   | WasherwomanClaim
@@ -50,6 +52,8 @@ export type Claim =
   | OracleClaim
   | StewardClaim
   | KnightClaim
+  | GamblerClaim
+  | GossipClaim
   | SeamstressClaim
   | JugglerClaim
   | DreamerClaim
@@ -78,6 +82,17 @@ interface BaseClaim {
 export interface CustomInfoStatementDoc {
   readonly timing?: string;
   readonly expression?: string;
+}
+
+export interface AcrobatChoiceDoc {
+  readonly player: string;
+  readonly timing?: string;
+  readonly died: boolean;
+}
+
+export interface AcrobatClaim extends BaseClaim {
+  readonly type: "Acrobat";
+  readonly choices?: readonly AcrobatChoiceDoc[];
 }
 
 export interface InvestigatorClaim extends BaseClaim {
@@ -179,6 +194,29 @@ export interface StewardClaim extends BaseClaim {
 export interface KnightClaim extends BaseClaim {
   readonly type: "Knight";
   readonly noDemonAmong: readonly string[];
+}
+
+export interface GamblerGuessDoc {
+  readonly player: string;
+  readonly role: string;
+  readonly timing?: string;
+  readonly survived?: boolean;
+}
+
+export interface GamblerClaim extends BaseClaim {
+  readonly type: "Gambler";
+  readonly guesses?: readonly GamblerGuessDoc[];
+}
+
+export interface GossipStatementDoc {
+  readonly expression: string;
+  readonly timing?: string;
+  readonly killed?: boolean;
+}
+
+export interface GossipClaim extends BaseClaim {
+  readonly type: "Gossip";
+  readonly statements?: readonly GossipStatementDoc[];
 }
 
 export interface SeamstressClaim extends BaseClaim {
@@ -286,7 +324,6 @@ export interface NightwatchmanClaim extends BaseClaim {
 }
 
 export const BARE_CLAIM_TYPES = [
-  "Acrobat",
   "Alsaahir",
   "Artist",
   "Atheist",
@@ -297,9 +334,7 @@ export const BARE_CLAIM_TYPES = [
   "Damsel",
   "Drunk",
   "Evil Twin",
-  "Gambler",
   "Goblin",
-  "Gossip",
   "Imp",
   "Leviathan",
   "Lord of Typhon",
@@ -332,6 +367,7 @@ export interface BareClaim extends BaseClaim {
 }
 
 export const STRUCTURED_CLAIM_TYPES = [
+  "Acrobat",
   "Investigator",
   "Librarian",
   "Washerwoman",
@@ -345,6 +381,8 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Oracle",
   "Steward",
   "Knight",
+  "Gambler",
+  "Gossip",
   "Seamstress",
   "Juggler",
   "Dreamer",

@@ -59,7 +59,7 @@ function applyTimelineConstraints(game: BOTCModel, doc: PuzzleDoc): void {
 
   const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
   for (const event of deathEvents) {
-    if (event.type === "doomsayerDeath") continue;
+    if (event.type === "doomsayerDeath" || event.type === "abilityDeath") continue;
     for (const player of event.players) {
       for (const demonRole of demonRoles) game.fixNotActual(player, demonRole);
     }

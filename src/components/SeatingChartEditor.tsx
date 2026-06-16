@@ -380,7 +380,10 @@ function deathMarkerForPlayer(timeline: PuzzleDoc["timeline"], player: string): 
   if (events.some((event) => event.type === "nominationDeath" && event.players.includes(player)))
     return "nominationDeath";
   if (events.some((event) => event.type === "execution" && event.players.includes(player))) return "execution";
+  if (events.some((event) => event.type === "abilityDeath" && event.players.includes(player))) return "abilityDeath";
   if (events.some((event) => event.type === "nightKill" && event.players.includes(player))) return "nightKill";
+  if (events.some((event) => event.type === "nightKillBeforeInfo" && event.players.includes(player)))
+    return "nightKillBeforeInfo";
   return undefined;
 }
 
@@ -397,12 +400,14 @@ function deathMarkerLabel(type: TimelineEventDoc["type"]): string {
 function timelineEventAction(event: TimelineEventDoc): string {
   if (event.type === "nominationDeath") return "Nomination Death";
   if (event.type === "execution") return "Execution";
+  if (event.type === "abilityDeath") return "Ability Death";
   return event.players.length === 1 ? "Night Death" : "Night Deaths";
 }
 
 function timelineEventGlyph(type: TimelineEventDoc["type"]): string {
   if (type === "nominationDeath") return "!";
   if (type === "execution") return "X";
+  if (type === "abilityDeath") return "*";
   return "N";
 }
 

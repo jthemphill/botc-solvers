@@ -105,10 +105,11 @@ function validateTimeline(v: unknown, pathRoot: string): TimelineEventDoc[] {
       type !== "execution" &&
       type !== "nightKill" &&
       type !== "nightKillBeforeInfo" &&
+      type !== "abilityDeath" &&
       type !== "doomsayerDeath"
     ) {
       throw new ValidationError(
-        `Timeline event type must be "nominationDeath", "execution", "nightKill", "nightKillBeforeInfo", or "doomsayerDeath"`,
+        `Timeline event type must be "nominationDeath", "execution", "nightKill", "nightKillBeforeInfo", "abilityDeath", or "doomsayerDeath"`,
         `${path}.type`,
       );
     }
@@ -135,6 +136,27 @@ function validateClaim(input: unknown, path: string): Claim {
   const base = { name, timing, extraPossibleActualRoles, info };
 
   switch (type as Claim["type"]) {
+    case "Acrobat": {
+      const choices = input["choices"];
+      return {
+        ...base,
+        type: "Acrobat",
+        choices:
+          choices === undefined
+            ? undefined
+            : expectArray(choices, `${path}.choices`).map((entry, index) => {
+                if (!isObject(entry)) throw new ValidationError(`Expected object`, `${path}.choices[${index}]`);
+                return {
+                  player: expectString(entry["player"], `${path}.choices[${index}].player`),
+                  timing:
+                    entry["timing"] === undefined
+                      ? undefined
+                      : expectString(entry["timing"], `${path}.choices[${index}].timing`),
+                  died: expectBool(entry["died"], `${path}.choices[${index}].died`),
+                };
+              }),
+      };
+    }
     case "Investigator":
       return {
         ...base,
@@ -283,6 +305,55 @@ function validateClaim(input: unknown, path: string): Claim {
         ...base,
         type: "Knight",
         noDemonAmong,
+      };
+    }
+    case "Gambler": {
+      const guesses = input["guesses"];
+      return {
+        ...base,
+        type: "Gambler",
+        guesses:
+          guesses === undefined
+            ? undefined
+            : expectArray(guesses, `${path}.guesses`).map((entry, index) => {
+                if (!isObject(entry)) throw new ValidationError(`Expected object`, `${path}.guesses[${index}]`);
+                return {
+                  player: expectString(entry["player"], `${path}.guesses[${index}].player`),
+                  role: expectString(entry["role"], `${path}.guesses[${index}].role`),
+                  timing:
+                    entry["timing"] === undefined
+                      ? undefined
+                      : expectString(entry["timing"], `${path}.guesses[${index}].timing`),
+                  survived:
+                    entry["survived"] === undefined
+                      ? undefined
+                      : expectBool(entry["survived"], `${path}.guesses[${index}].survived`),
+                };
+              }),
+      };
+    }
+    case "Gossip": {
+      const statements = input["statements"];
+      return {
+        ...base,
+        type: "Gossip",
+        statements:
+          statements === undefined
+            ? undefined
+            : expectArray(statements, `${path}.statements`).map((entry, index) => {
+                if (!isObject(entry)) throw new ValidationError(`Expected object`, `${path}.statements[${index}]`);
+                return {
+                  expression: expectString(entry["expression"], `${path}.statements[${index}].expression`),
+                  timing:
+                    entry["timing"] === undefined
+                      ? undefined
+                      : expectString(entry["timing"], `${path}.statements[${index}].timing`),
+                  killed:
+                    entry["killed"] === undefined
+                      ? undefined
+                      : expectBool(entry["killed"], `${path}.statements[${index}].killed`),
+                };
+              }),
       };
     }
     case "Seamstress": {

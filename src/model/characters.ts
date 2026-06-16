@@ -535,12 +535,140 @@ export class Acrobat extends Role {
   static readonly roleName = "Acrobat";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly choices: readonly AcrobatChoice[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly choices?: readonly AcrobatChoice[];
+    },
+  ) {
+    super(options);
+    this.choices = options.choices ?? [];
+  }
+
+  static targetIsDrunkOrPoisoned(game: BOTCModel, player: string, timing: Timing, name: string): BoolVar {
+    return game.anyOf(
+      [game.isDrunkAt(player, timing), game.isPoisonedAt(player, timing), game.noDashiiPoisonedAt(player, timing)],
+      name,
+    );
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Acrobat, options);
+    this.choices.forEach((choice, index) => {
+      const timing = this.claimTiming(choice.timing, index);
+      const activeHealthy = game.allOf(
+        [game.hasRoleAt(this.name, Acrobat, timing), game.soberAndHealthy(this.name, timing)],
+        claimName(this.name, Acrobat, `choice_${index + 1}_active`),
+      );
+      const targetDrunkOrPoisoned = Acrobat.targetIsDrunkOrPoisoned(
+        game,
+        choice.player,
+        timing,
+        claimName(this.name, Acrobat, `choice_${index + 1}_${choice.player}_drunk_or_poisoned`),
+      );
+      game.addImplication(
+        activeHealthy,
+        choice.died
+          ? targetDrunkOrPoisoned
+          : game.not(targetDrunkOrPoisoned, claimName(this.name, Acrobat, `choice_${index + 1}_survived`)),
+      );
+    });
+    this.applyInfoClaimBuilders(game, Acrobat, this.infoClaims, options);
+  }
+}
+
+export interface AcrobatChoice {
+  readonly player: string;
+  readonly timing?: Timing;
+  readonly died: boolean;
 }
 
 export class Gambler extends Role {
   static readonly roleName = "Gambler";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly guesses: readonly GamblerGuess[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly guesses?: readonly GamblerGuess[];
+    },
+  ) {
+    super(options);
+    this.guesses = options.guesses ?? [];
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Gambler, options);
+    this.guesses.forEach((guess, index) => {
+      if (guess.survived === undefined) return;
+      const timing = this.claimTiming(guess.timing, index);
+      const activeHealthy = game.allOf(
+        [game.hasRoleAt(this.name, Gambler, timing), game.soberAndHealthy(this.name, timing)],
+        claimName(this.name, Gambler, `guess_${index + 1}_active`),
+      );
+      const correct = game.registersAsRole(
+        guess.player,
+        guess.role,
+        claimName(this.name, Gambler, `guess_${index + 1}_correct`),
+      );
+      game.addImplication(
+        activeHealthy,
+        guess.survived ? correct : game.not(correct, claimName(this.name, Gambler, `guess_${index + 1}_wrong`)),
+      );
+    });
+    this.applyInfoClaimBuilders(game, Gambler, this.infoClaims, options);
+  }
+}
+
+export interface GamblerGuess {
+  readonly player: string;
+  readonly role: RoleRef;
+  readonly timing?: Timing;
+  readonly survived?: boolean;
+}
+
+export interface GossipStatement {
+  readonly timing?: Timing;
+  readonly statement: ClaimPredicate;
+  readonly killed?: boolean;
+}
+
+export class Gossip extends Role {
+  static readonly roleName = "Gossip";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+  readonly statements: readonly GossipStatement[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly statements?: readonly GossipStatement[];
+    },
+  ) {
+    super(options);
+    this.statements = options.statements ?? [];
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Gossip, options);
+    this.statements.forEach((statement, index) => {
+      if (statement.killed === undefined) return;
+      const timing = this.claimTiming(statement.timing, index);
+      const activeHealthy = game.allOf(
+        [game.hasRoleAt(this.name, Gossip, timing), game.soberAndHealthy(this.name, healthTimingForAbility(timing))],
+        claimName(this.name, Gossip, `statement_${index + 1}_active`),
+      );
+      const trueStatement = statement.statement(game, options.context);
+      game.addImplication(
+        activeHealthy,
+        statement.killed
+          ? trueStatement
+          : game.not(trueStatement, claimName(this.name, Gossip, `statement_${index + 1}_false`)),
+      );
+    });
+    this.applyInfoClaimBuilders(game, Gossip, this.infoClaims, options);
+  }
 }
 
 export class Mathematician extends Role {
@@ -574,12 +702,6 @@ export class Mathematician extends Role {
     );
     this.applyInfoClaimBuilders(game, Mathematician, this.infoClaims, options);
   }
-}
-
-export class Gossip extends Role {
-  static readonly roleName = "Gossip";
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
 export class Ravenkeeper extends Role {
