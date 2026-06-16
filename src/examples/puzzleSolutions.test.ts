@@ -49,7 +49,7 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-35-typhon-season": 1,
   "puzzle-36-what-is-your-weapon-of-choice": 1,
   "puzzle-37-new-super-marionette-bros-u": 12,
-  "puzzle-38-snakes-on-a-plane": 56,
+  "puzzle-38-snakes-on-a-plane": 1,
   "puzzle-39-squid-game": 22,
   "puzzle-40-nine-lives": 1,
 };
@@ -447,6 +447,7 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
   {
     id: "puzzle-38-snakes-on-a-plane",
     source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1kccbp9/weekly_puzzle_38_snakes_on_a_plane/",
+    coversAllWorlds: true,
     worlds: [{ roles: { Dan: "Imp", Tim: "Baron", Hannah: "Drunk" } }],
   },
   {
@@ -487,12 +488,12 @@ describe("JSON puzzle solutions", () => {
     expect(new Set(catalogIds)).toEqual(new Set(sourceIds));
   });
 
-  test("puzzle 38 has the largest modeled JSON search space", () => {
+  test("puzzle 22 has the largest modeled JSON search space", () => {
     const [id, count] = Object.entries(JSON_SOLUTION_COUNTS).sort(
       ([leftId, leftCount], [rightId, rightCount]) => rightCount - leftCount || leftId.localeCompare(rightId),
     )[0] as [string, number];
 
-    expect({ id, count }).toEqual({ id: "puzzle-38-snakes-on-a-plane", count: 56 });
+    expect({ id, count }).toEqual({ id: "puzzle-22-one-in-the-chamber", count: 54 });
   });
 
   test.each(PUZZLE_SOLUTION_CASES)(
