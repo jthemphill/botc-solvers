@@ -102,6 +102,32 @@ describe("predicates and helpers", () => {
     expect(await sober.solveAll({ limit: 1 })).toEqual([]);
   });
 
+  test("poisoned true information does not count as a Mathematician malfunction", async () => {
+    const trueInfo = new BOTCModel(["A", "B", "C", "D"], {
+      characters: script(NoDashii, Seamstress, Witch, Chef),
+      backend,
+    });
+    trueInfo.fixActual("A", NoDashii);
+    trueInfo.fixActual("B", Seamstress);
+    trueInfo.fixActual("C", Witch);
+    trueInfo.fixActual("D", Chef);
+    trueInfo.addTruthfulInfoClaim("B", Seamstress, trueInfo.actualIs("C", Witch), { timing: night(1) });
+    trueInfo.addTruth(trueInfo.malfunctionCountAt(night(1), 0, "math_zero"));
+    expect(await trueInfo.solveAll({ limit: 1 })).toHaveLength(1);
+
+    const falseInfo = new BOTCModel(["A", "B", "C", "D"], {
+      characters: script(NoDashii, Seamstress, Witch, Chef),
+      backend,
+    });
+    falseInfo.fixActual("A", NoDashii);
+    falseInfo.fixActual("B", Seamstress);
+    falseInfo.fixActual("C", Witch);
+    falseInfo.fixActual("D", Chef);
+    falseInfo.addTruthfulInfoClaim("B", Seamstress, falseInfo.actualIs("D", Witch), { timing: night(1) });
+    falseInfo.addTruth(falseInfo.malfunctionCountAt(night(1), 1, "math_one"));
+    expect(await falseInfo.solveAll({ limit: 1 })).toHaveLength(1);
+  });
+
   test("poisoning is scoped and truthful claims use matching timing", async () => {
     const game = new BOTCModel(["A", "B", "C"], { characters: POISON_CHARACTERS, backend });
     game.fixActual("A", "Poisoner");

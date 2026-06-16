@@ -80,6 +80,7 @@ describe("validatePuzzleDoc", () => {
           info: [
             {
               timing: "night_1",
+              role: "Artist",
               expression: "A.role == Imp",
             },
           ],
@@ -92,6 +93,7 @@ describe("validatePuzzleDoc", () => {
     expect(doc.claims[0]?.info).toEqual([
       {
         timing: "night_1",
+        role: "Artist",
         expression: "A.role == Imp",
       },
     ]);

@@ -15,20 +15,64 @@
     "Sage",
     "Seamstress"
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "nominationDeath",
+      "players": ["Tom"]
+    },
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Aoife"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Sula"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightKill",
+      "players": ["You"]
+    }
+  ],
+  "forbiddenRoles": [
+    {
+      "name": "You",
+      "roles": ["No Dashii", "Witch", "Mutant"]
+    }
+  ],
   "claims": [
     {
       "type": "Sage",
       "name": "Fraser",
-      "timing": "night_2"
+      "timing": "night_2",
+      "demonAmong": ["Jasmine", "Matt"]
     },
     {
       "type": "Artist",
       "name": "Tom",
-      "timing": "day_1"
+      "timing": "day_1",
+      "info": [
+        {
+          "timing": "day_1",
+          "expression": "some p: {Jasmine, Matt, Aoife} | p.role == Mutant"
+        }
+      ]
     },
     {
       "type": "Mathematician",
-      "name": "Sula"
+      "name": "Sula",
+      "malfunctions": [
+        { "timing": "night_1", "count": 0 },
+        { "timing": "night_2", "count": 1 }
+      ]
     },
     {
       "type": "Klutz",
@@ -36,7 +80,10 @@
     },
     {
       "type": "Oracle",
-      "name": "You"
+      "name": "You",
+      "timing": "night_2",
+      "count": 1,
+      "deadPlayers": ["Tom", "Aoife", "Fraser"]
     },
     {
       "type": "Juggler",
@@ -54,7 +101,16 @@
     {
       "type": "Philosopher",
       "name": "Matt",
-      "extraPossibleActualRoles": ["Mutant"]
+      "timing": "night_1",
+      "role": "Seamstress",
+      "extraPossibleActualRoles": ["Mutant"],
+      "info": [
+        {
+          "timing": "night_1",
+          "role": "Seamstress",
+          "expression": "Aoife.alignment != Tom.alignment"
+        }
+      ]
     },
     {
       "type": "Seamstress",

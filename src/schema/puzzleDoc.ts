@@ -84,6 +84,7 @@ interface BaseClaim {
 
 export interface CustomInfoStatementDoc {
   readonly timing?: string;
+  readonly role?: string;
   readonly expression?: string;
 }
 

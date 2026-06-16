@@ -50,7 +50,7 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-36-what-is-your-weapon-of-choice": 1,
   "puzzle-37-new-super-marionette-bros-u": 12,
   "puzzle-38-snakes-on-a-plane": 1,
-  "puzzle-39-squid-game": 22,
+  "puzzle-39-squid-game": 1,
   "puzzle-40-nine-lives": 1,
 };
 
@@ -476,6 +476,7 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
   {
     id: "puzzle-39-squid-game",
     source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1kg6y94/weekly_puzzle_39_squid_game/",
+    coversAllWorlds: true,
     worlds: [{ roles: { Jasmine: "No Dashii", Hannah: "Witch", Matt: "Mutant" } }],
   },
   {
@@ -511,12 +512,12 @@ describe("JSON puzzle solutions", () => {
     expect(new Set(catalogIds)).toEqual(new Set(sourceIds));
   });
 
-  test("puzzle 39 has the largest modeled JSON search space", () => {
+  test("puzzle 4 has the largest modeled JSON search space", () => {
     const [id, count] = Object.entries(JSON_SOLUTION_COUNTS).sort(
       ([leftId, leftCount], [rightId, rightCount]) => rightCount - leftCount || leftId.localeCompare(rightId),
     )[0] as [string, number];
 
-    expect({ id, count }).toEqual({ id: "puzzle-39-squid-game", count: 22 });
+    expect({ id, count }).toEqual({ id: "puzzle-04-the-many-headed-monster", count: 16 });
   });
 
   test.each(PUZZLE_SOLUTION_CASES)(

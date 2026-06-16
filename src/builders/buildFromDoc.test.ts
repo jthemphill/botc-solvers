@@ -616,6 +616,35 @@ describe("buildFromDoc", () => {
     expect(worlds[0]?.actualRole("A")).toBe("Philosopher");
   });
 
+  test("custom info statements can use an explicit active role", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Philosopher", "Snake Charmer", "Seamstress", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Philosopher"] },
+          { name: "B", roles: ["Snake Charmer"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        claims: [
+          {
+            type: "Philosopher",
+            name: "A",
+            timing: "night_1",
+            role: "Snake Charmer",
+            info: [{ timing: "night_1", role: "Seamstress", expression: "false" }],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
+
   test("Slayer no-kill claims exclude actual demon targets", async () => {
     const killedDemonWorlds = await buildFromDoc(
       {

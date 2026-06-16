@@ -534,6 +534,7 @@ function validateCustomInfo(input: unknown, path: string): Claim["info"] {
     if (!isObject(entry)) throw new ValidationError(`Expected object`, entryPath);
     return {
       timing: entry["timing"] === undefined ? undefined : expectString(entry["timing"], `${entryPath}.timing`),
+      role: entry["role"] === undefined ? undefined : expectString(entry["role"], `${entryPath}.role`),
       expression:
         entry["expression"] === undefined ? undefined : expectString(entry["expression"], `${entryPath}.expression`),
     };

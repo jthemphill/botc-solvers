@@ -824,7 +824,7 @@ export class BOTCModel {
       `${claim.player}_${roleRef}_${claimTimingName}_sober_healthy_claim`,
     );
     const vortoxAffected = this.infoClaimAffectedByVortox(roleRef) || (claim.vortoxAffected ?? false);
-    this.recordInfoMalfunctions(claim.player, roleRef, claimTiming, activeRole, vortoxAffected);
+    this.recordInfoMalfunctions(claim.player, roleRef, claimTiming, activeRole, claim.learned, vortoxAffected);
 
     if (!vortoxAffected || !this.characters.has(roleName("Vortox"))) {
       this.addImplication(activeHealthy, claim.learned);
@@ -1145,21 +1145,29 @@ export class BOTCModel {
     role: string,
     timing: Timing,
     activeRole: BoolVar,
+    reportedInfo: BoolLike,
     vortoxAffected: boolean,
   ): void {
     const timingName = timing;
+    const falseInfo = this.not(reportedInfo, `${player}_${role}_${timingName}_reported_info_false`);
     const causes: BoolVar[] = [
-      this.allOf([activeRole, this.isPoisonedAt(player, timing)], `${player}_${role}_${timingName}_poison_malfunction`),
-      this.allOf([activeRole, this.isDrunkAt(player, timing)], `${player}_${role}_${timingName}_drunk_malfunction`),
       this.allOf(
-        [activeRole, this.noDashiiPoisonedAt(player, timing)],
+        [activeRole, this.isPoisonedAt(player, timing), falseInfo],
+        `${player}_${role}_${timingName}_poison_malfunction`,
+      ),
+      this.allOf(
+        [activeRole, this.isDrunkAt(player, timing), falseInfo],
+        `${player}_${role}_${timingName}_drunk_malfunction`,
+      ),
+      this.allOf(
+        [activeRole, this.noDashiiPoisonedAt(player, timing), falseInfo],
         `${player}_${role}_${timingName}_nodashii_malfunction`,
       ),
     ];
     if (vortoxAffected && this.characters.has(roleName("Vortox"))) {
       causes.push(
         this.allOf(
-          [activeRole, this.roleSoberAndHealthyAt("Vortox", timing, `${player}_${role}_vortox`)],
+          [activeRole, this.roleSoberAndHealthyAt("Vortox", timing, `${player}_${role}_vortox`), falseInfo],
           `${player}_${role}_${timingName}_vortox_malfunction`,
         ),
       );

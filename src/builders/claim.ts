@@ -249,6 +249,7 @@ function customInfoClaims(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Info
     return [
       {
         timing: timingOf(info.timing),
+        role: info.role ? resolveRoleRef(info.role) : undefined,
         learned: (game) =>
           compile(expression, game, {
             ...ctx,
