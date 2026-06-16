@@ -131,11 +131,13 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
   {
     id: "puzzle-05a-you-only-guess-twice",
     source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1fcriex/weekly_puzzle_5a_5b_you_only_guess_twice/",
+    coversAllWorlds: true,
     worlds: [{ roles: { Oscar: "Leviathan", Anna: "Goblin" } }, { roles: { Hannah: "Leviathan", Oscar: "Goblin" } }],
   },
   {
     id: "puzzle-05b-you-only-guess-twice",
     source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1fcriex/weekly_puzzle_5a_5b_you_only_guess_twice/",
+    coversAllWorlds: true,
     worlds: [
       { roles: { Aoife: "Leviathan", Sarah: "Goblin" } },
       { roles: { Aoife: "Leviathan", Steph: "Goblin" } },
@@ -182,6 +184,7 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
   {
     id: "puzzle-08-the-stitch-up",
     source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1ftqc28/weekly_puzzle_8_the_stitchup/",
+    coversAllWorlds: true,
     worlds: [
       {
         roleIn: { Josh: ["Imp", "Poisoner"], Steph: ["Imp", "Poisoner"] },
@@ -516,6 +519,16 @@ describe("JSON puzzle solutions", () => {
 
     expect(new Set(catalogIds)).toEqual(new Set(Object.keys(JSON_SOLUTION_COUNTS)));
     expect(new Set(catalogIds)).toEqual(new Set(sourceIds));
+  });
+
+  test("every multi-world puzzle has all-world Reddit solution coverage", () => {
+    const locksById = new Map(PUBLISHED_SOLUTION_LOCKS.map((lock) => [lock.id, lock]));
+    const uncoveredMultiWorldPuzzles = Object.entries(JSON_SOLUTION_COUNTS)
+      .filter(([, count]) => count > 1)
+      .filter(([id]) => locksById.get(id)?.coversAllWorlds !== true)
+      .map(([id]) => id);
+
+    expect(uncoveredMultiWorldPuzzles).toEqual([]);
   });
 
   test("puzzle 4 has the largest modeled JSON search space", () => {
