@@ -133,18 +133,22 @@ describe("validatePuzzleDoc", () => {
     const doc = validatePuzzleDoc({
       ...baseDoc,
       players: ["You", "A", "B"],
-      script: ["Clockmaker", "Mathematician", "Sage", "Snake Charmer"],
+      script: ["Chambermaid", "Clockmaker", "Mathematician", "Oracle", "Sage", "Snake Charmer"],
       claims: [
+        { type: "Chambermaid", name: "You", checks: [{ left: "A", right: "B", timing: "night_1", count: 1 }] },
         { type: "Clockmaker", name: "You", distance: 3 },
         { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
+        { type: "Oracle", name: "You", timing: "night_2", count: 1, deadPlayers: ["A", "B"] },
         { type: "Sage", name: "You", demonAmong: ["A", "B"] },
         { type: "Snake Charmer", name: "You", checked: "A", demon: false },
       ],
     });
 
     expect(doc.claims).toEqual([
+      { type: "Chambermaid", name: "You", checks: [{ left: "A", right: "B", timing: "night_1", count: 1 }] },
       { type: "Clockmaker", name: "You", distance: 3 },
       { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
+      { type: "Oracle", name: "You", timing: "night_2", count: 1, deadPlayers: ["A", "B"] },
       { type: "Sage", name: "You", demonAmong: ["A", "B"] },
       { type: "Snake Charmer", name: "You", checked: "A", demon: false },
     ]);

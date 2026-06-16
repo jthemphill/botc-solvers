@@ -117,6 +117,77 @@ describe("buildFromDoc", () => {
     expect(worlds[0]?.actualRole("B")).toBe("Imp");
   });
 
+  test("Chambermaid counts players who woke due to their ability", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C", "D", "E"],
+        script: ["Chambermaid", "Clockmaker", "Oracle", "Scarlet Woman", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Chambermaid"] },
+          { name: "B", roles: ["Clockmaker"] },
+          { name: "C", roles: ["Oracle"] },
+          { name: "D", roles: ["Scarlet Woman"] },
+          { name: "E", roles: ["Imp"] },
+        ],
+        claims: [
+          {
+            type: "Chambermaid",
+            name: "A",
+            checks: [
+              { left: "B", right: "C", timing: "night_1", count: 1 },
+              { left: "C", right: "D", timing: "night_1", count: 0 },
+            ],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
+
+  test("Oracle counts evil dead players", async () => {
+    const validWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Oracle", "Imp", "Clockmaker"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Oracle"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Clockmaker"] },
+        ],
+        claims: [{ type: "Oracle", name: "A", timing: "night_2", count: 1, deadPlayers: ["B", "C"] }],
+      },
+      backend,
+    ).solveAll();
+
+    const invalidWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Oracle", "Imp", "Clockmaker"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Oracle"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Clockmaker"] },
+        ],
+        claims: [{ type: "Oracle", name: "A", timing: "night_2", count: 0, deadPlayers: ["B", "C"] }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(validWorlds).toHaveLength(1);
+    expect(invalidWorlds).toEqual([]);
+  });
+
   test("timeline deaths exclude players from script demon roles", async () => {
     const worlds = await buildFromDoc(
       {

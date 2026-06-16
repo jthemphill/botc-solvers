@@ -102,16 +102,23 @@ describe("puzzle document reducer", () => {
   test("renamePlayer updates timeline references", () => {
     const doc: PuzzleDoc = {
       version: 1,
-      players: ["A", "B"],
+      players: ["A", "B", "C"],
       script: [],
       timeline: [{ timing: "day_1", type: "execution", players: ["B"] }],
-      claims: [],
+      claims: [
+        { type: "Chambermaid", name: "A", checks: [{ left: "B", right: "C", count: 1 }] },
+        { type: "Oracle", name: "A", count: 1, deadPlayers: ["B"] },
+      ],
     };
 
     const next = reducer(doc, { type: "renamePlayer", index: 1, name: "Bea" });
 
-    expect(next.players).toEqual(["A", "Bea"]);
+    expect(next.players).toEqual(["A", "Bea", "C"]);
     expect(next.timeline).toEqual([{ timing: "day_1", type: "execution", players: ["Bea"] }]);
+    expect(next.claims).toEqual([
+      { type: "Chambermaid", name: "A", checks: [{ left: "Bea", right: "C", count: 1 }] },
+      { type: "Oracle", name: "A", count: 1, deadPlayers: ["Bea"] },
+    ]);
   });
 
   test("removePlayer removes empty timeline events", () => {

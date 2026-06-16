@@ -161,6 +161,28 @@ function validateClaim(input: unknown, path: string): Claim {
         count: input["count"] === undefined ? undefined : expectNumber(input["count"], `${path}.count`),
         registers: input["registers"] as boolean | undefined,
       };
+    case "Chambermaid": {
+      const checks = input["checks"];
+      return {
+        ...base,
+        type: "Chambermaid",
+        checks:
+          checks === undefined
+            ? undefined
+            : expectArray(checks, `${path}.checks`).map((entry, index) => {
+                if (!isObject(entry)) throw new ValidationError(`Expected object`, `${path}.checks[${index}]`);
+                return {
+                  left: expectString(entry["left"], `${path}.checks[${index}].left`),
+                  right: expectString(entry["right"], `${path}.checks[${index}].right`),
+                  count: expectNumber(entry["count"], `${path}.checks[${index}].count`),
+                  timing:
+                    entry["timing"] === undefined
+                      ? undefined
+                      : expectString(entry["timing"], `${path}.checks[${index}].timing`),
+                };
+              }),
+      };
+    }
     case "Empath":
       return {
         ...base,
@@ -225,6 +247,16 @@ function validateClaim(input: unknown, path: string): Claim {
             : expectStringArray(input["oneEvilAmong"], `${path}.oneEvilAmong`),
         among: input["among"] === undefined ? undefined : expectStringArray(input["among"], `${path}.among`),
         evilCount: input["evilCount"] as number | undefined,
+      };
+    case "Oracle":
+      return {
+        ...base,
+        type: "Oracle",
+        count: input["count"] === undefined ? undefined : expectNumber(input["count"], `${path}.count`),
+        deadPlayers:
+          input["deadPlayers"] === undefined
+            ? undefined
+            : expectStringArray(input["deadPlayers"], `${path}.deadPlayers`),
       };
     case "Steward":
       return {

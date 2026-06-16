@@ -36,11 +36,13 @@ export type Claim =
   | LibrarianClaim
   | WasherwomanClaim
   | ChefClaim
+  | ChambermaidClaim
   | EmpathClaim
   | FortuneTellerClaim
   | UndertakerClaim
   | LegionaryClaim
   | NobleClaim
+  | OracleClaim
   | StewardClaim
   | KnightClaim
   | SeamstressClaim
@@ -100,6 +102,18 @@ export interface ChefClaim extends BaseClaim {
   readonly registers?: boolean;
 }
 
+export interface ChambermaidCheckDoc {
+  readonly left: string;
+  readonly right: string;
+  readonly count: number;
+  readonly timing?: string;
+}
+
+export interface ChambermaidClaim extends BaseClaim {
+  readonly type: "Chambermaid";
+  readonly checks?: readonly ChambermaidCheckDoc[];
+}
+
 export interface EmpathClaim extends BaseClaim {
   readonly type: "Empath";
   readonly count?: number;
@@ -143,6 +157,12 @@ export interface NobleClaim extends BaseClaim {
   readonly oneEvilAmong?: readonly string[];
   readonly among?: readonly string[];
   readonly evilCount?: number;
+}
+
+export interface OracleClaim extends BaseClaim {
+  readonly type: "Oracle";
+  readonly count?: number;
+  readonly deadPlayers?: readonly string[];
 }
 
 export interface StewardClaim extends BaseClaim {
@@ -261,7 +281,6 @@ export const BARE_CLAIM_TYPES = [
   "Baron",
   "Butler",
   "Cerenovus",
-  "Chambermaid",
   "Courtier",
   "Damsel",
   "Drunk",
@@ -278,7 +297,6 @@ export const BARE_CLAIM_TYPES = [
   "Mayor",
   "Mutant",
   "No Dashii",
-  "Oracle",
   "Philosopher",
   "Pit-Hag",
   "Po",
@@ -307,11 +325,13 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Librarian",
   "Washerwoman",
   "Chef",
+  "Chambermaid",
   "Empath",
   "FortuneTeller",
   "Undertaker",
   "Legionary",
   "Noble",
+  "Oracle",
   "Steward",
   "Knight",
   "Seamstress",

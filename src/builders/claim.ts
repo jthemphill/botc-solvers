@@ -1,5 +1,6 @@
 import {
   Balloonist,
+  Chambermaid,
   Chef,
   Clockmaker,
   Dreamer,
@@ -13,6 +14,7 @@ import {
   Mathematician,
   Noble,
   Nightwatchman,
+  Oracle,
   Ravenkeeper,
   Sage,
   Savant,
@@ -72,6 +74,16 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
       });
     case "Chef":
       return new Chef({ ...base, count: claim.count, registers: claim.registers });
+    case "Chambermaid":
+      return new Chambermaid({
+        ...base,
+        checks: claim.checks?.map((check) => ({
+          left: check.left,
+          right: check.right,
+          count: check.count,
+          timing: timingOf(check.timing),
+        })),
+      });
     case "Empath":
       return new Empath({ ...base, count: claim.count, player: claim.player, neighbors: claim.neighbors });
     case "FortuneTeller":
@@ -108,6 +120,8 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
         among: claim.among,
         evilCount: claim.evilCount,
       });
+    case "Oracle":
+      return new Oracle({ ...base, count: claim.count, deadPlayers: claim.deadPlayers });
     case "Steward":
       return new Steward({ ...base, goodPlayer: claim.goodPlayer });
     case "Knight":

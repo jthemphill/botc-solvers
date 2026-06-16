@@ -681,10 +681,115 @@ export class Chef extends Role {
   }
 }
 
+export interface ChambermaidCheck {
+  readonly left: string;
+  readonly right: string;
+  readonly count: number;
+  readonly timing?: Timing;
+}
+
+const FIRST_NIGHT_WAKE_ROLES = new Set([
+  "Chef",
+  "Clockmaker",
+  "Investigator",
+  "Librarian",
+  "Noble",
+  "Shugenja",
+  "Steward",
+  "Washerwoman",
+]);
+const EVERY_NIGHT_WAKE_ROLES = new Set([
+  "Balloonist",
+  "Chambermaid",
+  "Dreamer",
+  "Empath",
+  "Fortune Teller",
+  "Mathematician",
+  "Pukka",
+  "Snake Charmer",
+  "Village Idiot",
+]);
+const SECOND_NIGHT_PLUS_WAKE_ROLES = new Set(["Oracle", "Undertaker"]);
+const SECOND_NIGHT_WAKE_ROLES = new Set(["Juggler"]);
+
+function nightNumber(timing: Timing): number | undefined {
+  const match = /^night_(\d+)$/.exec(timing);
+  return match === null ? undefined : Number(match[1]);
+}
+
 export class Chambermaid extends Role {
   static readonly roleName = "Chambermaid";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly checks: readonly ChambermaidCheck[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly checks?: readonly ChambermaidCheck[];
+    },
+  ) {
+    super(options);
+    this.checks = options.checks ?? [];
+  }
+
+  static wakesDueToAbility(game: BOTCModel, player: string, timing: Timing, name: string): BoolVar {
+    const nightIndex = nightNumber(timing);
+    if (nightIndex === undefined) return game.constantBool(false, `${name}_not_a_night`);
+    const wakingRoles = [...game.characters.keys()].filter((role) => {
+      if (EVERY_NIGHT_WAKE_ROLES.has(role)) return true;
+      if (FIRST_NIGHT_WAKE_ROLES.has(role)) return nightIndex === 1;
+      if (SECOND_NIGHT_PLUS_WAKE_ROLES.has(role)) return nightIndex >= 2;
+      if (SECOND_NIGHT_WAKE_ROLES.has(role)) return nightIndex === 2;
+      return false;
+    });
+    return game.anyOf(
+      wakingRoles.map((role) => game.hasRoleAt(player, role, timing)),
+      `${name}_${player}_woke_due_to_ability`,
+    );
+  }
+
+  static learnsWakeCount(
+    game: BOTCModel,
+    players: readonly [string, string],
+    count: number,
+    timing: Timing,
+    name: string,
+  ): BoolVar {
+    return game.boolSumEquals(
+      players.map((player) => Chambermaid.wakesDueToAbility(game, player, timing, name)),
+      count,
+      `${name}_chambermaid_count_is_${count}`,
+    );
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    if (this.checks.length === 0) {
+      super.apply(game, options);
+      return;
+    }
+    this.applyRoleClaim(game, Chambermaid, options);
+    this.checks.forEach((check, index) => {
+      const timing = this.claimTiming(check.timing ?? explicitTiming(options), index);
+      this.applyInfoClaimBuilders(
+        game,
+        Chambermaid,
+        [
+          {
+            learned: Chambermaid.learnsWakeCount(
+              game,
+              [check.left, check.right],
+              check.count,
+              timing,
+              claimName(this.name, Chambermaid, `check_${index + 1}`),
+            ),
+            timing,
+          },
+        ],
+        options,
+      );
+    });
+    this.applyInfoClaimBuilders(game, Chambermaid, this.infoClaims, options);
+  }
 }
 
 export class Clockmaker extends Role {
@@ -1334,6 +1439,29 @@ export class Oracle extends Role {
   static readonly roleName = "Oracle";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly count?: number;
+  readonly deadPlayers: readonly string[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly count?: number;
+      readonly deadPlayers?: readonly string[];
+    },
+  ) {
+    super(options);
+    this.count = options.count;
+    this.deadPlayers = options.deadPlayers ?? [];
+  }
+
+  static learnsDeadEvilCount(game: BOTCModel, deadPlayers: readonly string[], count: number): BoolVar {
+    return game.registeredEvilCount(deadPlayers, count, `oracle_dead_evil_count_is_${count}`);
+  }
+
+  override learnedInfo(game: BOTCModel): BoolLike | undefined {
+    return this.count === undefined || this.deadPlayers.length === 0
+      ? undefined
+      : Oracle.learnsDeadEvilCount(game, this.deadPlayers, this.count);
+  }
 }
 
 export class Nightwatchman extends Role {
