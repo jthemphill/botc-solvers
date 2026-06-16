@@ -331,6 +331,79 @@ describe("buildFromDoc", () => {
     expect(spyWorlds).toHaveLength(1);
   });
 
+  test("ability deaths require a living catch when they kill an actual demon", async () => {
+    const impWithoutMinionWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Imp"] },
+          { name: "B", roles: ["Chef"] },
+        ],
+        timeline: [{ timing: "night_2", type: "abilityDeath", players: ["A"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+    const impWithMinionWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Imp", "Goblin"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Imp"] },
+          { name: "B", roles: ["Goblin"] },
+        ],
+        timeline: [{ timing: "night_2", type: "abilityDeath", players: ["A"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+    const dyingMinionWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Imp", "Goblin", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Imp"] },
+          { name: "B", roles: ["Goblin"] },
+          { name: "C", roles: ["Chef"] },
+        ],
+        timeline: [{ timing: "night_2", type: "abilityDeath", players: ["A", "B"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+    const poWithScarletWomanWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Po", "Scarlet Woman"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Po"] },
+          { name: "B", roles: ["Scarlet Woman"] },
+        ],
+        timeline: [{ timing: "night_2", type: "abilityDeath", players: ["A"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(impWithoutMinionWorlds).toEqual([]);
+    expect(impWithMinionWorlds).toHaveLength(1);
+    expect(dyingMinionWorlds).toEqual([]);
+    expect(poWithScarletWomanWorlds).toHaveLength(1);
+  });
+
   test("Xaan poisons Townsfolk on the night matching the Outsider count", async () => {
     const worlds = await buildFromDoc(
       {
@@ -643,6 +716,63 @@ describe("buildFromDoc", () => {
     ).solveAll();
 
     expect(worlds).toHaveLength(1);
+  });
+
+  test("death-causing good ability claims require the active healthy role", async () => {
+    const acrobatWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Acrobat", "Drunk", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Drunk"] },
+          { name: "B", roles: ["Acrobat"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        claims: [{ type: "Acrobat", name: "A", choices: [{ timing: "night_2", player: "B", died: true }] }],
+      },
+      backend,
+    ).solveAll();
+    const gamblerWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Gambler", "Drunk", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Drunk"] },
+          { name: "B", roles: ["Gambler"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        claims: [
+          { type: "Gambler", name: "A", guesses: [{ timing: "night_2", player: "B", role: "Imp", survived: false }] },
+        ],
+      },
+      backend,
+    ).solveAll();
+    const gossipWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Gossip", "Drunk", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Drunk"] },
+          { name: "B", roles: ["Gossip"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        claims: [{ type: "Gossip", name: "A", statements: [{ timing: "day_1", expression: "true", killed: true }] }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(acrobatWorlds).toEqual([]);
+    expect(gamblerWorlds).toEqual([]);
+    expect(gossipWorlds).toEqual([]);
   });
 
   test("Slayer no-kill claims exclude actual demon targets", async () => {

@@ -1,5 +1,5 @@
 import { applyClaims } from "../model/characters";
-import { Alignment, CharacterType, roleAlignment, roleCharacterType } from "../model/core";
+import { Alignment, CharacterType, roleAlignment, roleCharacterType, roleName } from "../model/core";
 import type { BoolLike, BOTCModel, Timing } from "../model/model";
 import type { SatBackend } from "../model/sat";
 import { buildPuzzleModel, type PuzzleSpec } from "../model/setup";
@@ -65,7 +65,20 @@ function applyTimelineConstraints(game: BOTCModel, doc: PuzzleDoc): void {
         game.addTruth(doomsayerSameRegisteredAlignment(game, event.caller, player));
       }
     }
-    if (event.type === "doomsayerDeath" || event.type === "abilityDeath") continue;
+    if (event.type === "abilityDeath") {
+      for (const player of event.players) {
+        for (const demonRole of demonRoles) {
+          game.addImplication(
+            game.actualIs(player, demonRole),
+            roleName(demonRole) === "Imp"
+              ? livingMinionCanCatchAbilityDeath(game, doc, event)
+              : livingScarletWomanCanCatchAbilityDeath(game, doc, event),
+          );
+        }
+      }
+      continue;
+    }
+    if (event.type === "doomsayerDeath") continue;
     for (const player of event.players) {
       if (hasSoldier && (event.type === "nightKill" || event.type === "nightKillBeforeInfo")) {
         game.addFalse(
@@ -103,6 +116,40 @@ function doomsayerSameRegisteredAlignment(game: BOTCModel, caller: string, deadP
     ],
     `${caller}_${deadPlayer}_doomsayer_same_registered_alignment`,
   );
+}
+
+function livingMinionCanCatchAbilityDeath(
+  game: BOTCModel,
+  doc: PuzzleDoc,
+  event: NonNullable<PuzzleDoc["timeline"]>[number],
+): BoolLike {
+  const candidates = livingPlayersAfterDeathEvent(doc, event);
+  return game.anyOf(
+    candidates.map((player) => game.isMinion(player)),
+    `${event.timing}_minion_can_catch_imp_death`,
+  );
+}
+
+function livingScarletWomanCanCatchAbilityDeath(
+  game: BOTCModel,
+  doc: PuzzleDoc,
+  event: NonNullable<PuzzleDoc["timeline"]>[number],
+): BoolLike {
+  if (!doc.script.includes("Scarlet Woman")) return game.constantBool(false, "no_scarlet_woman_to_catch_demon");
+  const candidates = livingPlayersAfterDeathEvent(doc, event);
+  return game.anyOf(
+    candidates.map((player) => game.actualIs(player, "Scarlet Woman")),
+    `${event.timing}_scarlet_woman_can_catch_demon_death`,
+  );
+}
+
+function livingPlayersAfterDeathEvent(
+  doc: PuzzleDoc,
+  event: NonNullable<PuzzleDoc["timeline"]>[number],
+): readonly string[] {
+  const deadPlayers = deadPlayersBefore(doc, event.timing as Timing);
+  const dyingPlayers = new Set(event.players);
+  return doc.players.filter((player) => !deadPlayers.has(player) && !dyingPlayers.has(player));
 }
 
 function usesMalfunctionCount(claim: PuzzleDoc["claims"][number]): boolean {

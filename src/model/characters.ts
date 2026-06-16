@@ -612,6 +612,7 @@ export class Acrobat extends Role {
         timing,
         claimName(this.name, Acrobat, `choice_${index + 1}_${choice.player}_drunk_or_poisoned`),
       );
+      if (choice.died) game.addTruth(activeHealthy);
       game.addImplication(
         activeHealthy,
         choice.died
@@ -658,6 +659,7 @@ export class Gambler extends Role {
         guess.role,
         claimName(this.name, Gambler, `guess_${index + 1}_correct`),
       );
+      if (!guess.survived) game.addTruth(activeHealthy);
       game.addImplication(
         activeHealthy,
         guess.survived ? correct : game.not(correct, claimName(this.name, Gambler, `guess_${index + 1}_wrong`)),
@@ -705,6 +707,7 @@ export class Gossip extends Role {
         claimName(this.name, Gossip, `statement_${index + 1}_active`),
       );
       const trueStatement = statement.statement(game, options.context);
+      if (statement.killed) game.addTruth(activeHealthy);
       game.addImplication(
         activeHealthy,
         statement.killed
