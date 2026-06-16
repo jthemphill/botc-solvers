@@ -36,7 +36,7 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-22-one-in-the-chamber": 1,
   "puzzle-23-goblincore": 6,
   "puzzle-24-the-ultimate-blunder": 1,
-  "puzzle-26-a-major-problem": 36,
+  "puzzle-26-a-major-problem": 8,
   "puzzle-27-is-this-a-legion-game": 1,
   "puzzle-28-a-study-in-scarlet": 1,
   "puzzle-29-a-dreamer-im-not-the-only-one": 1,
@@ -323,7 +323,16 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
   {
     id: "puzzle-26-a-major-problem",
     source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1ihl8vs/weekly_puzzle_26_a_major_problem/",
-    worlds: [{ roles: { Tom: "Imp", Matthew: "Poisoner" } }],
+    coversAllWorlds: true,
+    worlds: [
+      {
+        roles: { Tom: "Imp", Matthew: "Poisoner" },
+        poisoned: [
+          { player: "Fraser", timing: "night_1" },
+          { player: "Josh", timing: "night_2" },
+        ],
+      },
+    ],
   },
   {
     id: "puzzle-27-is-this-a-legion-game",
@@ -492,12 +501,12 @@ describe("JSON puzzle solutions", () => {
     expect(new Set(catalogIds)).toEqual(new Set(sourceIds));
   });
 
-  test("puzzle 26 has the largest modeled JSON search space", () => {
+  test("puzzle 32 has the largest modeled JSON search space", () => {
     const [id, count] = Object.entries(JSON_SOLUTION_COUNTS).sort(
       ([leftId, leftCount], [rightId, rightCount]) => rightCount - leftCount || leftId.localeCompare(rightId),
     )[0] as [string, number];
 
-    expect({ id, count }).toEqual({ id: "puzzle-26-a-major-problem", count: 36 });
+    expect({ id, count }).toEqual({ id: "puzzle-32-prepare-for-juggle-and-make-it-double", count: 35 });
   });
 
   test.each(PUZZLE_SOLUTION_CASES)(

@@ -206,6 +206,51 @@ describe("buildFromDoc", () => {
     expect(new Set(worlds.map((world) => world.actualRole("B")))).not.toContain("Imp");
   });
 
+  test("night kills cannot kill sober healthy Soldiers", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Soldier", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Soldier"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Chef"] },
+        ],
+        timeline: [{ timing: "night_2", type: "nightKill", players: ["A"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
+  });
+
+  test("night-killed Soldiers can be poisoned", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Soldier", "Imp", "Poisoner"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Soldier"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Poisoner"] },
+        ],
+        timeline: [{ timing: "night_2", type: "nightKill", players: ["A"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.poisonedByTiming.get("night_2")).toEqual(new Set(["A"]));
+  });
+
   test("Doomsayer deaths do not exclude players from script demon roles", async () => {
     const worlds = await buildFromDoc(
       {

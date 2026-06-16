@@ -58,6 +58,7 @@ function applyTimelineConstraints(game: BOTCModel, doc: PuzzleDoc): void {
   if (deathEvents.length === 0) return;
 
   const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
+  const hasSoldier = doc.script.includes("Soldier");
   for (const event of deathEvents) {
     if (event.type === "doomsayerDeath" && event.caller !== undefined) {
       for (const player of event.players) {
@@ -66,6 +67,17 @@ function applyTimelineConstraints(game: BOTCModel, doc: PuzzleDoc): void {
     }
     if (event.type === "doomsayerDeath" || event.type === "abilityDeath") continue;
     for (const player of event.players) {
+      if (hasSoldier && (event.type === "nightKill" || event.type === "nightKillBeforeInfo")) {
+        game.addFalse(
+          game.allOf(
+            [
+              game.hasRoleAt(player, "Soldier", event.timing as Timing),
+              game.soberAndHealthy(player, event.timing as Timing),
+            ],
+            `${player}_${event.timing}_sober_healthy_soldier_night_killed`,
+          ),
+        );
+      }
       for (const demonRole of demonRoles) game.fixNotActual(player, demonRole);
     }
   }

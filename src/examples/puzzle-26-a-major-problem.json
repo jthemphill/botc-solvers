@@ -18,6 +18,34 @@
     "Soldier",
     "Undertaker"
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Josh"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Dan"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightKill",
+      "players": ["Olivia"]
+    }
+  ],
+  "forbiddenRoles": [
+    {
+      "name": "You",
+      "roles": ["Imp", "Baron", "Poisoner", "Scarlet Woman", "Spy"]
+    }
+  ],
   "claims": [
     {
       "type": "Librarian",
@@ -32,7 +60,17 @@
     },
     {
       "type": "Undertaker",
-      "name": "Sula"
+      "name": "Sula",
+      "timing": "night_2",
+      "player": "You",
+      "role": "Empath"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Sula",
+      "timing": "night_3",
+      "player": "Dan",
+      "role": "Slayer"
     },
     {
       "type": "Chef",
@@ -53,7 +91,9 @@
     {
       "type": "Slayer",
       "name": "Dan",
-      "timing": "day_1"
+      "timing": "day_2",
+      "target": "Matthew",
+      "killed": false
     },
     {
       "type": "Recluse",
