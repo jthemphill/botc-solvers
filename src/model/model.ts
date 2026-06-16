@@ -133,6 +133,7 @@ export class BOTCModel {
   private hasGlobalDrunkSource = false;
   private readonly defaultSoberConstraints = new Set<string>();
   private readonly predicateCache = new Map<string, BoolVar>();
+  private readonly fortuneTellerRedHerringVars = new Map<string, RedHerrings>();
   private readonly infoMalfunctionsByTiming = new Map<string, BoolVar[]>();
   private readonly backend: SatBackend;
 
@@ -747,6 +748,9 @@ export class BOTCModel {
   ): RedHerrings {
     const players = options.players ?? this.players;
     const fortuneTellerRole = options.fortuneTellerRole ?? "Fortune Teller";
+    const key = keyOf([fortuneTeller, roleName(fortuneTellerRole), ...players]);
+    const cached = this.fortuneTellerRedHerringVars.get(key);
+    if (cached !== undefined) return cached;
     const entries = players.map((player) => [player, this.newBool(`${player}_fortune_teller_red_herring`)] as const);
     const redHerrings = new Map(entries);
     this.addEnforcedExactlyN(
@@ -755,7 +759,16 @@ export class BOTCModel {
       this.actualIs(fortuneTeller, fortuneTellerRole),
     );
     for (const [player, redHerring] of entries) this.addImplication(redHerring, this.isGood(player));
+    this.fortuneTellerRedHerringVars.set(key, redHerrings);
     return redHerrings;
+  }
+
+  fortuneTellerRedHerring(fortuneTeller: string, player: string): BoolVar {
+    this.checkPlayer(player);
+    const redHerrings = this.addFortuneTellerRedHerring(fortuneTeller);
+    const redHerring = redHerrings.get(player);
+    if (redHerring === undefined) throw new KeyError(`No Fortune Teller red herring variable for ${player}.`);
+    return redHerring;
   }
 
   fortuneTellerYes(
