@@ -43,7 +43,7 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-30-the-babel-fish-is-a-dead-giveaway-left": 1,
   "puzzle-30-the-babel-fish-is-a-dead-giveaway-right": 1,
   "puzzle-31-no-your-other-left": 1,
-  "puzzle-32-prepare-for-juggle-and-make-it-double": 35,
+  "puzzle-32-prepare-for-juggle-and-make-it-double": 1,
   "puzzle-33-twice-is-coincidence-thrice-is-proof": 1,
   "puzzle-34-the-vortox-conjecture": 1,
   "puzzle-35-typhon-season": 1,
@@ -396,7 +396,17 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
     id: "puzzle-32-prepare-for-juggle-and-make-it-double",
     source:
       "https://www.reddit.com/r/BloodOnTheClocktower/comments/1je8z17/weekly_puzzle_32_prepare_for_juggle_and_make_it/",
-    worlds: [{ roles: { Olivia: "Imp", Matthew: "Poisoner", Fraser: "Saint" } }],
+    coversAllWorlds: true,
+    worlds: [
+      {
+        roles: { Olivia: "Imp", Matthew: "Poisoner", Fraser: "Saint" },
+        poisoned: [
+          { player: "You", timing: "night_1" },
+          { player: "Dan", timing: "night_2" },
+          { player: "Sula", timing: "night_3" },
+        ],
+      },
+    ],
   },
   {
     id: "puzzle-33-twice-is-coincidence-thrice-is-proof",
@@ -501,12 +511,12 @@ describe("JSON puzzle solutions", () => {
     expect(new Set(catalogIds)).toEqual(new Set(sourceIds));
   });
 
-  test("puzzle 32 has the largest modeled JSON search space", () => {
+  test("puzzle 39 has the largest modeled JSON search space", () => {
     const [id, count] = Object.entries(JSON_SOLUTION_COUNTS).sort(
       ([leftId, leftCount], [rightId, rightCount]) => rightCount - leftCount || leftId.localeCompare(rightId),
     )[0] as [string, number];
 
-    expect({ id, count }).toEqual({ id: "puzzle-32-prepare-for-juggle-and-make-it-double", count: 35 });
+    expect({ id, count }).toEqual({ id: "puzzle-39-squid-game", count: 22 });
   });
 
   test.each(PUZZLE_SOLUTION_CASES)(

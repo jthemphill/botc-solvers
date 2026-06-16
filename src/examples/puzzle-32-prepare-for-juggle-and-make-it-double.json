@@ -15,6 +15,34 @@
     "Saint",
     "Undertaker"
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Tim"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Dan"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightKillBeforeInfo",
+      "players": ["Fraser"]
+    }
+  ],
+  "forbiddenRoles": [
+    {
+      "name": "You",
+      "roles": ["Imp", "Baron", "Poisoner"]
+    }
+  ],
   "claims": [
     {
       "type": "Juggler",
@@ -33,12 +61,29 @@
     },
     {
       "type": "Undertaker",
-      "name": "Jasmine"
+      "name": "Jasmine",
+      "timing": "night_2",
+      "player": "You",
+      "role": "Dreamer"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Jasmine",
+      "timing": "night_3",
+      "player": "Dan",
+      "role": "Juggler"
     },
     {
       "type": "FortuneTeller",
       "name": "Tim",
-      "checks": []
+      "checks": [
+        {
+          "left": "Matthew",
+          "right": "Fraser",
+          "yes": false,
+          "timing": "night_1"
+        }
+      ]
     },
     {
       "type": "Dreamer",
@@ -65,7 +110,24 @@
     },
     {
       "type": "Empath",
-      "name": "Sula"
+      "name": "Sula",
+      "timing": "night_1",
+      "count": 1,
+      "neighbors": ["Olivia", "Dan"]
+    },
+    {
+      "type": "Empath",
+      "name": "Sula",
+      "timing": "night_2",
+      "count": 1,
+      "neighbors": ["Olivia", "Dan"]
+    },
+    {
+      "type": "Empath",
+      "name": "Sula",
+      "timing": "night_3",
+      "count": 0,
+      "neighbors": ["Olivia", "Jasmine"]
     }
   ]
 }
