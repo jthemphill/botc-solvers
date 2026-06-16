@@ -48,7 +48,7 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-34-the-vortox-conjecture": 1,
   "puzzle-35-typhon-season": 1,
   "puzzle-36-what-is-your-weapon-of-choice": 1,
-  "puzzle-37-new-super-marionette-bros-u": 12,
+  "puzzle-37-new-super-marionette-bros-u": 1,
   "puzzle-38-snakes-on-a-plane": 1,
   "puzzle-39-squid-game": 1,
   "puzzle-40-nine-lives": 1,
@@ -457,6 +457,7 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
     id: "puzzle-37-new-super-marionette-bros-u",
     source:
       "https://www.reddit.com/r/BloodOnTheClocktower/comments/1k7n8hi/weekly_puzzle_37_new_super_marionette_bros_u/",
+    coversAllWorlds: true,
     worlds: [
       {
         roles: { Fraser: "Imp", Jasmine: "Poisoner", Adam: "Drunk" },

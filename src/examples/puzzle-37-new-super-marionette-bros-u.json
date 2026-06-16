@@ -32,6 +32,11 @@
       "timing": "day_2",
       "type": "execution",
       "players": ["Aoife"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightKillBeforeInfo",
+      "players": ["Sula"]
     }
   ],
   "fixedRoles": [
