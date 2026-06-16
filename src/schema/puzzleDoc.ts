@@ -61,6 +61,7 @@ export type Claim =
   | SlayerClaim
   | SnakeCharmerClaim
   | VillageIdiotClaim
+  | KlutzClaim
   | VirginClaim
   | BalloonistClaim
   | SavantClaim
@@ -252,6 +253,12 @@ export interface VillageIdiotClaim extends BaseClaim {
   readonly checks: readonly VillageIdiotCheckDoc[];
 }
 
+export interface KlutzClaim extends BaseClaim {
+  readonly type: "Klutz";
+  readonly chosen?: string;
+  readonly lost?: boolean;
+}
+
 export interface VirginClaim extends BaseClaim {
   readonly type: "Virgin";
   readonly nominator?: string;
@@ -294,7 +301,6 @@ export const BARE_CLAIM_TYPES = [
   "Goblin",
   "Gossip",
   "Imp",
-  "Klutz",
   "Leviathan",
   "Lord of Typhon",
   "Lunatic",
@@ -350,6 +356,7 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Slayer",
   "Snake Charmer",
   "VillageIdiot",
+  "Klutz",
   "Virgin",
   "Balloonist",
   "Savant",

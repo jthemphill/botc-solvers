@@ -394,6 +394,35 @@ export class Klutz extends Role {
   static readonly roleName = "Klutz";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Outsider;
+  readonly chosen?: string;
+  readonly lost?: boolean;
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly chosen?: string;
+      readonly lost?: boolean;
+    },
+  ) {
+    super(options);
+    this.chosen = options.chosen;
+    this.lost = options.lost;
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Klutz, options);
+    if (this.chosen === undefined || this.lost === undefined) {
+      this.applyInfoClaimBuilders(game, Klutz, this.infoClaims, options);
+      return;
+    }
+
+    const timing = this.claimTiming(explicitTiming(options));
+    const activeHealthy = game.allOf(
+      [game.hasRoleAt(this.name, Klutz, timing), game.soberAndHealthy(this.name, timing)],
+      claimName(this.name, Klutz, "choice_active"),
+    );
+    game.addImplication(activeHealthy, this.lost ? game.isEvil(this.chosen) : game.isGood(this.chosen));
+    this.applyInfoClaimBuilders(game, Klutz, this.infoClaims, options);
+  }
 }
 export class Puzzlemaster extends Role {
   static readonly roleName = "Puzzlemaster";

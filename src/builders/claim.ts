@@ -9,6 +9,7 @@ import {
   Investigator,
   Juggler,
   Knight,
+  Klutz,
   Legionary,
   Librarian,
   Mathematician,
@@ -126,6 +127,8 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
       return new Steward({ ...base, goodPlayer: claim.goodPlayer });
     case "Knight":
       return new Knight({ ...base, noDemonAmong: claim.noDemonAmong });
+    case "Klutz":
+      return new Klutz({ ...base, chosen: claim.chosen, lost: claim.lost });
     case "Seamstress":
       return new Seamstress({ ...base, among: claim.among, aligned: claim.aligned });
     case "Juggler": {

@@ -383,6 +383,13 @@ function validateClaim(input: unknown, path: string): Claim {
         }),
       };
     }
+    case "Klutz":
+      return {
+        ...base,
+        type: "Klutz",
+        chosen: input["chosen"] === undefined ? undefined : expectString(input["chosen"], `${path}.chosen`),
+        lost: input["lost"] === undefined ? undefined : expectBool(input["lost"], `${path}.lost`),
+      };
     case "Virgin":
       return {
         ...base,

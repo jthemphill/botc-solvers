@@ -496,6 +496,49 @@ describe("buildFromDoc", () => {
     expect(worlds).toHaveLength(1);
   });
 
+  test("Klutz no-loss claims require a healthy Klutz to choose good", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Klutz", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Klutz"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Chef"] },
+        ],
+        claims: [{ type: "Klutz", name: "A", timing: "night_2", chosen: "B", lost: false }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
+  });
+
+  test("Klutz no-loss claims can be disabled by poisoning", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Klutz", "Imp", "Poisoner"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Klutz"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Poisoner"] },
+        ],
+        claims: [{ type: "Klutz", name: "A", timing: "night_2", chosen: "B", lost: false }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds.length).toBeGreaterThan(0);
+    expect(worlds.every((world) => world.poisonedByTiming.get("night_2")?.has("A"))).toBe(true);
+  });
+
   test("day Slayer shots use the corresponding night poison state", async () => {
     const worlds = await buildFromDoc(
       {
