@@ -158,6 +158,23 @@ describe("predicates and helpers", () => {
     expect(await dedup.solveAll()).toHaveLength(1);
   });
 
+  test("Chef count can register Recluse per adjacent pair", async () => {
+    const game = new BOTCModel(["Adam", "Fraser", "Sarah", "Olivia", "You", "Aoife", "Tim"], {
+      characters: REGISTRATION_CHARACTERS,
+      backend,
+    });
+    game.fixActual("Adam", "Imp");
+    game.fixActual("Fraser", "Recluse");
+    game.fixActual("Sarah", "Poisoner");
+    game.fixActual("Olivia", "Librarian");
+    game.fixActual("You", "Chef");
+    game.fixActual("Aoife", "Spy");
+    game.fixActual("Tim", "Drunk");
+    game.addTruth(chefCountRegistersAs(game, 1, "chef"));
+
+    expect(await game.solveAll()).toHaveLength(1);
+  });
+
   test("model-owned sober and healthy checks include No Dashii adjacency", async () => {
     const poisonedInfo = new BOTCModel(["A", "B", "C", "D"], {
       characters: script(NoDashii, Chef, Empath, Investigator),

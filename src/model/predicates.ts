@@ -42,12 +42,14 @@ export function chefCountIs(game: BOTCModel, count: number): BoolVar {
 }
 
 export function chefCountRegistersAs(game: BOTCModel, count: number, name: string): BoolVar {
-  const registersAsEvil = new Map(game.players.map((player) => [player, game.registersAsEvil(player, name)] as const));
   const evilPairs = game
     .adjacentPairs()
     .map(([left, right]) =>
       game.allOf(
-        [registersAsEvil.get(left) as BoolVar, registersAsEvil.get(right) as BoolVar],
+        [
+          game.registersAsEvil(left, `${name}_${left}_${right}_left`),
+          game.registersAsEvil(right, `${name}_${left}_${right}_right`),
+        ],
         `${name}_${left}_${right}_evil_pair`,
       ),
     );
