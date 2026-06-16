@@ -324,6 +324,22 @@ class Compiler {
         span: node.span,
       };
     }
+    if (node.name === "registers_as") {
+      if (node.args.length !== 2) throw new DslError(`registers_as() takes (player, role)`, node.span);
+      const playerArg = node.args[0] as AstCall["args"][number];
+      const roleArg = node.args[1] as AstCall["args"][number];
+      if (playerArg.name !== undefined || roleArg.name !== undefined)
+        throw new DslError(`registers_as arguments are positional`, node.span);
+      const player = this.evalNode(playerArg.value, env);
+      const role = this.evalNode(roleArg.value, env);
+      if (player.kind !== "player") throw new DslError(`registers_as expected a player`, player.span);
+      if (role.kind !== "role") throw new DslError(`registers_as expected a role`, role.span);
+      return {
+        kind: "bool",
+        value: this.game.registersAsRole(player.name, role.name, this.freshName("registers_as")),
+        span: node.span,
+      };
+    }
     if (node.name === "chef") {
       if (node.args.length === 0 || node.args.length > 2)
         throw new DslError(`chef() takes (n) or (n, registers: bool)`, node.span);

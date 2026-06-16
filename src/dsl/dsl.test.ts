@@ -123,6 +123,7 @@ describe("DSL", () => {
     game.addTruth(compile("A.alignment != B.alignment", game, ctx) as BoolLike);
     game.addTruth(compile("role_count(2, A, Savant, B, Imp)", game, ctx) as BoolLike);
     game.addTruth(compile("malfunctions(night_1, 0)", game, ctx) as BoolLike);
+    game.addTruth(compile("registers_as(B, Imp)", game, ctx) as BoolLike);
 
     expect(await game.solveAll()).toHaveLength(1);
   });
