@@ -377,6 +377,39 @@ export class BOTCModel {
     this.addEnforcedExactlyN(drunkPlayers, 0, atLeastTwoVillageIdiots.not());
   }
 
+  addRoleDrunking(
+    role: RoleRef,
+    timings: readonly Timing[],
+    options: { readonly activeIf?: BoolLike | boolean } = {},
+  ): void {
+    const roleRef = roleName(role);
+    this.checkRole(roleRef);
+    for (const timing of timings) {
+      this.drunkSourceTimingKeys.add(timing);
+      const roleInPlay = this.roleInPlay(roleRef);
+      const active =
+        options.activeIf === undefined
+          ? roleInPlay
+          : typeof options.activeIf === "boolean"
+            ? this.allOf(
+                [roleInPlay, this.constantBool(options.activeIf, `${timing}_${roleRef}_drunking_active_if`)],
+                `${timing}_${roleRef}_drunking_active`,
+              )
+            : this.allOf([roleInPlay, options.activeIf], `${timing}_${roleRef}_drunking_active`);
+
+      for (const player of this.players) {
+        const drunk = this.drunk(player, timing);
+        const hasRole = this.hasRoleAt(player, roleRef, timing);
+        this.addImplication(this.allOf([active, hasRole], `${timing}_${player}_${roleRef}_is_drunked_role`), drunk);
+        this.addImplication(
+          this.allOf([active, hasRole.not()], `${timing}_${player}_${roleRef}_is_not_drunked_role`),
+          drunk.not(),
+        );
+        this.addImplication(active.not(), drunk.not());
+      }
+    }
+  }
+
   addPoisonerEffect(
     timing: Timing,
     options: { readonly poisonerRole?: RoleRef; readonly activeIf?: BoolLike | boolean } = {},
@@ -785,15 +818,13 @@ export class BOTCModel {
       return;
     }
 
+    const activeVortox = this.roleSoberAndHealthyAt("Vortox", claimTiming, `${claim.player}_${roleRef}_vortox`);
     this.addImplication(
-      this.allOf(
-        [activeHealthy, this.roleInPlay("Vortox").not()],
-        `${claim.player}_${roleRef}_${claimTimingName}_normal`,
-      ),
+      this.allOf([activeHealthy, activeVortox.not()], `${claim.player}_${roleRef}_${claimTimingName}_normal`),
       claim.learned,
     );
     this.addImplication(
-      this.allOf([activeHealthy, this.roleInPlay("Vortox")], `${claim.player}_${roleRef}_${claimTimingName}_vortox`),
+      this.allOf([activeHealthy, activeVortox], `${claim.player}_${roleRef}_${claimTimingName}_vortox`),
       this.not(claim.learned, `${claim.player}_${roleRef}_${claimTimingName}_vortox_false`),
     );
   }
@@ -1114,13 +1145,29 @@ export class BOTCModel {
     ];
     if (vortoxAffected && this.characters.has(roleName("Vortox"))) {
       causes.push(
-        this.allOf([activeRole, this.roleInPlay("Vortox")], `${player}_${role}_${timingName}_vortox_malfunction`),
+        this.allOf(
+          [activeRole, this.roleSoberAndHealthyAt("Vortox", timing, `${player}_${role}_vortox`)],
+          `${player}_${role}_${timingName}_vortox_malfunction`,
+        ),
       );
     }
     const malfunction = this.anyOf(causes, `${player}_${role}_${timingName}_info_malfunction`);
     const malfunctions = this.infoMalfunctionsByTiming.get(timingName) ?? [];
     malfunctions.push(malfunction);
     this.infoMalfunctionsByTiming.set(timingName, malfunctions);
+  }
+
+  private roleSoberAndHealthyAt(role: RoleRef, timing: Timing, name: string): BoolVar {
+    const roleRef = roleName(role);
+    return this.anyOf(
+      this.players.map((player) =>
+        this.allOf(
+          [this.hasRoleAt(player, roleRef, timing), this.soberAndHealthy(player, timing)],
+          `${name}_${player}_${timing}_sober_healthy`,
+        ),
+      ),
+      `${name}_${timing}_sober_healthy_in_play`,
+    );
   }
 
   private applyDefaultTimingRoleConstraints(): void {

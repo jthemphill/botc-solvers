@@ -59,11 +59,38 @@ function applyTimelineConstraints(game: BOTCModel, doc: PuzzleDoc): void {
 
   const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
   for (const event of deathEvents) {
+    if (event.type === "doomsayerDeath" && event.caller !== undefined) {
+      for (const player of event.players) {
+        game.addTruth(doomsayerSameRegisteredAlignment(game, event.caller, player));
+      }
+    }
     if (event.type === "doomsayerDeath" || event.type === "abilityDeath") continue;
     for (const player of event.players) {
       for (const demonRole of demonRoles) game.fixNotActual(player, demonRole);
     }
   }
+}
+
+function doomsayerSameRegisteredAlignment(game: BOTCModel, caller: string, deadPlayer: string): BoolLike {
+  return game.anyOf(
+    [
+      game.allOf(
+        [
+          game.registersAsGood(caller, `${caller}_${deadPlayer}_doomsayer_caller_good`),
+          game.registersAsGood(deadPlayer, `${caller}_${deadPlayer}_doomsayer_dead_good`),
+        ],
+        `${caller}_${deadPlayer}_doomsayer_both_good`,
+      ),
+      game.allOf(
+        [
+          game.registersAsEvil(caller, `${caller}_${deadPlayer}_doomsayer_caller_evil`),
+          game.registersAsEvil(deadPlayer, `${caller}_${deadPlayer}_doomsayer_dead_evil`),
+        ],
+        `${caller}_${deadPlayer}_doomsayer_both_evil`,
+      ),
+    ],
+    `${caller}_${deadPlayer}_doomsayer_same_registered_alignment`,
+  );
 }
 
 function usesMalfunctionCount(claim: PuzzleDoc["claims"][number]): boolean {

@@ -24,11 +24,13 @@
     {
       "timing": "day_1",
       "type": "doomsayerDeath",
+      "caller": "Hannah",
       "players": ["Tim"]
     },
     {
       "timing": "day_1",
       "type": "doomsayerDeath",
+      "caller": "You",
       "players": ["Sarah"]
     }
   ],
@@ -42,7 +44,10 @@
     },
     {
       "type": "Courtier",
-      "name": "Sarah"
+      "name": "Sarah",
+      "timing": "night_1",
+      "role": "Vortox",
+      "drunkTimings": ["night_1"]
     },
     {
       "type": "Mayor",

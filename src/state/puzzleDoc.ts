@@ -159,18 +159,25 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
 }
 
 function rewriteTimelineName(timeline: PuzzleDoc["timeline"], oldName: string, newName: string): PuzzleDoc["timeline"] {
-  return timeline?.map((event) => ({
-    ...event,
-    players: event.players.map((player) => (player === oldName ? newName : player)),
-  }));
+  return timeline?.map((event) => {
+    const next = {
+      ...event,
+      players: event.players.map((player) => (player === oldName ? newName : player)),
+    };
+    return event.caller === undefined ? next : { ...next, caller: event.caller === oldName ? newName : event.caller };
+  });
 }
 
 function removeTimelineNames(timeline: PuzzleDoc["timeline"], removed: ReadonlySet<string>): PuzzleDoc["timeline"] {
   return timeline
-    ?.map((event) => ({
-      ...event,
-      players: event.players.filter((player) => !removed.has(player)),
-    }))
+    ?.map((event) => {
+      const next = {
+        ...event,
+        players: event.players.filter((player) => !removed.has(player)),
+      };
+      if (event.caller === undefined) return next;
+      return removed.has(event.caller) ? { ...next, caller: undefined } : next;
+    })
     .filter((event) => event.players.length > 0);
 }
 

@@ -228,6 +228,64 @@ describe("buildFromDoc", () => {
     expect(worlds[0]?.actualRole("B")).toBe("Imp");
   });
 
+  test("Doomsayer deaths with callers require the same registered alignment", async () => {
+    const validWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Imp", "Sage", "Mayor"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Sage"] },
+          { name: "B", roles: ["Mayor"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        timeline: [{ timing: "day_1", type: "doomsayerDeath", caller: "A", players: ["B"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+    const invalidWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Imp", "Sage", "Mayor"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Sage"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Mayor"] },
+        ],
+        timeline: [{ timing: "day_1", type: "doomsayerDeath", caller: "A", players: ["B"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+    const spyWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Imp", "Spy", "Sage"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Spy"] },
+          { name: "B", roles: ["Sage"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        timeline: [{ timing: "day_1", type: "doomsayerDeath", caller: "A", players: ["B"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(validWorlds).toHaveLength(1);
+    expect(invalidWorlds).toEqual([]);
+    expect(spyWorlds).toHaveLength(1);
+  });
+
   test("Xaan poisons Townsfolk on the night matching the Outsider count", async () => {
     const worlds = await buildFromDoc(
       {
@@ -434,6 +492,51 @@ describe("buildFromDoc", () => {
     ).solveAll();
 
     expect(worlds).toHaveLength(1);
+  });
+
+  test("Courtier drunking disables Vortox false information", async () => {
+    const validWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Courtier", "Vortox", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Courtier"] },
+          { name: "B", roles: ["Vortox"] },
+          { name: "C", roles: ["Chef"] },
+        ],
+        claims: [
+          { type: "Courtier", name: "A", timing: "night_1", role: "Vortox", drunkTimings: ["night_1"] },
+          { type: "Chef", name: "C", timing: "night_1", count: 0 },
+        ],
+      },
+      backend,
+    ).solveAll();
+    const invalidWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Courtier", "Vortox", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Courtier"] },
+          { name: "B", roles: ["Vortox"] },
+          { name: "C", roles: ["Chef"] },
+        ],
+        claims: [
+          { type: "Courtier", name: "A" },
+          { type: "Chef", name: "C", timing: "night_1", count: 0 },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(validWorlds).toHaveLength(1);
+    expect(validWorlds[0]?.isDrunk("B", "night_1")).toBe(true);
+    expect(invalidWorlds).toEqual([]);
   });
 
   test("Philosopher choice can satisfy chosen role information", async () => {

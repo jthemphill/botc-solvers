@@ -26,16 +26,19 @@
     {
       "timing": "day_1",
       "type": "doomsayerDeath",
+      "caller": "Tom",
       "players": ["Josh"]
     },
     {
       "timing": "day_1",
       "type": "doomsayerDeath",
+      "caller": "Steph",
       "players": ["Oscar"]
     },
     {
       "timing": "day_1",
       "type": "doomsayerDeath",
+      "caller": "Fraser",
       "players": ["Aoife"]
     }
   ],
@@ -60,7 +63,10 @@
     },
     {
       "type": "Courtier",
-      "name": "Steph"
+      "name": "Steph",
+      "timing": "night_1",
+      "role": "Vortox",
+      "drunkTimings": ["night_1"]
     },
     {
       "type": "Librarian",

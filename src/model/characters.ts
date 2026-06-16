@@ -1024,6 +1024,32 @@ export class Courtier extends Role {
   static readonly roleName = "Courtier";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly role?: RoleRef;
+  readonly drunkTimings: readonly Timing[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly role?: RoleRef;
+      readonly drunkTimings?: readonly Timing[];
+    },
+  ) {
+    super(options);
+    this.role = options.role;
+    this.drunkTimings = options.drunkTimings ?? [];
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Courtier, options);
+    if (this.role !== undefined && this.drunkTimings.length > 0) {
+      const timing = this.claimTiming(explicitTiming(options));
+      const activeHealthy = game.allOf(
+        [game.hasRoleAt(this.name, Courtier, timing), game.soberAndHealthy(this.name, timing)],
+        claimName(this.name, Courtier, "choice_active"),
+      );
+      game.addRoleDrunking(this.role, this.drunkTimings, { activeIf: activeHealthy });
+    }
+    this.applyInfoClaimBuilders(game, Courtier, this.infoClaims, options);
+  }
 }
 
 export class Dreamer extends Role {

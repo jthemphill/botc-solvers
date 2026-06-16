@@ -4,6 +4,7 @@ import {
   Chambermaid,
   Chef,
   Clockmaker,
+  Courtier,
   Dreamer,
   Empath,
   FortuneTeller,
@@ -180,6 +181,12 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
       return new Shugenja({ ...base, evilDirection: claim.evilDirection });
     case "Clockmaker":
       return new Clockmaker({ ...base, distance: claim.distance });
+    case "Courtier":
+      return new Courtier({
+        ...base,
+        role: claim.role ? resolveRoleRef(claim.role) : undefined,
+        drunkTimings: claim.drunkTimings?.map((timing) => timingOf(timing) as Timing),
+      });
     case "Mathematician":
       return new Mathematician({
         ...base,

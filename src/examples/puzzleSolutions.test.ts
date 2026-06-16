@@ -22,8 +22,8 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-09-the-new-acrobat": 10,
   "puzzle-10-dont-overcook-it": 1,
   "puzzle-11-false-is-the-new-black": 2,
-  "puzzle-12a-thunderstruck": 17,
-  "puzzle-12b-thunderstruck": 41,
+  "puzzle-12a-thunderstruck": 1,
+  "puzzle-12b-thunderstruck": 1,
   "puzzle-13-clockblocking": 1,
   "puzzle-14-new-super-marionette-bros": 1,
   "puzzle-15-wake-up-and-choose-violets": 1,
@@ -166,11 +166,13 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
   {
     id: "puzzle-12a-thunderstruck",
     source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1gexyoq/weekly_puzzle_12a_12b_thunderstruck/",
+    coversAllWorlds: true,
     worlds: [{ roles: { Sarah: "Spy", Jasmine: "Vortox", Fraser: "Lunatic" } }],
   },
   {
     id: "puzzle-12b-thunderstruck",
     source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1gexyoq/weekly_puzzle_12a_12b_thunderstruck/",
+    coversAllWorlds: true,
     worlds: [{ roles: { Steph: "Scarlet Woman", Oscar: "Vortox", Anna: "Lunatic" } }],
   },
   {
@@ -489,12 +491,12 @@ describe("JSON puzzle solutions", () => {
     expect(new Set(catalogIds)).toEqual(new Set(sourceIds));
   });
 
-  test("puzzle 12b has the largest modeled JSON search space", () => {
+  test("puzzle 7 has the largest modeled JSON search space", () => {
     const [id, count] = Object.entries(JSON_SOLUTION_COUNTS).sort(
       ([leftId, leftCount], [rightId, rightCount]) => rightCount - leftCount || leftId.localeCompare(rightId),
     )[0] as [string, number];
 
-    expect({ id, count }).toEqual({ id: "puzzle-12b-thunderstruck", count: 41 });
+    expect({ id, count }).toEqual({ id: "puzzle-07-the-savant-strikes-back", count: 39 });
   });
 
   test.each(PUZZLE_SOLUTION_CASES)(

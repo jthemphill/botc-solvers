@@ -54,6 +54,7 @@ export function claimScriptRoles(claim: Claim): string[] {
       break;
     case "Librarian":
     case "Washerwoman":
+    case "Courtier":
       roles.push(claim.role);
       break;
     case "FortuneTeller":

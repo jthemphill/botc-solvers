@@ -117,6 +117,7 @@ function validateTimeline(v: unknown, pathRoot: string): TimelineEventDoc[] {
       timing: expectString(entry["timing"], `${path}.timing`),
       type,
       players: expectStringArray(entry["players"], `${path}.players`),
+      caller: entry["caller"] === undefined ? undefined : expectString(entry["caller"], `${path}.caller`),
     };
   });
 }
@@ -406,6 +407,16 @@ function validateClaim(input: unknown, path: string): Claim {
         type: "Clockmaker",
         distance:
           input["distance"] === undefined ? undefined : expectPositiveInteger(input["distance"], `${path}.distance`),
+      };
+    case "Courtier":
+      return {
+        ...base,
+        type: "Courtier",
+        role: input["role"] === undefined ? undefined : expectString(input["role"], `${path}.role`),
+        drunkTimings:
+          input["drunkTimings"] === undefined
+            ? undefined
+            : expectStringArray(input["drunkTimings"], `${path}.drunkTimings`),
       };
     case "Mathematician":
       return {

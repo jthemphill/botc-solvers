@@ -15,9 +15,15 @@ describe("puzzle document reducer", () => {
       type: "addClaim",
       claim: { type: "Investigator", name: "A", minionRole: "Poisoner", among: ["B", "C"] },
     });
+    const withCourtier = reducer(doc, {
+      type: "addClaim",
+      claim: { type: "Courtier", name: "A", role: "Vortox", drunkTimings: ["night_1"] },
+    });
 
     expect(withClaim.script).toContain("Investigator");
     expect(withClaim.script).toContain("Poisoner");
+    expect(withCourtier.script).toContain("Courtier");
+    expect(withCourtier.script).toContain("Vortox");
   });
 
   test("setScript cannot remove roles referenced by claims or role constraints", () => {
@@ -85,7 +91,8 @@ describe("puzzle document reducer", () => {
       forbiddenRoles: [{ name: "C", roles: ["Imp"] }],
       timeline: [
         { timing: "day_1", type: "execution", players: ["B"] },
-        { timing: "night_2", type: "nightKill", players: ["C"] },
+        { timing: "day_1", type: "doomsayerDeath", players: ["B"], caller: "C" },
+        { timing: "night_2", type: "nightKill", players: ["C"], caller: "C" },
       ],
       claims: [{ type: "Investigator", name: "A", among: ["B", "C"] }],
     };
@@ -95,7 +102,10 @@ describe("puzzle document reducer", () => {
     expect(next.players).toEqual(["A", "B"]);
     expect(next.fixedRoles).toEqual([]);
     expect(next.forbiddenRoles).toEqual([]);
-    expect(next.timeline).toEqual([{ timing: "day_1", type: "execution", players: ["B"] }]);
+    expect(next.timeline).toEqual([
+      { timing: "day_1", type: "execution", players: ["B"] },
+      { timing: "day_1", type: "doomsayerDeath", players: ["B"], caller: undefined },
+    ]);
     expect(next.claims).toEqual([{ type: "Investigator", name: "A", among: ["B"] }]);
   });
 
@@ -104,7 +114,10 @@ describe("puzzle document reducer", () => {
       version: 1,
       players: ["A", "B", "C"],
       script: [],
-      timeline: [{ timing: "day_1", type: "execution", players: ["B"] }],
+      timeline: [
+        { timing: "day_1", type: "doomsayerDeath", players: ["B"], caller: "C" },
+        { timing: "day_1", type: "doomsayerDeath", players: ["C"], caller: "B" },
+      ],
       claims: [
         { type: "Chambermaid", name: "A", checks: [{ left: "B", right: "C", count: 1 }] },
         { type: "Oracle", name: "A", count: 1, deadPlayers: ["B"] },
@@ -114,7 +127,10 @@ describe("puzzle document reducer", () => {
     const next = reducer(doc, { type: "renamePlayer", index: 1, name: "Bea" });
 
     expect(next.players).toEqual(["A", "Bea", "C"]);
-    expect(next.timeline).toEqual([{ timing: "day_1", type: "execution", players: ["Bea"] }]);
+    expect(next.timeline).toEqual([
+      { timing: "day_1", type: "doomsayerDeath", players: ["Bea"], caller: "C" },
+      { timing: "day_1", type: "doomsayerDeath", players: ["C"], caller: "Bea" },
+    ]);
     expect(next.claims).toEqual([
       { type: "Chambermaid", name: "A", checks: [{ left: "Bea", right: "C", count: 1 }] },
       { type: "Oracle", name: "A", count: 1, deadPlayers: ["Bea"] },

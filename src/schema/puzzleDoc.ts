@@ -35,6 +35,7 @@ export interface TimelineEventDoc {
   readonly timing: string;
   readonly type: TimelineEventType;
   readonly players: readonly string[];
+  readonly caller?: string;
 }
 
 export type Claim =
@@ -60,6 +61,7 @@ export type Claim =
   | DreamerClaim
   | ShugenjaClaim
   | ClockmakerClaim
+  | CourtierClaim
   | MathematicianClaim
   | RavenkeeperClaim
   | SageClaim
@@ -253,6 +255,12 @@ export interface ClockmakerClaim extends BaseClaim {
   readonly distance?: number;
 }
 
+export interface CourtierClaim extends BaseClaim {
+  readonly type: "Courtier";
+  readonly role?: string;
+  readonly drunkTimings?: readonly string[];
+}
+
 export interface MathematicianCountDoc {
   readonly timing: string;
   readonly count: number;
@@ -336,7 +344,6 @@ export const BARE_CLAIM_TYPES = [
   "Baron",
   "Butler",
   "Cerenovus",
-  "Courtier",
   "Damsel",
   "Drunk",
   "Evil Twin",
@@ -394,6 +401,7 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Dreamer",
   "Shugenja",
   "Clockmaker",
+  "Courtier",
   "Mathematician",
   "Ravenkeeper",
   "Sage",
