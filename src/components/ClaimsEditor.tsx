@@ -6,6 +6,7 @@ import type {
   BalloonistClaim,
   Claim,
   ClockmakerClaim,
+  CourtierClaim,
   CustomInfoStatementDoc,
   ChefClaim,
   DreamerClaim,
@@ -130,6 +131,8 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
       return { type: "Shugenja", name, evilDirection: "clockwise" };
     case "Clockmaker":
       return { type: "Clockmaker", name, distance: 1 };
+    case "Courtier":
+      return { type: "Courtier", name, timing: "night_1", role: "", drunkTimings: ["night_1"] };
     case "Mathematician":
       return { type: "Mathematician", name, malfunctions: [{ timing: "night_1", count: 0 }] };
     case "Sage":
@@ -294,6 +297,8 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         return <ShugenjaBody claim={claim} onChange={onChange} />;
       case "Clockmaker":
         return <ClockmakerBody claim={claim} onChange={onChange} />;
+      case "Courtier":
+        return <CourtierBody doc={doc} claim={claim} onChange={onChange} />;
       case "Mathematician":
         return <MathematicianBody claim={claim} onChange={onChange} />;
       case "Sage":
@@ -787,6 +792,55 @@ function ClockmakerBody({ claim, onChange }: { claim: ClockmakerClaim; onChange:
       />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+    </div>
+  );
+}
+
+function CourtierBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: CourtierClaim;
+  onChange: (c: Claim) => void;
+}) {
+  const drunkTimings = claim.drunkTimings ?? [];
+  const setTiming = (index: number, timing: string) => {
+    onChange({ ...claim, drunkTimings: drunkTimings.map((entry, i) => (i === index ? timing : entry)) });
+  };
+  const removeTiming = (index: number) => {
+    onChange({ ...claim, drunkTimings: drunkTimings.filter((_, i) => i !== index) });
+  };
+  const addTiming = () => {
+    onChange({ ...claim, drunkTimings: [...drunkTimings, `night_${drunkTimings.length + 1}`] });
+  };
+  return (
+    <div>
+      <div className="field-grid">
+        <span>Chosen role</span>
+        <RoleSelect
+          script={doc.script}
+          value={claim.role}
+          onChange={(role) => onChange({ ...claim, role: role || undefined })}
+          allowEmpty
+        />
+        <span>Choice timing</span>
+        <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
+      </div>
+      {drunkTimings.map((timing, index) => (
+        <div key={index} className="field-grid">
+          <span>Drunk timing</span>
+          <TimingField value={timing} onChange={(nextTiming) => setTiming(index, nextTiming ?? "night_1")} />
+          <span />
+          <button type="button" onClick={() => removeTiming(index)}>
+            Remove timing
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addTiming}>
+        + Add timing
+      </button>
     </div>
   );
 }

@@ -17,6 +17,34 @@
     "Recluse",
     "Undertaker"
   ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Chef", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKillBeforeInfo",
+      "players": ["Tim"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Sarah"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightKillBeforeInfo",
+      "players": ["Olivia"]
+    }
+  ],
   "claims": [
     {
       "type": "Investigator",
@@ -39,20 +67,50 @@
     {
       "type": "FortuneTeller",
       "name": "Olivia",
-      "checks": []
+      "checks": [
+        {
+          "left": "Aoife",
+          "right": "Tim",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Aoife",
+          "right": "Olivia",
+          "yes": false,
+          "timing": "night_2"
+        }
+      ]
     },
     {
       "type": "Chef",
-      "name": "You"
+      "name": "You",
+      "count": 1
     },
     {
       "type": "Empath",
-      "name": "Aoife"
+      "name": "Aoife",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Aoife",
+      "timing": "night_2",
+      "count": 1
+    },
+    {
+      "type": "Empath",
+      "name": "Aoife",
+      "timing": "night_3",
+      "count": 1
     },
     {
       "type": "Ravenkeeper",
       "name": "Tim",
-      "timing": "night_2"
+      "timing": "night_2",
+      "player": "Olivia",
+      "role": "Imp"
     }
   ]
 }

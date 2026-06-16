@@ -19,6 +19,34 @@
     "Slayer",
     "Washerwoman"
   ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Investigator", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Josh"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKillBeforeInfo",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Jasmine"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightKillBeforeInfo",
+      "players": ["Tim"]
+    }
+  ],
   "claims": [
     {
       "type": "Saint",
@@ -33,7 +61,17 @@
     },
     {
       "type": "Empath",
-      "name": "Tim"
+      "name": "Tim",
+      "timing": "night_1",
+      "count": 2,
+      "neighbors": ["Fraser", "Josh"]
+    },
+    {
+      "type": "Empath",
+      "name": "Tim",
+      "timing": "night_2",
+      "count": 1,
+      "neighbors": ["Adam", "Hannah"]
     },
     {
       "type": "Butler",
@@ -42,7 +80,9 @@
     {
       "type": "Slayer",
       "name": "Adam",
-      "timing": "day_1"
+      "timing": "day_3",
+      "target": "Matthew",
+      "killed": false
     },
     {
       "type": "Investigator",
@@ -54,7 +94,26 @@
     {
       "type": "FortuneTeller",
       "name": "Matthew",
-      "checks": []
+      "checks": [
+        {
+          "left": "Tim",
+          "right": "Josh",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Hannah",
+          "right": "Tim",
+          "yes": false,
+          "timing": "night_2"
+        },
+        {
+          "left": "You",
+          "right": "Matthew",
+          "yes": true,
+          "timing": "night_3"
+        }
+      ]
     },
     {
       "type": "Recluse",

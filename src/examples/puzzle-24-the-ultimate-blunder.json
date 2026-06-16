@@ -15,10 +15,31 @@
     "Virgin",
     "Washerwoman"
   ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Investigator", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKillBeforeInfo",
+      "players": ["Olivia"]
+    }
+  ],
   "claims": [
     {
       "type": "Virgin",
-      "name": "Sula"
+      "name": "Sula",
+      "timing": "day_1",
+      "nominator": "Adam",
+      "executed": false
     },
     {
       "type": "Librarian",
@@ -35,7 +56,17 @@
     },
     {
       "type": "Empath",
-      "name": "Josh"
+      "name": "Josh",
+      "timing": "night_1",
+      "count": 1,
+      "neighbors": ["You", "Adam"]
+    },
+    {
+      "type": "Empath",
+      "name": "Josh",
+      "timing": "night_2",
+      "count": 0,
+      "neighbors": ["Steph", "Adam"]
     },
     {
       "type": "Investigator",
@@ -46,12 +77,28 @@
     },
     {
       "type": "Klutz",
-      "name": "Olivia"
+      "name": "Olivia",
+      "timing": "night_2",
+      "chosen": "Adam",
+      "lost": false
     },
     {
       "type": "FortuneTeller",
       "name": "Steph",
-      "checks": []
+      "checks": [
+        {
+          "left": "Steph",
+          "right": "Adam",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Steph",
+          "right": "Adam",
+          "yes": true,
+          "timing": "night_2"
+        }
+      ]
     },
     {
       "type": "Washerwoman",

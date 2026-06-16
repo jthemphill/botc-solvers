@@ -17,19 +17,94 @@
     "Ravenkeeper",
     "Snake Charmer"
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "abilityDeath",
+      "players": ["Dan"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Sula"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightKill",
+      "players": ["Matt"]
+    }
+  ],
+  "forbiddenRoles": [
+    {
+      "name": "You",
+      "roles": ["Imp", "Baron", "Poisoner", "Spy", "Scarlet Woman", "Drunk"]
+    }
+  ],
   "claims": [
     {
       "type": "Snake Charmer",
-      "name": "Tim"
+      "name": "Tim",
+      "timing": "night_1",
+      "checked": "Matt",
+      "demon": false
     },
     {
       "type": "Snake Charmer",
-      "name": "Fraser"
+      "name": "Tim",
+      "timing": "night_2",
+      "checked": "Sula",
+      "demon": false
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Tim",
+      "timing": "night_3",
+      "checked": "Hannah",
+      "demon": false
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Fraser",
+      "timing": "night_1",
+      "checked": "Sula",
+      "demon": false
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Fraser",
+      "timing": "night_2",
+      "checked": "Hannah",
+      "demon": false
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Fraser",
+      "timing": "night_3",
+      "checked": "Adam",
+      "demon": false
     },
     {
       "type": "FortuneTeller",
       "name": "Sula",
-      "checks": []
+      "checks": [
+        {
+          "left": "You",
+          "right": "Tim",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Fraser",
+          "right": "Matt",
+          "yes": false,
+          "timing": "night_2"
+        }
+      ]
     },
     {
       "type": "Saint",
@@ -41,12 +116,34 @@
     },
     {
       "type": "Empath",
-      "name": "Hannah"
+      "name": "Hannah",
+      "timing": "night_1",
+      "player": "Hannah",
+      "neighbors": ["You", "Dan"],
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Hannah",
+      "timing": "night_2",
+      "player": "Hannah",
+      "neighbors": ["Adam", "Matt"],
+      "count": 1
+    },
+    {
+      "type": "Empath",
+      "name": "Hannah",
+      "timing": "night_3",
+      "player": "Hannah",
+      "neighbors": ["Adam", "Fraser"],
+      "count": 1
     },
     {
       "type": "Ravenkeeper",
       "name": "Dan",
-      "timing": "night_2"
+      "timing": "night_2",
+      "player": "Fraser",
+      "role": "Poisoner"
     },
     {
       "type": "Investigator",

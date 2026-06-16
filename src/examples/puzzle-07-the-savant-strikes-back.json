@@ -21,6 +21,40 @@
       "roles": ["Savant"]
     }
   ],
+  "forbiddenRoles": [
+    {
+      "name": "Anna",
+      "roles": ["Drunk"]
+    },
+    {
+      "name": "Aoife",
+      "roles": ["Drunk"]
+    },
+    {
+      "name": "Steph",
+      "roles": ["Drunk"]
+    },
+    {
+      "name": "Tim",
+      "roles": ["Drunk"]
+    },
+    {
+      "name": "You",
+      "roles": ["Drunk"]
+    },
+    {
+      "name": "Fraser",
+      "roles": ["Drunk"]
+    },
+    {
+      "name": "Sarah",
+      "roles": ["Drunk"]
+    },
+    {
+      "name": "Oscar",
+      "roles": ["Drunk"]
+    }
+  ],
   "claims": [
     {
       "type": "Juggler",
@@ -40,7 +74,26 @@
     {
       "type": "Dreamer",
       "name": "Steph",
-      "roles": []
+      "extraPossibleActualRoles": ["Mutant"],
+      "timing": "night_1",
+      "player": "Sarah",
+      "roles": ["Fortune Teller", "Leviathan"]
+    },
+    {
+      "type": "Dreamer",
+      "name": "Steph",
+      "extraPossibleActualRoles": ["Mutant"],
+      "timing": "night_2",
+      "player": "You",
+      "roles": ["Savant", "Goblin"]
+    },
+    {
+      "type": "Dreamer",
+      "name": "Steph",
+      "extraPossibleActualRoles": ["Mutant"],
+      "timing": "night_3",
+      "player": "Fraser",
+      "roles": ["Mutant", "Goblin"]
     },
     {
       "type": "VillageIdiot",
@@ -64,7 +117,37 @@
       "type": "Savant",
       "name": "You",
       "timing": "day_1",
-      "statements": []
+      "statements": [
+        {
+          "options": ["one p: {Fraser, Anna, Steph} | p.alignment == Evil", "role_distance(3, Leviathan, Goblin)"]
+        }
+      ]
+    },
+    {
+      "type": "Savant",
+      "name": "You",
+      "timing": "day_2",
+      "statements": [
+        {
+          "options": [
+            "fortune_teller_red_herring(Sarah, Sarah)",
+            "Fraser.role == `Village Idiot` && globally_drunk(Fraser)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Savant",
+      "name": "You",
+      "timing": "day_3",
+      "statements": [
+        {
+          "options": [
+            "role_in_play_count(2, Juggler, Shugenja, `Village Idiot`)",
+            "(Oscar.type == Townsfolk && Anna.type == Townsfolk && Tim.type != Townsfolk) || (Oscar.type == Townsfolk && Tim.type == Townsfolk && Anna.type != Townsfolk) || (Anna.type == Townsfolk && Tim.type == Townsfolk && Oscar.type != Townsfolk)"
+          ]
+        }
+      ]
     },
     {
       "type": "VillageIdiot",
@@ -87,7 +170,26 @@
     {
       "type": "FortuneTeller",
       "name": "Sarah",
-      "checks": []
+      "checks": [
+        {
+          "left": "Oscar",
+          "right": "Aoife",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "You",
+          "right": "Sarah",
+          "yes": true,
+          "timing": "night_2"
+        },
+        {
+          "left": "Fraser",
+          "right": "Tim",
+          "yes": false,
+          "timing": "night_3"
+        }
+      ]
     },
     {
       "type": "Investigator",

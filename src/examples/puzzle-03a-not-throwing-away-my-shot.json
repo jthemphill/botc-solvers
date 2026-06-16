@@ -17,6 +17,13 @@
     "Slayer",
     "Washerwoman"
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "abilityDeath",
+      "players": ["Tom"]
+    }
+  ],
   "claims": [
     {
       "type": "Investigator",
@@ -44,7 +51,10 @@
     {
       "type": "Slayer",
       "name": "You",
-      "timing": "day_1"
+      "timing": "day_1",
+      "target": "Tom",
+      "killed": true,
+      "gameContinued": true
     },
     {
       "type": "Chef",

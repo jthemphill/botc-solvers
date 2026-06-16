@@ -29,6 +29,11 @@ function expectStringArray(v: unknown, path: string): string[] {
   return v.map((el, i) => expectString(el, `${path}[${i}]`));
 }
 
+function expectArray(v: unknown, path: string): unknown[] {
+  if (!Array.isArray(v)) throw new ValidationError(`Expected array`, path);
+  return v;
+}
+
 function expectBool(v: unknown, path: string): boolean {
   if (typeof v !== "boolean") throw new ValidationError(`Expected boolean`, path);
   return v;
@@ -49,8 +54,8 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
   const validatedClaims = claims.map((c, i) => validateClaim(c, `$.claims[${i}]`));
 
   const setup = input["setup"];
-  if (setup !== undefined && setup !== "standard" && setup !== "none")
-    throw new ValidationError(`setup must be "standard" or "none"`, "$.setup");
+  if (setup !== undefined && setup !== "standard" && setup !== "none" && setup !== "atheist")
+    throw new ValidationError(`setup must be "standard", "none", or "atheist"`, "$.setup");
 
   const title = input["title"] === undefined ? undefined : expectString(input["title"], "$.title");
   const uniqueCharacters =
@@ -95,9 +100,16 @@ function validateTimeline(v: unknown, pathRoot: string): TimelineEventDoc[] {
     const path = `${pathRoot}[${i}]`;
     if (!isObject(entry)) throw new ValidationError(`Expected object`, path);
     const type = expectString(entry["type"], `${path}.type`);
-    if (type !== "nominationDeath" && type !== "execution" && type !== "nightKill") {
+    if (
+      type !== "nominationDeath" &&
+      type !== "execution" &&
+      type !== "nightKill" &&
+      type !== "nightKillBeforeInfo" &&
+      type !== "abilityDeath" &&
+      type !== "doomsayerDeath"
+    ) {
       throw new ValidationError(
-        `Timeline event type must be "nominationDeath", "execution", or "nightKill"`,
+        `Timeline event type must be "nominationDeath", "execution", "nightKill", "nightKillBeforeInfo", "abilityDeath", or "doomsayerDeath"`,
         `${path}.type`,
       );
     }
@@ -105,6 +117,7 @@ function validateTimeline(v: unknown, pathRoot: string): TimelineEventDoc[] {
       timing: expectString(entry["timing"], `${path}.timing`),
       type,
       players: expectStringArray(entry["players"], `${path}.players`),
+      caller: entry["caller"] === undefined ? undefined : expectString(entry["caller"], `${path}.caller`),
     };
   });
 }
@@ -116,10 +129,35 @@ function validateClaim(input: unknown, path: string): Claim {
     throw new ValidationError(`Unsupported claim type '${type}'`, `${path}.type`);
   const name = expectString(input["name"], `${path}.name`);
   const timing = input["timing"] === undefined ? undefined : expectString(input["timing"], `${path}.timing`);
+  const extraPossibleActualRoles =
+    input["extraPossibleActualRoles"] === undefined
+      ? undefined
+      : expectStringArray(input["extraPossibleActualRoles"], `${path}.extraPossibleActualRoles`);
   const info = input["info"] === undefined ? undefined : validateCustomInfo(input["info"], `${path}.info`);
-  const base = { name, timing, info };
+  const base = { name, timing, extraPossibleActualRoles, info };
 
   switch (type as Claim["type"]) {
+    case "Acrobat": {
+      const choices = input["choices"];
+      return {
+        ...base,
+        type: "Acrobat",
+        choices:
+          choices === undefined
+            ? undefined
+            : expectArray(choices, `${path}.choices`).map((entry, index) => {
+                if (!isObject(entry)) throw new ValidationError(`Expected object`, `${path}.choices[${index}]`);
+                return {
+                  player: expectString(entry["player"], `${path}.choices[${index}].player`),
+                  timing:
+                    entry["timing"] === undefined
+                      ? undefined
+                      : expectString(entry["timing"], `${path}.choices[${index}].timing`),
+                  died: expectBool(entry["died"], `${path}.choices[${index}].died`),
+                };
+              }),
+      };
+    }
     case "Investigator":
       return {
         ...base,
@@ -152,12 +190,35 @@ function validateClaim(input: unknown, path: string): Claim {
         count: input["count"] === undefined ? undefined : expectNumber(input["count"], `${path}.count`),
         registers: input["registers"] as boolean | undefined,
       };
+    case "Chambermaid": {
+      const checks = input["checks"];
+      return {
+        ...base,
+        type: "Chambermaid",
+        checks:
+          checks === undefined
+            ? undefined
+            : expectArray(checks, `${path}.checks`).map((entry, index) => {
+                if (!isObject(entry)) throw new ValidationError(`Expected object`, `${path}.checks[${index}]`);
+                return {
+                  left: expectString(entry["left"], `${path}.checks[${index}].left`),
+                  right: expectString(entry["right"], `${path}.checks[${index}].right`),
+                  count: expectNumber(entry["count"], `${path}.checks[${index}].count`),
+                  timing:
+                    entry["timing"] === undefined
+                      ? undefined
+                      : expectString(entry["timing"], `${path}.checks[${index}].timing`),
+                };
+              }),
+      };
+    }
     case "Empath":
       return {
         ...base,
         type: "Empath",
         count: input["count"] === undefined ? undefined : expectNumber(input["count"], `${path}.count`),
         player: input["player"] as string | undefined,
+        neighbors: input["neighbors"] === undefined ? undefined : validatePair(input["neighbors"], `${path}.neighbors`),
       };
     case "FortuneTeller": {
       const checks = input["checks"];
@@ -185,6 +246,26 @@ function validateClaim(input: unknown, path: string): Claim {
         player: input["player"] === undefined ? undefined : expectString(input["player"], `${path}.player`),
         role: input["role"] === undefined ? undefined : expectString(input["role"], `${path}.role`),
       };
+    case "Legionary": {
+      const counts = input["counts"];
+      return {
+        ...base,
+        type: "Legionary",
+        counts:
+          counts === undefined
+            ? undefined
+            : expectArray(counts, `${path}.counts`).map((entry, index) => {
+                if (!isObject(entry)) throw new ValidationError(`Expected object`, `${path}.counts[${index}]`);
+                return {
+                  count: expectNumber(entry["count"], `${path}.counts[${index}].count`),
+                  timing:
+                    entry["timing"] === undefined
+                      ? undefined
+                      : expectString(entry["timing"], `${path}.counts[${index}].timing`),
+                };
+              }),
+      };
+    }
     case "Noble":
       return {
         ...base,
@@ -195,6 +276,16 @@ function validateClaim(input: unknown, path: string): Claim {
             : expectStringArray(input["oneEvilAmong"], `${path}.oneEvilAmong`),
         among: input["among"] === undefined ? undefined : expectStringArray(input["among"], `${path}.among`),
         evilCount: input["evilCount"] as number | undefined,
+      };
+    case "Oracle":
+      return {
+        ...base,
+        type: "Oracle",
+        count: input["count"] === undefined ? undefined : expectNumber(input["count"], `${path}.count`),
+        deadPlayers:
+          input["deadPlayers"] === undefined
+            ? undefined
+            : expectStringArray(input["deadPlayers"], `${path}.deadPlayers`),
       };
     case "Steward":
       return {
@@ -217,6 +308,61 @@ function validateClaim(input: unknown, path: string): Claim {
         noDemonAmong,
       };
     }
+    case "Gambler": {
+      const guesses = input["guesses"];
+      return {
+        ...base,
+        type: "Gambler",
+        guesses:
+          guesses === undefined
+            ? undefined
+            : expectArray(guesses, `${path}.guesses`).map((entry, index) => {
+                if (!isObject(entry)) throw new ValidationError(`Expected object`, `${path}.guesses[${index}]`);
+                return {
+                  player: expectString(entry["player"], `${path}.guesses[${index}].player`),
+                  role: expectString(entry["role"], `${path}.guesses[${index}].role`),
+                  timing:
+                    entry["timing"] === undefined
+                      ? undefined
+                      : expectString(entry["timing"], `${path}.guesses[${index}].timing`),
+                  survived:
+                    entry["survived"] === undefined
+                      ? undefined
+                      : expectBool(entry["survived"], `${path}.guesses[${index}].survived`),
+                };
+              }),
+      };
+    }
+    case "Gossip": {
+      const statements = input["statements"];
+      return {
+        ...base,
+        type: "Gossip",
+        statements:
+          statements === undefined
+            ? undefined
+            : expectArray(statements, `${path}.statements`).map((entry, index) => {
+                if (!isObject(entry)) throw new ValidationError(`Expected object`, `${path}.statements[${index}]`);
+                return {
+                  expression: expectString(entry["expression"], `${path}.statements[${index}].expression`),
+                  timing:
+                    entry["timing"] === undefined
+                      ? undefined
+                      : expectString(entry["timing"], `${path}.statements[${index}].timing`),
+                  killed:
+                    entry["killed"] === undefined
+                      ? undefined
+                      : expectBool(entry["killed"], `${path}.statements[${index}].killed`),
+                };
+              }),
+      };
+    }
+    case "Philosopher":
+      return {
+        ...base,
+        type: "Philosopher",
+        role: input["role"] === undefined ? undefined : expectString(input["role"], `${path}.role`),
+      };
     case "Seamstress": {
       const among = input["among"] === undefined ? [] : expectStringArray(input["among"], `${path}.among`);
       const aligned = input["aligned"] === undefined ? undefined : expectBool(input["aligned"], `${path}.aligned`);
@@ -262,6 +408,16 @@ function validateClaim(input: unknown, path: string): Claim {
         distance:
           input["distance"] === undefined ? undefined : expectPositiveInteger(input["distance"], `${path}.distance`),
       };
+    case "Courtier":
+      return {
+        ...base,
+        type: "Courtier",
+        role: input["role"] === undefined ? undefined : expectString(input["role"], `${path}.role`),
+        drunkTimings:
+          input["drunkTimings"] === undefined
+            ? undefined
+            : expectStringArray(input["drunkTimings"], `${path}.drunkTimings`),
+      };
     case "Mathematician":
       return {
         ...base,
@@ -271,12 +427,30 @@ function validateClaim(input: unknown, path: string): Claim {
             ? undefined
             : validateMathematicianCounts(input["malfunctions"], `${path}.malfunctions`),
       };
+    case "Ravenkeeper":
+      return {
+        ...base,
+        type: "Ravenkeeper",
+        player: input["player"] === undefined ? undefined : expectString(input["player"], `${path}.player`),
+        role: input["role"] === undefined ? undefined : expectString(input["role"], `${path}.role`),
+      };
     case "Sage":
       return {
         ...base,
         type: "Sage",
         demonAmong:
           input["demonAmong"] === undefined ? undefined : expectStringArray(input["demonAmong"], `${path}.demonAmong`),
+      };
+    case "Slayer":
+      return {
+        ...base,
+        type: "Slayer",
+        target: input["target"] === undefined ? undefined : expectString(input["target"], `${path}.target`),
+        killed: input["killed"] === undefined ? undefined : expectBool(input["killed"], `${path}.killed`),
+        gameContinued:
+          input["gameContinued"] === undefined
+            ? undefined
+            : expectBool(input["gameContinued"], `${path}.gameContinued`),
       };
     case "Snake Charmer":
       return {
@@ -296,10 +470,25 @@ function validateClaim(input: unknown, path: string): Claim {
           return {
             player: expectString(c["player"], `${path}.checks[${i}].player`),
             good: expectBool(c["good"], `${path}.checks[${i}].good`),
+            timing: c["timing"] === undefined ? undefined : expectString(c["timing"], `${path}.checks[${i}].timing`),
           };
         }),
       };
     }
+    case "Klutz":
+      return {
+        ...base,
+        type: "Klutz",
+        chosen: input["chosen"] === undefined ? undefined : expectString(input["chosen"], `${path}.chosen`),
+        lost: input["lost"] === undefined ? undefined : expectBool(input["lost"], `${path}.lost`),
+      };
+    case "Virgin":
+      return {
+        ...base,
+        type: "Virgin",
+        nominator: input["nominator"] === undefined ? undefined : expectString(input["nominator"], `${path}.nominator`),
+        executed: input["executed"] === undefined ? undefined : expectBool(input["executed"], `${path}.executed`),
+      };
     case "Balloonist": {
       const pairs = input["differentCharacterTypePairs"];
       if (!Array.isArray(pairs)) throw new ValidationError(`Expected array`, `${path}.differentCharacterTypePairs`);
@@ -330,6 +519,13 @@ function validateClaim(input: unknown, path: string): Claim {
         }),
       };
     }
+    case "Nightwatchman":
+      return {
+        ...base,
+        type: "Nightwatchman",
+        chosen: input["chosen"] === undefined ? undefined : expectString(input["chosen"], `${path}.chosen`),
+        learned: input["learned"] === undefined ? undefined : expectBool(input["learned"], `${path}.learned`),
+      };
     default:
       return { ...base, type: type as Claim["type"] } as Claim;
   }
@@ -342,10 +538,16 @@ function validateCustomInfo(input: unknown, path: string): Claim["info"] {
     if (!isObject(entry)) throw new ValidationError(`Expected object`, entryPath);
     return {
       timing: entry["timing"] === undefined ? undefined : expectString(entry["timing"], `${entryPath}.timing`),
+      role: entry["role"] === undefined ? undefined : expectString(entry["role"], `${entryPath}.role`),
       expression:
         entry["expression"] === undefined ? undefined : expectString(entry["expression"], `${entryPath}.expression`),
     };
   });
+}
+
+function validatePair(input: unknown, path: string): [string, string] {
+  if (!Array.isArray(input) || input.length !== 2) throw new ValidationError(`Expected [left, right]`, path);
+  return [expectString(input[0], `${path}[0]`), expectString(input[1], `${path}[1]`)];
 }
 
 function expectPositiveInteger(v: unknown, path: string): number {

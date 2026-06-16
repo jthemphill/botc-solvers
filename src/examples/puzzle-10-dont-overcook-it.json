@@ -17,11 +17,42 @@
     "Undertaker",
     "Washerwoman"
   ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Slayer", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Josh"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Matthew"]
+    }
+  ],
   "claims": [
     {
       "type": "FortuneTeller",
       "name": "Tom",
-      "checks": []
+      "checks": [
+        {
+          "left": "Tom",
+          "right": "Sula",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Tom",
+          "right": "Josh",
+          "yes": true,
+          "timing": "night_2"
+        }
+      ]
     },
     {
       "type": "Chef",
@@ -43,12 +74,16 @@
     {
       "type": "Slayer",
       "name": "You",
-      "timing": "day_1"
+      "timing": "day_2",
+      "target": "Fraser",
+      "killed": false
     },
     {
       "type": "Ravenkeeper",
       "name": "Matthew",
-      "timing": "night_2"
+      "timing": "night_2",
+      "player": "Josh",
+      "role": "Imp"
     },
     {
       "type": "Undertaker",

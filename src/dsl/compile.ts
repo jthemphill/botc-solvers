@@ -311,6 +311,64 @@ class Compiler {
         span: node.span,
       };
     }
+    if (node.name === "role_in_play_count") {
+      if (node.args.length < 2) throw new DslError(`role_in_play_count() takes (n, role, ...)`, node.span);
+      const countArg = node.args[0] as AstCall["args"][number];
+      if (countArg.name !== undefined)
+        throw new DslError(`role_in_play_count's first argument is positional`, countArg.span);
+      const countVal = this.evalNode(countArg.value, env);
+      if (countVal.kind !== "number") throw new DslError(`role_in_play_count expects a number first`, countArg.span);
+      const literals: BoolLike[] = [];
+      for (let index = 1; index < node.args.length; index += 1) {
+        const roleArg = node.args[index] as AstCall["args"][number];
+        if (roleArg.name !== undefined)
+          throw new DslError(`role_in_play_count role arguments are positional`, roleArg.span);
+        const role = this.evalNode(roleArg.value, env);
+        if (role.kind !== "role") throw new DslError(`role_in_play_count expected a role`, role.span);
+        literals.push(this.game.roleInPlay(role.name));
+      }
+      return {
+        kind: "bool",
+        value: this.game.boolSumEquals(
+          literals,
+          countVal.value,
+          this.freshName(`role_in_play_count_${countVal.value}`),
+        ),
+        span: node.span,
+      };
+    }
+    if (node.name === "role_distance") {
+      if (node.args.length !== 3) throw new DslError(`role_distance() takes (n, role, role)`, node.span);
+      const countArg = node.args[0] as AstCall["args"][number];
+      const leftArg = node.args[1] as AstCall["args"][number];
+      const rightArg = node.args[2] as AstCall["args"][number];
+      if (countArg.name !== undefined || leftArg.name !== undefined || rightArg.name !== undefined)
+        throw new DslError(`role_distance arguments are positional`, node.span);
+      const distance = this.evalNode(countArg.value, env);
+      const left = this.evalNode(leftArg.value, env);
+      const right = this.evalNode(rightArg.value, env);
+      if (distance.kind !== "number") throw new DslError(`role_distance expects a number first`, countArg.span);
+      if (left.kind !== "role") throw new DslError(`role_distance expected a role second`, left.span);
+      if (right.kind !== "role") throw new DslError(`role_distance expected a role third`, right.span);
+      return {
+        kind: "bool",
+        value: this.rolesAtDistance(left.name, right.name, distance.value),
+        span: node.span,
+      };
+    }
+    if (node.name === "townsfolk_chain_length") {
+      if (node.args.length !== 1) throw new DslError(`townsfolk_chain_length() takes (n)`, node.span);
+      const lengthArg = node.args[0] as AstCall["args"][number];
+      if (lengthArg.name !== undefined)
+        throw new DslError(`townsfolk_chain_length's argument is positional`, lengthArg.span);
+      const lengthVal = this.evalNode(lengthArg.value, env);
+      if (lengthVal.kind !== "number") throw new DslError(`townsfolk_chain_length expects a number`, lengthArg.span);
+      return {
+        kind: "bool",
+        value: this.longestCharacterTypeChainIs(CharacterType.Townsfolk, lengthVal.value),
+        span: node.span,
+      };
+    }
     if (node.name === "malfunctions") {
       if (node.args.length !== 2) throw new DslError(`malfunctions() takes (timing, n)`, node.span);
       const timingArg = node.args[0] as AstCall["args"][number];
@@ -323,6 +381,49 @@ class Compiler {
         value: this.game.malfunctionCountAt(timing, countVal.value, this.freshName(`malfunctions_${timing}`)),
         span: node.span,
       };
+    }
+    if (node.name === "registers_as") {
+      if (node.args.length !== 2) throw new DslError(`registers_as() takes (player, role)`, node.span);
+      const playerArg = node.args[0] as AstCall["args"][number];
+      const roleArg = node.args[1] as AstCall["args"][number];
+      if (playerArg.name !== undefined || roleArg.name !== undefined)
+        throw new DslError(`registers_as arguments are positional`, node.span);
+      const player = this.evalNode(playerArg.value, env);
+      const role = this.evalNode(roleArg.value, env);
+      if (player.kind !== "player") throw new DslError(`registers_as expected a player`, player.span);
+      if (role.kind !== "role") throw new DslError(`registers_as expected a role`, role.span);
+      return {
+        kind: "bool",
+        value: this.game.registersAsRole(player.name, role.name, this.freshName("registers_as")),
+        span: node.span,
+      };
+    }
+    if (node.name === "fortune_teller_red_herring") {
+      if (node.args.length !== 2)
+        throw new DslError(`fortune_teller_red_herring() takes (fortuneTeller, player)`, node.span);
+      const fortuneTellerArg = node.args[0] as AstCall["args"][number];
+      const playerArg = node.args[1] as AstCall["args"][number];
+      if (fortuneTellerArg.name !== undefined || playerArg.name !== undefined)
+        throw new DslError(`fortune_teller_red_herring arguments are positional`, node.span);
+      const fortuneTeller = this.evalNode(fortuneTellerArg.value, env);
+      const player = this.evalNode(playerArg.value, env);
+      if (fortuneTeller.kind !== "player")
+        throw new DslError(`fortune_teller_red_herring expected a player first`, fortuneTeller.span);
+      if (player.kind !== "player")
+        throw new DslError(`fortune_teller_red_herring expected a player second`, player.span);
+      return {
+        kind: "bool",
+        value: this.game.fortuneTellerRedHerring(fortuneTeller.name, player.name),
+        span: node.span,
+      };
+    }
+    if (node.name === "globally_drunk") {
+      if (node.args.length !== 1) throw new DslError(`globally_drunk() takes (player)`, node.span);
+      const playerArg = node.args[0] as AstCall["args"][number];
+      if (playerArg.name !== undefined) throw new DslError(`globally_drunk argument is positional`, node.span);
+      const player = this.evalNode(playerArg.value, env);
+      if (player.kind !== "player") throw new DslError(`globally_drunk expected a player`, player.span);
+      return { kind: "bool", value: this.game.globalDrunk(player.name), span: node.span };
     }
     if (node.name === "chef") {
       if (node.args.length === 0 || node.args.length > 2)
@@ -345,6 +446,58 @@ class Compiler {
       return { kind: "bool", value: bv, span: node.span };
     }
     throw new DslError(`Unknown function '${node.name}'`, node.nameSpan);
+  }
+
+  private rolesAtDistance(leftRole: string, rightRole: string, distance: number): BoolLike {
+    if (!Number.isInteger(distance) || distance < 0)
+      throw new DslError(`Distance must be a non-negative integer`, { start: 0, end: 0 });
+    return this.game.anyOf(
+      this.ctx.players.flatMap((leftPlayer, leftIndex) =>
+        this.ctx.players.map((rightPlayer, rightIndex) => {
+          const clockwise = (rightIndex - leftIndex + this.ctx.players.length) % this.ctx.players.length;
+          const seatingDistance = Math.min(clockwise, this.ctx.players.length - clockwise);
+          return this.game.allOf(
+            [
+              this.game.actualIs(leftPlayer, leftRole),
+              this.game.actualIs(rightPlayer, rightRole),
+              this.game.constantBool(seatingDistance === distance, this.freshName(`distance_${distance}`)),
+            ],
+            this.freshName(`role_distance_${distance}`),
+          );
+        }),
+      ),
+      this.freshName(`roles_at_distance_${distance}`),
+    );
+  }
+
+  private longestCharacterTypeChainIs(characterType: CharacterType, length: number): BoolLike {
+    if (!Number.isInteger(length) || length < 1)
+      throw new DslError(`Chain length must be a positive integer`, { start: 0, end: 0 });
+    const atLeastLength = this.hasCharacterTypeChain(characterType, length);
+    if (length >= this.ctx.players.length) return atLeastLength;
+    return this.game.allOf(
+      [
+        atLeastLength,
+        this.game.not(this.hasCharacterTypeChain(characterType, length + 1), this.freshName("longer_chain_absent")),
+      ],
+      this.freshName(`${characterType}_chain_length_${length}`),
+    );
+  }
+
+  private hasCharacterTypeChain(characterType: CharacterType, length: number): BoolLike {
+    if (length > this.ctx.players.length) return this.game.constantBool(false, this.freshName("chain_too_long"));
+    return this.game.anyOf(
+      this.ctx.players.map((_player, startIndex) =>
+        this.game.allOf(
+          Array.from({ length }, (_ignored, offset) => {
+            const player = this.ctx.players[(startIndex + offset) % this.ctx.players.length] as string;
+            return this.game.hasCharacterType(player, characterType);
+          }),
+          this.freshName(`${characterType}_chain_${length}`),
+        ),
+      ),
+      this.freshName(`${characterType}_chain_at_least_${length}`),
+    );
   }
 
   private expectTimingArg(arg: AstCall["args"][number]): Timing {

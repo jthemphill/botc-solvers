@@ -30,6 +30,7 @@ export interface InfoClaim {
 export interface RoleBaseOptions {
   readonly name: string;
   readonly timing?: Timing;
+  readonly extraPossibleActualRoles?: readonly RoleRef[];
   readonly infoClaims?: readonly InfoClaimBuilder[];
 }
 
@@ -82,6 +83,11 @@ function resolveInfoClaim(game: BOTCModel, context: unknown, claim: InfoClaim): 
 
 function explicitTiming(options: TimedOptions): Timing | undefined {
   return options.timing;
+}
+
+function healthTimingForAbility(timing: Timing): Timing {
+  const match = /^day_(\d+)$/.exec(timing);
+  return match === null ? timing : (`night_${match[1]}` as Timing);
 }
 
 function addDefaultInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
@@ -148,6 +154,7 @@ export abstract class Role {
   readonly maxCopies?: number;
   readonly name: string;
   readonly timing?: Timing;
+  readonly extraPossibleActualRoles: readonly RoleRef[];
   readonly infoClaims: readonly InfoClaim[];
 
   constructor(nameOrOptions: string | RoleBaseOptions, options: TimedOptions = {}) {
@@ -160,6 +167,8 @@ export abstract class Role {
     this.characterType = cls.characterType;
     this.maxCopies = cls.maxCopies;
     this.timing = resolvedTiming;
+    this.extraPossibleActualRoles =
+      typeof nameOrOptions === "string" ? [] : (nameOrOptions.extraPossibleActualRoles ?? []);
     this.infoClaims = typeof nameOrOptions === "string" ? [] : (nameOrOptions.infoClaims ?? []).map(normalizeInfoClaim);
   }
 
@@ -189,7 +198,7 @@ export abstract class Role {
       {
         drunkRole,
         evilRoles: options.evilRoles,
-        extraPossibleActualRoles: options.extraPossibleActualRoles,
+        extraPossibleActualRoles: [...this.extraPossibleActualRoles, ...(options.extraPossibleActualRoles ?? [])],
       },
     );
   }
@@ -240,6 +249,7 @@ export abstract class Role {
         Dreamer.roleName,
         Empath.roleName,
         FortuneTeller.roleName,
+        Legionary.roleName,
         Mathematician.roleName,
         SnakeCharmer.roleName,
         VillageIdiot.roleName,
@@ -384,6 +394,35 @@ export class Klutz extends Role {
   static readonly roleName = "Klutz";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Outsider;
+  readonly chosen?: string;
+  readonly lost?: boolean;
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly chosen?: string;
+      readonly lost?: boolean;
+    },
+  ) {
+    super(options);
+    this.chosen = options.chosen;
+    this.lost = options.lost;
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Klutz, options);
+    if (this.chosen === undefined || this.lost === undefined) {
+      this.applyInfoClaimBuilders(game, Klutz, this.infoClaims, options);
+      return;
+    }
+
+    const timing = this.claimTiming(explicitTiming(options));
+    const activeHealthy = game.allOf(
+      [game.hasRoleAt(this.name, Klutz, timing), game.soberAndHealthy(this.name, timing)],
+      claimName(this.name, Klutz, "choice_active"),
+    );
+    game.addImplication(activeHealthy, this.lost ? game.isEvil(this.chosen) : game.isGood(this.chosen));
+    this.applyInfoClaimBuilders(game, Klutz, this.infoClaims, options);
+  }
 }
 export class Puzzlemaster extends Role {
   static readonly roleName = "Puzzlemaster";
@@ -429,6 +468,69 @@ export class Slayer extends Role {
   static readonly roleName = "Slayer";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly target?: string;
+  readonly killed?: boolean;
+  readonly gameContinued: boolean;
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly target?: string;
+      readonly killed?: boolean;
+      readonly gameContinued?: boolean;
+    },
+  ) {
+    super(options);
+    this.target = options.target;
+    this.killed = options.killed;
+    this.gameContinued = options.gameContinued ?? false;
+  }
+
+  static shotResult(game: BOTCModel, target: string, killed: boolean, name: string): BoolVar {
+    const registersAsDemon = game.registersAsCharacterType(target, CharacterType.Demon, name);
+    return killed ? registersAsDemon : game.not(registersAsDemon, `${name}_${target}_did_not_die`);
+  }
+
+  static actualDemonTarget(game: BOTCModel, target: string, name: string): BoolVar {
+    const demonRoles = [...game.characters.entries()]
+      .filter(([, character]) => roleCharacterType(character) === CharacterType.Demon)
+      .map(([role]) => role);
+    return game.anyOf(
+      demonRoles.map((role) => game.actualIs(target, role)),
+      `${name}_${target}_actual_demon`,
+    );
+  }
+
+  static scarletWomanCanCatch(game: BOTCModel, name: string): BoolVar {
+    return game.characters.has("Scarlet Woman")
+      ? game.roleInPlay("Scarlet Woman")
+      : game.constantBool(false, `${name}_no_scarlet_woman_to_catch`);
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Slayer, options);
+    if (this.target === undefined || this.killed === undefined) {
+      this.applyInfoClaimBuilders(game, Slayer, this.infoClaims, options);
+      return;
+    }
+
+    const timing = this.claimTiming(explicitTiming(options));
+    const activeHealthy = game.allOf(
+      [game.hasRoleAt(this.name, Slayer, timing), game.soberAndHealthy(this.name, healthTimingForAbility(timing))],
+      claimName(this.name, Slayer, "shot_active"),
+    );
+    if (this.killed) game.addTruth(activeHealthy);
+    game.addImplication(
+      activeHealthy,
+      Slayer.shotResult(game, this.target, this.killed, claimName(this.name, Slayer, "shot")),
+    );
+    if (this.killed && this.gameContinued) {
+      game.addImplication(
+        Slayer.actualDemonTarget(game, this.target, claimName(this.name, Slayer, "shot")),
+        Slayer.scarletWomanCanCatch(game, claimName(this.name, Slayer, "shot_continued")),
+      );
+    }
+    this.applyInfoClaimBuilders(game, Slayer, this.infoClaims, options);
+  }
 }
 
 export class Alsaahir extends Role {
@@ -453,18 +555,168 @@ export class Philosopher extends Role {
   static readonly roleName = "Philosopher";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly role?: RoleRef;
+
+  constructor(options: RoleBaseOptions & { readonly role?: RoleRef }) {
+    super(options);
+    this.role = options.role;
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Philosopher, options);
+    if (this.role !== undefined) {
+      const timing = this.claimTiming(explicitTiming(options));
+      const activeHealthy = game.allOf(
+        [game.actualIs(this.name, Philosopher), game.soberAndHealthy(this.name, timing)],
+        claimName(this.name, Philosopher, "choice_active"),
+      );
+      game.addRoleAt(this.name, this.role, timing, activeHealthy);
+    }
+    this.applyInfoClaimBuilders(game, Philosopher, this.infoClaims, options);
+  }
 }
 
 export class Acrobat extends Role {
   static readonly roleName = "Acrobat";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly choices: readonly AcrobatChoice[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly choices?: readonly AcrobatChoice[];
+    },
+  ) {
+    super(options);
+    this.choices = options.choices ?? [];
+  }
+
+  static targetIsDrunkOrPoisoned(game: BOTCModel, player: string, timing: Timing, name: string): BoolVar {
+    return game.anyOf(
+      [game.isDrunkAt(player, timing), game.isPoisonedAt(player, timing), game.noDashiiPoisonedAt(player, timing)],
+      name,
+    );
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Acrobat, options);
+    this.choices.forEach((choice, index) => {
+      const timing = this.claimTiming(choice.timing, index);
+      const activeHealthy = game.allOf(
+        [game.hasRoleAt(this.name, Acrobat, timing), game.soberAndHealthy(this.name, timing)],
+        claimName(this.name, Acrobat, `choice_${index + 1}_active`),
+      );
+      const targetDrunkOrPoisoned = Acrobat.targetIsDrunkOrPoisoned(
+        game,
+        choice.player,
+        timing,
+        claimName(this.name, Acrobat, `choice_${index + 1}_${choice.player}_drunk_or_poisoned`),
+      );
+      if (choice.died) game.addTruth(activeHealthy);
+      game.addImplication(
+        activeHealthy,
+        choice.died
+          ? targetDrunkOrPoisoned
+          : game.not(targetDrunkOrPoisoned, claimName(this.name, Acrobat, `choice_${index + 1}_survived`)),
+      );
+    });
+    this.applyInfoClaimBuilders(game, Acrobat, this.infoClaims, options);
+  }
+}
+
+export interface AcrobatChoice {
+  readonly player: string;
+  readonly timing?: Timing;
+  readonly died: boolean;
 }
 
 export class Gambler extends Role {
   static readonly roleName = "Gambler";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly guesses: readonly GamblerGuess[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly guesses?: readonly GamblerGuess[];
+    },
+  ) {
+    super(options);
+    this.guesses = options.guesses ?? [];
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Gambler, options);
+    this.guesses.forEach((guess, index) => {
+      if (guess.survived === undefined) return;
+      const timing = this.claimTiming(guess.timing, index);
+      const activeHealthy = game.allOf(
+        [game.hasRoleAt(this.name, Gambler, timing), game.soberAndHealthy(this.name, timing)],
+        claimName(this.name, Gambler, `guess_${index + 1}_active`),
+      );
+      const correct = game.registersAsRole(
+        guess.player,
+        guess.role,
+        claimName(this.name, Gambler, `guess_${index + 1}_correct`),
+      );
+      if (!guess.survived) game.addTruth(activeHealthy);
+      game.addImplication(
+        activeHealthy,
+        guess.survived ? correct : game.not(correct, claimName(this.name, Gambler, `guess_${index + 1}_wrong`)),
+      );
+    });
+    this.applyInfoClaimBuilders(game, Gambler, this.infoClaims, options);
+  }
+}
+
+export interface GamblerGuess {
+  readonly player: string;
+  readonly role: RoleRef;
+  readonly timing?: Timing;
+  readonly survived?: boolean;
+}
+
+export interface GossipStatement {
+  readonly timing?: Timing;
+  readonly statement: ClaimPredicate;
+  readonly killed?: boolean;
+}
+
+export class Gossip extends Role {
+  static readonly roleName = "Gossip";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+  readonly statements: readonly GossipStatement[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly statements?: readonly GossipStatement[];
+    },
+  ) {
+    super(options);
+    this.statements = options.statements ?? [];
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Gossip, options);
+    this.statements.forEach((statement, index) => {
+      if (statement.killed === undefined) return;
+      const timing = this.claimTiming(statement.timing, index);
+      const activeHealthy = game.allOf(
+        [game.hasRoleAt(this.name, Gossip, timing), game.soberAndHealthy(this.name, healthTimingForAbility(timing))],
+        claimName(this.name, Gossip, `statement_${index + 1}_active`),
+      );
+      const trueStatement = statement.statement(game, options.context);
+      if (statement.killed) game.addTruth(activeHealthy);
+      game.addImplication(
+        activeHealthy,
+        statement.killed
+          ? trueStatement
+          : game.not(trueStatement, claimName(this.name, Gossip, `statement_${index + 1}_false`)),
+      );
+    });
+    this.applyInfoClaimBuilders(game, Gossip, this.infoClaims, options);
+  }
 }
 
 export class Mathematician extends Role {
@@ -500,16 +752,29 @@ export class Mathematician extends Role {
   }
 }
 
-export class Gossip extends Role {
-  static readonly roleName = "Gossip";
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
-}
-
 export class Ravenkeeper extends Role {
   static readonly roleName = "Ravenkeeper";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly player?: string;
+  readonly role?: RoleRef;
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly player?: string;
+      readonly role?: RoleRef;
+    },
+  ) {
+    super(options);
+    this.player = options.player;
+    this.role = options.role;
+  }
+
+  override learnedInfo(game: BOTCModel): BoolLike | undefined {
+    return this.player === undefined || this.role === undefined
+      ? undefined
+      : game.registersAsRole(this.player, this.role, claimName(this.name, Ravenkeeper, "role"));
+  }
 }
 
 export class Sage extends Role {
@@ -617,10 +882,115 @@ export class Chef extends Role {
   }
 }
 
+export interface ChambermaidCheck {
+  readonly left: string;
+  readonly right: string;
+  readonly count: number;
+  readonly timing?: Timing;
+}
+
+const FIRST_NIGHT_WAKE_ROLES = new Set([
+  "Chef",
+  "Clockmaker",
+  "Investigator",
+  "Librarian",
+  "Noble",
+  "Shugenja",
+  "Steward",
+  "Washerwoman",
+]);
+const EVERY_NIGHT_WAKE_ROLES = new Set([
+  "Balloonist",
+  "Chambermaid",
+  "Dreamer",
+  "Empath",
+  "Fortune Teller",
+  "Mathematician",
+  "Pukka",
+  "Snake Charmer",
+  "Village Idiot",
+]);
+const SECOND_NIGHT_PLUS_WAKE_ROLES = new Set(["Oracle", "Undertaker"]);
+const SECOND_NIGHT_WAKE_ROLES = new Set(["Juggler"]);
+
+function nightNumber(timing: Timing): number | undefined {
+  const match = /^night_(\d+)$/.exec(timing);
+  return match === null ? undefined : Number(match[1]);
+}
+
 export class Chambermaid extends Role {
   static readonly roleName = "Chambermaid";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly checks: readonly ChambermaidCheck[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly checks?: readonly ChambermaidCheck[];
+    },
+  ) {
+    super(options);
+    this.checks = options.checks ?? [];
+  }
+
+  static wakesDueToAbility(game: BOTCModel, player: string, timing: Timing, name: string): BoolVar {
+    const nightIndex = nightNumber(timing);
+    if (nightIndex === undefined) return game.constantBool(false, `${name}_not_a_night`);
+    const wakingRoles = [...game.characters.keys()].filter((role) => {
+      if (EVERY_NIGHT_WAKE_ROLES.has(role)) return true;
+      if (FIRST_NIGHT_WAKE_ROLES.has(role)) return nightIndex === 1;
+      if (SECOND_NIGHT_PLUS_WAKE_ROLES.has(role)) return nightIndex >= 2;
+      if (SECOND_NIGHT_WAKE_ROLES.has(role)) return nightIndex === 2;
+      return false;
+    });
+    return game.anyOf(
+      wakingRoles.map((role) => game.hasRoleAt(player, role, timing)),
+      `${name}_${player}_woke_due_to_ability`,
+    );
+  }
+
+  static learnsWakeCount(
+    game: BOTCModel,
+    players: readonly [string, string],
+    count: number,
+    timing: Timing,
+    name: string,
+  ): BoolVar {
+    return game.boolSumEquals(
+      players.map((player) => Chambermaid.wakesDueToAbility(game, player, timing, name)),
+      count,
+      `${name}_chambermaid_count_is_${count}`,
+    );
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    if (this.checks.length === 0) {
+      super.apply(game, options);
+      return;
+    }
+    this.applyRoleClaim(game, Chambermaid, options);
+    this.checks.forEach((check, index) => {
+      const timing = this.claimTiming(check.timing ?? explicitTiming(options), index);
+      this.applyInfoClaimBuilders(
+        game,
+        Chambermaid,
+        [
+          {
+            learned: Chambermaid.learnsWakeCount(
+              game,
+              [check.left, check.right],
+              check.count,
+              timing,
+              claimName(this.name, Chambermaid, `check_${index + 1}`),
+            ),
+            timing,
+          },
+        ],
+        options,
+      );
+    });
+    this.applyInfoClaimBuilders(game, Chambermaid, this.infoClaims, options);
+  }
 }
 
 export class Clockmaker extends Role {
@@ -683,6 +1053,32 @@ export class Courtier extends Role {
   static readonly roleName = "Courtier";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly role?: RoleRef;
+  readonly drunkTimings: readonly Timing[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly role?: RoleRef;
+      readonly drunkTimings?: readonly Timing[];
+    },
+  ) {
+    super(options);
+    this.role = options.role;
+    this.drunkTimings = options.drunkTimings ?? [];
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Courtier, options);
+    if (this.role !== undefined && this.drunkTimings.length > 0) {
+      const timing = this.claimTiming(explicitTiming(options));
+      const activeHealthy = game.allOf(
+        [game.hasRoleAt(this.name, Courtier, timing), game.soberAndHealthy(this.name, timing)],
+        claimName(this.name, Courtier, "choice_active"),
+      );
+      game.addRoleDrunking(this.role, this.drunkTimings, { activeIf: activeHealthy });
+    }
+    this.applyInfoClaimBuilders(game, Courtier, this.infoClaims, options);
+  }
 }
 
 export class Dreamer extends Role {
@@ -721,18 +1117,27 @@ export class Empath extends Role {
   static readonly characterType = CharacterType.Townsfolk;
   readonly count?: number;
   readonly player?: string;
+  readonly neighbors?: readonly [string, string];
   constructor(
     options: RoleBaseOptions & {
       readonly count?: number;
       readonly player?: string;
+      readonly neighbors?: readonly [string, string];
     },
   ) {
     super(options);
     this.count = options.count;
     this.player = options.player;
+    this.neighbors = options.neighbors;
   }
-  static learnsCount(game: BOTCModel, player: string, count: number, name: string): BoolVar {
-    const [left, right] = game.neighbors(player);
+  static learnsCount(
+    game: BOTCModel,
+    player: string,
+    count: number,
+    name: string,
+    neighbors?: readonly [string, string],
+  ): BoolVar {
+    const [left, right] = neighbors ?? game.neighbors(player);
     return game.boolSumEquals(
       [game.registersAsEvil(left, name), game.registersAsEvil(right, name)],
       count,
@@ -742,7 +1147,13 @@ export class Empath extends Role {
   override learnedInfo(game: BOTCModel): BoolLike | undefined {
     return this.count === undefined
       ? undefined
-      : Empath.learnsCount(game, this.player ?? this.name, this.count, claimName(this.name, Empath, "count"));
+      : Empath.learnsCount(
+          game,
+          this.player ?? this.name,
+          this.count,
+          claimName(this.name, Empath, "count"),
+          this.neighbors,
+        );
   }
 }
 
@@ -778,18 +1189,25 @@ export class FortuneTeller extends Role {
       readonly name: string;
       readonly demonRole?: RoleRef;
       readonly registers?: boolean;
+      readonly redHerrings?: ReturnType<BOTCModel["addFortuneTellerRedHerring"]>;
     },
   ): BoolVar {
-    const choices =
+    const isDemon =
       options.demonRole === undefined
-        ? [game.isDemon(left), game.isDemon(right)]
+        ? (player: string) => game.isDemon(player)
         : options.registers
-          ? [
-              game.registersAsRole(left, options.demonRole, options.name),
-              game.registersAsRole(right, options.demonRole, options.name),
-            ]
-          : [game.actualIs(left, options.demonRole), game.actualIs(right, options.demonRole)];
-    const either = game.anyOf(choices, `${options.name}_${left}_${right}_either_demon`);
+          ? (player: string, name: string) => game.registersAsRole(player, options.demonRole as RoleRef, name)
+          : (player: string) => game.actualIs(player, options.demonRole as RoleRef);
+    if (options.redHerrings !== undefined) {
+      return options.yes
+        ? game.fortuneTellerYes(options.redHerrings, [left, right], options.name, isDemon)
+        : game.fortuneTellerNo(options.redHerrings, [left, right], options.name, isDemon);
+    }
+
+    const either = game.anyOf(
+      [isDemon(left, `${options.name}_${left}`), isDemon(right, `${options.name}_${right}`)],
+      `${options.name}_${left}_${right}_either_demon`,
+    );
     return options.yes ? either : game.not(either, `${options.name}_${left}_${right}_neither_demon`);
   }
   override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
@@ -798,6 +1216,7 @@ export class FortuneTeller extends Role {
       return;
     }
     this.applyRoleClaim(game, FortuneTeller, options);
+    const redHerrings = game.addFortuneTellerRedHerring(this.name);
     this.checks.forEach((check, index) => {
       const name = check.name ?? claimName(this.name, FortuneTeller, `check_${index + 1}`);
       const learned = FortuneTeller.learnsCheck(game, check.left, check.right, {
@@ -805,6 +1224,7 @@ export class FortuneTeller extends Role {
         name,
         demonRole: check.demonRole,
         registers: check.registers ?? false,
+        redHerrings,
       });
       this.applyInfoClaimBuilders(
         game,
@@ -983,6 +1403,7 @@ export class Knight extends Role {
 export interface VillageIdiotCheck {
   readonly player: string;
   readonly good: boolean;
+  readonly timing?: Timing;
   readonly name?: string;
 }
 
@@ -1003,20 +1424,23 @@ export class VillageIdiot extends Role {
   static learnsCheck(game: BOTCModel, player: string, good: boolean, name: string): BoolVar {
     return good ? game.registersAsGood(player, name) : game.registersAsEvil(player, name);
   }
-  override learnedInfo(game: BOTCModel): BoolLike | undefined {
-    return this.checks.length === 0
-      ? undefined
-      : game.allOf(
-          this.checks.map((check, index) =>
-            VillageIdiot.learnsCheck(
-              game,
-              check.player,
-              check.good,
-              check.name ?? claimName(this.name, VillageIdiot, `check_${index + 1}`),
-            ),
-          ),
-          claimName(this.name, VillageIdiot, "checks"),
-        );
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, VillageIdiot, options);
+    this.applyInfoClaimBuilders(
+      game,
+      VillageIdiot,
+      [
+        ...this.checks.map((check, index): InfoClaim => {
+          const name = check.name ?? claimName(this.name, VillageIdiot, `check_${index + 1}`);
+          return {
+            timing: check.timing ?? this.claimTiming(undefined, index),
+            learned: (model: BOTCModel) => VillageIdiot.learnsCheck(model, check.player, check.good, name),
+          };
+        }),
+        ...this.infoClaims,
+      ],
+      options,
+    );
   }
 }
 
@@ -1024,6 +1448,40 @@ export class Virgin extends Role {
   static readonly roleName = "Virgin";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly nominator?: string;
+  readonly executed?: boolean;
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly nominator?: string;
+      readonly executed?: boolean;
+    },
+  ) {
+    super(options);
+    this.nominator = options.nominator;
+    this.executed = options.executed;
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Virgin, options);
+    if (this.nominator === undefined || this.executed === undefined) {
+      this.applyInfoClaimBuilders(game, Virgin, this.infoClaims, options);
+      return;
+    }
+
+    const timing = this.claimTiming(explicitTiming(options));
+    const activeHealthy = game.allOf(
+      [game.hasRoleAt(this.name, Virgin, timing), game.soberAndHealthy(this.name, healthTimingForAbility(timing))],
+      claimName(this.name, Virgin, "nomination_active"),
+    );
+    game.addImplication(
+      activeHealthy,
+      this.executed
+        ? game.isTownsfolk(this.nominator)
+        : game.not(game.isTownsfolk(this.nominator), claimName(this.name, Virgin, "nominator_not_townsfolk")),
+    );
+    this.applyInfoClaimBuilders(game, Virgin, this.infoClaims, options);
+  }
 }
 
 export class Librarian extends Role {
@@ -1089,6 +1547,85 @@ export class Legionary extends Role {
   static readonly roleName = "Legionary";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  static readonly maxCopies = 3;
+  readonly counts: readonly LegionaryCount[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly counts?: readonly LegionaryCount[];
+    },
+  ) {
+    super(options);
+    this.counts = options.counts ?? [];
+  }
+
+  static learnsCount(
+    game: BOTCModel,
+    player: string,
+    count: number,
+    alivePlayers: readonly string[],
+    name: string,
+  ): BoolVar {
+    const playerIndex = alivePlayers.indexOf(player);
+    if (playerIndex === -1) return game.constantBool(false, `${name}_dead_player`);
+
+    const nextLegionaryOptions: BoolVar[] = [];
+    for (let offset = 1; offset < alivePlayers.length; offset += 1) {
+      const candidate = alivePlayers[(playerIndex + offset) % alivePlayers.length] as string;
+      const between = Array.from(
+        { length: offset - 1 },
+        (_ignored, betweenOffset) => alivePlayers[(playerIndex + betweenOffset + 1) % alivePlayers.length] as string,
+      );
+      const candidateIsNext = game.allOf(
+        [
+          game.actualIs(candidate, Legionary),
+          ...between.map((betweenPlayer) => game.actualIs(betweenPlayer, Legionary).not()),
+        ],
+        `${name}_${candidate}_next_legionary`,
+      );
+      const countMatches = game.boolSumEquals(
+        between.map((betweenPlayer) => game.isEvil(betweenPlayer)),
+        count,
+        `${name}_${candidate}_evil_count_${count}`,
+      );
+      nextLegionaryOptions.push(
+        game.allOf([candidateIsNext, countMatches], `${name}_${candidate}_next_legionary_count_matches`),
+      );
+    }
+    return game.anyOf(nextLegionaryOptions, name);
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Legionary, options);
+    this.applyInfoClaimBuilders(
+      game,
+      Legionary,
+      [
+        ...this.counts.map((entry, index): InfoClaim => {
+          const timing = this.claimTiming(entry.timing, index);
+          return {
+            timing,
+            learned: (model: BOTCModel) =>
+              Legionary.learnsCount(
+                model,
+                this.name,
+                entry.count,
+                entry.alivePlayers ?? model.players,
+                claimName(this.name, Legionary, `count_${index + 1}`),
+              ),
+          };
+        }),
+        ...this.infoClaims,
+      ],
+      options,
+    );
+  }
+}
+
+export interface LegionaryCount {
+  readonly count: number;
+  readonly timing?: Timing;
+  readonly alivePlayers?: readonly string[];
 }
 
 export class Mayor extends Role {
@@ -1129,12 +1666,67 @@ export class Oracle extends Role {
   static readonly roleName = "Oracle";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly count?: number;
+  readonly deadPlayers: readonly string[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly count?: number;
+      readonly deadPlayers?: readonly string[];
+    },
+  ) {
+    super(options);
+    this.count = options.count;
+    this.deadPlayers = options.deadPlayers ?? [];
+  }
+
+  static learnsDeadEvilCount(game: BOTCModel, deadPlayers: readonly string[], count: number): BoolVar {
+    return game.registeredEvilCount(deadPlayers, count, `oracle_dead_evil_count_is_${count}`);
+  }
+
+  override learnedInfo(game: BOTCModel): BoolLike | undefined {
+    return this.count === undefined || this.deadPlayers.length === 0
+      ? undefined
+      : Oracle.learnsDeadEvilCount(game, this.deadPlayers, this.count);
+  }
 }
 
 export class Nightwatchman extends Role {
   static readonly roleName = "Nightwatchman";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly chosen?: string;
+  readonly learned?: boolean;
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly chosen?: string;
+      readonly learned?: boolean;
+    },
+  ) {
+    super(options);
+    this.chosen = options.chosen;
+    this.learned = options.learned;
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Nightwatchman, options);
+    if (this.chosen === undefined || this.learned === undefined) {
+      this.applyInfoClaimBuilders(game, Nightwatchman, this.infoClaims, options);
+      return;
+    }
+
+    const timing = this.claimTiming(explicitTiming(options));
+    const activeHealthy = game.allOf(
+      [game.hasRoleAt(this.name, Nightwatchman, timing), game.soberAndHealthy(this.name, timing)],
+      claimName(this.name, Nightwatchman, "chosen_player_learns"),
+    );
+    game.addImplication(
+      activeHealthy,
+      game.constantBool(this.learned, claimName(this.chosen, Nightwatchman, "learned")),
+    );
+    this.applyInfoClaimBuilders(game, Nightwatchman, this.infoClaims, options);
+  }
 }
 
 export class Savant extends Role {

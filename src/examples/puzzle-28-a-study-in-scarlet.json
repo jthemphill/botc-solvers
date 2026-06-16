@@ -16,27 +16,100 @@
     "Oracle",
     "Undertaker"
   ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Chambermaid", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Adam"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["You"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Aoife"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightKill",
+      "players": ["Sarah"]
+    }
+  ],
   "claims": [
     {
       "type": "Clockmaker",
-      "name": "Adam"
+      "name": "Adam",
+      "distance": 4
     },
     {
       "type": "Empath",
-      "name": "Oscar"
+      "name": "Oscar",
+      "timing": "night_1",
+      "count": 1
+    },
+    {
+      "type": "Empath",
+      "name": "Oscar",
+      "timing": "night_2",
+      "count": 2
+    },
+    {
+      "type": "Empath",
+      "name": "Oscar",
+      "timing": "night_3",
+      "count": 1
     },
     {
       "type": "FortuneTeller",
       "name": "Olivia",
-      "checks": []
+      "checks": [
+        {
+          "left": "Olivia",
+          "right": "Sarah",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Olivia",
+          "right": "Aoife",
+          "yes": false,
+          "timing": "night_2"
+        },
+        {
+          "left": "Matt",
+          "right": "Oscar",
+          "yes": false,
+          "timing": "night_3"
+        }
+      ]
     },
     {
       "type": "Oracle",
-      "name": "Sarah"
+      "name": "Sarah",
+      "timing": "night_2",
+      "count": 1,
+      "deadPlayers": ["Adam", "You"]
     },
     {
       "type": "Chambermaid",
-      "name": "You"
+      "name": "You",
+      "checks": [
+        {
+          "left": "Adam",
+          "right": "Sarah",
+          "count": 1,
+          "timing": "night_1"
+        }
+      ]
     },
     {
       "type": "Juggler",
@@ -50,7 +123,17 @@
     },
     {
       "type": "Undertaker",
-      "name": "Fraser"
+      "name": "Fraser",
+      "timing": "night_2",
+      "player": "Adam",
+      "role": "Drunk"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Fraser",
+      "timing": "night_3",
+      "player": "Aoife",
+      "role": "No Dashii"
     },
     {
       "type": "Librarian",

@@ -13,10 +13,16 @@ import {
   Imp,
   Investigator,
   Librarian,
+  Leviathan,
+  LordOfTyphon,
+  Marionette,
+  Poisoner,
   Recluse,
   Saint,
   ScarletWoman,
   Slayer,
+  Spy,
+  Xaan,
   script,
 } from "./characters";
 
@@ -165,6 +171,97 @@ describe("standard setup lowering", () => {
       [CharacterType.Minion]: 1,
       [CharacterType.Demon]: 1,
     });
+  });
+
+  test("Lord of Typhon setup allows extra outsiders and adds a minion", async () => {
+    const characters = script(
+      Imp,
+      LordOfTyphon,
+      Poisoner,
+      Spy,
+      Drunk,
+      Recluse,
+      Saint,
+      Butler,
+      Chef,
+      Empath,
+      Investigator,
+      Librarian,
+      Slayer,
+    );
+    const game = buildPuzzleModel({ players: players(8), characters }, backend);
+    game.fixActual("A", LordOfTyphon);
+    game.addTruth(game.outsiderCountIs(2));
+
+    const world = (await game.solveAll({ limit: 1 }))[0] as World;
+
+    expect(world).toBeDefined();
+    expect(characterTypeCounts(world, characters)).toEqual({
+      [CharacterType.Townsfolk]: 3,
+      [CharacterType.Outsider]: 2,
+      [CharacterType.Minion]: 2,
+      [CharacterType.Demon]: 1,
+    });
+  });
+
+  test("Lord of Typhon with two minions sits between them", async () => {
+    const characters = script(
+      Imp,
+      LordOfTyphon,
+      Poisoner,
+      Spy,
+      Drunk,
+      Recluse,
+      Saint,
+      Butler,
+      Chef,
+      Empath,
+      Investigator,
+      Librarian,
+      Slayer,
+    );
+    const valid = buildPuzzleModel({ players: players(8), characters }, backend);
+    valid.fixActual("A", LordOfTyphon);
+    valid.fixActual("B", Poisoner);
+    valid.fixActual("H", Spy);
+    expect(await valid.solveAll({ limit: 1 })).toHaveLength(1);
+
+    const invalid = buildPuzzleModel({ players: players(8), characters }, backend);
+    invalid.fixActual("A", LordOfTyphon);
+    invalid.fixActual("C", Poisoner);
+    invalid.fixActual("D", Spy);
+    expect(await invalid.solveAll({ limit: 1 })).toEqual([]);
+  });
+
+  test("Xaan setup allows the Outsider count to define X", async () => {
+    const characters = script(Leviathan, Xaan, Drunk, Recluse, Saint, Chef, Empath, Investigator, Librarian);
+    const game = buildPuzzleModel({ players: players(8), characters }, backend);
+    game.fixActual("A", Xaan);
+    game.addTruth(game.outsiderCountIs(3));
+
+    const world = (await game.solveAll({ limit: 1 }))[0] as World;
+
+    expect(world).toBeDefined();
+    expect(characterTypeCounts(world, characters)).toEqual({
+      [CharacterType.Townsfolk]: 3,
+      [CharacterType.Outsider]: 3,
+      [CharacterType.Minion]: 1,
+      [CharacterType.Demon]: 1,
+    });
+  });
+
+  test("Marionette neighbors the Demon", async () => {
+    const characters = script(Imp, Marionette, Drunk, Recluse, Saint, Chef, Empath, Investigator, Librarian, Slayer);
+
+    const valid = buildPuzzleModel({ players: players(7), characters }, backend);
+    valid.fixActual("A", Marionette);
+    valid.fixActual("B", Imp);
+    expect(await valid.solveAll({ limit: 1 })).toHaveLength(1);
+
+    const invalid = buildPuzzleModel({ players: players(7), characters }, backend);
+    invalid.fixActual("A", Marionette);
+    invalid.fixActual("C", Imp);
+    expect(await invalid.solveAll({ limit: 1 })).toEqual([]);
   });
 });
 

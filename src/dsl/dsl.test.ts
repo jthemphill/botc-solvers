@@ -17,6 +17,12 @@ import {
   Steward,
   applyClaims,
   script,
+  Clockmaker,
+  FortuneTeller,
+  Goblin,
+  Klutz,
+  Leviathan,
+  VillageIdiot,
 } from "../model/characters";
 import type { BoolLike, BOTCModel } from "../model/model";
 import { drunkBetweenTwoTownsfolk } from "../model/predicates";
@@ -123,6 +129,95 @@ describe("DSL", () => {
     game.addTruth(compile("A.alignment != B.alignment", game, ctx) as BoolLike);
     game.addTruth(compile("role_count(2, A, Savant, B, Imp)", game, ctx) as BoolLike);
     game.addTruth(compile("malfunctions(night_1, 0)", game, ctx) as BoolLike);
+    game.addTruth(compile("registers_as(B, Imp)", game, ctx) as BoolLike);
+
+    expect(await game.solveAll()).toHaveLength(1);
+  });
+
+  test("role_in_play_count counts roles instead of player-role pairs", async () => {
+    const game = buildPuzzleModel(
+      { players: ["A", "B", "C"], characters: [Imp, Savant, Clockmaker, Klutz], setup: false },
+      backend,
+    );
+    const ctx: CompileCtx = {
+      players: ["A", "B", "C"],
+      script: ["Imp", "Savant", "Clockmaker", "Klutz"],
+      nameRoot: "role_in_play_count",
+    };
+
+    game.fixActual("A", Imp);
+    game.fixActual("B", Savant);
+    game.fixActual("C", Clockmaker);
+    game.addTruth(compile("role_in_play_count(1, Clockmaker, Klutz)", game, ctx) as BoolLike);
+    game.addFalse(compile("role_in_play_count(2, Clockmaker, Klutz)", game, ctx) as BoolLike);
+
+    expect(await game.solveAll()).toHaveLength(1);
+  });
+
+  test("role_distance matches exact circular seating distance", async () => {
+    const game = buildPuzzleModel(
+      { players: ["A", "B", "C", "D"], characters: [Leviathan, Goblin, Savant, Clockmaker], setup: false },
+      backend,
+    );
+    const ctx: CompileCtx = {
+      players: ["A", "B", "C", "D"],
+      script: ["Leviathan", "Goblin", "Savant", "Clockmaker"],
+      nameRoot: "role_distance",
+    };
+
+    game.fixActual("A", Leviathan);
+    game.fixActual("B", Savant);
+    game.fixActual("C", Goblin);
+    game.fixActual("D", Clockmaker);
+    game.addTruth(compile("role_distance(2, Leviathan, Goblin)", game, ctx) as BoolLike);
+    game.addFalse(compile("role_distance(1, Leviathan, Goblin)", game, ctx) as BoolLike);
+
+    expect(await game.solveAll()).toHaveLength(1);
+  });
+
+  test("fortune_teller_red_herring and globally_drunk expose model state", async () => {
+    const game = buildPuzzleModel(
+      { players: ["FT", "Red", "VI", "Demon"], characters: [FortuneTeller, Leviathan, VillageIdiot], setup: false },
+      backend,
+    );
+    const ctx: CompileCtx = {
+      players: ["FT", "Red", "VI", "Demon"],
+      script: ["Fortune Teller", "Leviathan", "Village Idiot"],
+      nameRoot: "ft_red_herring_drunk",
+    };
+
+    game.fixActual("FT", FortuneTeller);
+    game.fixActual("Red", VillageIdiot);
+    game.fixActual("VI", VillageIdiot);
+    game.fixActual("Demon", Leviathan);
+    game.addVillageIdiotDrunking();
+    game.addTruth(game.fortuneTellerRedHerring("FT", "Red"));
+    game.addTruth(game.globalDrunk("VI"));
+    game.addTruth(compile("fortune_teller_red_herring(FT, Red)", game, ctx) as BoolLike);
+    game.addTruth(compile("globally_drunk(VI)", game, ctx) as BoolLike);
+    game.addFalse(compile("fortune_teller_red_herring(FT, VI)", game, ctx) as BoolLike);
+    game.addFalse(compile("globally_drunk(Red)", game, ctx) as BoolLike);
+
+    expect(await game.solveAll()).toHaveLength(1);
+  });
+
+  test("townsfolk_chain_length matches circular adjacent Townsfolk chains", async () => {
+    const game = buildPuzzleModel(
+      { players: ["A", "B", "C", "D"], characters: [Imp, Savant, Clockmaker, Klutz], setup: false },
+      backend,
+    );
+    const ctx: CompileCtx = {
+      players: ["A", "B", "C", "D"],
+      script: ["Imp", "Savant", "Clockmaker", "Klutz"],
+      nameRoot: "townsfolk_chain_length",
+    };
+
+    game.fixActual("A", Clockmaker);
+    game.fixActual("B", Savant);
+    game.fixActual("C", Imp);
+    game.fixActual("D", Klutz);
+    game.addTruth(compile("townsfolk_chain_length(2)", game, ctx) as BoolLike);
+    game.addFalse(compile("townsfolk_chain_length(3)", game, ctx) as BoolLike);
 
     expect(await game.solveAll()).toHaveLength(1);
   });

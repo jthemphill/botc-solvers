@@ -24,32 +24,76 @@
   "claims": [
     {
       "type": "Clockmaker",
-      "name": "Fraser"
+      "name": "Fraser",
+      "distance": 3,
+      "extraPossibleActualRoles": ["Mutant"]
     },
     {
       "type": "Seamstress",
       "name": "Aoife",
       "timing": "night_1",
-      "among": ["Oscar", "Hannah"]
+      "among": ["Oscar", "Hannah"],
+      "aligned": false,
+      "extraPossibleActualRoles": ["Mutant"]
     },
     {
       "type": "Artist",
       "name": "Adam",
-      "timing": "day_1"
+      "timing": "day_1",
+      "extraPossibleActualRoles": ["Mutant"],
+      "info": [
+        {
+          "timing": "day_1",
+          "expression": "no p: {You, Oscar, Sarah} | p.role == Vortox"
+        }
+      ]
     },
     {
       "type": "Snake Charmer",
-      "name": "Jasmine"
+      "name": "Jasmine",
+      "timing": "night_1",
+      "checked": "Fraser",
+      "demon": false,
+      "extraPossibleActualRoles": ["Mutant"],
+      "info": [
+        {
+          "timing": "night_1",
+          "expression": "Hannah.role == `Evil Twin`"
+        }
+      ]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Jasmine",
+      "timing": "night_2",
+      "checked": "Aoife",
+      "demon": false,
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Jasmine",
+      "timing": "night_3",
+      "checked": "Adam",
+      "demon": false,
+      "extraPossibleActualRoles": ["Mutant"]
     },
     {
       "type": "Savant",
       "name": "You",
       "timing": "day_1",
-      "statements": []
+      "statements": [
+        {
+          "options": ["role_in_play_count(3, Clockmaker, Klutz, Juggler, Vortox)", "townsfolk_chain_length(5)"]
+        }
+      ]
     },
     {
       "type": "Klutz",
-      "name": "Oscar"
+      "name": "Oscar",
+      "timing": "day_2",
+      "chosen": "Sarah",
+      "lost": false
     },
     {
       "type": "Juggler",
@@ -61,11 +105,39 @@
         "Fraser": "Clockmaker",
         "Aoife": "Seamstress",
         "Jasmine": "Snake Charmer"
-      }
+      },
+      "correctCount": 3,
+      "extraPossibleActualRoles": ["Mutant"]
     },
     {
       "type": "Snake Charmer",
-      "name": "Hannah"
+      "name": "Hannah",
+      "timing": "night_1",
+      "checked": "Sarah",
+      "demon": false,
+      "extraPossibleActualRoles": ["Mutant"],
+      "info": [
+        {
+          "timing": "night_1",
+          "expression": "Jasmine.role == `Evil Twin`"
+        }
+      ]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Hannah",
+      "timing": "night_2",
+      "checked": "Oscar",
+      "demon": false,
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Hannah",
+      "timing": "night_3",
+      "checked": "Aoife",
+      "demon": false,
+      "extraPossibleActualRoles": ["Mutant"]
     }
   ]
 }

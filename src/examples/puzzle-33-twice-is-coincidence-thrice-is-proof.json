@@ -18,6 +18,28 @@
     "Saint",
     "Washerwoman"
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Olivia"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightKill",
+      "players": ["Jasmine"]
+    }
+  ],
   "claims": [
     {
       "type": "Librarian",
@@ -29,7 +51,26 @@
     {
       "type": "FortuneTeller",
       "name": "Oscar",
-      "checks": []
+      "checks": [
+        {
+          "left": "Sula",
+          "right": "Fraser",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Tom",
+          "right": "Sula",
+          "yes": false,
+          "timing": "night_2"
+        },
+        {
+          "left": "Hannah",
+          "right": "Tom",
+          "yes": false,
+          "timing": "night_3"
+        }
+      ]
     },
     {
       "type": "Saint",
@@ -44,7 +85,9 @@
     },
     {
       "type": "Empath",
-      "name": "You"
+      "name": "You",
+      "timing": "night_1",
+      "count": 0
     },
     {
       "type": "Recluse",
@@ -53,7 +96,9 @@
     {
       "type": "Ravenkeeper",
       "name": "Jasmine",
-      "timing": "night_2"
+      "timing": "night_3",
+      "player": "Hannah",
+      "role": "Washerwoman"
     },
     {
       "type": "Washerwoman",

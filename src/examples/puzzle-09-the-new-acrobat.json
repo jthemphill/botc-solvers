@@ -21,6 +21,18 @@
       "roles": ["Acrobat", "Drunk"]
     }
   ],
+  "timeline": [
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Sula"]
+    },
+    {
+      "timing": "night_3",
+      "type": "abilityDeath",
+      "players": ["You", "Josh", "Anna"]
+    }
+  ],
   "claims": [
     {
       "type": "Knight",
@@ -29,13 +41,31 @@
     },
     {
       "type": "Gambler",
-      "name": "Anna"
+      "name": "Anna",
+      "guesses": [
+        {
+          "timing": "night_2",
+          "player": "Sula",
+          "role": "Goblin",
+          "survived": true
+        },
+        {
+          "timing": "night_3",
+          "player": "You",
+          "role": "Drunk"
+        }
+      ]
     },
     {
       "type": "Juggler",
       "name": "Sula",
       "timing": "night_2",
-      "guesses": {}
+      "guesses": {
+        "You": "Goblin",
+        "Oscar": "Gossip",
+        "Josh": "Knight",
+        "Anna": "Po"
+      }
     },
     {
       "type": "Steward",
@@ -44,7 +74,19 @@
     },
     {
       "type": "Acrobat",
-      "name": "You"
+      "name": "You",
+      "choices": [
+        {
+          "timing": "night_2",
+          "player": "Fraser",
+          "died": false
+        },
+        {
+          "timing": "night_3",
+          "player": "Josh",
+          "died": true
+        }
+      ]
     },
     {
       "type": "Balloonist",
@@ -57,7 +99,18 @@
     {
       "type": "Gossip",
       "name": "Oscar",
-      "timing": "day_1"
+      "statements": [
+        {
+          "timing": "day_1",
+          "expression": "Fraser.type == Demon",
+          "killed": false
+        },
+        {
+          "timing": "day_2",
+          "expression": "Anna.type == Demon",
+          "killed": true
+        }
+      ]
     }
   ]
 }

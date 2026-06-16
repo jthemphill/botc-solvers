@@ -17,11 +17,31 @@
     "Ravenkeeper",
     "Slayer"
   ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Investigator", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Aoife"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKillBeforeInfo",
+      "players": ["Tim"]
+    }
+  ],
   "claims": [
     {
       "type": "Ravenkeeper",
       "name": "Tim",
-      "timing": "night_2"
+      "timing": "night_2",
+      "player": "Oscar",
+      "role": "Librarian"
     },
     {
       "type": "FortuneTeller",
@@ -48,7 +68,9 @@
     {
       "type": "Slayer",
       "name": "Fraser",
-      "timing": "day_1"
+      "timing": "day_2",
+      "target": "Oscar",
+      "killed": false
     },
     {
       "type": "Recluse",
@@ -63,7 +85,8 @@
     },
     {
       "type": "Clockmaker",
-      "name": "Jasmine"
+      "name": "Jasmine",
+      "distance": 3
     },
     {
       "type": "Librarian",

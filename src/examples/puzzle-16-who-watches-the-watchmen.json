@@ -24,6 +24,28 @@
       "roles": ["Saint"]
     }
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Hannah"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["You"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightKill",
+      "players": ["Olivia"]
+    }
+  ],
   "claims": [
     {
       "type": "Recluse",
@@ -55,7 +77,15 @@
     },
     {
       "type": "Empath",
-      "name": "Olivia"
+      "name": "Olivia",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Olivia",
+      "timing": "night_2",
+      "count": 1
     },
     {
       "type": "FortuneTeller",
@@ -89,7 +119,10 @@
     },
     {
       "type": "Nightwatchman",
-      "name": "Fraser"
+      "name": "Fraser",
+      "timing": "night_1",
+      "chosen": "Tim",
+      "learned": false
     }
   ]
 }

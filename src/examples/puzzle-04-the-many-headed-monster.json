@@ -22,6 +22,28 @@
       "roles": ["Investigator", "Drunk", "Marionette"]
     }
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Anna"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Tim"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Hannah"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightKill",
+      "players": ["Dan"]
+    }
+  ],
   "claims": [
     {
       "type": "Librarian",

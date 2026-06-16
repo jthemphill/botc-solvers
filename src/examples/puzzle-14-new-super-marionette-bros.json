@@ -23,6 +23,18 @@
       "roles": ["Slayer", "Marionette"]
     }
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Brett"]
+    }
+  ],
   "claims": [
     {
       "type": "FortuneTeller",
@@ -40,7 +52,15 @@
     },
     {
       "type": "Empath",
-      "name": "Rob"
+      "name": "Rob",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Rob",
+      "timing": "night_2",
+      "count": 0
     },
     {
       "type": "Chef",
@@ -58,7 +78,9 @@
     {
       "type": "Slayer",
       "name": "You",
-      "timing": "day_1"
+      "timing": "day_1",
+      "target": "Lydia",
+      "killed": false
     },
     {
       "type": "Washerwoman",

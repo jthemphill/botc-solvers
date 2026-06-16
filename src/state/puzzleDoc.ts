@@ -44,6 +44,12 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
       return { ...claim, name, among: claim.among ? remapArr(claim.among) : claim.among };
     case "Washerwoman":
       return { ...claim, name, among: remapArr(claim.among) };
+    case "Chambermaid":
+      return {
+        ...claim,
+        name,
+        checks: claim.checks?.map((c) => ({ ...c, left: remap(c.left), right: remap(c.right) })),
+      };
     case "Knight":
       return { ...claim, name, noDemonAmong: remapArr(claim.noDemonAmong) };
     case "Noble":
@@ -52,6 +58,12 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
         name,
         oneEvilAmong: claim.oneEvilAmong ? remapArr(claim.oneEvilAmong) : claim.oneEvilAmong,
         among: claim.among ? remapArr(claim.among) : claim.among,
+      };
+    case "Oracle":
+      return {
+        ...claim,
+        name,
+        deadPlayers: claim.deadPlayers ? remapArr(claim.deadPlayers) : claim.deadPlayers,
       };
     case "Empath":
       return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
@@ -102,6 +114,8 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
     case "Librarian":
     case "Washerwoman":
       return { ...claim, among: stripArr(claim.among) ?? [] } as Claim;
+    case "Chambermaid":
+      return { ...claim, checks: claim.checks?.filter((c) => c.left !== name && c.right !== name) };
     case "Knight":
       return { ...claim, noDemonAmong: stripArr(claim.noDemonAmong) ?? [] };
     case "Noble":
@@ -110,6 +124,8 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
         oneEvilAmong: stripArr(claim.oneEvilAmong),
         among: stripArr(claim.among),
       };
+    case "Oracle":
+      return { ...claim, deadPlayers: stripArr(claim.deadPlayers) };
     case "Empath":
       return { ...claim, player: claim.player === name ? undefined : claim.player };
     case "Steward":
@@ -143,18 +159,25 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
 }
 
 function rewriteTimelineName(timeline: PuzzleDoc["timeline"], oldName: string, newName: string): PuzzleDoc["timeline"] {
-  return timeline?.map((event) => ({
-    ...event,
-    players: event.players.map((player) => (player === oldName ? newName : player)),
-  }));
+  return timeline?.map((event) => {
+    const next = {
+      ...event,
+      players: event.players.map((player) => (player === oldName ? newName : player)),
+    };
+    return event.caller === undefined ? next : { ...next, caller: event.caller === oldName ? newName : event.caller };
+  });
 }
 
 function removeTimelineNames(timeline: PuzzleDoc["timeline"], removed: ReadonlySet<string>): PuzzleDoc["timeline"] {
   return timeline
-    ?.map((event) => ({
-      ...event,
-      players: event.players.filter((player) => !removed.has(player)),
-    }))
+    ?.map((event) => {
+      const next = {
+        ...event,
+        players: event.players.filter((player) => !removed.has(player)),
+      };
+      if (event.caller === undefined) return next;
+      return removed.has(event.caller) ? { ...next, caller: undefined } : next;
+    })
     .filter((event) => event.players.length > 0);
 }
 

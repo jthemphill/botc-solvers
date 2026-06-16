@@ -17,11 +17,34 @@
     "Ravenkeeper",
     "Undertaker"
   ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Librarian", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Oscar"]
+    }
+  ],
   "claims": [
     {
       "type": "Ravenkeeper",
       "name": "Oscar",
-      "timing": "night_2"
+      "timing": "night_2",
+      "info": [
+        {
+          "expression": "Sula.role == Imp"
+        }
+      ]
     },
     {
       "type": "Saint",
@@ -30,29 +53,56 @@
     {
       "type": "Investigator",
       "name": "Sarah",
-      "among": []
+      "role": "Spy",
+      "among": ["Olivia", "Jasmine"]
     },
     {
       "type": "Empath",
-      "name": "Jasmine"
+      "name": "Jasmine",
+      "timing": "night_1",
+      "count": 2
+    },
+    {
+      "type": "Empath",
+      "name": "Jasmine",
+      "timing": "night_2",
+      "count": 2
     },
     {
       "type": "Librarian",
       "name": "You",
-      "among": []
+      "role": "Drunk",
+      "among": ["Sula", "Oscar"]
     },
     {
       "type": "Clockmaker",
-      "name": "Tim"
+      "name": "Tim",
+      "distance": 4
     },
     {
       "type": "Undertaker",
-      "name": "Sula"
+      "name": "Sula",
+      "timing": "night_2",
+      "player": "You",
+      "role": "Spy"
     },
     {
       "type": "FortuneTeller",
       "name": "Fraser",
-      "checks": []
+      "checks": [
+        {
+          "left": "Sula",
+          "right": "Oscar",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Sarah",
+          "right": "Jasmine",
+          "yes": false,
+          "timing": "night_2"
+        }
+      ]
     }
   ]
 }
