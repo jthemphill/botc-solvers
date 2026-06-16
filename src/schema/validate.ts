@@ -447,6 +447,10 @@ function validateClaim(input: unknown, path: string): Claim {
         type: "Slayer",
         target: input["target"] === undefined ? undefined : expectString(input["target"], `${path}.target`),
         killed: input["killed"] === undefined ? undefined : expectBool(input["killed"], `${path}.killed`),
+        gameContinued:
+          input["gameContinued"] === undefined
+            ? undefined
+            : expectBool(input["gameContinued"], `${path}.gameContinued`),
       };
     case "Snake Charmer":
       return {

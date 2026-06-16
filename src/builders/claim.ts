@@ -204,7 +204,7 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
     case "Sage":
       return new Sage({ ...base, demonAmong: claim.demonAmong });
     case "Slayer":
-      return new Slayer({ ...base, target: claim.target, killed: claim.killed });
+      return new Slayer({ ...base, target: claim.target, killed: claim.killed, gameContinued: claim.gameContinued });
     case "Snake Charmer":
       return new SnakeCharmer({ ...base, checked: claim.checked, demon: claim.demon });
     case "VillageIdiot":

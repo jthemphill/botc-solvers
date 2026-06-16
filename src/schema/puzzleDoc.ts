@@ -287,6 +287,7 @@ export interface SlayerClaim extends BaseClaim {
   readonly type: "Slayer";
   readonly target?: string;
   readonly killed?: boolean;
+  readonly gameContinued?: boolean;
 }
 
 export interface SnakeCharmerClaim extends BaseClaim {

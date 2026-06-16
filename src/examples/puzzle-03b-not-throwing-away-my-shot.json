@@ -18,6 +18,13 @@
     "Slayer",
     "Washerwoman"
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "abilityDeath",
+      "players": ["Anna"]
+    }
+  ],
   "claims": [
     {
       "type": "Chef",
@@ -42,7 +49,10 @@
     {
       "type": "Slayer",
       "name": "You",
-      "timing": "day_1"
+      "timing": "day_1",
+      "target": "Anna",
+      "killed": true,
+      "gameContinued": true
     },
     {
       "type": "Librarian",

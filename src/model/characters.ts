@@ -470,21 +470,40 @@ export class Slayer extends Role {
   static readonly characterType = CharacterType.Townsfolk;
   readonly target?: string;
   readonly killed?: boolean;
+  readonly gameContinued: boolean;
 
   constructor(
     options: RoleBaseOptions & {
       readonly target?: string;
       readonly killed?: boolean;
+      readonly gameContinued?: boolean;
     },
   ) {
     super(options);
     this.target = options.target;
     this.killed = options.killed;
+    this.gameContinued = options.gameContinued ?? false;
   }
 
   static shotResult(game: BOTCModel, target: string, killed: boolean, name: string): BoolVar {
     const registersAsDemon = game.registersAsCharacterType(target, CharacterType.Demon, name);
     return killed ? registersAsDemon : game.not(registersAsDemon, `${name}_${target}_did_not_die`);
+  }
+
+  static actualDemonTarget(game: BOTCModel, target: string, name: string): BoolVar {
+    const demonRoles = [...game.characters.entries()]
+      .filter(([, character]) => roleCharacterType(character) === CharacterType.Demon)
+      .map(([role]) => role);
+    return game.anyOf(
+      demonRoles.map((role) => game.actualIs(target, role)),
+      `${name}_${target}_actual_demon`,
+    );
+  }
+
+  static scarletWomanCanCatch(game: BOTCModel, name: string): BoolVar {
+    return game.characters.has("Scarlet Woman")
+      ? game.roleInPlay("Scarlet Woman")
+      : game.constantBool(false, `${name}_no_scarlet_woman_to_catch`);
   }
 
   override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
@@ -499,10 +518,17 @@ export class Slayer extends Role {
       [game.hasRoleAt(this.name, Slayer, timing), game.soberAndHealthy(this.name, healthTimingForAbility(timing))],
       claimName(this.name, Slayer, "shot_active"),
     );
+    if (this.killed) game.addTruth(activeHealthy);
     game.addImplication(
       activeHealthy,
       Slayer.shotResult(game, this.target, this.killed, claimName(this.name, Slayer, "shot")),
     );
+    if (this.killed && this.gameContinued) {
+      game.addImplication(
+        Slayer.actualDemonTarget(game, this.target, claimName(this.name, Slayer, "shot")),
+        Slayer.scarletWomanCanCatch(game, claimName(this.name, Slayer, "shot_continued")),
+      );
+    }
     this.applyInfoClaimBuilders(game, Slayer, this.infoClaims, options);
   }
 }

@@ -705,6 +705,64 @@ describe("buildFromDoc", () => {
     expect(worlds).toHaveLength(1);
   });
 
+  test("Slayer kill claims require an active healthy Slayer", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Slayer", "Drunk", "Recluse", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Drunk"] },
+          { name: "B", roles: ["Recluse"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        claims: [{ type: "Slayer", name: "A", timing: "day_1", target: "B", killed: true }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
+  });
+
+  test("continued Slayer kill claims require Scarlet Woman for actual demon targets", async () => {
+    const noCatchWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Slayer", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Slayer"] },
+          { name: "B", roles: ["Imp"] },
+        ],
+        claims: [{ type: "Slayer", name: "A", timing: "day_1", target: "B", killed: true, gameContinued: true }],
+      },
+      backend,
+    ).solveAll();
+    const catchWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Slayer", "Imp", "Scarlet Woman"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Slayer"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Scarlet Woman"] },
+        ],
+        claims: [{ type: "Slayer", name: "A", timing: "day_1", target: "B", killed: true, gameContinued: true }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(noCatchWorlds).toEqual([]);
+    expect(catchWorlds).toHaveLength(1);
+  });
+
   test("Klutz no-loss claims require a healthy Klutz to choose good", async () => {
     const worlds = await buildFromDoc(
       {

@@ -11,8 +11,8 @@ import { PUZZLE_EXAMPLES } from "./puzzleCatalog";
 const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-01-sober-savant": 1,
   "puzzle-02-come-fly-with-me": 1,
-  "puzzle-03a-not-throwing-away-my-shot": 11,
-  "puzzle-03b-not-throwing-away-my-shot": 12,
+  "puzzle-03a-not-throwing-away-my-shot": 1,
+  "puzzle-03b-not-throwing-away-my-shot": 1,
   "puzzle-04-the-many-headed-monster": 16,
   "puzzle-05a-you-only-guess-twice": 2,
   "puzzle-05b-you-only-guess-twice": 4,
@@ -103,12 +103,14 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
     id: "puzzle-03a-not-throwing-away-my-shot",
     source:
       "https://www.reddit.com/r/BloodOnTheClocktower/comments/1f2jht3/weekly_puzzle_3a_3b_not_throwing_away_my_shot/",
+    coversAllWorlds: true,
     worlds: [{ roles: { Matthew: "Imp", Aoife: "Baron", Oscar: "Drunk" } }],
   },
   {
     id: "puzzle-03b-not-throwing-away-my-shot",
     source:
       "https://www.reddit.com/r/BloodOnTheClocktower/comments/1f2jht3/weekly_puzzle_3a_3b_not_throwing_away_my_shot/",
+    coversAllWorlds: true,
     worlds: [{ roles: { Sarah: "Imp", Hannah: "Spy" } }],
   },
   {
