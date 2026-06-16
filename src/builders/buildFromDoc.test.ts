@@ -415,6 +415,27 @@ describe("buildFromDoc", () => {
     expect(worlds[0]?.actualRole("B")).toBe("Scarlet Woman");
   });
 
+  test("Ravenkeeper learned role allows Spy registration", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Ravenkeeper", "Spy", "Imp", "Saint"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Ravenkeeper"] },
+          { name: "B", roles: ["Spy"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        claims: [{ type: "Ravenkeeper", name: "A", timing: "night_2", player: "B", role: "Saint" }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
+
   test("Slayer no-kill claims exclude actual demon targets", async () => {
     const killedDemonWorlds = await buildFromDoc(
       {
@@ -452,6 +473,27 @@ describe("buildFromDoc", () => {
 
     expect(killedDemonWorlds).toEqual([]);
     expect(livingTownsfolkWorlds).toHaveLength(1);
+  });
+
+  test("Slayer kill claims allow Recluse demon registration", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Slayer", "Recluse", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Slayer"] },
+          { name: "B", roles: ["Recluse"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        claims: [{ type: "Slayer", name: "A", timing: "day_1", target: "B", killed: true }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
   });
 
   test("day Slayer shots use the corresponding night poison state", async () => {

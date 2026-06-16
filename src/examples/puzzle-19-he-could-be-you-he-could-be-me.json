@@ -18,15 +18,43 @@
     "Undertaker",
     "Washerwoman"
   ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Librarian", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKillBeforeInfo",
+      "players": ["Matt"]
+    },
+    {
+      "timing": "day_2",
+      "type": "nominationDeath",
+      "players": ["Oscar"]
+    }
+  ],
   "claims": [
     {
       "type": "Undertaker",
-      "name": "Olivia"
+      "name": "Olivia",
+      "timing": "night_2",
+      "player": "You",
+      "role": "Baron"
     },
     {
       "type": "Ravenkeeper",
       "name": "Matt",
-      "timing": "night_2"
+      "timing": "night_2",
+      "player": "Fraser",
+      "role": "Saint"
     },
     {
       "type": "Washerwoman",
@@ -37,7 +65,17 @@
     },
     {
       "type": "Empath",
-      "name": "Aoife"
+      "name": "Aoife",
+      "timing": "night_1",
+      "count": 0,
+      "neighbors": ["You", "Sula"]
+    },
+    {
+      "type": "Empath",
+      "name": "Aoife",
+      "timing": "night_2",
+      "count": 1,
+      "neighbors": ["Fraser", "Sula"]
     },
     {
       "type": "Librarian",
@@ -57,7 +95,9 @@
     {
       "type": "Slayer",
       "name": "Jasmine",
-      "timing": "day_1"
+      "timing": "day_2",
+      "target": "Oscar",
+      "killed": true
     }
   ]
 }

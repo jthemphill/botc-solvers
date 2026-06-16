@@ -454,8 +454,8 @@ export class Slayer extends Role {
   }
 
   static shotResult(game: BOTCModel, target: string, killed: boolean, name: string): BoolVar {
-    const isDemon = game.isDemon(target);
-    return killed ? isDemon : game.not(isDemon, `${name}_${target}_did_not_die`);
+    const registersAsDemon = game.registersAsCharacterType(target, CharacterType.Demon, name);
+    return killed ? registersAsDemon : game.not(registersAsDemon, `${name}_${target}_did_not_die`);
   }
 
   override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
@@ -572,7 +572,9 @@ export class Ravenkeeper extends Role {
   }
 
   override learnedInfo(game: BOTCModel): BoolLike | undefined {
-    return this.player === undefined || this.role === undefined ? undefined : game.actualIs(this.player, this.role);
+    return this.player === undefined || this.role === undefined
+      ? undefined
+      : game.registersAsRole(this.player, this.role, claimName(this.name, Ravenkeeper, "role"));
   }
 }
 
