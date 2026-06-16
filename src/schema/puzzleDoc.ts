@@ -23,7 +23,12 @@ export interface ForbiddenRoleConstraint {
   readonly roles: readonly string[];
 }
 
-export type TimelineEventType = "nominationDeath" | "execution" | "nightKill" | "doomsayerDeath";
+export type TimelineEventType =
+  | "nominationDeath"
+  | "execution"
+  | "nightKill"
+  | "nightKillBeforeInfo"
+  | "doomsayerDeath";
 
 export interface TimelineEventDoc {
   readonly timing: string;

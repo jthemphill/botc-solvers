@@ -177,6 +177,7 @@ function livingNeighborInDirection(
 }
 
 function deathEventOrder(event: NonNullable<PuzzleDoc["timeline"]>[number]): number {
+  if (event.type === "nightKillBeforeInfo") return phaseStartOrder(event.timing as Timing) - 0.5;
   return phaseStartOrder(event.timing as Timing) + 0.5;
 }
 

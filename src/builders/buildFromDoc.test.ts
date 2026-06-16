@@ -318,6 +318,39 @@ describe("buildFromDoc", () => {
     expect(worlds[0]?.isPoisoned("C", "night_2")).toBe(false);
   });
 
+  test("nightKillBeforeInfo stops same-night Poisoner effects", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Imp", "Poisoner", "Investigator"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Poisoner"] },
+          { name: "B", roles: ["Investigator"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        timeline: [{ timing: "night_2", type: "nightKillBeforeInfo", players: ["A"] }],
+        claims: [
+          {
+            type: "Investigator",
+            name: "B",
+            timing: "night_2",
+            role: "Poisoner",
+            among: ["A", "C"],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.isPoisoned("A", "night_2")).toBe(false);
+    expect(worlds[0]?.isPoisoned("B", "night_2")).toBe(false);
+    expect(worlds[0]?.isPoisoned("C", "night_2")).toBe(false);
+  });
+
   test("timed Empath claims use living neighbors from the timeline", async () => {
     const worlds = await buildFromDoc(
       {

@@ -47,11 +47,11 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-33-twice-is-coincidence-thrice-is-proof": 59,
   "puzzle-34-the-vortox-conjecture": 1,
   "puzzle-35-typhon-season": 1,
-  "puzzle-36-what-is-your-weapon-of-choice": 207,
+  "puzzle-36-what-is-your-weapon-of-choice": 1,
   "puzzle-37-new-super-marionette-bros-u": 12,
   "puzzle-38-snakes-on-a-plane": 56,
   "puzzle-39-squid-game": 22,
-  "puzzle-40-nine-lives": 196,
+  "puzzle-40-nine-lives": 1,
 };
 
 interface PoisonLock {
@@ -474,12 +474,12 @@ describe("JSON puzzle solutions", () => {
     expect(new Set(catalogIds)).toEqual(new Set(sourceIds));
   });
 
-  test("puzzle 36 has the largest modeled JSON search space", () => {
+  test("puzzle 19 has the largest modeled JSON search space", () => {
     const [id, count] = Object.entries(JSON_SOLUTION_COUNTS).sort(
       ([leftId, leftCount], [rightId, rightCount]) => rightCount - leftCount || leftId.localeCompare(rightId),
     )[0] as [string, number];
 
-    expect({ id, count }).toEqual({ id: "puzzle-36-what-is-your-weapon-of-choice", count: 207 });
+    expect({ id, count }).toEqual({ id: "puzzle-19-he-could-be-you-he-could-be-me", count: 163 });
   });
 
   test.each(PUZZLE_SOLUTION_CASES)(

@@ -17,7 +17,6 @@
     "Ravenkeeper",
     "Slayer"
   ],
-  "uniqueCharacters": false,
   "fixedRoles": [
     {
       "name": "You",
