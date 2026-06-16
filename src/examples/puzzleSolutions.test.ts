@@ -34,7 +34,7 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-20-the-three-wise-men": 1,
   "puzzle-21-eight-jugglers-juggling": 1,
   "puzzle-22-one-in-the-chamber": 1,
-  "puzzle-23-goblincore": 6,
+  "puzzle-23-goblincore": 1,
   "puzzle-24-the-ultimate-blunder": 1,
   "puzzle-26-a-major-problem": 8,
   "puzzle-27-is-this-a-legion-game": 1,
@@ -317,6 +317,7 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
   {
     id: "puzzle-23-goblincore",
     source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1i199yv/weekly_puzzle_23_goblincore/",
+    coversAllWorlds: true,
     worlds: [{ roles: { Sula: "Imp", Aoife: "Goblin", Fraser: "Lunatic" } }],
   },
   {

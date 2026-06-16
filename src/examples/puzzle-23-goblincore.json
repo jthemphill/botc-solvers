@@ -20,11 +20,20 @@
       "roles": ["Chef"]
     }
   ],
+  "timeline": [
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Aoife"]
+    }
+  ],
   "claims": [
     {
       "type": "Ravenkeeper",
       "name": "Aoife",
-      "timing": "night_2"
+      "timing": "night_2",
+      "player": "Matt",
+      "role": "Investigator"
     },
     {
       "type": "Goblin",
@@ -40,7 +49,9 @@
     {
       "type": "Slayer",
       "name": "Sula",
-      "timing": "day_1"
+      "timing": "day_2",
+      "target": "Matt",
+      "killed": false
     },
     {
       "type": "Chef",
@@ -63,7 +74,20 @@
     {
       "type": "FortuneTeller",
       "name": "Tim",
-      "checks": []
+      "checks": [
+        {
+          "left": "Hannah",
+          "right": "Tim",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Fraser",
+          "right": "Sula",
+          "yes": true,
+          "timing": "night_2"
+        }
+      ]
     }
   ]
 }
