@@ -114,6 +114,7 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
   {
     id: "puzzle-04-the-many-headed-monster",
     source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1f823s4/weekly_puzzle_4_the_manyheaded_monster/",
+    coversAllWorlds: true,
     worlds: [
       {
         roles: { Fraser: "Lord of Typhon", Anna: "Drunk" },
