@@ -436,6 +436,38 @@ describe("buildFromDoc", () => {
     expect(worlds).toHaveLength(1);
   });
 
+  test("Philosopher choice can satisfy chosen role information", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Philosopher", "Snake Charmer", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Philosopher"] },
+          { name: "B", roles: ["Snake Charmer"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+        claims: [
+          { type: "Philosopher", name: "A", timing: "night_1", role: "Snake Charmer" },
+          {
+            type: "Snake Charmer",
+            name: "A",
+            timing: "night_1",
+            checked: "C",
+            demon: true,
+            extraPossibleActualRoles: ["Philosopher"],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("A")).toBe("Philosopher");
+  });
+
   test("Slayer no-kill claims exclude actual demon targets", async () => {
     const killedDemonWorlds = await buildFromDoc(
       {

@@ -19,6 +19,7 @@ import {
   Noble,
   Nightwatchman,
   Oracle,
+  Philosopher,
   Ravenkeeper,
   Sage,
   Savant,
@@ -162,6 +163,8 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
             }),
         })),
       });
+    case "Philosopher":
+      return new Philosopher({ ...base, role: claim.role ? resolveRoleRef(claim.role) : undefined });
     case "Klutz":
       return new Klutz({ ...base, chosen: claim.chosen, lost: claim.lost });
     case "Seamstress":

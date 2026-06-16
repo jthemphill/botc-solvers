@@ -23,38 +23,126 @@
       "roles": ["Clockmaker"]
     }
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Anna"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Sula"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightKill",
+      "players": ["Tom"]
+    }
+  ],
   "claims": [
+    {
+      "type": "Seamstress",
+      "name": "Matthew",
+      "timing": "night_1",
+      "among": ["Aoife", "Tom"],
+      "aligned": true,
+      "extraPossibleActualRoles": ["Artist", "Mutant"]
+    },
     {
       "type": "Artist",
       "name": "Matthew",
-      "timing": "day_1"
+      "timing": "day_2",
+      "extraPossibleActualRoles": ["Seamstress", "Mutant"],
+      "info": [
+        {
+          "timing": "day_2",
+          "expression": "You.role == Clockmaker"
+        }
+      ]
     },
     {
       "type": "Sage",
       "name": "Anna",
-      "timing": "night_2"
+      "timing": "night_2",
+      "demonAmong": ["Matthew", "Hannah"]
     },
     {
       "type": "Snake Charmer",
-      "name": "Aoife"
+      "name": "Aoife",
+      "timing": "night_1",
+      "checked": "Tom",
+      "demon": false
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Aoife",
+      "timing": "night_2",
+      "checked": "Hannah",
+      "demon": false
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Aoife",
+      "timing": "night_3",
+      "checked": "Matthew",
+      "demon": false
     },
     {
       "type": "Artist",
       "name": "Hannah",
-      "timing": "day_1"
+      "timing": "day_1",
+      "info": [
+        {
+          "timing": "day_1",
+          "expression": "false"
+        }
+      ]
     },
     {
       "type": "Clockmaker",
-      "name": "You"
+      "name": "You",
+      "distance": 2
+    },
+    {
+      "type": "Philosopher",
+      "name": "Sula",
+      "timing": "night_2",
+      "role": "Snake Charmer"
     },
     {
       "type": "Snake Charmer",
-      "name": "Sula"
+      "name": "Sula",
+      "timing": "night_2",
+      "checked": "Sarah",
+      "demon": false,
+      "extraPossibleActualRoles": ["Philosopher"]
     },
     {
       "type": "Dreamer",
       "name": "Sarah",
-      "roles": []
+      "timing": "night_1",
+      "player": "Matthew",
+      "roles": ["Cerenovus", "Seamstress"]
+    },
+    {
+      "type": "Dreamer",
+      "name": "Sarah",
+      "timing": "night_2",
+      "player": "Aoife",
+      "roles": ["Vortox", "Mutant"]
+    },
+    {
+      "type": "Dreamer",
+      "name": "Sarah",
+      "timing": "night_3",
+      "player": "You",
+      "roles": ["Vortox", "Mutant"]
     },
     {
       "type": "Sweetheart",

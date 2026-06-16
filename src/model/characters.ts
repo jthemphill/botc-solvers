@@ -529,6 +529,25 @@ export class Philosopher extends Role {
   static readonly roleName = "Philosopher";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
+  readonly role?: RoleRef;
+
+  constructor(options: RoleBaseOptions & { readonly role?: RoleRef }) {
+    super(options);
+    this.role = options.role;
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Philosopher, options);
+    if (this.role !== undefined) {
+      const timing = this.claimTiming(explicitTiming(options));
+      const activeHealthy = game.allOf(
+        [game.actualIs(this.name, Philosopher), game.soberAndHealthy(this.name, timing)],
+        claimName(this.name, Philosopher, "choice_active"),
+      );
+      game.addRoleAt(this.name, this.role, timing, activeHealthy);
+    }
+    this.applyInfoClaimBuilders(game, Philosopher, this.infoClaims, options);
+  }
 }
 
 export class Acrobat extends Role {

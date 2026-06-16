@@ -54,6 +54,7 @@ export type Claim =
   | KnightClaim
   | GamblerClaim
   | GossipClaim
+  | PhilosopherClaim
   | SeamstressClaim
   | JugglerClaim
   | DreamerClaim
@@ -219,6 +220,11 @@ export interface GossipClaim extends BaseClaim {
   readonly statements?: readonly GossipStatementDoc[];
 }
 
+export interface PhilosopherClaim extends BaseClaim {
+  readonly type: "Philosopher";
+  readonly role?: string;
+}
+
 export interface SeamstressClaim extends BaseClaim {
   readonly type: "Seamstress";
   readonly among: readonly string[];
@@ -343,7 +349,6 @@ export const BARE_CLAIM_TYPES = [
   "Mayor",
   "Mutant",
   "No Dashii",
-  "Philosopher",
   "Pit-Hag",
   "Po",
   "Poisoner",
@@ -383,6 +388,7 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Knight",
   "Gambler",
   "Gossip",
+  "Philosopher",
   "Seamstress",
   "Juggler",
   "Dreamer",

@@ -356,6 +356,12 @@ function validateClaim(input: unknown, path: string): Claim {
               }),
       };
     }
+    case "Philosopher":
+      return {
+        ...base,
+        type: "Philosopher",
+        role: input["role"] === undefined ? undefined : expectString(input["role"], `${path}.role`),
+      };
     case "Seamstress": {
       const among = input["among"] === undefined ? [] : expectStringArray(input["among"], `${path}.among`);
       const aligned = input["aligned"] === undefined ? undefined : expectBool(input["aligned"], `${path}.aligned`);
