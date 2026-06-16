@@ -44,7 +44,7 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-30-the-babel-fish-is-a-dead-giveaway-right": 1,
   "puzzle-31-no-your-other-left": 1,
   "puzzle-32-prepare-for-juggle-and-make-it-double": 35,
-  "puzzle-33-twice-is-coincidence-thrice-is-proof": 59,
+  "puzzle-33-twice-is-coincidence-thrice-is-proof": 1,
   "puzzle-34-the-vortox-conjecture": 1,
   "puzzle-35-typhon-season": 1,
   "puzzle-36-what-is-your-weapon-of-choice": 1,
@@ -389,6 +389,7 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
     id: "puzzle-33-twice-is-coincidence-thrice-is-proof",
     source:
       "https://www.reddit.com/r/BloodOnTheClocktower/comments/1jl7cuv/weekly_puzzle_33_twice_is_coincidence_thrice_is/",
+    coversAllWorlds: true,
     worlds: [{ roles: { Tom: "Imp", Sula: "Poisoner" } }],
   },
   {
@@ -486,12 +487,12 @@ describe("JSON puzzle solutions", () => {
     expect(new Set(catalogIds)).toEqual(new Set(sourceIds));
   });
 
-  test("puzzle 33 has the largest modeled JSON search space", () => {
+  test("puzzle 38 has the largest modeled JSON search space", () => {
     const [id, count] = Object.entries(JSON_SOLUTION_COUNTS).sort(
       ([leftId, leftCount], [rightId, rightCount]) => rightCount - leftCount || leftId.localeCompare(rightId),
     )[0] as [string, number];
 
-    expect({ id, count }).toEqual({ id: "puzzle-33-twice-is-coincidence-thrice-is-proof", count: 59 });
+    expect({ id, count }).toEqual({ id: "puzzle-38-snakes-on-a-plane", count: 56 });
   });
 
   test.each(PUZZLE_SOLUTION_CASES)(
