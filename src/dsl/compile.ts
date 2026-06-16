@@ -311,6 +311,45 @@ class Compiler {
         span: node.span,
       };
     }
+    if (node.name === "role_in_play_count") {
+      if (node.args.length < 2) throw new DslError(`role_in_play_count() takes (n, role, ...)`, node.span);
+      const countArg = node.args[0] as AstCall["args"][number];
+      if (countArg.name !== undefined)
+        throw new DslError(`role_in_play_count's first argument is positional`, countArg.span);
+      const countVal = this.evalNode(countArg.value, env);
+      if (countVal.kind !== "number") throw new DslError(`role_in_play_count expects a number first`, countArg.span);
+      const literals: BoolLike[] = [];
+      for (let index = 1; index < node.args.length; index += 1) {
+        const roleArg = node.args[index] as AstCall["args"][number];
+        if (roleArg.name !== undefined)
+          throw new DslError(`role_in_play_count role arguments are positional`, roleArg.span);
+        const role = this.evalNode(roleArg.value, env);
+        if (role.kind !== "role") throw new DslError(`role_in_play_count expected a role`, role.span);
+        literals.push(this.game.roleInPlay(role.name));
+      }
+      return {
+        kind: "bool",
+        value: this.game.boolSumEquals(
+          literals,
+          countVal.value,
+          this.freshName(`role_in_play_count_${countVal.value}`),
+        ),
+        span: node.span,
+      };
+    }
+    if (node.name === "townsfolk_chain_length") {
+      if (node.args.length !== 1) throw new DslError(`townsfolk_chain_length() takes (n)`, node.span);
+      const lengthArg = node.args[0] as AstCall["args"][number];
+      if (lengthArg.name !== undefined)
+        throw new DslError(`townsfolk_chain_length's argument is positional`, lengthArg.span);
+      const lengthVal = this.evalNode(lengthArg.value, env);
+      if (lengthVal.kind !== "number") throw new DslError(`townsfolk_chain_length expects a number`, lengthArg.span);
+      return {
+        kind: "bool",
+        value: this.longestCharacterTypeChainIs(CharacterType.Townsfolk, lengthVal.value),
+        span: node.span,
+      };
+    }
     if (node.name === "malfunctions") {
       if (node.args.length !== 2) throw new DslError(`malfunctions() takes (timing, n)`, node.span);
       const timingArg = node.args[0] as AstCall["args"][number];
@@ -361,6 +400,36 @@ class Compiler {
       return { kind: "bool", value: bv, span: node.span };
     }
     throw new DslError(`Unknown function '${node.name}'`, node.nameSpan);
+  }
+
+  private longestCharacterTypeChainIs(characterType: CharacterType, length: number): BoolLike {
+    if (!Number.isInteger(length) || length < 1)
+      throw new DslError(`Chain length must be a positive integer`, { start: 0, end: 0 });
+    const atLeastLength = this.hasCharacterTypeChain(characterType, length);
+    if (length >= this.ctx.players.length) return atLeastLength;
+    return this.game.allOf(
+      [
+        atLeastLength,
+        this.game.not(this.hasCharacterTypeChain(characterType, length + 1), this.freshName("longer_chain_absent")),
+      ],
+      this.freshName(`${characterType}_chain_length_${length}`),
+    );
+  }
+
+  private hasCharacterTypeChain(characterType: CharacterType, length: number): BoolLike {
+    if (length > this.ctx.players.length) return this.game.constantBool(false, this.freshName("chain_too_long"));
+    return this.game.anyOf(
+      this.ctx.players.map((_player, startIndex) =>
+        this.game.allOf(
+          Array.from({ length }, (_ignored, offset) => {
+            const player = this.ctx.players[(startIndex + offset) % this.ctx.players.length] as string;
+            return this.game.hasCharacterType(player, characterType);
+          }),
+          this.freshName(`${characterType}_chain_${length}`),
+        ),
+      ),
+      this.freshName(`${characterType}_chain_at_least_${length}`),
+    );
   }
 
   private expectTimingArg(arg: AstCall["args"][number]): Timing {

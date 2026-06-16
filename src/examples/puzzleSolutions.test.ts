@@ -26,7 +26,7 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-12b-thunderstruck": 41,
   "puzzle-13-clockblocking": 1,
   "puzzle-14-new-super-marionette-bros": 1,
-  "puzzle-15-wake-up-and-choose-violets": 60,
+  "puzzle-15-wake-up-and-choose-violets": 1,
   "puzzle-16-who-watches-the-watchmen": 1,
   "puzzle-17-the-missing-piece": 2,
   "puzzle-18-x-and-the-city": 1,
@@ -230,6 +230,7 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
     id: "puzzle-15-wake-up-and-choose-violets",
     source:
       "https://www.reddit.com/r/BloodOnTheClocktower/comments/1gv12ck/weekly_puzzle_15_wake_up_and_choose_violets/",
+    coversAllWorlds: true,
     worlds: [{ roles: { Adam: "Vortox", Jasmine: "Evil Twin" } }],
   },
   {
@@ -485,12 +486,12 @@ describe("JSON puzzle solutions", () => {
     expect(new Set(catalogIds)).toEqual(new Set(sourceIds));
   });
 
-  test("puzzle 15 has the largest modeled JSON search space", () => {
+  test("puzzle 33 has the largest modeled JSON search space", () => {
     const [id, count] = Object.entries(JSON_SOLUTION_COUNTS).sort(
       ([leftId, leftCount], [rightId, rightCount]) => rightCount - leftCount || leftId.localeCompare(rightId),
     )[0] as [string, number];
 
-    expect({ id, count }).toEqual({ id: "puzzle-15-wake-up-and-choose-violets", count: 60 });
+    expect({ id, count }).toEqual({ id: "puzzle-33-twice-is-coincidence-thrice-is-proof", count: 59 });
   });
 
   test.each(PUZZLE_SOLUTION_CASES)(
