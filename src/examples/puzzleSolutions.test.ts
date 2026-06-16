@@ -28,7 +28,7 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-14-new-super-marionette-bros": 1,
   "puzzle-15-wake-up-and-choose-violets": 60,
   "puzzle-16-who-watches-the-watchmen": 1,
-  "puzzle-17-the-missing-piece": 89,
+  "puzzle-17-the-missing-piece": 2,
   "puzzle-18-x-and-the-city": 1,
   "puzzle-19-he-could-be-you-he-could-be-me": 1,
   "puzzle-20-the-three-wise-men": 1,
@@ -71,6 +71,7 @@ interface PublishedSolutionLock {
   readonly id: string;
   readonly source: string;
   readonly worlds: readonly PublishedWorldLock[];
+  readonly coversAllWorlds?: boolean;
 }
 
 interface PublishedSolutionGap {
@@ -246,6 +247,7 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
   {
     id: "puzzle-17-the-missing-piece",
     source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1h5sgc7/weekly_puzzle_17_the_missing_piece/",
+    coversAllWorlds: true,
     worlds: [{ drunk: ["Steph"] }],
   },
   {
@@ -482,12 +484,12 @@ describe("JSON puzzle solutions", () => {
     expect(new Set(catalogIds)).toEqual(new Set(sourceIds));
   });
 
-  test("puzzle 17 has the largest modeled JSON search space", () => {
+  test("puzzle 9 has the largest modeled JSON search space", () => {
     const [id, count] = Object.entries(JSON_SOLUTION_COUNTS).sort(
       ([leftId, leftCount], [rightId, rightCount]) => rightCount - leftCount || leftId.localeCompare(rightId),
     )[0] as [string, number];
 
-    expect({ id, count }).toEqual({ id: "puzzle-17-the-missing-piece", count: 89 });
+    expect({ id, count }).toEqual({ id: "puzzle-09-the-new-acrobat", count: 88 });
   });
 
   test.each(PUZZLE_SOLUTION_CASES)(
@@ -513,6 +515,22 @@ describe("JSON puzzle solutions", () => {
       );
 
       expect(missingWorlds, `${id} did not include all published worlds from ${source}`).toEqual([]);
+    },
+    PUBLISHED_WORLD_TIMEOUT_MS,
+  );
+
+  test.each(PUBLISHED_SOLUTION_LOCKS.filter((lock) => lock.coversAllWorlds === true))(
+    "$id has only Reddit-published solution worlds",
+    async ({ id, source, worlds: expectedWorlds }: PublishedSolutionLock) => {
+      const example = EXAMPLES_BY_ID.get(id);
+      if (example === undefined) throw new Error(`Missing puzzle example for ${id}`);
+      const doc = validatePuzzleDoc(example.data);
+      const worlds = await buildFromDoc(doc, backend).solveAll();
+      const invalidWorlds = worlds.filter(
+        (world) => !expectedWorlds.some((expectedWorld) => matchesWorldLock(world, expectedWorld, doc)),
+      );
+
+      expect(invalidWorlds, `${id} included a world outside the published solution from ${source}`).toEqual([]);
     },
     PUBLISHED_WORLD_TIMEOUT_MS,
   );

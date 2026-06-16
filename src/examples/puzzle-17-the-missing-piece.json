@@ -20,11 +20,35 @@
       "roles": ["Puzzlemaster"]
     }
   ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Steph"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightKill",
+      "players": ["Adam"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Sula"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightKill",
+      "players": ["Hannah"]
+    }
+  ],
   "claims": [
     {
       "type": "Undertaker",
       "name": "Sarah",
-      "timing": "night_2"
+      "timing": "night_2",
+      "player": "Steph",
+      "role": "Empath"
     },
     {
       "type": "Washerwoman",
@@ -35,13 +59,16 @@
     {
       "type": "Investigator",
       "name": "Hannah",
+      "timing": "night_1",
       "role": "Scarlet Woman",
       "among": ["Fraser", "Sarah"]
     },
     {
       "type": "Slayer",
       "name": "Tom",
-      "timing": "day_3"
+      "timing": "day_3",
+      "target": "Sarah",
+      "killed": false
     },
     {
       "type": "Puzzlemaster",
@@ -55,12 +82,33 @@
     },
     {
       "type": "Empath",
-      "name": "Steph"
+      "name": "Steph",
+      "timing": "night_1",
+      "count": 0
     },
     {
       "type": "FortuneTeller",
       "name": "Fraser",
-      "checks": []
+      "checks": [
+        {
+          "left": "Hannah",
+          "right": "Tom",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Tom",
+          "right": "Fraser",
+          "yes": true,
+          "timing": "night_2"
+        },
+        {
+          "left": "You",
+          "right": "Sarah",
+          "yes": true,
+          "timing": "night_3"
+        }
+      ]
     }
   ]
 }
