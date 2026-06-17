@@ -92,6 +92,8 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
       return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
     case "Sage":
       return { ...claim, name, demonAmong: claim.demonAmong ? remapArr(claim.demonAmong) : claim.demonAmong };
+    case "Slayer":
+      return { ...claim, name, target: claim.target ? remap(claim.target) : claim.target };
     case "Snake Charmer":
       return { ...claim, name, checked: claim.checked ? remap(claim.checked) : claim.checked };
     case "Steward":
@@ -165,6 +167,8 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
       return claim.player === name ? { ...claim, player: undefined } : claim;
     case "Sage":
       return { ...claim, demonAmong: stripArr(claim.demonAmong) };
+    case "Slayer":
+      return claim.target === name ? { ...claim, target: undefined } : claim;
     case "Snake Charmer":
       return claim.checked === name ? { ...claim, checked: undefined } : claim;
     case "Balloonist":

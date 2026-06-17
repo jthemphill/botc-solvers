@@ -138,6 +138,19 @@ describe("puzzle document reducer", () => {
     ]);
   });
 
+  test("renamePlayer updates Slayer targets", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B"],
+      script: ["Slayer"],
+      claims: [{ type: "Slayer", name: "A", timing: "day_1", target: "B", killed: false }],
+    };
+
+    const next = reducer(doc, { type: "renamePlayer", index: 1, name: "Bea" });
+
+    expect(next.claims).toEqual([{ type: "Slayer", name: "A", timing: "day_1", target: "Bea", killed: false }]);
+  });
+
   test("removePlayer removes empty timeline events", () => {
     const doc: PuzzleDoc = {
       version: 1,

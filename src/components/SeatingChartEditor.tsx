@@ -569,6 +569,13 @@ function claimSummary(claim: Claim): string {
         : `${claim.player} is ${rolePhrase(claim.role, "unknown")}.`;
     case "Sage":
       return `${formatList(claim.demonAmong ?? [])} is Demon`;
+    case "Slayer": {
+      const target = claim.target || "someone";
+      const timing = claim.timing === undefined ? "a day" : sentenceTimingLabel(claim.timing);
+      if (claim.killed === true) return `I shot ${target} on ${timing}, and they died.`;
+      if (claim.killed === false) return `I shot ${target} on ${timing}, and they did not die.`;
+      return `I shot ${target} on ${timing}.`;
+    }
     case "Snake Charmer":
       return claim.checked ? `${claim.checked} is ${claim.demon ? "" : "not "}Demon` : "No check yet";
     case "VillageIdiot": {
