@@ -1,6 +1,7 @@
 import { Fragment, useId, useState, type Dispatch } from "react";
 import { DslError, lex } from "../dsl/lex";
 import { parse } from "../dsl/parse";
+import { roleEmojiLabel } from "../model/roleEmoji";
 import { ALL_ROLE_NAMES, jugglerGuessRoleOptions } from "../state/scriptRoles";
 import type {
   BalloonistClaim,
@@ -88,7 +89,7 @@ export function ClaimsEditor({ doc, dispatch }: Props) {
         <div key={i} className="claim-block">
           <header>
             <strong>
-              {c.name} — {c.type}
+              {c.name} — {roleEmojiLabel(c.type)}
             </strong>
             <button onClick={() => dispatch({ type: "removeClaim", index: i })}>Remove</button>
           </header>

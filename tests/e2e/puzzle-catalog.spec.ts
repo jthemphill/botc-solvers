@@ -68,6 +68,23 @@ test("clears stale solve results when loading another puzzle", async ({ page }) 
   await expect(solvePanel.getByText("Solution 1")).toHaveCount(0);
 });
 
+test("puzzle 9 formats Knight claims and Claims tab role labels", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-09-the-new-acrobat");
+
+  const claims = page.getByLabel("Player claim summaries");
+  await expect(claims).toContainText("Neither Fraser nor Oscar is the Demon.");
+  await expect(claims).not.toContainText("Fraser or Oscar not Demon");
+
+  await page
+    .getByRole("navigation", { name: "Workbench sections" })
+    .getByRole("button", { name: /Claims/ })
+    .click();
+
+  await expect(page.getByText("Josh — ⚔️ Knight")).toBeVisible();
+});
+
 test("puzzle 20 keeps full claim summaries visible on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/");
