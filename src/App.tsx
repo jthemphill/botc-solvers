@@ -6,9 +6,8 @@ import { PuzzleHeader } from "./components/PuzzleHeader";
 import { ResultsView } from "./components/ResultsView";
 import { PuzzleSheet, SelectedPlayerWorkbench } from "./components/SeatingChartEditor";
 import { ScriptPicker } from "./components/ScriptPicker";
-import { initialDoc, reducer } from "./state/puzzleDoc";
+import { initialDoc, initialState, reducer } from "./state/puzzleDoc";
 import { useSolver } from "./state/useSolver";
-import type { SerializableWorld } from "./worker/protocol";
 
 type WorkbenchTab = "draw" | "script" | "claims" | "solve";
 
@@ -20,29 +19,34 @@ const WORKBENCH_TABS: Array<{ id: WorkbenchTab; label: string; icon: string }> =
 ];
 
 export function App() {
-  const [doc, dispatch] = useReducer(reducer, initialDoc);
-  const [worlds, setWorlds] = useState<readonly SerializableWorld[] | undefined>(undefined);
-  const [error, setError] = useState<string | undefined>(undefined);
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { doc, solveError, solveResult } = state;
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<WorkbenchTab>("draw");
   const { busy, solve } = useSolver();
 
+  const handleError = (message: string | undefined) => {
+    dispatch(
+      message === undefined
+        ? { type: "solve", status: "cleared", doc }
+        : { type: "solve", status: "failed", doc, message },
+    );
+  };
+
   const handleSolve = async () => {
-    setError(undefined);
-    setWorlds(undefined);
+    const solveDoc = doc;
+    dispatch({ type: "solve", status: "started", doc: solveDoc });
     try {
-      const result = await solve(doc);
-      setWorlds(result);
+      const result = await solve(solveDoc);
+      dispatch({ type: "solve", status: "succeeded", doc: solveDoc, worlds: result });
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      dispatch({ type: "solve", status: "failed", doc: solveDoc, message: e instanceof Error ? e.message : String(e) });
     }
   };
 
   const handleNewPuzzle = () => {
     dispatch({ type: "load", doc: initialDoc });
     setSelectedIndex(0);
-    setWorlds(undefined);
-    setError(undefined);
   };
 
   return (
@@ -54,7 +58,7 @@ export function App() {
           </span>
           <span>BOTC Puzzle Solver</span>
         </div>
-        <ImportExportBar doc={doc} dispatch={dispatch} onError={setError} />
+        <ImportExportBar doc={doc} dispatch={dispatch} onError={handleError} />
         <div className="chrome-actions">
           <button type="button" onClick={handleNewPuzzle}>
             New Puzzle
@@ -126,7 +130,7 @@ export function App() {
                     {busy ? "Solving…" : "Solve"}
                   </button>
                 </div>
-                <ResultsView worlds={worlds} players={doc.players} error={error} />
+                <ResultsView worlds={solveResult} players={doc.players} error={solveError} />
               </section>
             )}
           </div>

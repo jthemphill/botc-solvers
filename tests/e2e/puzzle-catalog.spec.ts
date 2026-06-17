@@ -48,6 +48,26 @@ test("loads puzzle 34 with structured role clues", async ({ page }) => {
   await expect(sula).toHaveCSS("border-top-color", "rgb(165, 43, 43)");
 });
 
+test("clears stale solve results when loading another puzzle", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-09-the-new-acrobat");
+  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: "Solve" }).click();
+  const solvePanel = page.locator(".solve-panel");
+  await solvePanel.getByRole("button", { name: "Solve" }).click();
+
+  await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByText("Solution 1")).toBeVisible();
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-10-dont-overcook-it");
+
+  await expect(page.locator("input.title-input")).toHaveValue("Puzzle 10 - Dont Overcook It");
+  await expect(solvePanel.getByText("Press Solve to compute satisfying worlds.")).toBeVisible();
+  await expect(solvePanel.getByText("Satisfying worlds:")).toHaveCount(0);
+  await expect(solvePanel.getByText("Solution 1")).toHaveCount(0);
+});
+
 test("puzzle 20 keeps full claim summaries visible on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/");

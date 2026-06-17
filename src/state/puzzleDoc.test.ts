@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { PuzzleDoc } from "../schema/puzzleDoc";
-import { reducer } from "./puzzleDoc";
+import type { SerializableWorld } from "../worker/protocol";
+import { docReducer as reducer, reducer as puzzleReducer } from "./puzzleDoc";
 
 describe("puzzle document reducer", () => {
   test("claim roles are added to the protected script", () => {
@@ -200,5 +201,41 @@ describe("puzzle document reducer", () => {
 
     expect(loaded.claims).toEqual([{ type: "Investigator", name: "A", among: ["B"] }]);
     expect(added.claims).toEqual([{ type: "Investigator", name: "A", among: ["B"] }]);
+  });
+
+  test("solve action stores current results and ignores stale completions", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      title: "First",
+      players: ["A"],
+      script: ["Imp"],
+      claims: [],
+    };
+    const nextDoc: PuzzleDoc = {
+      ...doc,
+      title: "Second",
+      players: ["B"],
+    };
+    const worlds: readonly SerializableWorld[] = [
+      {
+        actual: [["A", "Imp"]],
+        apparent: [["A", "Imp"]],
+        poisoned: [],
+        drunk: [],
+      },
+    ];
+
+    const solving = puzzleReducer({ doc }, { type: "solve", status: "started", doc });
+    const solved = puzzleReducer(solving, { type: "solve", status: "succeeded", doc, worlds });
+
+    expect(solved.solveResult).toBe(worlds);
+    expect(solved.solveError).toBeUndefined();
+
+    const loaded = puzzleReducer(solving, { type: "load", doc: nextDoc });
+    const staleCompletion = puzzleReducer(loaded, { type: "solve", status: "succeeded", doc, worlds });
+
+    expect(staleCompletion.doc.title).toBe("Second");
+    expect(staleCompletion.solveResult).toBeUndefined();
+    expect(staleCompletion.solveError).toBeUndefined();
   });
 });

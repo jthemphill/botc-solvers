@@ -1,7 +1,14 @@
 import { KNIGHT_NO_DEMON_AMONG_MAX, type Claim, type PuzzleDoc } from "../schema/puzzleDoc";
+import type { SerializableWorld } from "../worker/protocol";
 import { scriptWithProtectedRoles, withProtectedScript } from "./scriptRoles";
 
-export type PuzzleAction =
+export interface PuzzleState {
+  readonly doc: PuzzleDoc;
+  readonly solveResult?: readonly SerializableWorld[];
+  readonly solveError?: string;
+}
+
+export type PuzzleDocAction =
   | { type: "load"; doc: PuzzleDoc }
   | { type: "setTitle"; title: string }
   | { type: "setPlayerCount"; count: number }
@@ -17,12 +24,24 @@ export type PuzzleAction =
   | { type: "updateClaim"; index: number; claim: Claim }
   | { type: "removeClaim"; index: number };
 
+export type SolveAction =
+  | { type: "solve"; status: "started"; doc: PuzzleDoc }
+  | { type: "solve"; status: "succeeded"; doc: PuzzleDoc; worlds: readonly SerializableWorld[] }
+  | { type: "solve"; status: "failed"; doc: PuzzleDoc; message: string }
+  | { type: "solve"; status: "cleared"; doc: PuzzleDoc };
+
+export type PuzzleAction = PuzzleDocAction | SolveAction;
+
 export const initialDoc: PuzzleDoc = {
   version: 1,
   title: "Untitled puzzle",
   players: ["Player 1", "Player 2", "Player 3", "Player 4", "Player 5", "Player 6", "Player 7"],
   script: [],
   claims: [],
+};
+
+export const initialState: PuzzleState = {
+  doc: initialDoc,
 };
 
 function defaultPlayerName(existing: readonly string[]): string {
@@ -192,7 +211,7 @@ function normalizeClaim(claim: Claim): Claim {
   return claim;
 }
 
-export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
+export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc {
   switch (action.type) {
     case "load":
       return withProtectedScript({ ...action.doc, claims: action.doc.claims.map(normalizeClaim) });
@@ -304,4 +323,22 @@ export function reducer(state: PuzzleDoc, action: PuzzleAction): PuzzleDoc {
     case "removeClaim":
       return { ...state, claims: state.claims.filter((_, i) => i !== action.index) };
   }
+}
+
+export function reducer(state: PuzzleState, action: PuzzleAction): PuzzleState {
+  if (action.type === "solve") {
+    if (action.doc !== state.doc) return state;
+    switch (action.status) {
+      case "started":
+      case "cleared":
+        return { doc: state.doc };
+      case "succeeded":
+        return { doc: state.doc, solveResult: action.worlds };
+      case "failed":
+        return { doc: state.doc, solveError: action.message };
+    }
+  }
+
+  const doc = docReducer(state.doc, action);
+  return doc === state.doc ? state : { doc };
 }
