@@ -80,6 +80,10 @@ test("puzzle 9 formats claim summaries without leaking hidden death causes", asy
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("Neither Fraser nor Oscar is the Demon.");
   await expect(claims).not.toContainText("Fraser or Oscar not Demon");
+  await expect(claims).toContainText("N2: Sula=Goblin, survived; N3: You=Drunk");
+  await expect(claims).not.toContainText("I am the Gambler");
+  await expect(claims).toContainText("N2: chose Fraser, survived; N3: chose Josh, died");
+  await expect(claims).not.toContainText("I am the Acrobat");
   await expect(claims).toContainText("D1 gossip: Fraser.type == Demon; D2 gossip: Anna.type == Demon");
   await expect(claims).not.toContainText("I am the Gossip");
 
@@ -103,6 +107,30 @@ test("puzzle 2 formats Balloonist and Juggler claim summaries with player detail
   await expect(claims).toContainText("Different types: Tim/Matthew; Matthew/Steph.");
   await expect(claims).not.toContainText("5 guesses, 2 correct");
   await expect(claims).not.toContainText("2 different-type pairs");
+});
+
+test("formats remaining structured claim summaries with their details", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-12a-thunderstruck");
+  await expect(page.getByLabel("Player claim summaries")).toContainText("Chose Vortox on N1; drunk N1.");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-16-who-watches-the-watchmen");
+  await expect(page.getByLabel("Player claim summaries")).toContainText("Tim did not learn Nightwatchman.");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-27-is-this-a-legion-game");
+  await expect(page.getByLabel("Player claim summaries")).toContainText("N1: 1 living evil; N2: 2 living evil");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-28-a-study-in-scarlet");
+  const studyClaims = page.getByLabel("Player claim summaries");
+  await expect(studyClaims).toContainText("1 dead evil among Adam or You");
+  await expect(studyClaims).toContainText("N1: Adam + Sarah, 1 woke");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-11-false-is-the-new-black");
+  await expect(page.getByLabel("Player claim summaries")).toContainText("Chose Snake Charmer.");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-24-the-ultimate-blunder");
+  await expect(page.getByLabel("Player claim summaries")).toContainText("Chose Adam and did not lose.");
 });
 
 test("puzzle 1 formats Savant claim summaries as Alloy XOR expressions", async ({ page }) => {
