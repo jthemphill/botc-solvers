@@ -19,7 +19,7 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-06-super-marionette-bros": 1,
   "puzzle-07-the-savant-strikes-back": 1,
   "puzzle-08-the-stitch-up": 2,
-  "puzzle-09-the-new-acrobat": 1,
+  "puzzle-09-the-new-acrobat": 4,
   "puzzle-10-dont-overcook-it": 1,
   "puzzle-11-false-is-the-new-black": 2,
   "puzzle-12a-thunderstruck": 1,
@@ -195,7 +195,6 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
   {
     id: "puzzle-09-the-new-acrobat",
     source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1fz4jqe/weekly_puzzle_9_the_new_acrobat/",
-    coversAllWorlds: true,
     worlds: [{ roles: { Anna: "Imp", Hannah: "Goblin", Josh: "Drunk" } }],
   },
   {
@@ -495,7 +494,13 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
   },
 ];
 
-const PUBLISHED_SOLUTION_GAPS: Readonly<Record<string, PublishedSolutionGap>> = {};
+const PUBLISHED_SOLUTION_GAPS: Readonly<Record<string, PublishedSolutionGap>> = {
+  "puzzle-09-the-new-acrobat": {
+    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1fz4jqe/weekly_puzzle_9_the_new_acrobat/",
+    reason:
+      "The published solution uses hidden night-death causality that the player-visible puzzle doc no longer encodes.",
+  },
+};
 
 const EXAMPLES_BY_ID = new Map(PUZZLE_EXAMPLES.map((example) => [example.id, example]));
 
@@ -526,6 +531,7 @@ describe("JSON puzzle solutions", () => {
     const uncoveredMultiWorldPuzzles = Object.entries(JSON_SOLUTION_COUNTS)
       .filter(([, count]) => count > 1)
       .filter(([id]) => locksById.get(id)?.coversAllWorlds !== true)
+      .filter(([id]) => PUBLISHED_SOLUTION_GAPS[id] === undefined)
       .map(([id]) => id);
 
     expect(uncoveredMultiWorldPuzzles).toEqual([]);

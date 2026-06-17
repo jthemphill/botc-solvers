@@ -26,6 +26,7 @@ export interface ForbiddenRoleConstraint {
 export type TimelineEventType =
   | "nominationDeath"
   | "execution"
+  | "nightDeath"
   | "nightKill"
   | "nightKillBeforeInfo"
   | "abilityDeath"
@@ -215,7 +216,6 @@ export interface GamblerClaim extends BaseClaim {
 export interface GossipStatementDoc {
   readonly expression: string;
   readonly timing?: string;
-  readonly killed?: boolean;
 }
 
 export interface GossipClaim extends BaseClaim {

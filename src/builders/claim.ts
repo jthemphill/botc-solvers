@@ -156,7 +156,6 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
         ...base,
         statements: claim.statements?.map((statement, index) => ({
           timing: timingOf(statement.timing),
-          killed: statement.killed,
           statement: (game) =>
             compile(statement.expression, game, {
               ...ctx,

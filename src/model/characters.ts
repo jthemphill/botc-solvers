@@ -679,7 +679,6 @@ export interface GamblerGuess {
 export interface GossipStatement {
   readonly timing?: Timing;
   readonly statement: ClaimPredicate;
-  readonly killed?: boolean;
 }
 
 export class Gossip extends Role {
@@ -699,22 +698,6 @@ export class Gossip extends Role {
 
   override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
     this.applyRoleClaim(game, Gossip, options);
-    this.statements.forEach((statement, index) => {
-      if (statement.killed === undefined) return;
-      const timing = this.claimTiming(statement.timing, index);
-      const activeHealthy = game.allOf(
-        [game.hasRoleAt(this.name, Gossip, timing), game.soberAndHealthy(this.name, healthTimingForAbility(timing))],
-        claimName(this.name, Gossip, `statement_${index + 1}_active`),
-      );
-      const trueStatement = statement.statement(game, options.context);
-      if (statement.killed) game.addTruth(activeHealthy);
-      game.addImplication(
-        activeHealthy,
-        statement.killed
-          ? trueStatement
-          : game.not(trueStatement, claimName(this.name, Gossip, `statement_${index + 1}_false`)),
-      );
-    });
     this.applyInfoClaimBuilders(game, Gossip, this.infoClaims, options);
   }
 }

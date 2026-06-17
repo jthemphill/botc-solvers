@@ -380,7 +380,7 @@ function TimelineStrip({ timeline }: { timeline: readonly TimelineEventDoc[] }) 
       </div>
       <ol className="timeline-event-list">
         {timeline.map((event, index) => {
-          const deathClass = deathMarkerClass(event.type);
+          const deathClass = deathMarkerClass(event);
           return (
             <li
               key={`${event.timing}-${event.type}-${index}`}
@@ -388,7 +388,7 @@ function TimelineStrip({ timeline }: { timeline: readonly TimelineEventDoc[] }) 
               aria-label={`${timingLabel(event.timing)} ${timelineEventAction(event)}: ${event.players.join(", ")}`}
             >
               <span className={`timeline-node ${deathClass}`} aria-hidden="true">
-                {timelineEventGlyph(event.type)}
+                {timelineEventGlyph(event)}
               </span>
               <div>
                 <strong>
@@ -443,36 +443,49 @@ function firstQuoteCardsByPlayer(cards: readonly ClaimQuoteCard[]): ClaimQuoteCa
   });
 }
 
-function deathMarkerForPlayer(timeline: PuzzleDoc["timeline"], player: string): TimelineEventDoc["type"] | undefined {
+function deathMarkerForPlayer(timeline: PuzzleDoc["timeline"], player: string): TimelineEventDoc | undefined {
   const events = timeline ?? [];
-  if (events.some((event) => event.type === "nominationDeath" && event.players.includes(player)))
-    return "nominationDeath";
-  if (events.some((event) => event.type === "execution" && event.players.includes(player))) return "execution";
-  if (events.some((event) => event.type === "abilityDeath" && event.players.includes(player))) return "abilityDeath";
-  if (events.some((event) => event.type === "nightKill" && event.players.includes(player))) return "nightKill";
-  if (events.some((event) => event.type === "nightKillBeforeInfo" && event.players.includes(player)))
-    return "nightKillBeforeInfo";
-  return undefined;
+  const nominationDeath = events.find((event) => event.type === "nominationDeath" && event.players.includes(player));
+  if (nominationDeath !== undefined) return nominationDeath;
+  const execution = events.find((event) => event.type === "execution" && event.players.includes(player));
+  if (execution !== undefined) return execution;
+  const nightDeath = events.find((event) => event.type === "nightDeath" && event.players.includes(player));
+  if (nightDeath !== undefined) return nightDeath;
+  const abilityDeath = events.find((event) => event.type === "abilityDeath" && event.players.includes(player));
+  if (abilityDeath !== undefined) return abilityDeath;
+  const nightKill = events.find((event) => event.type === "nightKill" && event.players.includes(player));
+  if (nightKill !== undefined) return nightKill;
+  return events.find((event) => event.type === "nightKillBeforeInfo" && event.players.includes(player));
 }
 
-function deathMarkerClass(type: TimelineEventDoc["type"]): "nomination-death" | "execution" | "night-kill" {
+function visibleTimelineEventType(event: TimelineEventDoc): TimelineEventDoc["type"] {
+  return event.type === "abilityDeath" && event.timing.startsWith("night_") ? "nightKill" : event.type;
+}
+
+function deathMarkerClass(event: TimelineEventDoc): "nomination-death" | "execution" | "night-kill" {
+  const type = visibleTimelineEventType(event);
   if (type === "nominationDeath") return "nomination-death";
   return type === "execution" ? "execution" : "night-kill";
 }
 
-function deathMarkerLabel(type: TimelineEventDoc["type"]): string {
+function deathMarkerLabel(event: TimelineEventDoc): string {
+  const type = visibleTimelineEventType(event);
   if (type === "nominationDeath") return "died while nominating";
-  return type === "execution" ? "executed" : "killed at night";
+  if (type === "execution") return "executed";
+  if (type === "abilityDeath") return "died from an ability";
+  return "killed at night";
 }
 
 function timelineEventAction(event: TimelineEventDoc): string {
-  if (event.type === "nominationDeath") return "Nomination Death";
-  if (event.type === "execution") return "Execution";
-  if (event.type === "abilityDeath") return "Ability Death";
+  const type = visibleTimelineEventType(event);
+  if (type === "nominationDeath") return "Nomination Death";
+  if (type === "execution") return "Execution";
+  if (type === "abilityDeath") return "Ability Death";
   return event.players.length === 1 ? "Night Death" : "Night Deaths";
 }
 
-function timelineEventGlyph(type: TimelineEventDoc["type"]): string {
+function timelineEventGlyph(event: TimelineEventDoc): string {
+  const type = visibleTimelineEventType(event);
   if (type === "nominationDeath") return "!";
   if (type === "execution") return "X";
   if (type === "abilityDeath") return "*";
@@ -548,7 +561,7 @@ function claimSummary(claim: Claim): string {
     case "Seamstress":
       return `${formatPair(claim.among)} are ${claim.aligned ? "same" : "different"}`;
     case "Juggler":
-      return `${Object.keys(claim.guesses).length} guesses, ${claim.correctCount ?? "?"} correct`;
+      return jugglerSummary(claim);
     case "Dreamer":
       return `${claim.player || "Player"} is ${formatList(claim.roles)}`;
     case "Shugenja":
@@ -557,6 +570,8 @@ function claimSummary(claim: Claim): string {
       return claim.distance === undefined
         ? "No Clockmaker number"
         : `Demon ${claim.distance} step${claim.distance === 1 ? "" : "s"} from Minion`;
+    case "Gossip":
+      return gossipSummary(claim);
     case "Mathematician":
       return (claim.malfunctions ?? []).length === 0
         ? "No malfunction counts"
@@ -590,7 +605,7 @@ function claimSummary(claim: Claim): string {
       return `I checked: ${checks}.`;
     }
     case "Balloonist":
-      return `${claim.differentCharacterTypePairs.length} different-type pair${claim.differentCharacterTypePairs.length === 1 ? "" : "s"}`;
+      return balloonistSummary(claim);
     case "Savant":
       return savantSummary(claim.statements[0]?.options ?? []);
     case "Virgin": {
@@ -603,6 +618,36 @@ function claimSummary(claim: Claim): string {
     default:
       return `I am the ${claim.type}`;
   }
+}
+
+function jugglerSummary(claim: Extract<Claim, { readonly type: "Juggler" }>): string {
+  const guesses = Object.entries(claim.guesses)
+    .filter(([player, role]) => player.trim() !== "" && role.trim() !== "")
+    .map(([player, role]) => `${player}=${role}`);
+  const correct = claim.correctCount === undefined ? "correct count unknown" : `${claim.correctCount} correct`;
+  return `Day 1 guesses: ${guesses.length === 0 ? "none" : guesses.join("; ")}; ${correct}.`;
+}
+
+function balloonistSummary(claim: Extract<Claim, { readonly type: "Balloonist" }>): string {
+  const pairs = claim.differentCharacterTypePairs
+    .map(([left, right]) => [left.trim(), right.trim()] as const)
+    .filter(([left, right]) => left !== "" && right !== "")
+    .map(([left, right]) => `${left}/${right}`);
+
+  return pairs.length === 0 ? "No Balloonist pairs yet" : `Different types: ${pairs.join("; ")}.`;
+}
+
+function gossipSummary(claim: Extract<Claim, { readonly type: "Gossip" }>): string {
+  const statements = (claim.statements ?? [])
+    .map((statement) => {
+      const expression = statement.expression.trim();
+      if (expression === "") return undefined;
+      const timing = statement.timing === undefined ? "Gossip" : `${compactTimingLabel(statement.timing)} gossip`;
+      return `${timing}: ${expression}`;
+    })
+    .filter((statement): statement is string => statement !== undefined);
+
+  return statements.length === 0 ? "No Gossip statements" : statements.join("; ");
 }
 
 function rolePhrase(role: string | undefined, fallback: string): string {

@@ -65,7 +65,7 @@ function applyTimelineConstraints(game: BOTCModel, doc: PuzzleDoc): void {
         game.addTruth(doomsayerSameRegisteredAlignment(game, event.caller, player));
       }
     }
-    if (event.type === "abilityDeath") {
+    if (event.type === "abilityDeath" || event.type === "nightDeath") {
       for (const player of event.players) {
         for (const demonRole of demonRoles) {
           game.addImplication(
