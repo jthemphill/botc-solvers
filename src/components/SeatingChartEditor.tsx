@@ -52,6 +52,7 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
   const players = doc.players;
   const selectedName = players[selectedIndex];
   const setupCounts = countSetupRoles(doc);
+  const hasTimeline = doc.timeline !== undefined && doc.timeline.length > 0;
   const [draggedIndex, setDraggedIndex] = useState<number | undefined>(undefined);
   const quoteCards = claimQuoteCardsForDoc(doc);
   const chartQuoteCards = players.length <= 10 ? firstQuoteCardsByPlayer(quoteCards) : [];
@@ -94,9 +95,7 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
             onChange={(event) => dispatch({ type: "setPlayerCount", count: Number(event.target.value) })}
           />
         </label>
-        <span>
-          {doc.script.length} roles · {doc.claims.length} claims
-        </span>
+        <SetupCountSummary setupCounts={setupCounts} />
       </div>
 
       <div className="seating-chart" aria-label="Clockwise seating chart">
@@ -165,12 +164,11 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
 
       <ClaimQuoteDeck cards={quoteCards} onSelect={onSelect} />
 
-      <div className="sheet-divider" />
-
-      {doc.timeline !== undefined && doc.timeline.length > 0 ? (
-        <TimelineStrip timeline={doc.timeline} />
-      ) : (
-        <SetupStrip playerCount={players.length} setupCounts={setupCounts} />
+      {hasTimeline && (
+        <>
+          <div className="sheet-divider" />
+          <TimelineStrip timeline={doc.timeline ?? []} />
+        </>
       )}
     </div>
   );
@@ -337,36 +335,23 @@ function HiddenRolesTray({ roles }: { roles: readonly string[] }) {
   );
 }
 
-function RuleToken({ label, count, tone = "good" }: { label: string; count: number; tone?: "good" | "evil" }) {
+function SetupCountSummary({ setupCounts }: { setupCounts: Record<CharacterType, number> }) {
   return (
-    <div className={`rule-token ${tone}`} aria-label={`${count} ${label}`}>
-      <strong>{count}</strong>
-      <span>{label}</span>
+    <div className="setup-counts" aria-label="Setup role counts">
+      <SetupCountPill label="Townsfolk" count={setupCounts.townsfolk} />
+      <SetupCountPill label="Outsider" count={setupCounts.outsider} />
+      <SetupCountPill label="Minion" count={setupCounts.minion} tone="evil" />
+      <SetupCountPill label="Demon" count={setupCounts.demon} tone="evil" />
     </div>
   );
 }
 
-function SetupStrip({ playerCount, setupCounts }: { playerCount: number; setupCounts: Record<CharacterType, number> }) {
+function SetupCountPill({ label, count, tone = "good" }: { label: string; count: number; tone?: "good" | "evil" }) {
   return (
-    <div className="rules-strip" aria-label="Puzzle setup summary">
-      <div className="notes-box">
-        <strong>Notes</strong>
-        <span>Use the workbench to add role stamps and claims.</span>
-      </div>
-      <div className="rules-summary">
-        <h3>Setup</h3>
-        <div className="rule-token-row">
-          <RuleToken label="Townsfolk" count={setupCounts.townsfolk} />
-          <RuleToken label="Outsider" count={setupCounts.outsider} />
-          <RuleToken label="Minion" count={setupCounts.minion} tone="evil" />
-          <RuleToken label="Demon" count={setupCounts.demon} tone="evil" />
-        </div>
-      </div>
-      <div className="sheet-footnote">
-        {playerCount} players · {setupCounts.demon} demon · {setupCounts.minion} minion · {setupCounts.outsider}{" "}
-        outsider
-      </div>
-    </div>
+    <span className={`setup-count-pill ${tone}`} aria-label={`${count} ${label}`}>
+      <strong>{count}</strong>
+      {label}
+    </span>
   );
 }
 
