@@ -988,6 +988,67 @@ summary {
   width: 100%;
 }
 
+.radio-tile-group {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(4rem, 1fr));
+  gap: 0.35rem;
+}
+
+.radio-tile {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.radio-tile input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.radio-tile span {
+  display: grid;
+  width: 100%;
+  min-width: 4rem;
+  min-height: 2.35rem;
+  place-items: center;
+  border: 1px solid var(--paper-soft-line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.68);
+  color: var(--muted-ink);
+  font-weight: 700;
+  padding: 0.34rem 0.72rem;
+}
+
+.radio-tile:hover span {
+  border-color: rgba(32, 26, 21, 0.36);
+  background: #fffaf0;
+}
+
+.radio-tile input:checked + span {
+  color: var(--ink);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 0 0 1px currentColor;
+}
+
+.radio-tile.good input:checked + span {
+  border-color: var(--blue-ink);
+  background: rgba(14, 119, 169, 0.14);
+}
+
+.radio-tile.evil input:checked + span {
+  border-color: var(--red-ink);
+  background: rgba(165, 43, 43, 0.12);
+}
+
+.radio-tile input:focus-visible + span {
+  outline: 3px solid rgba(14, 119, 169, 0.28);
+  outline-offset: 2px;
+}
+
 .script-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));

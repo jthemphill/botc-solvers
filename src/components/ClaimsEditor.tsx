@@ -1,4 +1,4 @@
-import { Fragment, useState, type Dispatch } from "react";
+import { Fragment, useId, useState, type Dispatch } from "react";
 import { DslError, lex } from "../dsl/lex";
 import { parse } from "../dsl/parse";
 import { ALL_ROLE_NAMES, jugglerGuessRoleOptions } from "../state/scriptRoles";
@@ -944,6 +944,7 @@ function VillageIdiotBody({
   claim: VillageIdiotClaim;
   onChange: (c: Claim) => void;
 }) {
+  const radioGroupId = useId();
   const addCheck = () =>
     onChange({ ...claim, checks: [...claim.checks, { player: doc.players[0] ?? "", good: true }] });
   const setCheck = (i: number, c: (typeof claim.checks)[number]) =>
@@ -954,14 +955,28 @@ function VillageIdiotBody({
       {claim.checks.map((chk, i) => (
         <div key={i} className="row">
           <PlayerSelect players={doc.players} value={chk.player} onChange={(v) => setCheck(i, { ...chk, player: v })} />
-          <label>
-            <input
-              type="checkbox"
-              checked={chk.good}
-              onChange={(e) => setCheck(i, { ...chk, good: e.target.checked })}
-            />
-            registers good
-          </label>
+          <div className="radio-tile-group" role="radiogroup" aria-label="Registers as">
+            <label className="radio-tile good">
+              <input
+                type="radio"
+                name={`${radioGroupId}-check-${i}`}
+                value="good"
+                checked={chk.good}
+                onChange={() => setCheck(i, { ...chk, good: true })}
+              />
+              <span>Good</span>
+            </label>
+            <label className="radio-tile evil">
+              <input
+                type="radio"
+                name={`${radioGroupId}-check-${i}`}
+                value="evil"
+                checked={!chk.good}
+                onChange={() => setCheck(i, { ...chk, good: false })}
+              />
+              <span>Evil</span>
+            </label>
+          </div>
           <button onClick={() => removeCheck(i)}>×</button>
         </div>
       ))}
