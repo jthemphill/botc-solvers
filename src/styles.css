@@ -289,8 +289,9 @@ summary {
 .sheet-tools {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 1rem;
+  flex-wrap: wrap;
   color: var(--muted-ink);
   font-size: 0.9rem;
 }
@@ -301,6 +302,42 @@ summary {
   align-items: center;
   color: var(--ink);
   font-weight: 650;
+}
+
+.setup-counts {
+  display: inline-flex;
+  gap: 0.42rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.setup-count-pill {
+  display: inline-flex;
+  gap: 0.28rem;
+  align-items: baseline;
+  min-height: 2rem;
+  border: 1px solid rgba(14, 119, 169, 0.28);
+  border-radius: 999px;
+  background: rgba(14, 119, 169, 0.08);
+  color: var(--ink);
+  padding: 0.26rem 0.58rem;
+  font-size: 0.78rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.setup-count-pill strong {
+  color: var(--blue-ink);
+  font-size: 0.94rem;
+}
+
+.setup-count-pill.evil {
+  border-color: rgba(165, 43, 43, 0.28);
+  background: rgba(165, 43, 43, 0.08);
+}
+
+.setup-count-pill.evil strong {
+  color: var(--red-ink);
 }
 
 .seating-chart {
@@ -566,73 +603,11 @@ summary {
   background: var(--paper-line);
 }
 
-.rules-strip {
-  display: grid;
-  grid-template-columns: minmax(8rem, 0.38fr) minmax(16rem, 1fr) minmax(10rem, 0.5fr);
-  gap: 1.2rem;
-  align-items: center;
-  padding: 1rem 0 0;
-}
-
-.notes-box {
-  display: grid;
-  gap: 0.5rem;
-  min-height: 6rem;
-  padding: 0.8rem;
-  border: 2px dashed var(--paper-soft-line);
-  border-radius: 8px;
-}
-
-.notes-box span,
 .sheet-footnote,
 .panel-heading-row span,
 .solve-panel-header span {
   color: var(--muted-ink);
   font-size: 0.86rem;
-}
-
-.rules-summary {
-  display: grid;
-  justify-items: center;
-  gap: 0.7rem;
-}
-
-.rules-summary h3 {
-  border-bottom: 2px solid var(--paper-line);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.45rem;
-}
-
-.rule-token-row {
-  display: flex;
-  justify-content: center;
-  gap: 1.2rem;
-  flex-wrap: wrap;
-}
-
-.rule-token {
-  display: grid;
-  width: 5.8rem;
-  min-height: 4.8rem;
-  place-items: center;
-  border: 1.5px solid var(--paper-line);
-  border-radius: 50%;
-  background: rgba(255, 252, 244, 0.75);
-  text-align: center;
-}
-
-.rule-token strong {
-  color: var(--blue-ink);
-  font-size: 1.35rem;
-}
-
-.rule-token.evil strong {
-  color: var(--red-ink);
-}
-
-.rule-token span {
-  font-size: 0.76rem;
-  font-weight: 750;
 }
 
 .sheet-footnote {
@@ -1273,10 +1248,6 @@ summary {
   }
 
   .claim-summary-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .rules-strip {
     grid-template-columns: 1fr;
   }
 
