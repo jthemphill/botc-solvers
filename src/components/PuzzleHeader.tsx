@@ -1,4 +1,4 @@
-import type { Dispatch } from "react";
+import type { CSSProperties, Dispatch } from "react";
 import type { PuzzleDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
 
@@ -8,6 +8,11 @@ interface Props {
 }
 
 export function PuzzleHeader({ doc, dispatch }: Props) {
+  const title = doc.title ?? "";
+  const titleStyle = {
+    "--title-scale": Math.min(1, 24 / Math.max(title.length, 1)).toFixed(3),
+  } as CSSProperties;
+
   return (
     <div className="puzzle-title-editor">
       <span className="puzzle-number">Puzzle Sheet</span>
@@ -16,7 +21,8 @@ export function PuzzleHeader({ doc, dispatch }: Props) {
         <input
           className="title-input"
           type="text"
-          value={doc.title ?? ""}
+          value={title}
+          style={titleStyle}
           onChange={(e) => dispatch({ type: "setTitle", title: e.target.value })}
         />
       </label>

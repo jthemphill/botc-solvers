@@ -5,7 +5,7 @@ import { roleEmoji, roleEmojiLabel } from "../model/roleEmoji";
 import { standardSetupCounts } from "../model/setup";
 import type { Claim, PuzzleDoc, TimelineEventDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
-import { isHiddenScriptRole } from "../state/scriptRoles";
+import { hiddenScriptRoleOptions } from "../state/scriptRoles";
 import { CLAIM_TYPES, ClaimBody, makeEmptyClaim } from "./ClaimsEditor";
 
 interface Props {
@@ -17,6 +17,21 @@ interface SharedProps extends Props {
   selectedIndex: number;
   onSelect: (index: number) => void;
 }
+
+interface ClaimQuoteCard {
+  readonly player: string;
+  readonly playerIndex: number;
+  readonly claimIndex: number;
+  readonly roleLabel: string;
+  readonly summary: string;
+}
+
+const TYPE_LABEL: Record<CharacterType, string> = {
+  [CharacterType.Townsfolk]: "Townsfolk",
+  [CharacterType.Outsider]: "Outsider",
+  [CharacterType.Minion]: "Minion",
+  [CharacterType.Demon]: "Demon",
+};
 
 export function SeatingChartEditor({ doc, dispatch }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -38,6 +53,8 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
   const selectedName = players[selectedIndex];
   const setupCounts = countSetupRoles(doc);
   const [draggedIndex, setDraggedIndex] = useState<number | undefined>(undefined);
+  const quoteCards = claimQuoteCardsForDoc(doc);
+  const chartQuoteCards = players.length <= 10 ? firstQuoteCardsByPlayer(quoteCards) : [];
 
   useEffect(() => {
     if (selectedIndex >= players.length) onSelect(Math.max(0, players.length - 1));
@@ -87,7 +104,7 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
         {players.map((player, index) => {
           const roleClaims = claimIndexesForPlayer(doc, player);
           const roleLabels = roleClaims.map(([claim]) => roleEmojiLabel(claim.type));
-          const primaryClaim = roleClaims[0]?.[0];
+          const primaryClaim = mostRecentClaim(roleClaims);
           const deathMarker = deathMarkerForPlayer(doc.timeline, player);
           const deathClass = deathMarker === undefined ? undefined : deathMarkerClass(deathMarker);
           const deathLabel = deathMarker === undefined ? "" : `, ${deathMarkerLabel(deathMarker)}`;
@@ -98,7 +115,7 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
               className={`seat-button${deathClass === undefined ? "" : ` death-${deathClass}`}${
                 index === selectedIndex ? " selected" : ""
               }${index === draggedIndex ? " dragging" : ""}`}
-              style={seatPosition(index, players.length)}
+              style={seatButtonStyle(index, players.length, player)}
               draggable
               onDragStart={(event) => startSeatDrag(event, index)}
               onDragOver={allowSeatDrop}
@@ -109,7 +126,13 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
               aria-label={`Seat ${index + 1}: ${player}${deathLabel}. Drag to reorder seats.`}
             >
               {deathClass !== undefined && <span className={`seat-shroud ${deathClass}`} aria-hidden="true" />}
-              <span className="seat-token-icon" aria-hidden="true">
+              <span
+                className="seat-token-icon"
+                aria-label={
+                  roleLabels.length === 0 ? "No claims" : `Primary claim: ${roleEmojiLabel(primaryClaim?.type)}`
+                }
+                title={roleLabels.join(", ")}
+              >
                 {roleEmoji(primaryClaim?.type) ?? index + 1}
               </span>
               <span className="seat-player-name">{player}</span>
@@ -118,43 +141,29 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
                   {timelineEventGlyph(deathMarker)}
                 </span>
               )}
-              <small
-                className="seat-role-claims"
-                aria-label={roleLabels.length === 0 ? "No claims" : `Claims: ${roleLabels.join(", ")}`}
-                title={roleLabels.join(", ")}
-              >
-                {roleClaims.map(([claim, claimIndex]) => (
-                  <span key={claimIndex} aria-hidden="true">
-                    {roleEmoji(claim.type)}
-                  </span>
-                ))}
-              </small>
             </button>
           );
         })}
 
-        {players.length <= 10 &&
-          players.map((player, index) => {
-            const claim = claimIndexesForPlayer(doc, player)[0]?.[0];
-            if (claim === undefined) return null;
-            return (
-              <button
-                key={`${player}-callout`}
-                type="button"
-                className="claim-callout"
-                style={calloutPosition(index, players.length)}
-                onClick={() => onSelect(index)}
-              >
-                "{claimSummary(claim)}"
-              </button>
-            );
-          })}
+        {chartQuoteCards.map((card) => (
+          <button
+            key={`${card.claimIndex}-${card.player}-callout`}
+            type="button"
+            className="claim-callout"
+            style={calloutPosition(card.playerIndex, players.length)}
+            onClick={() => onSelect(card.playerIndex)}
+          >
+            "{card.summary}"
+          </button>
+        ))}
 
         <div className="center-timeline" aria-live="polite">
           <strong>{selectedName ?? "No player selected"}</strong>
           <span>Click tokens to edit claims</span>
         </div>
       </div>
+
+      <ClaimQuoteDeck cards={quoteCards} onSelect={onSelect} />
 
       <div className="sheet-divider" />
 
@@ -164,6 +173,32 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
         <SetupStrip playerCount={players.length} setupCounts={setupCounts} />
       )}
     </div>
+  );
+}
+
+function ClaimQuoteDeck({ cards, onSelect }: { cards: readonly ClaimQuoteCard[]; onSelect: (index: number) => void }) {
+  if (cards.length === 0) return null;
+
+  return (
+    <section className="claim-summary-deck" aria-label="Player claim summaries">
+      <h3>Claims</h3>
+      <div className="claim-summary-grid">
+        {cards.map((card) => (
+          <button
+            key={`${card.claimIndex}-${card.player}-summary`}
+            type="button"
+            className="claim-summary-card"
+            onClick={() => onSelect(card.playerIndex)}
+          >
+            <span className="claim-summary-meta">
+              <strong>{card.player}</strong>
+              <span>{card.roleLabel}</span>
+            </span>
+            <span className="claim-summary-text">"{card.summary}"</span>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -274,7 +309,8 @@ export function SelectedPlayerWorkbench({ doc, dispatch, selectedIndex, onSelect
 }
 
 function HiddenRolesTray({ roles }: { roles: readonly string[] }) {
-  const hiddenRoles = roles.filter(isHiddenScriptRole);
+  const selected = new Set(roles);
+  const hiddenRoles = hiddenScriptRoleOptions().filter((role) => selected.has(role));
 
   return (
     <section className="panel hidden-role-tray">
@@ -284,18 +320,18 @@ function HiddenRolesTray({ roles }: { roles: readonly string[] }) {
           <span>{hiddenRoles.length} roles</span>
         </div>
       </header>
-      <div className="hidden-role-slots">
-        {hiddenRoles.map((role) => (
-          <div key={role} className="hidden-role-token">
-            <span aria-hidden="true">{roleEmoji(role) ?? "?"}</span>
-            <small>{role}</small>
-          </div>
-        ))}
-        {Array.from({ length: Math.max(0, 5 - hiddenRoles.length) }, (_, index) => (
-          <div key={`empty-${index}`} className="hidden-role-token empty" aria-label="Empty hidden-role slot">
-            +
-          </div>
-        ))}
+      <div className="role-palette script-role-palette">
+        {hiddenRoles.map((role) => {
+          const type = ROLE_CLASSES.get(role)?.characterType;
+          return (
+            <div key={role} className="role-stamp selected hidden-role-preview" aria-label={role}>
+              <span aria-hidden="true">{roleEmoji(role) ?? "?"}</span>
+              <small>{role}</small>
+              {type !== undefined && <em>{TYPE_LABEL[type]}</em>}
+            </div>
+          );
+        })}
+        {hiddenRoles.length === 0 && <p className="palette-empty">No hidden roles selected.</p>}
       </div>
     </section>
   );
@@ -375,6 +411,38 @@ function claimIndexesForPlayer(doc: PuzzleDoc, player: string): Array<[Claim, nu
   return doc.claims.flatMap((claim, index) => (claim.name === player ? [[claim, index] as [Claim, number]] : []));
 }
 
+function mostRecentClaim(claims: Array<[Claim, number]>): Claim | undefined {
+  return claims.reduce<[Claim, number] | undefined>(
+    (latest, entry) => (latest === undefined || entry[1] > latest[1] ? entry : latest),
+    undefined,
+  )?.[0];
+}
+
+function claimQuoteCardsForDoc(doc: PuzzleDoc): ClaimQuoteCard[] {
+  return doc.claims.flatMap((claim, claimIndex) => {
+    const playerIndex = doc.players.indexOf(claim.name);
+    if (playerIndex === -1) return [];
+    return [
+      {
+        player: claim.name,
+        playerIndex,
+        claimIndex,
+        roleLabel: roleEmojiLabel(claim.type),
+        summary: claimSummary(claim),
+      },
+    ];
+  });
+}
+
+function firstQuoteCardsByPlayer(cards: readonly ClaimQuoteCard[]): ClaimQuoteCard[] {
+  const seen = new Set<string>();
+  return cards.filter((card) => {
+    if (seen.has(card.player)) return false;
+    seen.add(card.player);
+    return true;
+  });
+}
+
 function deathMarkerForPlayer(timeline: PuzzleDoc["timeline"], player: string): TimelineEventDoc["type"] | undefined {
   const events = timeline ?? [];
   if (events.some((event) => event.type === "nominationDeath" && event.players.includes(player)))
@@ -422,6 +490,13 @@ function seatPosition(index: number, count: number): CSSProperties {
   };
 }
 
+function seatButtonStyle(index: number, count: number, player: string): CSSProperties {
+  return {
+    ...seatPosition(index, count),
+    "--seat-name-scale": Math.min(1, 6.6 / Math.max(player.length, 1)).toFixed(3),
+  } as CSSProperties;
+}
+
 function calloutPosition(index: number, count: number): CSSProperties {
   if (count === 0) return {};
   const angle = -90 + (index * 360) / count;
@@ -447,7 +522,9 @@ function claimSummary(claim: Claim): string {
       return `${claim.player ? `${claim.player}: ` : ""}${claim.count} evil neighbor${claim.count === 1 ? "" : "s"}`;
     case "Investigator": {
       const role = claim.role ?? claim.minionRole ?? "a Minion";
-      return `${formatList(claim.among)} could be ${role}`;
+      const subject =
+        claim.among.length === 2 ? `Either ${claim.among[0]} or ${claim.among[1]}` : formatList(claim.among);
+      return `${subject} is ${rolePhrase(role, "a Minion")}.`;
     }
     case "Librarian":
       return claim.outsiderCount !== undefined
@@ -486,22 +563,44 @@ function claimSummary(claim: Claim): string {
         : (claim.malfunctions ?? [])
             .map((entry) => `${entry.count} malfunction${entry.count === 1 ? "" : "s"} (${timingLabel(entry.timing)})`)
             .join("; ");
+    case "Ravenkeeper":
+      return claim.player === undefined
+        ? "No Ravenkeeper pick yet"
+        : `${claim.player} is ${rolePhrase(claim.role, "unknown")}.`;
     case "Sage":
       return `${formatList(claim.demonAmong ?? [])} is Demon`;
     case "Snake Charmer":
       return claim.checked ? `${claim.checked} is ${claim.demon ? "" : "not "}Demon` : "No check yet";
     case "VillageIdiot": {
-      const check = claim.checks[0];
-      if (check === undefined) return "No checks yet";
-      return `${check.player}: ${check.good ? "good" : "evil"}`;
+      if (claim.checks.length === 0) return "No checks yet";
+      const showTimings = claim.checks.some((check) => check.timing !== undefined);
+      const checks = claim.checks
+        .map((check) => {
+          const timing = showTimings && check.timing !== undefined ? `${compactTimingLabel(check.timing)} ` : "";
+          return `${timing}${check.player} -> ${check.good ? "good" : "evil"}`;
+        })
+        .join(", ");
+      return `I checked: ${checks}.`;
     }
     case "Balloonist":
       return `${claim.differentCharacterTypePairs.length} different-type pair${claim.differentCharacterTypePairs.length === 1 ? "" : "s"}`;
     case "Savant":
       return `${claim.statements[0]?.options.length ?? 0} Savant statements`;
+    case "Virgin": {
+      const nominator = claim.nominator ?? "Someone";
+      const timing = claim.timing === undefined ? "that day" : sentenceTimingLabel(claim.timing);
+      if (claim.executed === true) return `${nominator} nominated me on ${timing} and was executed.`;
+      if (claim.executed === false) return `${nominator} nominated me on ${timing} and nothing happened.`;
+      return `${nominator} nominated me on ${timing}.`;
+    }
     default:
       return `I am the ${claim.type}`;
   }
+}
+
+function rolePhrase(role: string | undefined, fallback: string): string {
+  const value = role?.trim() || fallback;
+  return /^(a|an|the)\s/i.test(value) ? value : `the ${value}`;
 }
 
 function formatList(values: readonly string[]): string {
@@ -524,6 +623,10 @@ function timingLabel(timing: string): string {
   const [, period, number] = match;
   if (period === undefined || number === undefined) return timing;
   return `${period[0]?.toUpperCase()}${period.slice(1)} ${number}`;
+}
+
+function sentenceTimingLabel(timing: string): string {
+  return timingLabel(timing).toLowerCase();
 }
 
 function compactTimingLabel(timing: string): string {

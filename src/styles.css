@@ -249,6 +249,7 @@ summary {
 
 .puzzle-title-editor label {
   width: min(100%, 46rem);
+  container-type: inline-size;
 }
 
 .puzzle-number {
@@ -266,9 +267,10 @@ summary {
   padding: 0 0.6rem 0.18rem;
   text-align: center;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 2.75rem;
+  font-size: min(clamp(0.85rem, calc(2.75rem * var(--title-scale, 1)), 2.75rem), 5.3cqi);
   font-weight: 800;
   line-height: 1.05;
+  white-space: nowrap;
 }
 
 .puzzle-counts {
@@ -321,8 +323,10 @@ summary {
   position: absolute;
   z-index: 3;
   display: grid;
+  grid-template-rows: 1fr auto 1fr;
   width: clamp(5.4rem, 8.6vw, 7.3rem);
-  min-height: clamp(5.4rem, 8.6vw, 7.3rem);
+  height: clamp(5.4rem, 8.6vw, 7.3rem);
+  min-height: 0;
   place-items: center;
   gap: 0.1rem;
   transform: translate(-50%, -50%);
@@ -334,9 +338,11 @@ summary {
   box-shadow:
     0 8px 18px rgba(37, 27, 17, 0.16),
     0 0 0 0 rgba(14, 119, 169, 0);
+  padding: 0;
   cursor: grab;
   isolation: isolate;
   overflow: visible;
+  container-type: inline-size;
 }
 
 .seat-button.selected {
@@ -415,6 +421,7 @@ summary {
 .seat-token-icon {
   position: relative;
   z-index: 1;
+  align-self: end;
   color: var(--blue-ink);
   font-size: clamp(1.35rem, 2.4vw, 2.35rem);
   line-height: 1;
@@ -423,23 +430,12 @@ summary {
 .seat-player-name {
   position: relative;
   z-index: 1;
-  max-width: 82%;
-  overflow-wrap: anywhere;
-  font-size: clamp(0.9rem, 1.25vw, 1.15rem);
+  max-width: 90%;
+  overflow: visible;
+  overflow-wrap: normal;
+  font-size: clamp(0.62rem, calc(1.15rem * var(--seat-name-scale, 1)), 1.15rem);
   font-weight: 800;
   line-height: 1.05;
-}
-
-.seat-role-claims {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  max-width: 72%;
-  justify-content: center;
-  gap: 0.08rem;
-  overflow: hidden;
-  color: var(--muted-ink);
-  font-size: 0.72rem;
   white-space: nowrap;
 }
 
@@ -488,6 +484,60 @@ summary {
   font-weight: 700;
   line-height: 1.2;
   white-space: normal;
+}
+
+.claim-summary-deck {
+  display: none;
+}
+
+.claim-summary-grid {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.claim-summary-card {
+  display: grid;
+  grid-template-columns: minmax(6rem, 0.32fr) minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: center;
+  width: 100%;
+  min-height: 0;
+  border-color: rgba(32, 26, 21, 0.36);
+  background: rgba(255, 252, 244, 0.9);
+  padding: 0.55rem 0.65rem;
+  text-align: left;
+}
+
+.claim-summary-meta {
+  display: grid;
+  min-width: 0;
+  gap: 0.12rem;
+}
+
+.claim-summary-meta strong,
+.claim-summary-meta span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.claim-summary-meta strong {
+  font-size: 0.9rem;
+}
+
+.claim-summary-meta span {
+  color: var(--muted-ink);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.claim-summary-text {
+  min-width: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(0.92rem, 2.8vw, 1rem);
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .center-timeline {
@@ -799,27 +849,34 @@ summary {
   min-height: 5.8rem;
   place-items: center;
   gap: 0.25rem;
+  border: 1.5px solid var(--paper-line);
   border-radius: 50%;
   aspect-ratio: 1;
   background: radial-gradient(circle at 38% 28%, rgba(255, 255, 255, 0.92), rgba(244, 234, 219, 0.9) 62%, #eadcc8);
+  padding: 0.34rem 0.72rem;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  container-type: inline-size;
 }
 
 .role-stamp span,
-.hidden-role-token span,
 .solution-role {
   color: var(--blue-ink);
   font-size: 1.75rem;
   line-height: 1;
 }
 
-.role-stamp small,
-.hidden-role-token small {
+.role-stamp small {
   max-width: 90%;
-  overflow-wrap: anywhere;
-  font-size: 0.7rem;
+  overflow: visible;
+  overflow-wrap: normal;
   font-weight: 760;
   line-height: 1.05;
   text-align: center;
+  white-space: nowrap;
+}
+
+.role-stamp small {
+  font-size: min(0.7rem, 12cqi);
 }
 
 .role-stamp.selected {
@@ -837,6 +894,10 @@ summary {
   font-style: normal;
   font-weight: 760;
   line-height: 1;
+}
+
+.hidden-role-preview {
+  cursor: default;
 }
 
 .hidden-role-search {
@@ -938,28 +999,6 @@ summary {
   display: inline-flex;
   gap: 0.35rem;
   align-items: center;
-}
-
-.hidden-role-slots {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(4.7rem, 1fr));
-  gap: 0.7rem;
-}
-
-.hidden-role-token {
-  display: grid;
-  min-height: 4.8rem;
-  place-items: center;
-  gap: 0.2rem;
-  border: 1.5px solid var(--paper-line);
-  border-radius: 50%;
-  background: rgba(255, 252, 244, 0.72);
-}
-
-.hidden-role-token.empty {
-  border-style: dashed;
-  color: var(--muted-ink);
-  font-size: 1.35rem;
 }
 
 .solve-panel {
@@ -1150,10 +1189,6 @@ summary {
     flex-direction: column;
   }
 
-  .title-input {
-    font-size: 2rem;
-  }
-
   .seating-chart {
     min-height: 26rem;
     aspect-ratio: 0.92;
@@ -1161,6 +1196,23 @@ summary {
 
   .claim-callout {
     display: none;
+  }
+
+  .claim-summary-deck {
+    display: grid;
+    gap: 0.65rem;
+    margin-top: 0.75rem;
+  }
+
+  .claim-summary-deck h3 {
+    border-bottom: 2px solid var(--paper-line);
+    justify-self: start;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.12rem;
+  }
+
+  .claim-summary-grid {
+    grid-template-columns: 1fr;
   }
 
   .rules-strip {
@@ -1195,12 +1247,15 @@ summary {
     min-height: 4.9rem;
   }
 
-  .seat-player-name {
-    font-size: 0.8rem;
+  .claim-summary-card {
+    grid-template-columns: 1fr;
+    gap: 0.32rem;
   }
 
-  .seat-role-claims {
-    display: none;
+  .claim-summary-meta {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    column-gap: 0.45rem;
   }
 
   .role-palette {

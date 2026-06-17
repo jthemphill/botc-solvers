@@ -47,3 +47,30 @@ test("loads puzzle 34 with structured role clues", async ({ page }) => {
   await expect(sula).not.toContainText("Clockmaker");
   await expect(sula).toHaveCSS("border-top-color", "rgb(165, 43, 43)");
 });
+
+test("puzzle 20 keeps full claim summaries visible on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto("/");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-20-the-three-wise-men");
+
+  await expect(page.locator("input.title-input")).toHaveValue("Puzzle 20 - The Three Wise Men");
+  await expect
+    .poll(() =>
+      page.locator("input.title-input").evaluate((input: unknown) => {
+        const titleInput = input as { clientWidth: number; scrollWidth: number };
+        return titleInput.scrollWidth <= titleInput.clientWidth + 1;
+      }),
+    )
+    .toBe(true);
+
+  const balthazarSeat = page.getByRole("button", { name: /Seat 3: Balthazar/ });
+  await expect(balthazarSeat.locator(".seat-player-name")).toHaveCSS("white-space", "nowrap");
+
+  const claims = page.getByLabel("Player claim summaries");
+  await expect(claims).toBeVisible();
+  await expect(claims).toContainText("Balthazar nominated me on day 1 and nothing happened.");
+  await expect(claims).toContainText("I checked: Balthazar -> evil, Mary -> evil.");
+  await expect(claims).toContainText("I checked: Joseph -> evil, Caspar -> evil.");
+  await expect(claims).toContainText("I checked: Mary -> evil, Joseph -> evil.");
+});
