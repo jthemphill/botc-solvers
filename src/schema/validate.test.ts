@@ -108,6 +108,7 @@ describe("validatePuzzleDoc", () => {
         { timing: "day_1", type: "nominationDeath", players: ["You"] },
         { timing: "day_1", type: "execution", players: ["A"] },
         { timing: "day_1", type: "doomsayerDeath", players: ["A"], caller: "You" },
+        { timing: "night_2", type: "nightDeath", players: ["You"] },
         { timing: "night_2", type: "nightKill", players: ["A"] },
         { timing: "night_2", type: "nightKillBeforeInfo", players: ["You"] },
         { timing: "night_2", type: "abilityDeath", players: ["You"] },
@@ -119,6 +120,7 @@ describe("validatePuzzleDoc", () => {
       { timing: "day_1", type: "nominationDeath", players: ["You"] },
       { timing: "day_1", type: "execution", players: ["A"] },
       { timing: "day_1", type: "doomsayerDeath", players: ["A"], caller: "You" },
+      { timing: "night_2", type: "nightDeath", players: ["You"] },
       { timing: "night_2", type: "nightKill", players: ["A"] },
       { timing: "night_2", type: "nightKillBeforeInfo", players: ["You"] },
       { timing: "night_2", type: "abilityDeath", players: ["You"] },
@@ -133,7 +135,7 @@ describe("validatePuzzleDoc", () => {
         claims: [],
       }),
     ).toThrow(
-      'Timeline event type must be "nominationDeath", "execution", "nightKill", "nightKillBeforeInfo", "abilityDeath", or "doomsayerDeath"',
+      'Timeline event type must be "nominationDeath", "execution", "nightDeath", "nightKill", "nightKillBeforeInfo", "abilityDeath", or "doomsayerDeath"',
     );
   });
 

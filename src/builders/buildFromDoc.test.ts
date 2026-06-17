@@ -37,6 +37,16 @@ describe("buildFromDoc", () => {
     expect(worlds.length).toBeGreaterThan(0);
   });
 
+  test("puzzle-09 public night deaths require enough hidden death sources", async () => {
+    const doc = loadDoc("puzzle-09-the-new-acrobat.json");
+    const worlds = await buildFromDoc(doc, backend).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("Anna")).toBe("Imp");
+    expect(worlds[0]?.actualRole("Hannah")).toBe("Goblin");
+    expect(worlds[0]?.actualRole("Josh")).toBe("Drunk");
+  });
+
   test("juggler count claims default to night 2 when timing is omitted", async () => {
     const doc = loadDoc("puzzle-05b-you-only-guess-twice.json");
     const claims = doc.claims.map((claim) =>
@@ -331,7 +341,7 @@ describe("buildFromDoc", () => {
     expect(spyWorlds).toHaveLength(1);
   });
 
-  test("ability deaths require a living catch when they kill an actual demon", async () => {
+  test("ability and unknown night deaths require a living catch when they kill an actual demon", async () => {
     const impWithoutMinionWorlds = await buildFromDoc(
       {
         version: 1,
@@ -344,6 +354,22 @@ describe("buildFromDoc", () => {
           { name: "B", roles: ["Chef"] },
         ],
         timeline: [{ timing: "night_2", type: "abilityDeath", players: ["A"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+    const unknownNightDeathWithoutCatchWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Imp"] },
+          { name: "B", roles: ["Chef"] },
+        ],
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
         claims: [],
       },
       backend,
@@ -399,9 +425,46 @@ describe("buildFromDoc", () => {
     ).solveAll();
 
     expect(impWithoutMinionWorlds).toEqual([]);
+    expect(unknownNightDeathWithoutCatchWorlds).toEqual([]);
     expect(impWithMinionWorlds).toHaveLength(1);
     expect(dyingMinionWorlds).toEqual([]);
     expect(poWithScarletWomanWorlds).toHaveLength(1);
+  });
+
+  test("standard puzzle docs require the final observed state to have a living demon path", async () => {
+    const baseDoc = {
+      version: 1,
+      players: ["A", "B", "C", "D", "E"],
+      script: ["Imp", "Goblin", "Chef", "Empath", "Ravenkeeper"],
+      fixedRoles: [
+        { name: "A", roles: ["Imp"] },
+        { name: "B", roles: ["Goblin"] },
+        { name: "C", roles: ["Chef"] },
+        { name: "D", roles: ["Empath"] },
+        { name: "E", roles: ["Ravenkeeper"] },
+      ],
+      claims: [],
+    } as const;
+    const ongoingWorlds = await buildFromDoc(
+      {
+        ...baseDoc,
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
+      },
+      backend,
+    ).solveAll();
+    const endedWorlds = await buildFromDoc(
+      {
+        ...baseDoc,
+        timeline: [
+          { timing: "night_2", type: "nightDeath", players: ["A"] },
+          { timing: "night_3", type: "nightDeath", players: ["B"] },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(ongoingWorlds).toHaveLength(1);
+    expect(endedWorlds).toEqual([]);
   });
 
   test("Xaan poisons Townsfolk on the night matching the Outsider count", async () => {
@@ -718,7 +781,7 @@ describe("buildFromDoc", () => {
     expect(worlds).toHaveLength(1);
   });
 
-  test("death-causing good ability claims require the active healthy role", async () => {
+  test("death-causing Acrobat and Gambler claims require the active healthy role", async () => {
     const acrobatWorlds = await buildFromDoc(
       {
         version: 1,
@@ -753,26 +816,8 @@ describe("buildFromDoc", () => {
       },
       backend,
     ).solveAll();
-    const gossipWorlds = await buildFromDoc(
-      {
-        version: 1,
-        players: ["A", "B", "C"],
-        script: ["Gossip", "Drunk", "Imp"],
-        setup: "none",
-        uniqueCharacters: true,
-        fixedRoles: [
-          { name: "A", roles: ["Drunk"] },
-          { name: "B", roles: ["Gossip"] },
-          { name: "C", roles: ["Imp"] },
-        ],
-        claims: [{ type: "Gossip", name: "A", statements: [{ timing: "day_1", expression: "true", killed: true }] }],
-      },
-      backend,
-    ).solveAll();
-
     expect(acrobatWorlds).toEqual([]);
     expect(gamblerWorlds).toEqual([]);
-    expect(gossipWorlds).toEqual([]);
   });
 
   test("Slayer no-kill claims exclude actual demon targets", async () => {

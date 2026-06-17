@@ -4,6 +4,7 @@ import type { BoolLike, BOTCModel, Timing } from "../model/model";
 import type { SatBackend } from "../model/sat";
 import { buildPuzzleModel, type PuzzleSpec } from "../model/setup";
 import type { PuzzleDoc } from "../schema/puzzleDoc";
+import { compile, type CompileCtx } from "../dsl/compile";
 import { buildClaim } from "./claim";
 import { resolveRoleRef } from "./roleRef";
 
@@ -27,6 +28,7 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
   }
   if (doc.setup === "atheist") applyAtheistSetup(game, doc);
   applyTimelineConstraints(game, doc);
+  applyOngoingGameConstraint(game, doc);
   const ctx = { players: doc.players, script: doc.script };
   const claims = doc.claims.map((claim) => applyTimelineClaimContext(claim, doc));
   const ordinaryClaims = claims.filter((claim) => !usesMalfunctionCount(claim)).map((claim) => buildClaim(claim, ctx));
@@ -41,6 +43,7 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
     applyXaanSources(game, doc);
     applyPuzzlemasterSources(game, doc);
     applyVillageIdiotSources(game, doc);
+    applyNightDeathSourceConstraints(game, doc, ctx);
   }
   return game;
 }
@@ -65,7 +68,7 @@ function applyTimelineConstraints(game: BOTCModel, doc: PuzzleDoc): void {
         game.addTruth(doomsayerSameRegisteredAlignment(game, event.caller, player));
       }
     }
-    if (event.type === "abilityDeath") {
+    if (event.type === "abilityDeath" || event.type === "nightDeath") {
       for (const player of event.players) {
         for (const demonRole of demonRoles) {
           game.addImplication(
@@ -150,6 +153,275 @@ function livingPlayersAfterDeathEvent(
   const deadPlayers = deadPlayersBefore(doc, event.timing as Timing);
   const dyingPlayers = new Set(event.players);
   return doc.players.filter((player) => !deadPlayers.has(player) && !dyingPlayers.has(player));
+}
+
+function applyOngoingGameConstraint(game: BOTCModel, doc: PuzzleDoc): void {
+  if (doc.setup === "none" || doc.setup === "atheist" || (doc.timeline?.length ?? 0) === 0) return;
+
+  const finalLivingPlayers = livingPlayersAfterTimeline(doc);
+  const finalDeadPlayers = doc.players.filter((player) => !finalLivingPlayers.includes(player));
+  const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
+  const finalLivingStartingDemon = finalLivingPlayers.flatMap((player) =>
+    demonRoles.map((role) => game.actualIs(player, role)),
+  );
+  const possibleSuccessions: BoolLike[] = [];
+
+  if (doc.script.includes("Imp")) {
+    possibleSuccessions.push(
+      game.allOf(
+        [
+          game.anyOf(
+            finalDeadPlayers.map((player) => game.actualIs(player, "Imp")),
+            "dead_imp_before_current_state",
+          ),
+          game.anyOf(
+            finalLivingPlayers.map((player) => game.isMinion(player)),
+            "final_living_minion_can_be_demon",
+          ),
+        ],
+        "final_imp_successor_can_be_alive",
+      ),
+    );
+  }
+
+  if (doc.script.includes("Scarlet Woman")) {
+    const deadNonImpDemons = finalDeadPlayers.flatMap((player) =>
+      demonRoles.filter((role) => roleName(role) !== "Imp").map((role) => game.actualIs(player, role)),
+    );
+    possibleSuccessions.push(
+      game.allOf(
+        [
+          game.anyOf(deadNonImpDemons, "dead_non_imp_demon_before_current_state"),
+          game.anyOf(
+            finalLivingPlayers.map((player) => game.actualIs(player, "Scarlet Woman")),
+            "final_living_scarlet_woman_can_be_demon",
+          ),
+        ],
+        "final_scarlet_woman_successor_can_be_alive",
+      ),
+    );
+  }
+
+  game.addTruth(
+    game.anyOf([...finalLivingStartingDemon, ...possibleSuccessions], "ongoing_game_has_living_demon_or_successor"),
+  );
+}
+
+interface NightDeathSource {
+  readonly id: string;
+  readonly available: BoolLike;
+  readonly players?: readonly string[];
+}
+
+function applyNightDeathSourceConstraints(game: BOTCModel, doc: PuzzleDoc, ctx: Omit<CompileCtx, "nameRoot">): void {
+  for (const event of doc.timeline ?? []) {
+    if (event.type !== "nightDeath") continue;
+    const sources = nightDeathSources(game, doc, event, ctx);
+    const assignmentsBySource = new Map<NightDeathSource, BoolLike[]>();
+
+    for (const player of event.players) {
+      const eligibleSources = sources.filter(
+        (source) => source.players === undefined || source.players.includes(player),
+      );
+      const assignments = eligibleSources.map((source) => {
+        const assignment = game.newBool(`${event.timing}_${player}_death_from_${source.id}`);
+        game.addImplication(assignment, source.available);
+        assignmentsBySource.set(source, [...(assignmentsBySource.get(source) ?? []), assignment]);
+        return assignment;
+      });
+      game.addExactlyOne(assignments);
+    }
+
+    const sourceCapacityActive = game.constantBool(true, `${event.timing}_night_death_source_capacity_active`);
+    for (const assignments of assignmentsBySource.values()) {
+      game.addEnforcedAtMostN(assignments, 1, sourceCapacityActive);
+    }
+  }
+}
+
+function nightDeathSources(
+  game: BOTCModel,
+  doc: PuzzleDoc,
+  event: NonNullable<PuzzleDoc["timeline"]>[number],
+  ctx: Omit<CompileCtx, "nameRoot">,
+): readonly NightDeathSource[] {
+  const timing = event.timing as Timing;
+  return [
+    {
+      id: `${timing}_demon_kill`,
+      available: livingDemonPathBeforeDeathEvent(game, doc, event),
+    },
+    ...gossipDeathSources(game, doc, event, ctx),
+    ...acrobatDeathSources(game, doc, timing),
+    ...gamblerDeathSources(game, doc, timing),
+  ];
+}
+
+function gossipDeathSources(
+  game: BOTCModel,
+  doc: PuzzleDoc,
+  event: NonNullable<PuzzleDoc["timeline"]>[number],
+  ctx: Omit<CompileCtx, "nameRoot">,
+): readonly NightDeathSource[] {
+  return doc.claims.flatMap((claim) => {
+    if (claim.type !== "Gossip") return [];
+    return (claim.statements ?? []).flatMap((statement, index): NightDeathSource[] => {
+      const statementTiming = statement.timing as Timing | undefined;
+      if (statementTiming === undefined || followingNight(statementTiming) !== event.timing) return [];
+      const learned = compile(statement.expression, game, {
+        ...ctx,
+        nameRoot: `${slug(claim.name)}_gossip_source_${index + 1}`,
+      });
+      return [
+        {
+          id: `${event.timing}_${slug(claim.name)}_gossip_${index + 1}`,
+          available: game.allOf(
+            [
+              game.hasRoleAt(claim.name, "Gossip", statementTiming),
+              game.soberAndHealthy(claim.name, statementTiming),
+              learned,
+            ],
+            `${event.timing}_${slug(claim.name)}_gossip_${index + 1}_source_available`,
+          ),
+        },
+      ];
+    });
+  });
+}
+
+function acrobatDeathSources(game: BOTCModel, doc: PuzzleDoc, timing: Timing): readonly NightDeathSource[] {
+  return doc.claims.flatMap((claim) => {
+    if (claim.type !== "Acrobat") return [];
+    return (claim.choices ?? []).flatMap((choice, index): NightDeathSource[] => {
+      if (!choice.died || choice.timing !== timing) return [];
+      const targetDrunkOrPoisoned = game.anyOf(
+        [
+          game.isDrunkAt(choice.player, timing),
+          game.isPoisonedAt(choice.player, timing),
+          game.noDashiiPoisonedAt(choice.player, timing),
+        ],
+        `${timing}_${slug(claim.name)}_acrobat_${index + 1}_${slug(choice.player)}_drunk_or_poisoned_source`,
+      );
+      return [
+        {
+          id: `${timing}_${slug(claim.name)}_acrobat_${index + 1}`,
+          players: [claim.name],
+          available: game.allOf(
+            [
+              game.hasRoleAt(claim.name, "Acrobat", timing),
+              game.soberAndHealthy(claim.name, timing),
+              targetDrunkOrPoisoned,
+            ],
+            `${timing}_${slug(claim.name)}_acrobat_${index + 1}_source_available`,
+          ),
+        },
+      ];
+    });
+  });
+}
+
+function gamblerDeathSources(game: BOTCModel, doc: PuzzleDoc, timing: Timing): readonly NightDeathSource[] {
+  return doc.claims.flatMap((claim) => {
+    if (claim.type !== "Gambler") return [];
+    return (claim.guesses ?? []).flatMap((guess, index): NightDeathSource[] => {
+      if (guess.timing !== timing || guess.survived === true) return [];
+      const correct = game.registersAsRole(
+        guess.player,
+        resolveRoleRef(guess.role),
+        `${timing}_${slug(claim.name)}_gambler_${index + 1}_${slug(guess.player)}_correct_source`,
+      );
+      return [
+        {
+          id: `${timing}_${slug(claim.name)}_gambler_${index + 1}`,
+          players: [claim.name],
+          available: game.allOf(
+            [
+              game.hasRoleAt(claim.name, "Gambler", timing),
+              game.soberAndHealthy(claim.name, timing),
+              game.not(correct, `${timing}_${slug(claim.name)}_gambler_${index + 1}_wrong_source`),
+            ],
+            `${timing}_${slug(claim.name)}_gambler_${index + 1}_source_available`,
+          ),
+        },
+      ];
+    });
+  });
+}
+
+function livingDemonPathBeforeDeathEvent(
+  game: BOTCModel,
+  doc: PuzzleDoc,
+  event: NonNullable<PuzzleDoc["timeline"]>[number],
+): BoolLike {
+  const livingPlayers = livingPlayersBeforeDeathEvent(doc, event);
+  const livingPlayerSet = new Set(livingPlayers);
+  const deadPlayers = doc.players.filter((player) => !livingPlayerSet.has(player));
+  const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
+  const livingStartingDemon = livingPlayers.flatMap((player) => demonRoles.map((role) => game.actualIs(player, role)));
+  const possibleSuccessions: BoolLike[] = [];
+
+  if (doc.script.includes("Imp")) {
+    possibleSuccessions.push(
+      game.allOf(
+        [
+          game.anyOf(
+            deadPlayers.map((player) => game.actualIs(player, "Imp")),
+            `${event.timing}_dead_imp_before_death_event`,
+          ),
+          game.anyOf(
+            livingPlayers.map((player) => game.isMinion(player)),
+            `${event.timing}_living_minion_before_death_event`,
+          ),
+        ],
+        `${event.timing}_imp_successor_alive_before_death_event`,
+      ),
+    );
+  }
+
+  if (doc.script.includes("Scarlet Woman")) {
+    const deadNonImpDemons = deadPlayers.flatMap((player) =>
+      demonRoles.filter((role) => roleName(role) !== "Imp").map((role) => game.actualIs(player, role)),
+    );
+    possibleSuccessions.push(
+      game.allOf(
+        [
+          game.anyOf(deadNonImpDemons, `${event.timing}_dead_non_imp_demon_before_death_event`),
+          game.anyOf(
+            livingPlayers.map((player) => game.actualIs(player, "Scarlet Woman")),
+            `${event.timing}_living_scarlet_woman_before_death_event`,
+          ),
+        ],
+        `${event.timing}_scarlet_woman_successor_alive_before_death_event`,
+      ),
+    );
+  }
+
+  return game.anyOf(
+    [...livingStartingDemon, ...possibleSuccessions],
+    `${event.timing}_living_demon_path_before_death_event`,
+  );
+}
+
+function livingPlayersBeforeDeathEvent(
+  doc: PuzzleDoc,
+  event: NonNullable<PuzzleDoc["timeline"]>[number],
+): readonly string[] {
+  const deadPlayers = deadPlayersBefore(doc, event.timing as Timing);
+  return doc.players.filter((player) => !deadPlayers.has(player));
+}
+
+function followingNight(timing: Timing): Timing | undefined {
+  const match = /^day_(\d+)$/.exec(timing);
+  if (match === null) return undefined;
+  return `night_${Number(match[1]) + 1}` as Timing;
+}
+
+function livingPlayersAfterTimeline(doc: PuzzleDoc): readonly string[] {
+  const deadPlayers = new Set<string>();
+  for (const event of doc.timeline ?? []) {
+    for (const player of event.players) deadPlayers.add(player);
+  }
+  return doc.players.filter((player) => !deadPlayers.has(player));
 }
 
 function usesMalfunctionCount(claim: PuzzleDoc["claims"][number]): boolean {

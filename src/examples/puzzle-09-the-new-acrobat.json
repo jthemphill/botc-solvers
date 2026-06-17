@@ -24,12 +24,12 @@
   "timeline": [
     {
       "timing": "night_2",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Sula"]
     },
     {
       "timing": "night_3",
-      "type": "abilityDeath",
+      "type": "nightDeath",
       "players": ["You", "Josh", "Anna"]
     }
   ],
@@ -102,13 +102,11 @@
       "statements": [
         {
           "timing": "day_1",
-          "expression": "Fraser.type == Demon",
-          "killed": false
+          "expression": "Fraser.type == Demon"
         },
         {
           "timing": "day_2",
-          "expression": "Anna.type == Demon",
-          "killed": true
+          "expression": "Anna.type == Demon"
         }
       ]
     }

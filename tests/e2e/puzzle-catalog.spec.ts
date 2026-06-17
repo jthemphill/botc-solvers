@@ -68,14 +68,20 @@ test("clears stale solve results when loading another puzzle", async ({ page }) 
   await expect(solvePanel.getByText("Solution 1")).toHaveCount(0);
 });
 
-test("puzzle 9 formats Knight claims and Claims tab role labels", async ({ page }) => {
+test("puzzle 9 formats claim summaries without leaking hidden death causes", async ({ page }) => {
   await page.goto("/");
 
   await page.getByLabel("Load example puzzle").selectOption("puzzle-09-the-new-acrobat");
 
+  const timeline = page.getByLabel("Puzzle timeline");
+  await expect(timeline).toContainText("N3 Night Deaths");
+  await expect(timeline).not.toContainText("Ability Death");
+
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("Neither Fraser nor Oscar is the Demon.");
   await expect(claims).not.toContainText("Fraser or Oscar not Demon");
+  await expect(claims).toContainText("D1 gossip: Fraser.type == Demon; D2 gossip: Anna.type == Demon");
+  await expect(claims).not.toContainText("I am the Gossip");
 
   await page
     .getByRole("navigation", { name: "Workbench sections" })
@@ -83,6 +89,20 @@ test("puzzle 9 formats Knight claims and Claims tab role labels", async ({ page 
     .click();
 
   await expect(page.getByText("Josh — ⚔️ Knight")).toBeVisible();
+});
+
+test("puzzle 2 formats Balloonist and Juggler claim summaries with player details", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-02-come-fly-with-me");
+
+  const claims = page.getByLabel("Player claim summaries");
+  await expect(claims).toContainText(
+    "Day 1 guesses: Steph=Knight; Sarah=Leviathan; Anna=Goblin; Sula=Goblin; You=Seamstress; 2 correct.",
+  );
+  await expect(claims).toContainText("Different types: Tim/Matthew; Matthew/Steph.");
+  await expect(claims).not.toContainText("5 guesses, 2 correct");
+  await expect(claims).not.toContainText("2 different-type pairs");
 });
 
 test("puzzle 1 formats Savant claim summaries as Alloy XOR expressions", async ({ page }) => {

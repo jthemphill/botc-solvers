@@ -103,13 +103,14 @@ function validateTimeline(v: unknown, pathRoot: string): TimelineEventDoc[] {
     if (
       type !== "nominationDeath" &&
       type !== "execution" &&
+      type !== "nightDeath" &&
       type !== "nightKill" &&
       type !== "nightKillBeforeInfo" &&
       type !== "abilityDeath" &&
       type !== "doomsayerDeath"
     ) {
       throw new ValidationError(
-        `Timeline event type must be "nominationDeath", "execution", "nightKill", "nightKillBeforeInfo", "abilityDeath", or "doomsayerDeath"`,
+        `Timeline event type must be "nominationDeath", "execution", "nightDeath", "nightKill", "nightKillBeforeInfo", "abilityDeath", or "doomsayerDeath"`,
         `${path}.type`,
       );
     }
@@ -349,10 +350,6 @@ function validateClaim(input: unknown, path: string): Claim {
                     entry["timing"] === undefined
                       ? undefined
                       : expectString(entry["timing"], `${path}.statements[${index}].timing`),
-                  killed:
-                    entry["killed"] === undefined
-                      ? undefined
-                      : expectBool(entry["killed"], `${path}.statements[${index}].killed`),
                 };
               }),
       };

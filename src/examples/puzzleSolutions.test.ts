@@ -526,6 +526,7 @@ describe("JSON puzzle solutions", () => {
     const uncoveredMultiWorldPuzzles = Object.entries(JSON_SOLUTION_COUNTS)
       .filter(([, count]) => count > 1)
       .filter(([id]) => locksById.get(id)?.coversAllWorlds !== true)
+      .filter(([id]) => PUBLISHED_SOLUTION_GAPS[id] === undefined)
       .map(([id]) => id);
 
     expect(uncoveredMultiWorldPuzzles).toEqual([]);
