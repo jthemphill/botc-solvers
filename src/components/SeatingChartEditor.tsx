@@ -544,7 +544,7 @@ function claimSummary(claim: Claim): string {
     case "Steward":
       return `${claim.goodPlayer || "Someone"} is good`;
     case "Knight":
-      return `${formatList(claim.noDemonAmong)} not Demon`;
+      return knightSummary(claim.noDemonAmong);
     case "Seamstress":
       return `${formatPair(claim.among)} are ${claim.aligned ? "same" : "different"}`;
     case "Juggler":
@@ -601,6 +601,14 @@ function claimSummary(claim: Claim): string {
 function rolePhrase(role: string | undefined, fallback: string): string {
   const value = role?.trim() || fallback;
   return /^(a|an|the)\s/i.test(value) ? value : `the ${value}`;
+}
+
+function knightSummary(players: readonly string[]): string {
+  const visible = players.filter(Boolean);
+  if (visible.length === 0) return "No Knight picks yet";
+  if (visible.length === 1) return `${visible[0]} is not the Demon.`;
+  if (visible.length === 2) return `Neither ${visible[0]} nor ${visible[1]} is the Demon.`;
+  return `None of ${formatList(visible)} are the Demon.`;
 }
 
 function formatList(values: readonly string[]): string {
