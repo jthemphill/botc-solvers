@@ -57,7 +57,7 @@ test("clears stale solve results when loading another puzzle", async ({ page }) 
   await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
-  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("3");
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
   await expect(solvePanel.getByText("Solution 1")).toBeVisible();
 
   await page.getByLabel("Load example puzzle").selectOption("puzzle-10-dont-overcook-it");

@@ -37,6 +37,16 @@ describe("buildFromDoc", () => {
     expect(worlds.length).toBeGreaterThan(0);
   });
 
+  test("puzzle-09 public night deaths require enough hidden death sources", async () => {
+    const doc = loadDoc("puzzle-09-the-new-acrobat.json");
+    const worlds = await buildFromDoc(doc, backend).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("Anna")).toBe("Imp");
+    expect(worlds[0]?.actualRole("Hannah")).toBe("Goblin");
+    expect(worlds[0]?.actualRole("Josh")).toBe("Drunk");
+  });
+
   test("juggler count claims default to night 2 when timing is omitted", async () => {
     const doc = loadDoc("puzzle-05b-you-only-guess-twice.json");
     const claims = doc.claims.map((claim) =>
