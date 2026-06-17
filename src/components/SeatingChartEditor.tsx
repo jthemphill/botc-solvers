@@ -592,7 +592,7 @@ function claimSummary(claim: Claim): string {
     case "Balloonist":
       return `${claim.differentCharacterTypePairs.length} different-type pair${claim.differentCharacterTypePairs.length === 1 ? "" : "s"}`;
     case "Savant":
-      return `${claim.statements[0]?.options.length ?? 0} Savant statements`;
+      return savantSummary(claim.statements[0]?.options ?? []);
     case "Virgin": {
       const nominator = claim.nominator ?? "Someone";
       const timing = claim.timing === undefined ? "that day" : sentenceTimingLabel(claim.timing);
@@ -616,6 +616,13 @@ function knightSummary(players: readonly string[]): string {
   if (visible.length === 1) return `${visible[0]} is not the Demon.`;
   if (visible.length === 2) return `Neither ${visible[0]} nor ${visible[1]} is the Demon.`;
   return `None of ${formatList(visible)} are the Demon.`;
+}
+
+function savantSummary(options: readonly string[]): string {
+  const expressions = options.map((option) => option.trim()).filter(Boolean);
+  return expressions.length === 0
+    ? "No Savant statements"
+    : expressions.map((expression) => `(${expression})`).join(" != ");
 }
 
 function formatList(values: readonly string[]): string {

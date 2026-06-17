@@ -85,6 +85,18 @@ test("puzzle 9 formats Knight claims and Claims tab role labels", async ({ page 
   await expect(page.getByText("Josh — ⚔️ Knight")).toBeVisible();
 });
 
+test("puzzle 1 formats Savant claim summaries as Alloy XOR expressions", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-01-sober-savant");
+
+  const claims = page.getByLabel("Player claim summaries");
+  await expect(claims).toContainText(
+    "(some p: players | p.role == Investigator) != (some p: You.neighbors | p.alignment == Evil)",
+  );
+  await expect(claims).not.toContainText("2 Savant statements");
+});
+
 test("puzzle 20 keeps full claim summaries visible on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/");
