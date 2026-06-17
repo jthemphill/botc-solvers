@@ -25,6 +25,7 @@ import type {
   SavantClaim,
   SeamstressClaim,
   ShugenjaClaim,
+  SlayerClaim,
   SnakeCharmerClaim,
   StewardClaim,
   UndertakerClaim,
@@ -138,6 +139,8 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
       return { type: "Mathematician", name, malfunctions: [{ timing: "night_1", count: 0 }] };
     case "Sage":
       return { type: "Sage", name, demonAmong: [] };
+    case "Slayer":
+      return { type: "Slayer", name, timing: "day_1", killed: false };
     case "Snake Charmer":
       return { type: "Snake Charmer", name, checked: "", demon: false };
     case "VillageIdiot":
@@ -304,6 +307,8 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         return <MathematicianBody claim={claim} onChange={onChange} />;
       case "Sage":
         return <SageBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Slayer":
+        return <SlayerBody doc={doc} claim={claim} onChange={onChange} />;
       case "Snake Charmer":
         return <SnakeCharmerBody doc={doc} claim={claim} onChange={onChange} />;
       case "VillageIdiot":
@@ -898,6 +903,40 @@ function SageBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SageClaim; 
       />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+    </div>
+  );
+}
+
+function SlayerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SlayerClaim; onChange: (c: Claim) => void }) {
+  return (
+    <div className="field-grid">
+      <span>Shot player</span>
+      <PlayerSelect
+        players={doc.players}
+        value={claim.target}
+        onChange={(target) => onChange({ ...claim, target: target || undefined })}
+      />
+      <span>Shot timing</span>
+      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="day_1" />
+      <span>Target died</span>
+      <select
+        value={claim.killed === undefined ? "" : claim.killed ? "yes" : "no"}
+        onChange={(event) => {
+          const killed = event.target.value === "" ? undefined : event.target.value === "yes";
+          onChange({ ...claim, killed, gameContinued: killed ? claim.gameContinued : undefined });
+        }}
+      >
+        <option value="">-</option>
+        <option value="yes">yes</option>
+        <option value="no">no</option>
+      </select>
+      <span>Game continued</span>
+      <input
+        type="checkbox"
+        checked={claim.gameContinued ?? false}
+        disabled={!claim.killed}
+        onChange={(event) => onChange({ ...claim, gameContinued: event.target.checked })}
+      />
     </div>
   );
 }
