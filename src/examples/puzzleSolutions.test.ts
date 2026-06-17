@@ -19,7 +19,7 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-06-super-marionette-bros": 1,
   "puzzle-07-the-savant-strikes-back": 1,
   "puzzle-08-the-stitch-up": 2,
-  "puzzle-09-the-new-acrobat": 4,
+  "puzzle-09-the-new-acrobat": 3,
   "puzzle-10-dont-overcook-it": 1,
   "puzzle-11-false-is-the-new-black": 2,
   "puzzle-12a-thunderstruck": 1,

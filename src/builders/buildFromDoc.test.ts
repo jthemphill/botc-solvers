@@ -421,6 +421,42 @@ describe("buildFromDoc", () => {
     expect(poWithScarletWomanWorlds).toHaveLength(1);
   });
 
+  test("standard puzzle docs require the final observed state to have a living demon path", async () => {
+    const baseDoc = {
+      version: 1,
+      players: ["A", "B", "C", "D", "E"],
+      script: ["Imp", "Goblin", "Chef", "Empath", "Ravenkeeper"],
+      fixedRoles: [
+        { name: "A", roles: ["Imp"] },
+        { name: "B", roles: ["Goblin"] },
+        { name: "C", roles: ["Chef"] },
+        { name: "D", roles: ["Empath"] },
+        { name: "E", roles: ["Ravenkeeper"] },
+      ],
+      claims: [],
+    } as const;
+    const ongoingWorlds = await buildFromDoc(
+      {
+        ...baseDoc,
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
+      },
+      backend,
+    ).solveAll();
+    const endedWorlds = await buildFromDoc(
+      {
+        ...baseDoc,
+        timeline: [
+          { timing: "night_2", type: "nightDeath", players: ["A"] },
+          { timing: "night_3", type: "nightDeath", players: ["B"] },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(ongoingWorlds).toHaveLength(1);
+    expect(endedWorlds).toEqual([]);
+  });
+
   test("Xaan poisons Townsfolk on the night matching the Outsider count", async () => {
     const worlds = await buildFromDoc(
       {

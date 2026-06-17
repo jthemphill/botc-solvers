@@ -27,6 +27,7 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
   }
   if (doc.setup === "atheist") applyAtheistSetup(game, doc);
   applyTimelineConstraints(game, doc);
+  applyOngoingGameConstraint(game, doc);
   const ctx = { players: doc.players, script: doc.script };
   const claims = doc.claims.map((claim) => applyTimelineClaimContext(claim, doc));
   const ordinaryClaims = claims.filter((claim) => !usesMalfunctionCount(claim)).map((claim) => buildClaim(claim, ctx));
@@ -150,6 +151,66 @@ function livingPlayersAfterDeathEvent(
   const deadPlayers = deadPlayersBefore(doc, event.timing as Timing);
   const dyingPlayers = new Set(event.players);
   return doc.players.filter((player) => !deadPlayers.has(player) && !dyingPlayers.has(player));
+}
+
+function applyOngoingGameConstraint(game: BOTCModel, doc: PuzzleDoc): void {
+  if (doc.setup === "none" || doc.setup === "atheist" || (doc.timeline?.length ?? 0) === 0) return;
+
+  const finalLivingPlayers = livingPlayersAfterTimeline(doc);
+  const finalDeadPlayers = doc.players.filter((player) => !finalLivingPlayers.includes(player));
+  const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
+  const finalLivingStartingDemon = finalLivingPlayers.flatMap((player) =>
+    demonRoles.map((role) => game.actualIs(player, role)),
+  );
+  const possibleSuccessions: BoolLike[] = [];
+
+  if (doc.script.includes("Imp")) {
+    possibleSuccessions.push(
+      game.allOf(
+        [
+          game.anyOf(
+            finalDeadPlayers.map((player) => game.actualIs(player, "Imp")),
+            "dead_imp_before_current_state",
+          ),
+          game.anyOf(
+            finalLivingPlayers.map((player) => game.isMinion(player)),
+            "final_living_minion_can_be_demon",
+          ),
+        ],
+        "final_imp_successor_can_be_alive",
+      ),
+    );
+  }
+
+  if (doc.script.includes("Scarlet Woman")) {
+    const deadNonImpDemons = finalDeadPlayers.flatMap((player) =>
+      demonRoles.filter((role) => roleName(role) !== "Imp").map((role) => game.actualIs(player, role)),
+    );
+    possibleSuccessions.push(
+      game.allOf(
+        [
+          game.anyOf(deadNonImpDemons, "dead_non_imp_demon_before_current_state"),
+          game.anyOf(
+            finalLivingPlayers.map((player) => game.actualIs(player, "Scarlet Woman")),
+            "final_living_scarlet_woman_can_be_demon",
+          ),
+        ],
+        "final_scarlet_woman_successor_can_be_alive",
+      ),
+    );
+  }
+
+  game.addTruth(
+    game.anyOf([...finalLivingStartingDemon, ...possibleSuccessions], "ongoing_game_has_living_demon_or_successor"),
+  );
+}
+
+function livingPlayersAfterTimeline(doc: PuzzleDoc): readonly string[] {
+  const deadPlayers = new Set<string>();
+  for (const event of doc.timeline ?? []) {
+    for (const player of event.players) deadPlayers.add(player);
+  }
+  return doc.players.filter((player) => !deadPlayers.has(player));
 }
 
 function usesMalfunctionCount(claim: PuzzleDoc["claims"][number]): boolean {
