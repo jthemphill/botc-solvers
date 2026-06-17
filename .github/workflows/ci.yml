@@ -7,7 +7,7 @@ on:
 
 jobs:
   checks:
-    name: bun test, playwright, tsc, prettier
+    name: CI
     runs-on: ubuntu-latest
 
     steps:
