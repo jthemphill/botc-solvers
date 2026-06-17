@@ -43,8 +43,8 @@ const SAVANT_CLAIMS = [
   },
   // statement 2
   {
-    dsl: "chef(1, registers: false)",
-    ts: (g: BOTCModel) => Chef.learnsCount(g, 1, "ref_chef", { registers: false }),
+    dsl: "chef(1)",
+    ts: (g: BOTCModel) => Chef.learnsCount(g, 1, "ref_chef"),
   },
   {
     dsl: "some p: players | p.role == Drunk && p.left.type == Townsfolk && p.right.type == Townsfolk",

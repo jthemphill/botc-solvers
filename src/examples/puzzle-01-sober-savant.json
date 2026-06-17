@@ -40,7 +40,7 @@
       "statements": [
         {
           "options": [
-            "chef(1, registers: false)",
+            "chef(1)",
             "some p: players | p.role == Drunk && p.left.type == Townsfolk && p.right.type == Townsfolk"
           ]
         }

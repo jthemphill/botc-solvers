@@ -426,23 +426,13 @@ class Compiler {
       return { kind: "bool", value: this.game.globalDrunk(player.name), span: node.span };
     }
     if (node.name === "chef") {
-      if (node.args.length === 0 || node.args.length > 2)
-        throw new DslError(`chef() takes (n) or (n, registers: bool)`, node.span);
+      if (node.args.length !== 1) throw new DslError(`chef() takes (n)`, node.span);
       const countArg = node.args[0] as AstCall["args"][number];
       if (countArg.name !== undefined) throw new DslError(`chef's first argument is positional`, countArg.span);
       const countVal = this.evalNode(countArg.value, env);
       if (countVal.kind !== "number") throw new DslError(`chef expects a number`, countArg.span);
-      let registers = true;
-      if (node.args.length === 2) {
-        const second = node.args[1] as AstCall["args"][number];
-        if (second.name !== "registers")
-          throw new DslError(`chef's second argument must be 'registers: <bool>'`, second.span);
-        if (second.value.kind !== "boollit")
-          throw new DslError(`'registers' must be a literal true/false`, second.value.span);
-        registers = second.value.value;
-      }
-      const name = this.freshName(`chef_${countVal.value}_${registers ? "reg" : "act"}`);
-      const bv = Chef.learnsCount(this.game, countVal.value, name, { registers });
+      const name = this.freshName(`chef_${countVal.value}`);
+      const bv = Chef.learnsCount(this.game, countVal.value, name);
       return { kind: "bool", value: bv, span: node.span };
     }
     throw new DslError(`Unknown function '${node.name}'`, node.nameSpan);
