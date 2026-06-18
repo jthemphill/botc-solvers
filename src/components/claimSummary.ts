@@ -7,8 +7,12 @@ export function claimSummary(claim: Claim): string {
   if (customInfo.length > 0) return customInfo.join("; ");
 
   switch (claim.type) {
+    case "Acrobat":
+      return acrobatSummary(claim);
     case "Chef":
       return `${claim.count} adjacent evil pair${claim.count === 1 ? "" : "s"}`;
+    case "Chambermaid":
+      return chambermaidSummary(claim);
     case "Empath":
       return `${claim.player ? `${claim.player}: ` : ""}${claim.count} evil neighbor${claim.count === 1 ? "" : "s"}`;
     case "Investigator": {
@@ -36,6 +40,8 @@ export function claimSummary(claim: Claim): string {
       return `${claim.goodPlayer || "Someone"} is good`;
     case "Knight":
       return knightSummary(claim.noDemonAmong);
+    case "Gambler":
+      return gamblerSummary(claim);
     case "Seamstress":
       return `${formatPair(claim.among)} are ${claim.aligned ? "same" : "different"}`;
     case "Juggler":
@@ -50,12 +56,20 @@ export function claimSummary(claim: Claim): string {
         : `Demon ${claim.distance} step${claim.distance === 1 ? "" : "s"} from Minion`;
     case "Gossip":
       return gossipSummary(claim);
+    case "Courtier":
+      return courtierSummary(claim);
+    case "Legionary":
+      return legionarySummary(claim);
     case "Mathematician":
       return (claim.malfunctions ?? []).length === 0
         ? "No malfunction counts"
         : (claim.malfunctions ?? [])
             .map((entry) => `${entry.count} malfunction${entry.count === 1 ? "" : "s"} (${timingLabel(entry.timing)})`)
             .join("; ");
+    case "Oracle":
+      return oracleSummary(claim);
+    case "Philosopher":
+      return claim.role === undefined ? "No Philosopher choice" : `Chose ${claim.role}.`;
     case "Ravenkeeper":
       return claim.player === undefined
         ? "No Ravenkeeper pick yet"
@@ -82,6 +96,12 @@ export function claimSummary(claim: Claim): string {
         .join(", ");
       return `I checked: ${checks}.`;
     }
+    case "Klutz": {
+      if (claim.chosen === undefined) return "No Klutz choice";
+      if (claim.lost === true) return `Chose ${claim.chosen} and lost.`;
+      if (claim.lost === false) return `Chose ${claim.chosen} and did not lose.`;
+      return `Chose ${claim.chosen}.`;
+    }
     case "Balloonist":
       return balloonistSummary(claim);
     case "Savant":
@@ -93,9 +113,42 @@ export function claimSummary(claim: Claim): string {
       if (claim.executed === false) return `${nominator} nominated me on ${timing} and nothing happened.`;
       return `${nominator} nominated me on ${timing}.`;
     }
+    case "Nightwatchman":
+      return nightwatchmanSummary(claim);
     default:
       return `I am the ${claim.type}`;
   }
+}
+
+function acrobatSummary(claim: Extract<Claim, { readonly type: "Acrobat" }>): string {
+  const choices = (claim.choices ?? [])
+    .filter((choice) => choice.player.trim() !== "")
+    .map((choice, index) => {
+      const timing = choice.timing === undefined ? defaultNightLabel(index) : compactTimingLabel(choice.timing);
+      return `${timing}: chose ${choice.player}, ${choice.died ? "died" : "survived"}`;
+    });
+  return choices.length === 0 ? "No Acrobat choices" : choices.join("; ");
+}
+
+function chambermaidSummary(claim: Extract<Claim, { readonly type: "Chambermaid" }>): string {
+  const checks = (claim.checks ?? [])
+    .filter((check) => check.left.trim() !== "" && check.right.trim() !== "")
+    .map((check, index) => {
+      const timing = check.timing === undefined ? defaultNightLabel(index) : compactTimingLabel(check.timing);
+      return `${timing}: ${check.left} + ${check.right}, ${check.count} woke`;
+    });
+  return checks.length === 0 ? "No Chambermaid checks" : checks.join("; ");
+}
+
+function gamblerSummary(claim: Extract<Claim, { readonly type: "Gambler" }>): string {
+  const guesses = (claim.guesses ?? [])
+    .filter((guess) => guess.player.trim() !== "" && guess.role.trim() !== "")
+    .map((guess, index) => {
+      const timing = guess.timing === undefined ? defaultNightLabel(index) : compactTimingLabel(guess.timing);
+      const outcome = guess.survived === undefined ? "" : `, ${guess.survived ? "survived" : "died"}`;
+      return `${timing}: ${guess.player}=${guess.role}${outcome}`;
+    });
+  return guesses.length === 0 ? "No Gambler guesses" : guesses.join("; ");
 }
 
 function rolePhrase(role: string | undefined, fallback: string): string {
@@ -131,6 +184,37 @@ function gossipSummary(claim: Extract<Claim, { readonly type: "Gossip" }>): stri
     .filter((statement): statement is string => statement !== undefined);
 
   return statements.length === 0 ? "No Gossip statements" : statements.join("; ");
+}
+
+function courtierSummary(claim: Extract<Claim, { readonly type: "Courtier" }>): string {
+  const role = claim.role?.trim() || "no role";
+  const choiceTiming = claim.timing === undefined ? "" : ` on ${compactTimingLabel(claim.timing)}`;
+  const drunkTimings = (claim.drunkTimings ?? []).map(compactTimingLabel);
+  const drunkSummary = drunkTimings.length === 0 ? "" : `; drunk ${drunkTimings.join(", ")}`;
+  return `Chose ${role}${choiceTiming}${drunkSummary}.`;
+}
+
+function legionarySummary(claim: Extract<Claim, { readonly type: "Legionary" }>): string {
+  const counts = (claim.counts ?? []).map((entry, index) => {
+    const timing = entry.timing === undefined ? defaultNightLabel(index) : compactTimingLabel(entry.timing);
+    return `${timing}: ${entry.count} living evil`;
+  });
+  return counts.length === 0 ? "No Legionary counts" : counts.join("; ");
+}
+
+function oracleSummary(claim: Extract<Claim, { readonly type: "Oracle" }>): string {
+  const count = claim.count === undefined ? "Unknown" : String(claim.count);
+  const deadPlayers = claim.deadPlayers?.filter(Boolean) ?? [];
+  const scope = deadPlayers.length === 0 ? "" : ` among ${formatList(deadPlayers)}`;
+  return `${count} dead evil${scope}`;
+}
+
+function nightwatchmanSummary(claim: Extract<Claim, { readonly type: "Nightwatchman" }>): string {
+  const chosen = claim.chosen?.trim();
+  if (!chosen) return "No Nightwatchman choice";
+  if (claim.learned === true) return `${chosen} learned Nightwatchman.`;
+  if (claim.learned === false) return `${chosen} did not learn Nightwatchman.`;
+  return `Chose ${chosen}.`;
 }
 
 function knightSummary(players: readonly string[]): string {
@@ -180,4 +264,8 @@ export function compactTimingLabel(timing: string): string {
   const [, period, number] = match;
   if (period === undefined || number === undefined) return timing;
   return `${period[0]?.toUpperCase()}${number}`;
+}
+
+function defaultNightLabel(index: number): string {
+  return `N${index + 1}`;
 }
