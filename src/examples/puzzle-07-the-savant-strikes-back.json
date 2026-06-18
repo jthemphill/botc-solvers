@@ -143,8 +143,8 @@
       "statements": [
         {
           "options": [
-            "role_in_play_count(2, Juggler, Shugenja, `Village Idiot`)",
-            "(Oscar.type == Townsfolk && Anna.type == Townsfolk && Tim.type != Townsfolk) || (Oscar.type == Townsfolk && Tim.type == Townsfolk && Anna.type != Townsfolk) || (Anna.type == Townsfolk && Tim.type == Townsfolk && Oscar.type != Townsfolk)"
+            "#{r : {Juggler, Shugenja, `Village Idiot`} | some p : players | p.role == r} == 2",
+            "#{p : {Oscar, Anna, Tim} | p.type == Townsfolk} == 2"
           ]
         }
       ]

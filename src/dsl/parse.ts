@@ -89,7 +89,10 @@ class Parser {
   private parseQuantOrCompare(): AstNode {
     const tok = this.peek();
     if (tok.kind === "some" || tok.kind === "all" || tok.kind === "no" || tok.kind === "one" || tok.kind === "lone") {
-      return this.parseQuantifier(tok.kind as Quantifier);
+      if (this.tokens[this.pos + 1]?.kind === "ident" && this.tokens[this.pos + 2]?.kind === "colon") {
+        return this.parseQuantifier(tok.kind as Quantifier);
+      }
+      if (tok.kind !== "all") return this.parseMultiplicity(tok.kind);
     }
     return this.parseCompare();
   }
@@ -108,6 +111,17 @@ class Parser {
       set,
       body,
       span: { start: start.span.start, end: body.span.end },
+    };
+  }
+
+  private parseMultiplicity(q: Exclude<Quantifier, "all">): AstNode {
+    const start = this.consume();
+    const set = this.parseUnary();
+    return {
+      kind: "multiplicity",
+      quantifier: q,
+      set,
+      span: { start: start.span.start, end: set.span.end },
     };
   }
 
@@ -164,6 +178,21 @@ class Parser {
 
     if (tok.kind === "lbrace") {
       this.consume();
+      if (this.peek().kind === "ident" && this.tokens[this.pos + 1]?.kind === "colon") {
+        const variable = this.consume();
+        this.expect("colon");
+        const set = this.parseSetExpr();
+        this.expect("pipe");
+        const body = this.parseFormula();
+        const end = this.expect("rbrace");
+        return {
+          kind: "comprehension",
+          variable: variable.text,
+          set,
+          body,
+          span: { start: tok.span.start, end: end.span.end },
+        };
+      }
       const elements: AstNode[] = [];
       if (this.peek().kind !== "rbrace") {
         elements.push(this.parseSetExpr());
@@ -171,6 +200,12 @@ class Parser {
       }
       const end = this.expect("rbrace");
       return { kind: "setlit", elements, span: { start: tok.span.start, end: end.span.end } };
+    }
+
+    if (tok.kind === "hash") {
+      this.consume();
+      const set = this.parsePrimary();
+      return { kind: "cardinality", set, span: { start: tok.span.start, end: set.span.end } };
     }
 
     if (tok.kind === "number") {

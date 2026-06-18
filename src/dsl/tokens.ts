@@ -13,6 +13,7 @@ export type TokenKind =
   | "minus"
   | "amp"
   | "bang"
+  | "hash"
   | "and"
   | "or"
   | "implies"

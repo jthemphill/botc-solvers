@@ -17,6 +17,8 @@ type DslValue =
   | { kind: "player"; name: string; span: Span }
   | { kind: "roleSet"; names: readonly string[]; span: Span }
   | { kind: "role"; name: string; span: Span }
+  | { kind: "dynamicSet"; atomKind: "player" | "role"; elements: readonly SetElement[]; span: Span }
+  | { kind: "cardinality"; literals: readonly BoolLike[]; span: Span }
   | { kind: "alignment"; value: "Good" | "Evil"; span: Span }
   | { kind: "type"; value: CharacterType; span: Span }
   | { kind: "playerRole"; player: string; span: Span }
@@ -24,6 +26,13 @@ type DslValue =
   | { kind: "playerType"; player: string; span: Span }
   | { kind: "bool"; value: BoolLike; span: Span }
   | { kind: "number"; value: number; span: Span };
+
+type SetAtom = DslValue & ({ kind: "player" } | { kind: "role" });
+
+interface SetElement {
+  readonly atom: SetAtom;
+  readonly present: BoolLike;
+}
 
 const CHARACTER_TYPES: Record<string, CharacterType> = {
   Townsfolk: CharacterType.Townsfolk,
@@ -68,6 +77,16 @@ class Compiler {
           node.elements.map((e) => this.evalNode(e, env)),
           node.span,
         );
+      case "comprehension":
+        return this.evalComprehension(node, env);
+      case "cardinality":
+        return {
+          kind: "cardinality",
+          literals: this.setElements(this.evalNode(node.set, env), node.set.span).elements.map(
+            (entry) => entry.present,
+          ),
+          span: node.span,
+        };
       case "call":
         return this.evalCall(node, env);
       case "not": {
@@ -76,6 +95,8 @@ class Compiler {
       }
       case "quant":
         return this.evalQuant(node, env);
+      case "multiplicity":
+        return this.evalMultiplicity(node, env);
       case "binop":
         return this.evalBinop(node, env);
     }
@@ -152,36 +173,217 @@ class Compiler {
   }
 
   private evalQuant(node: Extract<AstNode, { kind: "quant" }>, env: ReadonlyMap<string, DslValue>): DslValue {
-    const set = this.evalNode(node.set, env);
-    const atoms = setAtoms(set, node.set.span);
-    const literals = atoms.elements.map((atom) => {
+    const atoms = this.setElements(this.evalNode(node.set, env), node.set.span);
+    const entries = atoms.elements.map((entry) => {
       const newEnv = new Map(env);
-      newEnv.set(node.variable, atom);
-      return this.expectBool(this.evalNode(node.body, newEnv)).value;
+      newEnv.set(node.variable, entry.atom);
+      const body = this.expectBool(this.evalNode(node.body, newEnv)).value;
+      return { present: entry.present, body };
     });
     const label = `${node.quantifier}_${node.variable}`;
+    const matches = entries.map((entry) =>
+      this.game.allOf([entry.present, entry.body], this.freshName(`${label}_entry`)),
+    );
     let result: BoolLike;
     switch (node.quantifier) {
       case "some":
-        result = this.game.anyOf(literals, this.freshName(label));
+        result = this.game.anyOf(matches, this.freshName(label));
         break;
       case "all":
-        result = this.game.allOf(literals, this.freshName(label));
+        result = this.game.allOf(
+          entries.map((entry) =>
+            this.game.anyOf(
+              [this.game.not(entry.present, this.freshName(`${label}_absent`)), entry.body],
+              this.freshName(`${label}_present_implies_body`),
+            ),
+          ),
+          this.freshName(label),
+        );
         break;
       case "no":
-        result = this.game.not(this.game.anyOf(literals, this.freshName(`${label}_any`)), this.freshName(label));
+        result = this.game.not(this.game.anyOf(matches, this.freshName(`${label}_any`)), this.freshName(label));
         break;
       case "one":
-        result = this.game.boolSumEquals(literals, 1, this.freshName(label));
+        result = this.game.boolSumEquals(matches, 1, this.freshName(label));
         break;
       case "lone":
-        result = this.game.not(
-          this.game.boolSumEquals(literals.length === 0 ? [] : literals, 2, this.freshName(`${label}_two`)),
+        result = this.game.anyOf(
+          [
+            this.game.boolSumEquals(matches, 0, this.freshName(`${label}_zero`)),
+            this.game.boolSumEquals(matches, 1, this.freshName(`${label}_one`)),
+          ],
           this.freshName(label),
         );
         break;
     }
     return { kind: "bool", value: result, span: node.span };
+  }
+
+  private evalMultiplicity(
+    node: Extract<AstNode, { kind: "multiplicity" }>,
+    env: ReadonlyMap<string, DslValue>,
+  ): DslValue {
+    const literals = this.setElements(this.evalNode(node.set, env), node.set.span).elements.map(
+      (entry) => entry.present,
+    );
+    let result: BoolLike;
+    switch (node.quantifier) {
+      case "some":
+        result = this.game.anyOf(literals, this.freshName("some_set"));
+        break;
+      case "no":
+        result = this.game.not(this.game.anyOf(literals, this.freshName("no_set_any")), this.freshName("no_set"));
+        break;
+      case "one":
+        result = this.game.boolSumEquals(literals, 1, this.freshName("one_set"));
+        break;
+      case "lone":
+        result = this.game.anyOf(
+          [
+            this.game.boolSumEquals(literals, 0, this.freshName("lone_set_zero")),
+            this.game.boolSumEquals(literals, 1, this.freshName("lone_set_one")),
+          ],
+          this.freshName("lone_set"),
+        );
+        break;
+    }
+    return { kind: "bool", value: result, span: node.span };
+  }
+
+  private evalComprehension(
+    node: Extract<AstNode, { kind: "comprehension" }>,
+    env: ReadonlyMap<string, DslValue>,
+  ): DslValue {
+    const source = this.setElements(this.evalNode(node.set, env), node.set.span);
+    const elements = source.elements.map((entry) => {
+      const newEnv = new Map(env);
+      newEnv.set(node.variable, entry.atom);
+      const body = this.expectBool(this.evalNode(node.body, newEnv)).value;
+      return {
+        atom: entry.atom,
+        present: this.game.allOf([entry.present, body], this.freshName(`comprehension_${node.variable}`)),
+      };
+    });
+    return { kind: "dynamicSet", atomKind: source.kind, elements, span: node.span };
+  }
+
+  private setElements(
+    value: DslValue,
+    span: Span,
+  ): { readonly kind: "player" | "role"; readonly elements: readonly SetElement[] } {
+    if (value.kind === "dynamicSet") return { kind: value.atomKind, elements: value.elements };
+    if (value.kind === "playerSet")
+      return {
+        kind: "player",
+        elements: value.names.map((name) => ({
+          atom: { kind: "player", name, span },
+          present: this.game.constantBool(true, this.freshName("static_player_set")),
+        })),
+      };
+    if (value.kind === "player")
+      return {
+        kind: "player",
+        elements: [{ atom: value, present: this.game.constantBool(true, this.freshName("static_player")) }],
+      };
+    if (value.kind === "roleSet")
+      return {
+        kind: "role",
+        elements: value.names.map((name) => ({
+          atom: { kind: "role", name, span },
+          present: this.game.constantBool(true, this.freshName("static_role_set")),
+        })),
+      };
+    if (value.kind === "role")
+      return {
+        kind: "role",
+        elements: [{ atom: value, present: this.game.constantBool(true, this.freshName("static_role")) }],
+      };
+    if (value.kind === "playerRole")
+      return {
+        kind: "role",
+        elements: this.ctx.script.map((name) => ({
+          atom: { kind: "role", name, span },
+          present: this.game.actualIs(value.player, name),
+        })),
+      };
+    throw new DslError(`Expected a set, got ${value.kind}`, span);
+  }
+
+  private unionElements(left: readonly SetElement[], right: readonly SetElement[]): readonly SetElement[] {
+    const groups = this.groupElements([...left, ...right]);
+    return [...groups.values()].map(({ atom, presences }) => ({
+      atom,
+      present:
+        presences.length === 1 ? (presences[0] as BoolLike) : this.game.anyOf(presences, this.freshName("set_union")),
+    }));
+  }
+
+  private intersectElements(left: readonly SetElement[], right: readonly SetElement[]): readonly SetElement[] {
+    const leftGroups = this.groupElements(left);
+    const rightGroups = this.groupElements(right);
+    const elements: SetElement[] = [];
+    for (const [key, leftGroup] of leftGroups) {
+      const rightGroup = rightGroups.get(key);
+      if (rightGroup === undefined) continue;
+      const leftPresent =
+        leftGroup.presences.length === 1
+          ? (leftGroup.presences[0] as BoolLike)
+          : this.game.anyOf(leftGroup.presences, this.freshName("set_intersect_left"));
+      const rightPresent =
+        rightGroup.presences.length === 1
+          ? (rightGroup.presences[0] as BoolLike)
+          : this.game.anyOf(rightGroup.presences, this.freshName("set_intersect_right"));
+      elements.push({
+        atom: leftGroup.atom,
+        present: this.game.allOf([leftPresent, rightPresent], this.freshName("set_intersect")),
+      });
+    }
+    return elements;
+  }
+
+  private subtractElements(left: readonly SetElement[], right: readonly SetElement[]): readonly SetElement[] {
+    const leftGroups = this.groupElements(left);
+    const rightGroups = this.groupElements(right);
+    const elements: SetElement[] = [];
+    for (const [key, leftGroup] of leftGroups) {
+      const leftPresent =
+        leftGroup.presences.length === 1
+          ? (leftGroup.presences[0] as BoolLike)
+          : this.game.anyOf(leftGroup.presences, this.freshName("set_minus_left"));
+      const rightGroup = rightGroups.get(key);
+      if (rightGroup === undefined) {
+        elements.push({ atom: leftGroup.atom, present: leftPresent });
+        continue;
+      }
+      const rightPresent =
+        rightGroup.presences.length === 1
+          ? (rightGroup.presences[0] as BoolLike)
+          : this.game.anyOf(rightGroup.presences, this.freshName("set_minus_right"));
+      elements.push({
+        atom: leftGroup.atom,
+        present: this.game.allOf(
+          [leftPresent, this.game.not(rightPresent, this.freshName("set_minus_absent"))],
+          this.freshName("set_minus"),
+        ),
+      });
+    }
+    return elements;
+  }
+
+  private groupElements(
+    elements: readonly SetElement[],
+  ): Map<string, { readonly atom: SetAtom; readonly presences: BoolLike[] }> {
+    const groups = new Map<string, { atom: SetAtom; presences: BoolLike[] }>();
+    for (const element of elements) {
+      const key = atomKey(element.atom);
+      const group = groups.get(key);
+      if (group === undefined) {
+        groups.set(key, { atom: element.atom, presences: [element.present] });
+      } else {
+        group.presences.push(element.present);
+      }
+    }
+    return groups;
   }
 
   private evalBinop(node: Extract<AstNode, { kind: "binop" }>, env: ReadonlyMap<string, DslValue>): DslValue {
@@ -223,19 +425,23 @@ class Compiler {
     if (op === "plus") {
       const lhs = this.evalNode(node.left, env);
       const rhs = this.evalNode(node.right, env);
-      if (lhs.kind === "player" && rhs.kind === "player") {
-        const names = lhs.name === rhs.name ? [lhs.name] : [lhs.name, rhs.name];
-        return { kind: "playerSet", names, span: node.span };
-      }
-      const a = setAtoms(lhs, node.left.span);
-      const b = setAtoms(rhs, node.right.span);
+      const a = this.setElements(lhs, node.left.span);
+      const b = this.setElements(rhs, node.right.span);
       if (a.kind !== b.kind) throw new DslError(`Cannot union sets of different kinds`, node.span);
-      const merged = [...a.elements];
-      for (const el of b.elements) {
-        const dup = merged.some((m) => sameAtom(m, el));
-        if (!dup) merged.push(el);
-      }
-      return atomsToSet(merged, a.kind, node.span);
+      return {
+        kind: "dynamicSet",
+        atomKind: a.kind,
+        elements: this.unionElements(a.elements, b.elements),
+        span: node.span,
+      };
+    }
+    if (op === "amp" || op === "minus") {
+      const a = this.setElements(this.evalNode(node.left, env), node.left.span);
+      const b = this.setElements(this.evalNode(node.right, env), node.right.span);
+      if (a.kind !== b.kind) throw new DslError(`Cannot combine sets of different kinds`, node.span);
+      const elements =
+        op === "amp" ? this.intersectElements(a.elements, b.elements) : this.subtractElements(a.elements, b.elements);
+      return { kind: "dynamicSet", atomKind: a.kind, elements, span: node.span };
     }
     throw new DslError(`Operator '${op}' not supported here`, node.span);
   }
@@ -244,6 +450,10 @@ class Compiler {
     const pair = orderPair(lhs, rhs);
     const a = pair[0];
     const b = pair[1];
+    if (a.kind === "cardinality" && b.kind === "number")
+      return this.game.boolSumEquals(a.literals, b.value, this.freshName(`cardinality_${b.value}`));
+    if (a.kind === "number" && b.kind === "number")
+      return this.game.constantBool(a.value === b.value, this.freshName("number_eq"));
     if (a.kind === "playerRole" && b.kind === "role") return this.game.actualIs(a.player, b.name);
     if (a.kind === "playerAlignment" && b.kind === "alignment")
       return b.value === "Evil" ? this.game.isEvil(a.player) : this.game.isGood(a.player);
@@ -282,6 +492,10 @@ class Compiler {
       return this.game.constantBool(rhs.names.includes(lhs.name), this.freshName("in_player"));
     if (lhs.kind === "role" && rhs.kind === "roleSet")
       return this.game.constantBool(rhs.names.includes(lhs.name), this.freshName("in_role"));
+    if ((lhs.kind === "player" || lhs.kind === "role") && rhs.kind === "dynamicSet") {
+      const matches = rhs.elements.filter((entry) => sameAtom(entry.atom, lhs)).map((entry) => entry.present);
+      return this.game.anyOf(matches, this.freshName("in_dynamic_set"));
+    }
     throw new DslError(`'in' requires an atom on the left and a set on the right`, span);
   }
 
@@ -308,32 +522,6 @@ class Compiler {
       return {
         kind: "bool",
         value: this.game.boolSumEquals(literals, countVal.value, this.freshName(`role_count_${countVal.value}`)),
-        span: node.span,
-      };
-    }
-    if (node.name === "role_in_play_count") {
-      if (node.args.length < 2) throw new DslError(`role_in_play_count() takes (n, role, ...)`, node.span);
-      const countArg = node.args[0] as AstCall["args"][number];
-      if (countArg.name !== undefined)
-        throw new DslError(`role_in_play_count's first argument is positional`, countArg.span);
-      const countVal = this.evalNode(countArg.value, env);
-      if (countVal.kind !== "number") throw new DslError(`role_in_play_count expects a number first`, countArg.span);
-      const literals: BoolLike[] = [];
-      for (let index = 1; index < node.args.length; index += 1) {
-        const roleArg = node.args[index] as AstCall["args"][number];
-        if (roleArg.name !== undefined)
-          throw new DslError(`role_in_play_count role arguments are positional`, roleArg.span);
-        const role = this.evalNode(roleArg.value, env);
-        if (role.kind !== "role") throw new DslError(`role_in_play_count expected a role`, role.span);
-        literals.push(this.game.roleInPlay(role.name));
-      }
-      return {
-        kind: "bool",
-        value: this.game.boolSumEquals(
-          literals,
-          countVal.value,
-          this.freshName(`role_in_play_count_${countVal.value}`),
-        ),
         span: node.span,
       };
     }
@@ -504,32 +692,18 @@ class Compiler {
   }
 }
 
-type AtomBundle =
-  | { kind: "player"; elements: readonly (DslValue & { kind: "player" })[] }
-  | { kind: "role"; elements: readonly (DslValue & { kind: "role" })[] };
-
-function setAtoms(value: DslValue, span: Span): AtomBundle {
-  if (value.kind === "playerSet")
-    return { kind: "player", elements: value.names.map((n) => ({ kind: "player", name: n, span })) };
-  if (value.kind === "player") return { kind: "player", elements: [value] };
-  if (value.kind === "roleSet")
-    return { kind: "role", elements: value.names.map((n) => ({ kind: "role", name: n, span })) };
-  if (value.kind === "role") return { kind: "role", elements: [value] };
-  throw new DslError(`Expected a set, got ${value.kind}`, span);
-}
-
-function atomsToSet(atoms: readonly DslValue[], kind: "player" | "role", span: Span): DslValue {
-  const names = atoms.map((a) => (a as { name: string }).name);
-  return kind === "player" ? { kind: "playerSet", names, span } : { kind: "roleSet", names, span };
-}
-
 function sameAtom(a: DslValue, b: DslValue): boolean {
   if (a.kind === "player" && b.kind === "player") return a.name === b.name;
   if (a.kind === "role" && b.kind === "role") return a.name === b.name;
   return false;
 }
 
+function atomKey(atom: SetAtom): string {
+  return `${atom.kind}:${atom.name}`;
+}
+
 function orderPair(a: DslValue, b: DslValue): readonly [DslValue, DslValue] {
+  if (b.kind === "cardinality") return [b, a];
   const fieldKinds = new Set(["playerRole", "playerAlignment", "playerType"]);
   if (fieldKinds.has(a.kind)) return [a, b];
   if (fieldKinds.has(b.kind)) return [b, a];

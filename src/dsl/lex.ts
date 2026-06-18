@@ -21,6 +21,7 @@ const SINGLE: ReadonlyMap<string, TokenKind> = new Map([
   ["+", "plus"],
   ["-", "minus"],
   ["&", "amp"],
+  ["#", "hash"],
 ]);
 
 function isIdentStart(ch: string): boolean {

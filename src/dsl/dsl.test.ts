@@ -134,7 +134,7 @@ describe("DSL", () => {
     expect(await game.solveAll()).toHaveLength(1);
   });
 
-  test("role_in_play_count counts roles instead of player-role pairs", async () => {
+  test("cardinality comprehensions count roles in play", async () => {
     const game = buildPuzzleModel(
       { players: ["A", "B", "C"], characters: [Imp, Savant, Clockmaker, Klutz], setup: false },
       backend,
@@ -142,14 +142,15 @@ describe("DSL", () => {
     const ctx: CompileCtx = {
       players: ["A", "B", "C"],
       script: ["Imp", "Savant", "Clockmaker", "Klutz"],
-      nameRoot: "role_in_play_count",
+      nameRoot: "cardinality_comprehension",
     };
 
     game.fixActual("A", Imp);
     game.fixActual("B", Savant);
     game.fixActual("C", Clockmaker);
-    game.addTruth(compile("role_in_play_count(1, Clockmaker, Klutz)", game, ctx) as BoolLike);
-    game.addFalse(compile("role_in_play_count(2, Clockmaker, Klutz)", game, ctx) as BoolLike);
+    game.addTruth(compile("#{r : {Clockmaker, Klutz} | some p : players | p.role == r} == 1", game, ctx) as BoolLike);
+    game.addTruth(compile("#{p : players | some (p.role & {Clockmaker, Klutz})} == 1", game, ctx) as BoolLike);
+    game.addFalse(compile("#{r : {Clockmaker, Klutz} | some p : players | p.role == r} == 2", game, ctx) as BoolLike);
 
     expect(await game.solveAll()).toHaveLength(1);
   });

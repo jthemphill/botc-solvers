@@ -13,6 +13,13 @@ export interface AstQuant {
   readonly span: Span;
 }
 
+export interface AstMultiplicity {
+  readonly kind: "multiplicity";
+  readonly quantifier: Exclude<Quantifier, "all">;
+  readonly set: AstNode;
+  readonly span: Span;
+}
+
 export interface AstBinOp {
   readonly kind: "binop";
   readonly op: BinaryOp;
@@ -47,6 +54,20 @@ export interface AstSetLit {
   readonly span: Span;
 }
 
+export interface AstComprehension {
+  readonly kind: "comprehension";
+  readonly variable: string;
+  readonly set: AstNode;
+  readonly body: AstNode;
+  readonly span: Span;
+}
+
+export interface AstCardinality {
+  readonly kind: "cardinality";
+  readonly set: AstNode;
+  readonly span: Span;
+}
+
 export interface AstBoolLit {
   readonly kind: "boollit";
   readonly value: boolean;
@@ -67,4 +88,15 @@ export interface AstCallArg {
   readonly span: Span;
 }
 
-export type AstNode = AstQuant | AstBinOp | AstNot | AstPath | AstNumber | AstSetLit | AstBoolLit | AstCall;
+export type AstNode =
+  | AstQuant
+  | AstMultiplicity
+  | AstBinOp
+  | AstNot
+  | AstPath
+  | AstNumber
+  | AstSetLit
+  | AstComprehension
+  | AstCardinality
+  | AstBoolLit
+  | AstCall;
