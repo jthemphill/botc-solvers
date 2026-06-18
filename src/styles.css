@@ -355,11 +355,9 @@ summary {
   font-size: 0.82rem;
   font-weight: 850;
   line-height: 1;
-  opacity: 0.72;
   transition:
     background-color 120ms ease,
     border-color 120ms ease,
-    opacity 120ms ease,
     transform 120ms ease;
 }
 
@@ -374,13 +372,8 @@ summary {
   font-weight: 900;
 }
 
-.seat-trash-zone.armed {
-  border-color: rgba(165, 43, 43, 0.72);
-  background: rgba(165, 43, 43, 0.1);
-  opacity: 1;
-}
-
 .seat-trash-zone.drop-target {
+  border-color: rgba(165, 43, 43, 0.72);
   border-style: solid;
   background: rgba(165, 43, 43, 0.18);
   transform: translateY(-1px);

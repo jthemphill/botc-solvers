@@ -39,10 +39,18 @@ test("removes a seat by dragging it to the trash zone", async ({ page }) => {
   const trashZone = page.locator(".seat-trash-zone");
 
   await expect(firstSeat).toBeVisible();
+  await expect(trashZone).toHaveCount(0);
+
+  const dataTransfer = await page.evaluateHandle("new DataTransfer()");
+  await firstSeat.dispatchEvent("dragstart", { dataTransfer });
+
   await expect(trashZone).toBeVisible();
 
-  await firstSeat.dragTo(trashZone);
+  await trashZone.dispatchEvent("dragenter", { dataTransfer });
+  await trashZone.dispatchEvent("dragover", { dataTransfer });
+  await trashZone.dispatchEvent("drop", { dataTransfer });
 
   await expect(page.getByRole("button", { name: /Seat 1: Player 2\./ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Seat 1: Player 1\./ })).toHaveCount(0);
+  await expect(trashZone).toHaveCount(0);
 });

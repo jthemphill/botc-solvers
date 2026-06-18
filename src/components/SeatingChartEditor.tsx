@@ -188,22 +188,22 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
           />
         </label>
         <SetupCountSummary setupCounts={setupCounts} />
-        <div
-          className={`seat-trash-zone${draggedIndex === undefined ? "" : " armed"}${
-            trashDropActive ? " drop-target" : ""
-          }`}
-          aria-label="Trash zone for removing seats"
-          onDragEnter={(event) => {
-            allowSeatDrop(event);
-            setTrashDropActive(true);
-          }}
-          onDragOver={allowSeatDrop}
-          onDragLeave={() => setTrashDropActive(false)}
-          onDrop={dropSeatOnTrash}
-        >
-          <span aria-hidden="true">×</span>
-          <strong>Trash</strong>
-        </div>
+        {draggedIndex !== undefined && (
+          <div
+            className={`seat-trash-zone${trashDropActive ? " drop-target" : ""}`}
+            aria-label="Trash zone for removing seats"
+            onDragEnter={(event) => {
+              allowSeatDrop(event);
+              setTrashDropActive(true);
+            }}
+            onDragOver={allowSeatDrop}
+            onDragLeave={() => setTrashDropActive(false)}
+            onDrop={dropSeatOnTrash}
+          >
+            <span aria-hidden="true">×</span>
+            <strong>Trash</strong>
+          </div>
+        )}
       </div>
 
       <div className="seating-chart" aria-label="Clockwise seating chart">
