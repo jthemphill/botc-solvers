@@ -509,6 +509,13 @@ function ChefBody({ claim, onChange }: { claim: ChefClaim; onChange: (c: Claim) 
 }
 
 function EmpathBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: EmpathClaim; onChange: (c: Claim) => void }) {
+  const [leftNeighbor = "", rightNeighbor = ""] = claim.neighbors ?? [];
+  const setNeighbor = (index: 0 | 1, value: string) => {
+    const next: [string, string] = [leftNeighbor, rightNeighbor];
+    next[index] = value;
+    onChange({ ...claim, neighbors: next[0] === "" && next[1] === "" ? undefined : next });
+  };
+
   return (
     <div className="field-grid">
       <span>Count</span>
@@ -525,6 +532,10 @@ function EmpathBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: EmpathCla
       />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <span>Left neighbor</span>
+      <PlayerSelect players={doc.players} value={leftNeighbor} onChange={(v) => setNeighbor(0, v)} />
+      <span>Right neighbor</span>
+      <PlayerSelect players={doc.players} value={rightNeighbor} onChange={(v) => setNeighbor(1, v)} />
     </div>
   );
 }
