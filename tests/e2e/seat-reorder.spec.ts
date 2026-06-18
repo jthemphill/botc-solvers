@@ -41,7 +41,7 @@ test("removes a seat by dragging it to the trash zone", async ({ page }) => {
   await expect(firstSeat).toBeVisible();
   await expect(trashZone).toHaveCount(0);
 
-  const dataTransfer = await page.evaluateHandle("new DataTransfer()");
+  const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
   await firstSeat.dispatchEvent("dragstart", { dataTransfer });
 
   await expect(trashZone).toBeVisible();
