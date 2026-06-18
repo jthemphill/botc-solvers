@@ -4,7 +4,7 @@ import { FixedRolesEditor } from "./components/FixedRolesEditor";
 import { ImportExportBar } from "./components/ImportExportBar";
 import { PuzzleHeader } from "./components/PuzzleHeader";
 import { ResultsView } from "./components/ResultsView";
-import { PuzzleSheet, SelectedPlayerWorkbench } from "./components/SeatingChartEditor";
+import { DrawWorkbench, PuzzleSheet } from "./components/SeatingChartEditor";
 import { ScriptPicker } from "./components/ScriptPicker";
 import { initialDoc, initialState, reducer } from "./state/puzzleDoc";
 import { useSolver } from "./state/useSolver";
@@ -97,14 +97,7 @@ export function App() {
             ))}
           </nav>
           <div className="workbench-body">
-            {activeTab === "draw" && (
-              <SelectedPlayerWorkbench
-                doc={doc}
-                dispatch={dispatch}
-                selectedIndex={selectedIndex}
-                onSelect={setSelectedIndex}
-              />
-            )}
+            {activeTab === "draw" && <DrawWorkbench doc={doc} dispatch={dispatch} selectedIndex={selectedIndex} />}
             {activeTab === "script" && (
               <>
                 <ScriptPicker doc={doc} dispatch={dispatch} />
