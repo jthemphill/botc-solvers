@@ -340,6 +340,52 @@ summary {
   color: var(--red-ink);
 }
 
+.seat-trash-zone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  min-width: 6.25rem;
+  min-height: 2.25rem;
+  border: 1.5px dashed rgba(165, 43, 43, 0.48);
+  border-radius: 6px;
+  background: rgba(165, 43, 43, 0.06);
+  color: var(--red-ink);
+  padding: 0.28rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 850;
+  line-height: 1;
+  opacity: 0.72;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.seat-trash-zone span {
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.seat-trash-zone.armed {
+  border-color: rgba(165, 43, 43, 0.72);
+  background: rgba(165, 43, 43, 0.1);
+  opacity: 1;
+}
+
+.seat-trash-zone.drop-target {
+  border-style: solid;
+  background: rgba(165, 43, 43, 0.18);
+  transform: translateY(-1px);
+}
+
 .seating-chart {
   position: relative;
   width: min(100%, 48rem);
@@ -389,9 +435,23 @@ summary {
     0 0 0 5px rgba(14, 119, 169, 0.16);
 }
 
+.seat-button:hover,
+.seat-button:focus-visible {
+  background: radial-gradient(circle at 38% 28%, #fffdf8, rgba(244, 234, 219, 0.92) 58%, #eadcc8);
+}
+
+.seat-button:focus-visible {
+  outline: 3px solid rgba(14, 119, 169, 0.28);
+  outline-offset: 2px;
+}
+
 .seat-button.dragging {
   opacity: 0.58;
   cursor: grabbing;
+}
+
+.seat-button.editing {
+  cursor: text;
 }
 
 .seat-button.death-nomination-death {
@@ -474,6 +534,22 @@ summary {
   font-weight: 800;
   line-height: 1.05;
   white-space: nowrap;
+}
+
+.seat-name-input {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  width: min(5.7rem, 86%);
+  min-width: 0;
+  height: 1.75rem;
+  border-color: var(--blue-ink);
+  background: rgba(255, 252, 244, 0.96);
+  padding: 0.1rem 0.24rem;
+  text-align: center;
+  font-size: min(0.96rem, 16cqi);
+  font-weight: 800;
+  line-height: 1.05;
 }
 
 .seat-death-badge {
@@ -908,10 +984,6 @@ summary {
   color: var(--muted-ink);
 }
 
-.selected-player-grid {
-  grid-template-columns: minmax(5.2rem, 0.28fr) minmax(0, 1fr);
-}
-
 .claim-add-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -1263,8 +1335,7 @@ summary {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .field-grid,
-  .selected-player-grid {
+  .field-grid {
     grid-template-columns: 1fr;
   }
 
