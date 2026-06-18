@@ -114,7 +114,7 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
     case "Empath":
       return { type: "Empath", name, count: 0 };
     case "FortuneTeller":
-      return { type: "FortuneTeller", name, checks: [] };
+      return { type: "FortuneTeller", name, checks: [{ left: "", right: "", yes: false, timing: "night_1" }] };
     case "Undertaker":
       return { type: "Undertaker", name, player: "", role: "" };
     case "Noble":
@@ -549,54 +549,32 @@ function FortuneTellerBody({
   claim: FortuneTellerClaim;
   onChange: (c: Claim) => void;
 }) {
-  const setCheck = (i: number, c: FortuneTellerCheckDoc) => {
-    const next = claim.checks.map((c0, j) => (j === i ? c : c0));
-    onChange({ ...claim, checks: next });
-  };
-  const removeCheck = (i: number) => onChange({ ...claim, checks: claim.checks.filter((_, j) => j !== i) });
-  const addCheck = () =>
-    onChange({
-      ...claim,
-      checks: [...claim.checks, { left: doc.players[0] ?? "", right: doc.players[1] ?? "", yes: false }],
-    });
+  const check = claim.checks[0] ?? { left: "", right: "", yes: false };
+  const setCheck = (next: FortuneTellerCheckDoc) => onChange({ ...claim, checks: [next] });
+
   return (
-    <div>
-      {claim.checks.map((chk, i) => (
-        <div
-          key={i}
-          className="field-grid"
-          style={{ borderBottom: "1px solid rgba(0,0,0,0.05)", paddingBottom: "0.3rem" }}
-        >
-          <span>Left</span>
-          <PlayerSelect players={doc.players} value={chk.left} onChange={(v) => setCheck(i, { ...chk, left: v })} />
-          <span>Right</span>
-          <PlayerSelect players={doc.players} value={chk.right} onChange={(v) => setCheck(i, { ...chk, right: v })} />
-          <span>Saw demon</span>
-          <input type="checkbox" checked={chk.yes} onChange={(e) => setCheck(i, { ...chk, yes: e.target.checked })} />
-          <span>Demon role (optional)</span>
-          <RoleSelect
-            script={doc.script}
-            value={chk.demonRole}
-            onChange={(v) => setCheck(i, { ...chk, demonRole: v || undefined })}
-            allowEmpty
-          />
-          <span>Registers</span>
-          <input
-            type="checkbox"
-            checked={chk.registers ?? false}
-            onChange={(e) => setCheck(i, { ...chk, registers: e.target.checked })}
-          />
-          <span>Timing</span>
-          <TimingField
-            value={chk.timing}
-            onChange={(t) => setCheck(i, { ...chk, timing: t })}
-            defaultValue={`night_${i + 1}`}
-          />
-          <span />
-          <button onClick={() => removeCheck(i)}>Remove check</button>
-        </div>
-      ))}
-      <button onClick={addCheck}>+ Add check</button>
+    <div className="field-grid">
+      <span>Left</span>
+      <PlayerSelect players={doc.players} value={check.left} onChange={(v) => setCheck({ ...check, left: v })} />
+      <span>Right</span>
+      <PlayerSelect players={doc.players} value={check.right} onChange={(v) => setCheck({ ...check, right: v })} />
+      <span>Saw demon</span>
+      <input type="checkbox" checked={check.yes} onChange={(e) => setCheck({ ...check, yes: e.target.checked })} />
+      <span>Demon role (optional)</span>
+      <RoleSelect
+        script={doc.script}
+        value={check.demonRole}
+        onChange={(v) => setCheck({ ...check, demonRole: v || undefined })}
+        allowEmpty
+      />
+      <span>Registers</span>
+      <input
+        type="checkbox"
+        checked={check.registers ?? false}
+        onChange={(e) => setCheck({ ...check, registers: e.target.checked })}
+      />
+      <span>Timing</span>
+      <TimingField value={check.timing} onChange={(t) => setCheck({ ...check, timing: t })} />
     </div>
   );
 }

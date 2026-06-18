@@ -73,7 +73,13 @@
           "right": "Tim",
           "yes": false,
           "timing": "night_1"
-        },
+        }
+      ]
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Olivia",
+      "checks": [
         {
           "left": "Aoife",
           "right": "Olivia",

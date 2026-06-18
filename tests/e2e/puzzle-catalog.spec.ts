@@ -133,6 +133,12 @@ test("formats remaining structured claim summaries with their details", async ({
     }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: /N1: Aoife \+ Tim -> no; N2: Aoife \+ Olivia -> no/ })).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Workbench sections" })
+    .getByRole("button", { name: /Claims/ })
+    .click();
+  await expect(page.getByText("Olivia — 🔮 Fortune Teller")).toHaveCount(2);
+  await expect(page.getByText("+ Add check")).toHaveCount(0);
 
   await page.getByLabel("Load example puzzle").selectOption("puzzle-11-false-is-the-new-black");
   await expect(page.getByLabel("Player claim summaries")).toContainText("Chose Snake Charmer.");

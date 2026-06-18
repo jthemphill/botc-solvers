@@ -83,6 +83,39 @@ describe("puzzle document reducer", () => {
     expect(loaded.script).toContain("No Dashii");
   });
 
+  test("Fortune Teller checks normalize into one claim per night", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B", "C"],
+      script: [],
+      claims: [
+        {
+          type: "FortuneTeller",
+          name: "A",
+          checks: [
+            { left: "B", right: "C", yes: true, timing: "night_1" },
+            { left: "A", right: "B", yes: false, timing: "night_2" },
+          ],
+        },
+      ],
+    };
+
+    const loaded = reducer(doc, { type: "load", doc });
+
+    expect(loaded.claims).toEqual([
+      {
+        type: "FortuneTeller",
+        name: "A",
+        checks: [{ left: "B", right: "C", yes: true, timing: "night_1" }],
+      },
+      {
+        type: "FortuneTeller",
+        name: "A",
+        checks: [{ left: "A", right: "B", yes: false, timing: "night_2" }],
+      },
+    ]);
+  });
+
   test("setPlayerCount removes affected player references", () => {
     const doc: PuzzleDoc = {
       version: 1,
@@ -149,6 +182,32 @@ describe("puzzle document reducer", () => {
     const next = reducer(doc, { type: "renamePlayer", index: 1, name: "Bea" });
 
     expect(next.claims).toEqual([{ type: "Slayer", name: "A", timing: "day_1", target: "Bea", killed: false }]);
+  });
+
+  test("renamePlayer updates Empath neighbor overrides", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B", "C"],
+      script: ["Empath"],
+      claims: [{ type: "Empath", name: "A", timing: "night_1", count: 1, neighbors: ["B", "C"] }],
+    };
+
+    const next = reducer(doc, { type: "renamePlayer", index: 1, name: "Bea" });
+
+    expect(next.claims).toEqual([{ type: "Empath", name: "A", timing: "night_1", count: 1, neighbors: ["Bea", "C"] }]);
+  });
+
+  test("removePlayer clears Empath neighbor overrides that reference the removed player", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B", "C"],
+      script: ["Empath"],
+      claims: [{ type: "Empath", name: "A", timing: "night_1", count: 1, neighbors: ["B", "C"] }],
+    };
+
+    const next = reducer(doc, { type: "removePlayer", index: 1 });
+
+    expect(next.claims).toEqual([{ type: "Empath", name: "A", timing: "night_1", count: 1, neighbors: undefined }]);
   });
 
   test("removePlayer removes empty timeline events", () => {
