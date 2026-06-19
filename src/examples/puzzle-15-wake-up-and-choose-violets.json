@@ -51,31 +51,20 @@
     {
       "type": "Snake Charmer",
       "name": "Jasmine",
-      "timing": "night_1",
-      "checked": "Fraser",
-      "demon": false,
-      "extraPossibleActualRoles": ["Mutant"],
-      "info": [
-        {
-          "timing": "night_1",
-          "expression": "Hannah.role == `Evil Twin`"
-        }
-      ]
-    },
-    {
-      "type": "Snake Charmer",
-      "name": "Jasmine",
-      "timing": "night_2",
-      "checked": "Aoife",
-      "demon": false,
+      "checks": [{ "player": "Fraser", "demon": false, "timing": "night_1" }],
+      "evilTwin": { "player": "Hannah", "timing": "night_1" },
       "extraPossibleActualRoles": ["Mutant"]
     },
     {
       "type": "Snake Charmer",
       "name": "Jasmine",
-      "timing": "night_3",
-      "checked": "Adam",
-      "demon": false,
+      "checks": [{ "player": "Aoife", "demon": false, "timing": "night_2" }],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Jasmine",
+      "checks": [{ "player": "Adam", "demon": false, "timing": "night_3" }],
       "extraPossibleActualRoles": ["Mutant"]
     },
     {
@@ -115,31 +104,20 @@
     {
       "type": "Snake Charmer",
       "name": "Hannah",
-      "timing": "night_1",
-      "checked": "Sarah",
-      "demon": false,
-      "extraPossibleActualRoles": ["Mutant"],
-      "info": [
-        {
-          "timing": "night_1",
-          "expression": "Jasmine.role == `Evil Twin`"
-        }
-      ]
-    },
-    {
-      "type": "Snake Charmer",
-      "name": "Hannah",
-      "timing": "night_2",
-      "checked": "Oscar",
-      "demon": false,
+      "checks": [{ "player": "Sarah", "demon": false, "timing": "night_1" }],
+      "evilTwin": { "player": "Jasmine", "timing": "night_1" },
       "extraPossibleActualRoles": ["Mutant"]
     },
     {
       "type": "Snake Charmer",
       "name": "Hannah",
-      "timing": "night_3",
-      "checked": "Aoife",
-      "demon": false,
+      "checks": [{ "player": "Oscar", "demon": false, "timing": "night_2" }],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Hannah",
+      "checks": [{ "player": "Aoife", "demon": false, "timing": "night_3" }],
       "extraPossibleActualRoles": ["Mutant"]
     }
   ]

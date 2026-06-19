@@ -67,15 +67,15 @@ describe("validatePuzzleDoc", () => {
     expect(doc.claims[0]).toEqual({ type: "Investigator", name: "You", among: ["A"] });
   });
 
-  test("accepts custom info statements and forbidden roles", () => {
+  test("accepts Artist custom info statements and forbidden roles", () => {
     const doc = validatePuzzleDoc({
       ...baseDoc,
       players: ["You", "A"],
-      script: ["Savant", "Imp"],
+      script: ["Artist", "Imp"],
       forbiddenRoles: [{ name: "You", roles: ["Imp"] }],
       claims: [
         {
-          type: "Savant",
+          type: "Artist",
           name: "You",
           info: [
             {
@@ -84,7 +84,6 @@ describe("validatePuzzleDoc", () => {
               expression: "A.role == Imp",
             },
           ],
-          statements: [{ options: ["true", "false"] }],
         },
       ],
     });
@@ -97,6 +96,24 @@ describe("validatePuzzleDoc", () => {
         expression: "A.role == Imp",
       },
     ]);
+  });
+
+  test("rejects custom info expressions on non-Artist claims", () => {
+    expect(() =>
+      validatePuzzleDoc({
+        ...baseDoc,
+        players: ["You", "A"],
+        script: ["Savant", "Imp"],
+        claims: [
+          {
+            type: "Savant",
+            name: "You",
+            info: [{ timing: "night_1", expression: "A.role == Imp" }],
+            statements: [{ options: ["true", "false"] }],
+          },
+        ],
+      }),
+    ).toThrow("Only Artist claims may use custom info expressions");
   });
 
   test("accepts timeline events", () => {
@@ -152,7 +169,7 @@ describe("validatePuzzleDoc", () => {
         { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
         { type: "Oracle", name: "You", timing: "night_2", count: 1, deadPlayers: ["A", "B"] },
         { type: "Sage", name: "You", demonAmong: ["A", "B"] },
-        { type: "Snake Charmer", name: "You", checked: "A", demon: false },
+        { type: "Snake Charmer", name: "You", checks: [{ player: "A", demon: false, timing: "night_1" }] },
       ],
     });
 
@@ -164,7 +181,7 @@ describe("validatePuzzleDoc", () => {
       { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
       { type: "Oracle", name: "You", timing: "night_2", count: 1, deadPlayers: ["A", "B"] },
       { type: "Sage", name: "You", demonAmong: ["A", "B"] },
-      { type: "Snake Charmer", name: "You", checked: "A", demon: false },
+      { type: "Snake Charmer", name: "You", checks: [{ player: "A", demon: false, timing: "night_1" }] },
     ]);
   });
 });

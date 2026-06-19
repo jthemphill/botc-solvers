@@ -116,6 +116,41 @@ describe("puzzle document reducer", () => {
     ]);
   });
 
+  test("Snake Charmer checks normalize into one claim per night", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B", "C"],
+      script: [],
+      claims: [
+        {
+          type: "Snake Charmer",
+          name: "A",
+          checks: [
+            { player: "B", demon: false, timing: "night_1" },
+            { player: "C", demon: true, timing: "night_2" },
+          ],
+          evilTwin: { player: "C", timing: "night_1" },
+        },
+      ],
+    };
+
+    const loaded = reducer(doc, { type: "load", doc });
+
+    expect(loaded.claims).toEqual([
+      {
+        type: "Snake Charmer",
+        name: "A",
+        checks: [{ player: "B", demon: false, timing: "night_1" }],
+        evilTwin: { player: "C", timing: "night_1" },
+      },
+      {
+        type: "Snake Charmer",
+        name: "A",
+        checks: [{ player: "C", demon: true, timing: "night_2" }],
+      },
+    ]);
+  });
+
   test("setPlayerCount removes affected player references", () => {
     const doc: PuzzleDoc = {
       version: 1,

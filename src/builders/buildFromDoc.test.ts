@@ -738,9 +738,7 @@ describe("buildFromDoc", () => {
           {
             type: "Snake Charmer",
             name: "A",
-            timing: "night_1",
-            checked: "C",
-            demon: true,
+            checks: [{ player: "C", demon: true, timing: "night_1" }],
             extraPossibleActualRoles: ["Philosopher"],
           },
         ],

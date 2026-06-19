@@ -226,6 +226,13 @@ export interface GossipClaim extends BaseClaim {
 export interface PhilosopherClaim extends BaseClaim {
   readonly type: "Philosopher";
   readonly role?: string;
+  readonly seamstress?: PhilosopherSeamstressInfoDoc;
+}
+
+export interface PhilosopherSeamstressInfoDoc {
+  readonly among: readonly string[];
+  readonly aligned?: boolean;
+  readonly timing?: string;
 }
 
 export interface SeamstressClaim extends BaseClaim {
@@ -290,10 +297,21 @@ export interface SlayerClaim extends BaseClaim {
   readonly gameContinued?: boolean;
 }
 
+export interface SnakeCharmerCheckDoc {
+  readonly player: string;
+  readonly demon: boolean;
+  readonly timing: string;
+}
+
+export interface SnakeCharmerEvilTwinInfoDoc {
+  readonly player: string;
+  readonly timing: string;
+}
+
 export interface SnakeCharmerClaim extends BaseClaim {
   readonly type: "Snake Charmer";
-  readonly checked?: string;
-  readonly demon?: boolean;
+  readonly checks: readonly SnakeCharmerCheckDoc[];
+  readonly evilTwin?: SnakeCharmerEvilTwinInfoDoc;
 }
 
 export interface VillageIdiotCheckDoc {

@@ -66,7 +66,7 @@ export function claimSummary(claim: Claim): string {
     case "Oracle":
       return oracleSummary(claim);
     case "Philosopher":
-      return claim.role === undefined ? "No Philosopher choice" : `Chose ${claim.role}.`;
+      return philosopherSummary(claim);
     case "Ravenkeeper":
       return claim.player === undefined
         ? "No Ravenkeeper pick yet"
@@ -81,7 +81,7 @@ export function claimSummary(claim: Claim): string {
       return `I shot ${target} on ${timing}.`;
     }
     case "Snake Charmer":
-      return claim.checked ? `${claim.checked} is ${claim.demon ? "" : "not "}Demon` : "No check yet";
+      return snakeCharmerSummary(claim);
     case "VillageIdiot": {
       if (claim.checks.length === 0) return "No checks yet";
       const showTimings = claim.checks.some((check) => check.timing !== undefined);
@@ -202,6 +202,27 @@ function gossipSummary(claim: Extract<Claim, { readonly type: "Gossip" }>): stri
     .filter((statement): statement is string => statement !== undefined);
 
   return statements.length === 0 ? "No Gossip statements" : statements.join("; ");
+}
+
+function philosopherSummary(claim: Extract<Claim, { readonly type: "Philosopher" }>): string {
+  if (claim.role === undefined) return "No Philosopher choice";
+  const seamstress = claim.seamstress;
+  if (claim.role !== "Seamstress" || seamstress === undefined) return `Chose ${claim.role}.`;
+  const [left, right] = seamstress.among;
+  const alignment = seamstress.aligned === undefined ? "unknown alignment" : seamstress.aligned ? "same" : "different";
+  return `Chose Seamstress; ${left}/${right} ${alignment}.`;
+}
+
+function snakeCharmerSummary(claim: Extract<Claim, { readonly type: "Snake Charmer" }>): string {
+  const checks = claim.checks
+    .filter((check) => check.player.trim() !== "")
+    .map((check) => `${compactTimingLabel(check.timing)}: ${check.player} is ${check.demon ? "" : "not "}Demon`);
+  const evilTwin =
+    claim.evilTwin === undefined
+      ? undefined
+      : `${compactTimingLabel(claim.evilTwin.timing)}: ${claim.evilTwin.player} is Evil Twin`;
+  const info = evilTwin === undefined ? checks : [...checks, evilTwin];
+  return info.length === 0 ? "No check yet" : info.join("; ");
 }
 
 function courtierSummary(claim: Extract<Claim, { readonly type: "Courtier" }>): string {

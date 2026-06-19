@@ -19,6 +19,21 @@ describe("puzzle catalog", () => {
     expect(ids.has("puzzle-30-the-babel-fish-is-a-dead-giveaway-right")).toBe(true);
   });
 
+  test("uses arbitrary expressions only for Gossip, Savant, and Artist", () => {
+    for (const example of PUZZLE_EXAMPLES) {
+      const doc = validatePuzzleDoc(example.data);
+
+      for (const claim of doc.claims) {
+        const infoExpressions = (claim.info ?? []).filter((info) => info.expression?.trim());
+        if (claim.type === "Artist") {
+          continue;
+        }
+
+        expect(infoExpressions, `${example.id}: ${claim.name} ${claim.type}`).toHaveLength(0);
+      }
+    }
+  });
+
   test("uses structured info for puzzle 34", () => {
     const puzzle34 = PUZZLE_EXAMPLES.find((example) => example.id === "puzzle-34-the-vortox-conjecture");
     const doc = validatePuzzleDoc(puzzle34?.data);

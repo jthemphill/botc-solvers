@@ -75,23 +75,17 @@
     {
       "type": "Snake Charmer",
       "name": "Aoife",
-      "timing": "night_1",
-      "checked": "Tom",
-      "demon": false
+      "checks": [{ "player": "Tom", "demon": false, "timing": "night_1" }]
     },
     {
       "type": "Snake Charmer",
       "name": "Aoife",
-      "timing": "night_2",
-      "checked": "Hannah",
-      "demon": false
+      "checks": [{ "player": "Hannah", "demon": false, "timing": "night_2" }]
     },
     {
       "type": "Snake Charmer",
       "name": "Aoife",
-      "timing": "night_3",
-      "checked": "Matthew",
-      "demon": false
+      "checks": [{ "player": "Matthew", "demon": false, "timing": "night_3" }]
     },
     {
       "type": "Artist",
@@ -118,9 +112,7 @@
     {
       "type": "Snake Charmer",
       "name": "Sula",
-      "timing": "night_2",
-      "checked": "Sarah",
-      "demon": false,
+      "checks": [{ "player": "Sarah", "demon": false, "timing": "night_2" }],
       "extraPossibleActualRoles": ["Philosopher"]
     },
     {

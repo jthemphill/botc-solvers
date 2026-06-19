@@ -134,7 +134,7 @@ function validateClaim(input: unknown, path: string): Claim {
     input["extraPossibleActualRoles"] === undefined
       ? undefined
       : expectStringArray(input["extraPossibleActualRoles"], `${path}.extraPossibleActualRoles`);
-  const info = input["info"] === undefined ? undefined : validateCustomInfo(input["info"], `${path}.info`);
+  const info = input["info"] === undefined ? undefined : validateCustomInfo(input["info"], `${path}.info`, type);
   const base = { name, timing, extraPossibleActualRoles, info };
 
   switch (type as Claim["type"]) {
@@ -359,6 +359,10 @@ function validateClaim(input: unknown, path: string): Claim {
         ...base,
         type: "Philosopher",
         role: input["role"] === undefined ? undefined : expectString(input["role"], `${path}.role`),
+        seamstress:
+          input["seamstress"] === undefined
+            ? undefined
+            : validatePhilosopherSeamstress(input["seamstress"], `${path}.seamstress`),
       };
     case "Seamstress": {
       const among = input["among"] === undefined ? [] : expectStringArray(input["among"], `${path}.among`);
@@ -449,13 +453,26 @@ function validateClaim(input: unknown, path: string): Claim {
             ? undefined
             : expectBool(input["gameContinued"], `${path}.gameContinued`),
       };
-    case "Snake Charmer":
+    case "Snake Charmer": {
+      const checks = input["checks"];
+      if (!Array.isArray(checks)) throw new ValidationError(`Expected array`, `${path}.checks`);
       return {
         ...base,
         type: "Snake Charmer",
-        checked: input["checked"] === undefined ? undefined : expectString(input["checked"], `${path}.checked`),
-        demon: input["demon"] === undefined ? undefined : expectBool(input["demon"], `${path}.demon`),
+        checks: checks.map((c, i) => {
+          if (!isObject(c)) throw new ValidationError(`Expected object`, `${path}.checks[${i}]`);
+          return {
+            player: expectString(c["player"], `${path}.checks[${i}].player`),
+            demon: expectBool(c["demon"], `${path}.checks[${i}].demon`),
+            timing: expectString(c["timing"], `${path}.checks[${i}].timing`),
+          };
+        }),
+        evilTwin:
+          input["evilTwin"] === undefined
+            ? undefined
+            : validateSnakeCharmerEvilTwin(input["evilTwin"], `${path}.evilTwin`),
       };
+    }
     case "VillageIdiot": {
       const checks = input["checks"];
       if (!Array.isArray(checks)) throw new ValidationError(`Expected array`, `${path}.checks`);
@@ -528,7 +545,8 @@ function validateClaim(input: unknown, path: string): Claim {
   }
 }
 
-function validateCustomInfo(input: unknown, path: string): Claim["info"] {
+function validateCustomInfo(input: unknown, path: string, claimType: string): Claim["info"] {
+  if (claimType !== "Artist") throw new ValidationError(`Only Artist claims may use custom info expressions`, path);
   if (!Array.isArray(input)) throw new ValidationError(`Expected array`, path);
   return input.map((entry, index) => {
     const entryPath = `${path}[${index}]`;
@@ -540,6 +558,29 @@ function validateCustomInfo(input: unknown, path: string): Claim["info"] {
         entry["expression"] === undefined ? undefined : expectString(entry["expression"], `${entryPath}.expression`),
     };
   });
+}
+
+function validatePhilosopherSeamstress(
+  input: unknown,
+  path: string,
+): NonNullable<Extract<Claim, { type: "Philosopher" }>["seamstress"]> {
+  if (!isObject(input)) throw new ValidationError(`Expected object`, path);
+  return {
+    among: expectStringArray(input["among"], `${path}.among`),
+    aligned: input["aligned"] === undefined ? undefined : expectBool(input["aligned"], `${path}.aligned`),
+    timing: input["timing"] === undefined ? undefined : expectString(input["timing"], `${path}.timing`),
+  };
+}
+
+function validateSnakeCharmerEvilTwin(
+  input: unknown,
+  path: string,
+): NonNullable<Extract<Claim, { type: "Snake Charmer" }>["evilTwin"]> {
+  if (!isObject(input)) throw new ValidationError(`Expected object`, path);
+  return {
+    player: expectString(input["player"], `${path}.player`),
+    timing: expectString(input["timing"], `${path}.timing`),
+  };
 }
 
 function validatePair(input: unknown, path: string): [string, string] {
