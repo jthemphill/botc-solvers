@@ -71,7 +71,7 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
   const [trashDropActive, setTrashDropActive] = useState(false);
   const lastSeatTap = useRef<{ index: number; time: number }>({ index: -1, time: 0 });
   const quoteCards = claimQuoteCardsForDoc(doc);
-  const chartQuoteCards = players.length <= 10 ? firstQuoteCardsByPlayer(quoteCards) : [];
+  const chartQuoteCards = players.length <= 10 ? mergedQuoteCardsByPlayer(quoteCards) : [];
 
   useEffect(() => {
     if (selectedIndex >= players.length) onSelect(Math.max(0, players.length - 1));
@@ -513,13 +513,29 @@ function claimQuoteCardsForDoc(doc: PuzzleDoc): ClaimQuoteCard[] {
   });
 }
 
-function firstQuoteCardsByPlayer(cards: readonly ClaimQuoteCard[]): ClaimQuoteCard[] {
-  const seen = new Set<string>();
-  return cards.filter((card) => {
-    if (seen.has(card.player)) return false;
-    seen.add(card.player);
-    return true;
-  });
+function mergedQuoteCardsByPlayer(cards: readonly ClaimQuoteCard[]): ClaimQuoteCard[] {
+  const mergedCards: ClaimQuoteCard[] = [];
+  const cardIndexesByPlayer = new Map<string, number>();
+
+  for (const card of cards) {
+    const index = cardIndexesByPlayer.get(card.player);
+    if (index === undefined) {
+      cardIndexesByPlayer.set(card.player, mergedCards.length);
+      mergedCards.push(card);
+      continue;
+    }
+
+    const existing = mergedCards[index];
+    if (existing === undefined) continue;
+    const roleLabels = existing.roleLabel.split(", ");
+    mergedCards[index] = {
+      ...existing,
+      roleLabel: roleLabels.includes(card.roleLabel) ? existing.roleLabel : `${existing.roleLabel}, ${card.roleLabel}`,
+      summary: `${existing.summary}; ${card.summary}`,
+    };
+  }
+
+  return mergedCards;
 }
 
 function deathMarkerForPlayer(timeline: PuzzleDoc["timeline"], player: string): TimelineEventDoc | undefined {

@@ -14,7 +14,7 @@ export function claimSummary(claim: Claim): string {
     case "Chambermaid":
       return chambermaidSummary(claim);
     case "Empath":
-      return `${claim.player ? `${claim.player}: ` : ""}${claim.count} evil neighbor${claim.count === 1 ? "" : "s"}`;
+      return empathSummary(claim);
     case "Investigator": {
       const role = claim.role ?? claim.minionRole ?? "a Minion";
       const subject =
@@ -27,11 +27,8 @@ export function claimSummary(claim: Claim): string {
         : `${formatList(claim.among ?? [])} could be ${claim.role || "an Outsider"}`;
     case "Washerwoman":
       return `${formatList(claim.among)} could be ${claim.role || "a Townsfolk"}`;
-    case "FortuneTeller": {
-      const check = claim.checks[0];
-      if (check === undefined) return "I checked nobody yet";
-      return `${check.left} + ${check.right}: ${check.yes ? "yes" : "no"}`;
-    }
+    case "FortuneTeller":
+      return fortuneTellerSummary(claim);
     case "Undertaker":
       return `${claim.player || "Executed player"} was ${claim.role || "unknown"}`;
     case "Noble":
@@ -138,6 +135,27 @@ function chambermaidSummary(claim: Extract<Claim, { readonly type: "Chambermaid"
       return `${timing}: ${check.left} + ${check.right}, ${check.count} woke`;
     });
   return checks.length === 0 ? "No Chambermaid checks" : checks.join("; ");
+}
+
+function empathSummary(claim: Extract<Claim, { readonly type: "Empath" }>): string {
+  const timing = claim.timing === undefined ? "" : `${compactTimingLabel(claim.timing)}: `;
+  const count = claim.count === undefined ? "unknown" : String(claim.count);
+  const evil = `${count} evil`;
+  const neighbors = claim.neighbors?.filter(Boolean) ?? [];
+  if (neighbors.length === 2) return `${timing}${neighbors[0]} + ${neighbors[1]} -> ${evil}`;
+
+  const subject = claim.player ? `${claim.player}: ` : "";
+  return `${timing}${subject}${evil} neighbor${claim.count === 1 ? "" : "s"}`;
+}
+
+function fortuneTellerSummary(claim: Extract<Claim, { readonly type: "FortuneTeller" }>): string {
+  const checks = claim.checks
+    .filter((check) => check.left.trim() !== "" && check.right.trim() !== "")
+    .map((check, index) => {
+      const timing = check.timing === undefined ? defaultNightLabel(index) : compactTimingLabel(check.timing);
+      return `${timing}: ${check.left} + ${check.right} -> ${check.yes ? "yes" : "no"}`;
+    });
+  return checks.length === 0 ? "I checked nobody yet" : checks.join("; ");
 }
 
 function gamblerSummary(claim: Extract<Claim, { readonly type: "Gambler" }>): string {

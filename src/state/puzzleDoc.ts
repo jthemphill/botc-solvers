@@ -84,8 +84,12 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
         name,
         deadPlayers: claim.deadPlayers ? remapArr(claim.deadPlayers) : claim.deadPlayers,
       };
-    case "Empath":
-      return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
+    case "Empath": {
+      const renamed = { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
+      return claim.neighbors === undefined
+        ? renamed
+        : { ...renamed, neighbors: [remap(claim.neighbors[0]), remap(claim.neighbors[1])] };
+    }
     case "Undertaker":
       return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
     case "Dreamer":
@@ -148,7 +152,11 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
     case "Oracle":
       return { ...claim, deadPlayers: stripArr(claim.deadPlayers) };
     case "Empath":
-      return { ...claim, player: claim.player === name ? undefined : claim.player };
+      return {
+        ...claim,
+        player: claim.player === name ? undefined : claim.player,
+        neighbors: claim.neighbors?.includes(name) ? undefined : claim.neighbors,
+      };
     case "Steward":
       return claim.goodPlayer === name ? { ...claim, goodPlayer: undefined } : claim;
     case "Juggler": {
@@ -215,10 +223,20 @@ function normalizeClaim(claim: Claim): Claim {
   return claim;
 }
 
+function normalizeClaims(claim: Claim): Claim[] {
+  const normalized = normalizeClaim(claim);
+  if (normalized.type !== "FortuneTeller" || normalized.checks.length <= 1) return [normalized];
+
+  const { info: _info, ...claimWithoutInfo } = normalized;
+  return normalized.checks.map((check, index) =>
+    index === 0 ? { ...normalized, checks: [check] } : { ...claimWithoutInfo, checks: [check] },
+  );
+}
+
 export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc {
   switch (action.type) {
     case "load":
-      return withProtectedScript({ ...action.doc, claims: action.doc.claims.map(normalizeClaim) });
+      return withProtectedScript({ ...action.doc, claims: action.doc.claims.flatMap(normalizeClaims) });
     case "setTitle":
       return { ...state, title: action.title };
     case "setPlayerCount": {
@@ -319,9 +337,9 @@ export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc
     case "setForbiddenRoles":
       return withProtectedScript({ ...state, forbiddenRoles: action.forbiddenRoles });
     case "addClaim":
-      return withProtectedScript({ ...state, claims: [...state.claims, normalizeClaim(action.claim)] });
+      return withProtectedScript({ ...state, claims: [...state.claims, ...normalizeClaims(action.claim)] });
     case "updateClaim": {
-      const claims = state.claims.map((c, i) => (i === action.index ? normalizeClaim(action.claim) : c));
+      const claims = state.claims.flatMap((c, i) => (i === action.index ? normalizeClaims(action.claim) : [c]));
       return withProtectedScript({ ...state, claims });
     }
     case "removeClaim":

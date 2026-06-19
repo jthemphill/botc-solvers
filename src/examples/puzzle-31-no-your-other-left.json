@@ -73,7 +73,13 @@
           "right": "Tim",
           "yes": false,
           "timing": "night_1"
-        },
+        }
+      ]
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Olivia",
+      "checks": [
         {
           "left": "Aoife",
           "right": "Olivia",
@@ -91,19 +97,22 @@
       "type": "Empath",
       "name": "Aoife",
       "timing": "night_1",
-      "count": 0
+      "count": 0,
+      "neighbors": ["You", "Tim"]
     },
     {
       "type": "Empath",
       "name": "Aoife",
       "timing": "night_2",
-      "count": 1
+      "count": 1,
+      "neighbors": ["Adam", "Olivia"]
     },
     {
       "type": "Empath",
       "name": "Aoife",
       "timing": "night_3",
-      "count": 1
+      "count": 1,
+      "neighbors": ["Adam", "Fraser"]
     },
     {
       "type": "Ravenkeeper",

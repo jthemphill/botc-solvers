@@ -126,6 +126,20 @@ test("formats remaining structured claim summaries with their details", async ({
   await expect(studyClaims).toContainText("1 dead evil among Adam or You");
   await expect(studyClaims).toContainText("N1: Adam + Sarah, 1 woke");
 
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-31-no-your-other-left");
+  await expect(
+    page.getByRole("button", {
+      name: /N1: You \+ Tim -> 0 evil; N2: Adam \+ Olivia -> 1 evil; N3: Adam \+ Fraser -> 1 evil/,
+    }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: /N1: Aoife \+ Tim -> no; N2: Aoife \+ Olivia -> no/ })).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Workbench sections" })
+    .getByRole("button", { name: /Claims/ })
+    .click();
+  await expect(page.getByText("Olivia — 🔮 Fortune Teller")).toHaveCount(2);
+  await expect(page.getByText("+ Add check")).toHaveCount(0);
+
   await page.getByLabel("Load example puzzle").selectOption("puzzle-11-false-is-the-new-black");
   await expect(page.getByLabel("Player claim summaries")).toContainText("Chose Snake Charmer.");
 
