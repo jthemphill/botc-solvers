@@ -49,44 +49,32 @@
     {
       "type": "Snake Charmer",
       "name": "Tim",
-      "timing": "night_1",
-      "checked": "Matt",
-      "demon": false
+      "checks": [{ "player": "Matt", "demon": false, "timing": "night_1" }]
     },
     {
       "type": "Snake Charmer",
       "name": "Tim",
-      "timing": "night_2",
-      "checked": "Sula",
-      "demon": false
+      "checks": [{ "player": "Sula", "demon": false, "timing": "night_2" }]
     },
     {
       "type": "Snake Charmer",
       "name": "Tim",
-      "timing": "night_3",
-      "checked": "Hannah",
-      "demon": false
+      "checks": [{ "player": "Hannah", "demon": false, "timing": "night_3" }]
     },
     {
       "type": "Snake Charmer",
       "name": "Fraser",
-      "timing": "night_1",
-      "checked": "Sula",
-      "demon": false
+      "checks": [{ "player": "Sula", "demon": false, "timing": "night_1" }]
     },
     {
       "type": "Snake Charmer",
       "name": "Fraser",
-      "timing": "night_2",
-      "checked": "Hannah",
-      "demon": false
+      "checks": [{ "player": "Hannah", "demon": false, "timing": "night_2" }]
     },
     {
       "type": "Snake Charmer",
       "name": "Fraser",
-      "timing": "night_3",
-      "checked": "Adam",
-      "demon": false
+      "checks": [{ "player": "Adam", "demon": false, "timing": "night_3" }]
     },
     {
       "type": "FortuneTeller",

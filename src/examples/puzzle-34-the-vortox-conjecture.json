@@ -43,8 +43,7 @@
     {
       "type": "Snake Charmer",
       "name": "Aoife",
-      "checked": "Josh",
-      "demon": false
+      "checks": [{ "player": "Josh", "demon": false, "timing": "night_1" }]
     },
     {
       "type": "Mathematician",

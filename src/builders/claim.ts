@@ -164,7 +164,11 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
         })),
       });
     case "Philosopher":
-      return new Philosopher({ ...base, role: claim.role ? resolveRoleRef(claim.role) : undefined });
+      return new Philosopher({
+        ...base,
+        role: claim.role ? resolveRoleRef(claim.role) : undefined,
+        infoClaims: [...base.infoClaims, ...philosopherInfoClaims(claim)],
+      });
     case "Klutz":
       return new Klutz({ ...base, chosen: claim.chosen, lost: claim.lost });
     case "Seamstress":
@@ -205,7 +209,10 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
     case "Slayer":
       return new Slayer({ ...base, target: claim.target, killed: claim.killed, gameContinued: claim.gameContinued });
     case "Snake Charmer":
-      return new SnakeCharmer({ ...base, checked: claim.checked, demon: claim.demon });
+      return new SnakeCharmer({
+        ...base,
+        infoClaims: [...base.infoClaims, ...snakeCharmerInfoClaims(claim)],
+      });
     case "VillageIdiot":
       return new VillageIdiot({
         ...base,
@@ -257,6 +264,47 @@ function customInfoClaims(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Info
       },
     ];
   });
+}
+
+function philosopherInfoClaims(claim: Extract<Claim, { readonly type: "Philosopher" }>): InfoClaimBuilder[] {
+  const seamstress = claim.seamstress;
+  if (seamstress === undefined || seamstress.aligned === undefined) return [];
+  const [left, right] = seamstress.among;
+  if (left === undefined || right === undefined) return [];
+
+  return [
+    {
+      timing: timingOf(seamstress.timing ?? claim.timing),
+      role: resolveRoleRef("Seamstress"),
+      learned: (game) =>
+        seamstress.aligned
+          ? Seamstress.learnsSameAlignment(game, left, right)
+          : Seamstress.learnsDifferentAlignment(game, left, right),
+    },
+  ];
+}
+
+function snakeCharmerInfoClaims(claim: Extract<Claim, { readonly type: "Snake Charmer" }>): InfoClaimBuilder[] {
+  const checkClaims = claim.checks.map((check, index): InfoClaimBuilder => {
+    const nameRoot = `${slug(claim.name)}_snake_charmer_check_${index + 1}`;
+    return {
+      timing: timingOf(check.timing),
+      learned: (game) => {
+        const checkedIsDemon = game.isDemon(check.player);
+        return check.demon ? checkedIsDemon : game.not(checkedIsDemon, `${nameRoot}_not_demon`);
+      },
+    };
+  });
+
+  const evilTwin = claim.evilTwin;
+  if (evilTwin === undefined) return checkClaims;
+  return [
+    ...checkClaims,
+    {
+      timing: timingOf(evilTwin.timing),
+      learned: (game) => game.actualIs(evilTwin.player, "Evil Twin"),
+    },
+  ];
 }
 
 function slug(value: string): string {

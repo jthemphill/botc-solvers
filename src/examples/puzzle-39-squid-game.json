@@ -104,13 +104,11 @@
       "timing": "night_1",
       "role": "Seamstress",
       "extraPossibleActualRoles": ["Mutant"],
-      "info": [
-        {
-          "timing": "night_1",
-          "role": "Seamstress",
-          "expression": "Aoife.alignment != Tom.alignment"
-        }
-      ]
+      "seamstress": {
+        "timing": "night_1",
+        "among": ["Aoife", "Tom"],
+        "aligned": false
+      }
     },
     {
       "type": "Seamstress",

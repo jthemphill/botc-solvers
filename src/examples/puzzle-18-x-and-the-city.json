@@ -25,17 +25,14 @@
     {
       "type": "Balloonist",
       "name": "Aoife",
-      "differentCharacterTypePairs": [],
-      "info": [
-        {
-          "timing": "night_2",
-          "expression": "Olivia.type != Aoife.type"
-        },
-        {
-          "timing": "night_3",
-          "expression": "You.type != Aoife.type"
-        }
-      ]
+      "timing": "night_2",
+      "differentCharacterTypePairs": [["Olivia", "Aoife"]]
+    },
+    {
+      "type": "Balloonist",
+      "name": "Aoife",
+      "timing": "night_3",
+      "differentCharacterTypePairs": [["You", "Aoife"]]
     },
     {
       "type": "Saint",
@@ -71,20 +68,17 @@
     {
       "type": "Snake Charmer",
       "name": "Fraser",
-      "info": [
-        {
-          "timing": "night_1",
-          "expression": "Olivia.role != Leviathan"
-        },
-        {
-          "timing": "night_2",
-          "expression": "Steph.role != Leviathan"
-        },
-        {
-          "timing": "night_3",
-          "expression": "Aoife.role != Leviathan"
-        }
-      ]
+      "checks": [{ "player": "Olivia", "demon": false, "timing": "night_1" }]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Fraser",
+      "checks": [{ "player": "Steph", "demon": false, "timing": "night_2" }]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Fraser",
+      "checks": [{ "player": "Aoife", "demon": false, "timing": "night_3" }]
     },
     {
       "type": "FortuneTeller",

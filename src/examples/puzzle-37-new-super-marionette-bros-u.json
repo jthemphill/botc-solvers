@@ -128,11 +128,8 @@
       "type": "Ravenkeeper",
       "name": "Adam",
       "timing": "night_2",
-      "info": [
-        {
-          "expression": "Fraser.role == Empath"
-        }
-      ]
+      "player": "Fraser",
+      "role": "Empath"
     }
   ]
 }

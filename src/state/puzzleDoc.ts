@@ -84,6 +84,13 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
         name,
         deadPlayers: claim.deadPlayers ? remapArr(claim.deadPlayers) : claim.deadPlayers,
       };
+    case "Philosopher":
+      return {
+        ...claim,
+        name,
+        seamstress:
+          claim.seamstress === undefined ? undefined : { ...claim.seamstress, among: remapArr(claim.seamstress.among) },
+      };
     case "Empath": {
       const renamed = { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
       return claim.neighbors === undefined
@@ -99,7 +106,13 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
     case "Slayer":
       return { ...claim, name, target: claim.target ? remap(claim.target) : claim.target };
     case "Snake Charmer":
-      return { ...claim, name, checked: claim.checked ? remap(claim.checked) : claim.checked };
+      return {
+        ...claim,
+        name,
+        checks: claim.checks.map((c) => ({ ...c, player: remap(c.player) })),
+        evilTwin:
+          claim.evilTwin === undefined ? undefined : { ...claim.evilTwin, player: remap(claim.evilTwin.player) },
+      };
     case "Steward":
       return { ...claim, name, goodPlayer: claim.goodPlayer ? remap(claim.goodPlayer) : claim.goodPlayer };
     case "Seamstress":
@@ -157,6 +170,8 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
         player: claim.player === name ? undefined : claim.player,
         neighbors: claim.neighbors?.includes(name) ? undefined : claim.neighbors,
       };
+    case "Philosopher":
+      return claim.seamstress?.among.includes(name) ? { ...claim, seamstress: undefined } : claim;
     case "Steward":
       return claim.goodPlayer === name ? { ...claim, goodPlayer: undefined } : claim;
     case "Juggler": {
@@ -178,7 +193,11 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
     case "Slayer":
       return claim.target === name ? { ...claim, target: undefined } : claim;
     case "Snake Charmer":
-      return claim.checked === name ? { ...claim, checked: undefined } : claim;
+      return {
+        ...claim,
+        checks: claim.checks.filter((c) => c.player !== name),
+        evilTwin: claim.evilTwin?.player === name ? undefined : claim.evilTwin,
+      };
     case "Balloonist":
       return {
         ...claim,
@@ -225,12 +244,19 @@ function normalizeClaim(claim: Claim): Claim {
 
 function normalizeClaims(claim: Claim): Claim[] {
   const normalized = normalizeClaim(claim);
-  if (normalized.type !== "FortuneTeller" || normalized.checks.length <= 1) return [normalized];
-
-  const { info: _info, ...claimWithoutInfo } = normalized;
-  return normalized.checks.map((check, index) =>
-    index === 0 ? { ...normalized, checks: [check] } : { ...claimWithoutInfo, checks: [check] },
-  );
+  if (normalized.type === "FortuneTeller" && normalized.checks.length > 1) {
+    const { info: _info, ...claimWithoutInfo } = normalized;
+    return normalized.checks.map((check, index) =>
+      index === 0 ? { ...normalized, checks: [check] } : { ...claimWithoutInfo, checks: [check] },
+    );
+  }
+  if (normalized.type === "Snake Charmer" && normalized.checks.length > 1) {
+    const { info: _info, evilTwin: _evilTwin, ...claimWithoutSharedInfo } = normalized;
+    return normalized.checks.map((check, index) =>
+      index === 0 ? { ...normalized, checks: [check] } : { ...claimWithoutSharedInfo, checks: [check] },
+    );
+  }
+  return [normalized];
 }
 
 export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc {

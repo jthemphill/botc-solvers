@@ -40,11 +40,8 @@
       "type": "Ravenkeeper",
       "name": "Oscar",
       "timing": "night_2",
-      "info": [
-        {
-          "expression": "Sula.role == Imp"
-        }
-      ]
+      "player": "Sula",
+      "role": "Imp"
     },
     {
       "type": "Saint",

@@ -20,6 +20,7 @@ import type {
   LibrarianClaim,
   MathematicianClaim,
   NobleClaim,
+  PhilosopherClaim,
   PuzzleDoc,
   SageClaim,
   SavantClaim,
@@ -119,6 +120,8 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
       return { type: "Undertaker", name, player: "", role: "" };
     case "Noble":
       return { type: "Noble", name, oneEvilAmong: [] };
+    case "Philosopher":
+      return { type: "Philosopher", name, timing: "night_1", role: "" };
     case "Steward":
       return { type: "Steward", name, goodPlayer: "" };
     case "Knight":
@@ -142,7 +145,7 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
     case "Slayer":
       return { type: "Slayer", name, timing: "day_1", killed: false };
     case "Snake Charmer":
-      return { type: "Snake Charmer", name, checked: "", demon: false };
+      return { type: "Snake Charmer", name, checks: [{ player: "", demon: false, timing: "night_1" }] };
     case "VillageIdiot":
       return { type: "VillageIdiot", name, checks: [] };
     case "Balloonist":
@@ -287,6 +290,8 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         return <UndertakerBody doc={doc} claim={claim} onChange={onChange} />;
       case "Noble":
         return <NobleBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Philosopher":
+        return <PhilosopherBody doc={doc} claim={claim} onChange={onChange} />;
       case "Steward":
         return <StewardBody doc={doc} claim={claim} onChange={onChange} />;
       case "Knight":
@@ -330,7 +335,7 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
   return (
     <>
       {body}
-      <CustomInfoEditor claim={claim} onChange={onChange} />
+      {claim.type === "Artist" && <CustomInfoEditor claim={claim} onChange={onChange} />}
     </>
   );
 }
@@ -618,6 +623,64 @@ function NobleBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: NobleClaim
         value={claim.oneEvilAmong ?? []}
         onChange={(v) => onChange({ ...claim, oneEvilAmong: v })}
       />
+    </div>
+  );
+}
+
+function PhilosopherBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: PhilosopherClaim;
+  onChange: (c: Claim) => void;
+}) {
+  const seamstress = claim.seamstress ?? { among: [doc.players[0] ?? "", doc.players[1] ?? ""], aligned: true };
+  const setRole = (role: string) => {
+    onChange({
+      ...claim,
+      role: role || undefined,
+      seamstress: role === "Seamstress" ? seamstress : undefined,
+    });
+  };
+  const setSeamstress = (next: NonNullable<PhilosopherClaim["seamstress"]>) => {
+    onChange({ ...claim, seamstress: next });
+  };
+
+  return (
+    <div className="field-grid">
+      <span>Chosen role</span>
+      <RoleSelect script={doc.script} value={claim.role} onChange={setRole} allowEmpty />
+      <span>Choice timing</span>
+      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
+      {claim.role === "Seamstress" && (
+        <>
+          <span>Seamstress left</span>
+          <PlayerSelect
+            players={doc.players}
+            value={seamstress.among[0]}
+            onChange={(left) => setSeamstress({ ...seamstress, among: [left, seamstress.among[1] ?? ""] })}
+          />
+          <span>Seamstress right</span>
+          <PlayerSelect
+            players={doc.players}
+            value={seamstress.among[1]}
+            onChange={(right) => setSeamstress({ ...seamstress, among: [seamstress.among[0] ?? "", right] })}
+          />
+          <span>Aligned</span>
+          <input
+            type="checkbox"
+            checked={seamstress.aligned ?? false}
+            onChange={(event) => setSeamstress({ ...seamstress, aligned: event.target.checked })}
+          />
+          <span>Info timing</span>
+          <TimingField
+            value={seamstress.timing ?? claim.timing}
+            onChange={(timing) => setSeamstress({ ...seamstress, timing })}
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -939,27 +1002,42 @@ function SnakeCharmerBody({
   claim: SnakeCharmerClaim;
   onChange: (c: Claim) => void;
 }) {
+  const check = claim.checks[0] ?? { player: "", demon: false, timing: "night_1" };
+  const setCheck = (next: (typeof claim.checks)[number]) => onChange({ ...claim, checks: [next] });
+  const setEvilTwin = (player: string) => {
+    onChange({
+      ...claim,
+      evilTwin: player === "" ? undefined : { player, timing: claim.evilTwin?.timing ?? check.timing },
+    });
+  };
+  const setEvilTwinTiming = (timing: string | undefined) => {
+    const evilTwin = claim.evilTwin;
+    if (evilTwin === undefined) return;
+    onChange({ ...claim, evilTwin: { ...evilTwin, timing: timing ?? check.timing } });
+  };
+
   return (
     <div className="field-grid">
       <span>Checked player</span>
-      <PlayerSelect
-        players={doc.players}
-        value={claim.checked}
-        onChange={(checked) => onChange({ ...claim, checked })}
-      />
+      <PlayerSelect players={doc.players} value={check.player} onChange={(player) => setCheck({ ...check, player })} />
       <span>Is Demon</span>
       <select
-        value={claim.demon === undefined ? "" : claim.demon ? "yes" : "no"}
-        onChange={(event) =>
-          onChange({ ...claim, demon: event.target.value === "" ? undefined : event.target.value === "yes" })
-        }
+        value={check.demon ? "yes" : "no"}
+        onChange={(event) => setCheck({ ...check, demon: event.target.value === "yes" })}
       >
-        <option value="">-</option>
         <option value="yes">yes</option>
         <option value="no">no</option>
       </select>
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
+      <TimingField value={check.timing} onChange={(timing) => setCheck({ ...check, timing: timing ?? "night_1" })} />
+      <span>Evil Twin</span>
+      <PlayerSelect players={doc.players} value={claim.evilTwin?.player} onChange={setEvilTwin} />
+      {claim.evilTwin !== undefined && (
+        <>
+          <span>Evil Twin timing</span>
+          <TimingField value={claim.evilTwin.timing} onChange={setEvilTwinTiming} />
+        </>
+      )}
     </div>
   );
 }
