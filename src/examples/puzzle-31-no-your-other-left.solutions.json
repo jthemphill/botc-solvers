@@ -1,0 +1,15 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Imp",
+        "Aoife": "Empath",
+        "Fraser": "Recluse",
+        "Olivia": "Fortune Teller",
+        "Sarah": "Baron",
+        "Tim": "Drunk",
+        "You": "Chef"
+      }
+    }
+  ]
+}

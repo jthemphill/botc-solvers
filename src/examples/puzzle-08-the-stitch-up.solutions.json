@@ -1,0 +1,32 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Seamstress",
+        "Fraser": "Seamstress",
+        "Josh": "Imp",
+        "Matthew": "Seamstress",
+        "Steph": "Poisoner",
+        "Tim": "Seamstress",
+        "You": "Seamstress"
+      },
+      "poisoned": {
+        "night_1": ["You"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Seamstress",
+        "Fraser": "Seamstress",
+        "Josh": "Poisoner",
+        "Matthew": "Seamstress",
+        "Steph": "Imp",
+        "Tim": "Seamstress",
+        "You": "Seamstress"
+      },
+      "poisoned": {
+        "night_1": ["You"]
+      }
+    }
+  ]
+}

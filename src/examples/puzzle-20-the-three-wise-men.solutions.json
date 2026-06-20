@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Balthazar": "Imp",
+        "Caspar": "Village Idiot",
+        "Gabriel": "Drunk",
+        "Joseph": "Saint",
+        "Mary": "Baron",
+        "Melchior": "Village Idiot",
+        "You": "Investigator"
+      },
+      "drunk": ["Caspar"]
+    }
+  ]
+}

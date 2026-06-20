@@ -1,0 +1,21 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Drunk",
+        "Aoife": "Fortune Teller",
+        "Fraser": "Imp",
+        "Jasmine": "Poisoner",
+        "Matt": "Washerwoman",
+        "Steph": "Chef",
+        "Sula": "Librarian",
+        "You": "Undertaker"
+      },
+      "poisoned": {
+        "night_1": ["Sula"],
+        "night_2": ["You"],
+        "night_3": ["You"]
+      }
+    }
+  ]
+}

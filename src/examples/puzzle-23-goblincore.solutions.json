@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Goblin",
+        "Fraser": "Lunatic",
+        "Hannah": "Washerwoman",
+        "Matt": "Investigator",
+        "Sula": "Imp",
+        "Tim": "Fortune Teller",
+        "Tom": "Librarian",
+        "You": "Chef"
+      }
+    }
+  ]
+}

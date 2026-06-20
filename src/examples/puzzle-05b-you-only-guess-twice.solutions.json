@@ -1,0 +1,48 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Leviathan",
+        "Fraser": "Knight",
+        "Matthew": "Steward",
+        "Sarah": "Empath",
+        "Steph": "Goblin",
+        "Tim": "Seamstress",
+        "You": "Juggler"
+      }
+    },
+    {
+      "roles": {
+        "Aoife": "Leviathan",
+        "Fraser": "Knight",
+        "Matthew": "Steward",
+        "Sarah": "Goblin",
+        "Steph": "Investigator",
+        "Tim": "Seamstress",
+        "You": "Juggler"
+      }
+    },
+    {
+      "roles": {
+        "Aoife": "Noble",
+        "Fraser": "Knight",
+        "Matthew": "Leviathan",
+        "Sarah": "Empath",
+        "Steph": "Goblin",
+        "Tim": "Seamstress",
+        "You": "Juggler"
+      }
+    },
+    {
+      "roles": {
+        "Aoife": "Noble",
+        "Fraser": "Knight",
+        "Matthew": "Steward",
+        "Sarah": "Leviathan",
+        "Steph": "Goblin",
+        "Tim": "Seamstress",
+        "You": "Juggler"
+      }
+    }
+  ]
+}

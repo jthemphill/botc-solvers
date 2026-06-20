@@ -1,0 +1,15 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Recluse",
+        "Fraser": "Imp",
+        "Jasmine": "Clockmaker",
+        "Oscar": "Baron",
+        "Sarah": "Fortune Teller",
+        "Tim": "Drunk",
+        "You": "Investigator"
+      }
+    }
+  ]
+}

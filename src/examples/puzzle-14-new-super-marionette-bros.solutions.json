@@ -1,0 +1,19 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Brett": "Fortune Teller",
+        "Danielle": "Washerwoman",
+        "Gwilym": "Undertaker",
+        "Lav": "Imp",
+        "Lydia": "Poisoner",
+        "Rob": "Empath",
+        "You": "Slayer"
+      },
+      "poisoned": {
+        "night_1": ["Rob"],
+        "night_2": ["Rob"]
+      }
+    }
+  ]
+}

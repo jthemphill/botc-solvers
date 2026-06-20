@@ -1,0 +1,140 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Dan": "Slayer",
+        "Fraser": "Chef",
+        "Josh": "Soldier",
+        "Matthew": "Poisoner",
+        "Olivia": "Saint",
+        "Sula": "Undertaker",
+        "Tom": "Imp",
+        "You": "Empath"
+      },
+      "poisoned": {
+        "night_1": ["Fraser"],
+        "night_2": ["Josh"],
+        "night_3": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Dan": "Slayer",
+        "Fraser": "Chef",
+        "Josh": "Soldier",
+        "Matthew": "Poisoner",
+        "Olivia": "Saint",
+        "Sula": "Undertaker",
+        "Tom": "Imp",
+        "You": "Empath"
+      },
+      "poisoned": {
+        "night_1": ["Fraser"],
+        "night_2": ["Josh"],
+        "night_3": ["Fraser"]
+      }
+    },
+    {
+      "roles": {
+        "Dan": "Slayer",
+        "Fraser": "Chef",
+        "Josh": "Soldier",
+        "Matthew": "Poisoner",
+        "Olivia": "Saint",
+        "Sula": "Undertaker",
+        "Tom": "Imp",
+        "You": "Empath"
+      },
+      "poisoned": {
+        "night_1": ["Fraser"],
+        "night_2": ["Josh"],
+        "night_3": ["Josh"]
+      }
+    },
+    {
+      "roles": {
+        "Dan": "Slayer",
+        "Fraser": "Chef",
+        "Josh": "Soldier",
+        "Matthew": "Poisoner",
+        "Olivia": "Saint",
+        "Sula": "Undertaker",
+        "Tom": "Imp",
+        "You": "Empath"
+      },
+      "poisoned": {
+        "night_1": ["Fraser"],
+        "night_2": ["Josh"],
+        "night_3": ["Matthew"]
+      }
+    },
+    {
+      "roles": {
+        "Dan": "Slayer",
+        "Fraser": "Chef",
+        "Josh": "Soldier",
+        "Matthew": "Poisoner",
+        "Olivia": "Saint",
+        "Sula": "Undertaker",
+        "Tom": "Imp",
+        "You": "Empath"
+      },
+      "poisoned": {
+        "night_1": ["Fraser"],
+        "night_2": ["Josh"],
+        "night_3": ["Olivia"]
+      }
+    },
+    {
+      "roles": {
+        "Dan": "Slayer",
+        "Fraser": "Chef",
+        "Josh": "Soldier",
+        "Matthew": "Poisoner",
+        "Olivia": "Saint",
+        "Sula": "Undertaker",
+        "Tom": "Imp",
+        "You": "Empath"
+      },
+      "poisoned": {
+        "night_1": ["Fraser"],
+        "night_2": ["Josh"],
+        "night_3": ["Sula"]
+      }
+    },
+    {
+      "roles": {
+        "Dan": "Slayer",
+        "Fraser": "Chef",
+        "Josh": "Soldier",
+        "Matthew": "Poisoner",
+        "Olivia": "Saint",
+        "Sula": "Undertaker",
+        "Tom": "Imp",
+        "You": "Empath"
+      },
+      "poisoned": {
+        "night_1": ["Fraser"],
+        "night_2": ["Josh"],
+        "night_3": ["Tom"]
+      }
+    },
+    {
+      "roles": {
+        "Dan": "Slayer",
+        "Fraser": "Chef",
+        "Josh": "Soldier",
+        "Matthew": "Poisoner",
+        "Olivia": "Saint",
+        "Sula": "Undertaker",
+        "Tom": "Imp",
+        "You": "Empath"
+      },
+      "poisoned": {
+        "night_1": ["Fraser"],
+        "night_2": ["Josh"],
+        "night_3": ["You"]
+      }
+    }
+  ]
+}

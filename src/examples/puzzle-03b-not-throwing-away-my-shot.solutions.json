@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Recluse",
+        "Dan": "Chef",
+        "Fraser": "Empath",
+        "Hannah": "Spy",
+        "Matt": "Washerwoman",
+        "Sarah": "Imp",
+        "Tim": "Librarian",
+        "You": "Slayer"
+      }
+    }
+  ]
+}

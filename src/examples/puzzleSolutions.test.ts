@@ -1,526 +1,48 @@
 import { beforeAll, describe, expect, test } from "bun:test";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { buildFromDoc } from "../builders/buildFromDoc";
-import { CharacterType, roleCharacterType } from "../model/core";
 import type { Timing, World } from "../model/model";
-import { roleByName } from "../model/roleRegistry";
 import { KissatBackend, type SatBackend } from "../model/sat";
-import type { PuzzleDoc } from "../schema/puzzleDoc";
 import { validatePuzzleDoc } from "../schema/validate";
 import { PUZZLE_EXAMPLES } from "./puzzleCatalog";
 
-const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
-  "puzzle-01-sober-savant": 1,
-  "puzzle-02-come-fly-with-me": 1,
-  "puzzle-03a-not-throwing-away-my-shot": 1,
-  "puzzle-03b-not-throwing-away-my-shot": 1,
-  "puzzle-04-the-many-headed-monster": 16,
-  "puzzle-05a-you-only-guess-twice": 2,
-  "puzzle-05b-you-only-guess-twice": 4,
-  "puzzle-06-super-marionette-bros": 1,
-  "puzzle-07-the-savant-strikes-back": 1,
-  "puzzle-08-the-stitch-up": 2,
-  "puzzle-09-the-new-acrobat": 1,
-  "puzzle-10-dont-overcook-it": 1,
-  "puzzle-11-false-is-the-new-black": 2,
-  "puzzle-12a-thunderstruck": 1,
-  "puzzle-12b-thunderstruck": 1,
-  "puzzle-13-clockblocking": 1,
-  "puzzle-14-new-super-marionette-bros": 1,
-  "puzzle-15-wake-up-and-choose-violets": 1,
-  "puzzle-16-who-watches-the-watchmen": 1,
-  "puzzle-17-the-missing-piece": 4,
-  "puzzle-18-x-and-the-city": 1,
-  "puzzle-19-he-could-be-you-he-could-be-me": 2,
-  "puzzle-20-the-three-wise-men": 1,
-  "puzzle-21-eight-jugglers-juggling": 1,
-  "puzzle-22-one-in-the-chamber": 1,
-  "puzzle-23-goblincore": 1,
-  "puzzle-24-the-ultimate-blunder": 5,
-  "puzzle-26-a-major-problem": 8,
-  "puzzle-27-is-this-a-legion-game": 1,
-  "puzzle-28-a-study-in-scarlet": 1,
-  "puzzle-29-a-dreamer-im-not-the-only-one": 1,
-  "puzzle-30-the-babel-fish-is-a-dead-giveaway-left": 1,
-  "puzzle-30-the-babel-fish-is-a-dead-giveaway-right": 1,
-  "puzzle-31-no-your-other-left": 1,
-  "puzzle-32-prepare-for-juggle-and-make-it-double": 1,
-  "puzzle-33-twice-is-coincidence-thrice-is-proof": 1,
-  "puzzle-34-the-vortox-conjecture": 1,
-  "puzzle-35-typhon-season": 1,
-  "puzzle-36-what-is-your-weapon-of-choice": 1,
-  "puzzle-37-new-super-marionette-bros-u": 1,
-  "puzzle-38-snakes-on-a-plane": 1,
-  "puzzle-39-squid-game": 1,
-  "puzzle-40-nine-lives": 2,
-};
+const SOLUTION_FILE_SUFFIX = ".solutions.json";
+const EXAMPLES_DIR = fileURLToPath(new URL(".", import.meta.url));
 
-interface PoisonLock {
-  readonly player: string;
-  readonly timing: Timing;
-}
-
-interface PublishedWorldLock {
-  readonly roles?: Readonly<Record<string, string>>;
-  readonly roleIn?: Readonly<Record<string, readonly string[]>>;
-  readonly characterTypes?: Readonly<Record<string, CharacterType>>;
-  readonly poisoned?: readonly PoisonLock[];
+interface SerializedWorld {
+  readonly roles: Readonly<Record<string, string>>;
+  readonly poisoned?: Readonly<Record<Timing, readonly string[]>>;
   readonly drunk?: readonly string[];
+  readonly drunkByTiming?: Readonly<Record<Timing, readonly string[]>>;
 }
 
-interface PublishedSolutionLock {
+interface PuzzleSolutionsFile {
+  readonly solutions: readonly SerializedWorld[];
+}
+
+interface PuzzleSolutions extends PuzzleSolutionsFile {
   readonly id: string;
-  readonly source: string;
-  readonly worlds: readonly PublishedWorldLock[];
-  readonly coversAllWorlds?: boolean;
-}
-
-interface PublishedSolutionGap {
-  readonly source: string;
-  readonly reason: string;
+  readonly fileName: string;
 }
 
 interface PuzzleSolutionCase {
   readonly id: string;
   readonly data: unknown;
-  readonly expectedCount: number;
+  readonly solutions: readonly SerializedWorld[];
 }
 
-const SOLUTION_COUNT_TIMEOUT_MS = 120_000;
-const PUBLISHED_WORLD_TIMEOUT_MS = 60_000;
+const SOLUTION_TIMEOUT_MS = 120_000;
 
-const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
-  {
-    id: "puzzle-01-sober-savant",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1erb5e2/can_the_sober_savant_solve_the_puzzle/",
-    worlds: [{ roles: { Anna: "Imp", Tim: "Scarlet Woman", Oscar: "Drunk" } }],
-  },
-  {
-    id: "puzzle-02-come-fly-with-me",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1ewxu0r/weekly_puzzle_2_come_fly_with_me/",
-    worlds: [{ roles: { Matthew: "Leviathan", Sarah: "Goblin", You: "Drunk" } }],
-  },
-  {
-    id: "puzzle-03a-not-throwing-away-my-shot",
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1f2jht3/weekly_puzzle_3a_3b_not_throwing_away_my_shot/",
-    coversAllWorlds: true,
-    worlds: [{ roles: { Matthew: "Imp", Aoife: "Baron", Oscar: "Drunk" } }],
-  },
-  {
-    id: "puzzle-03b-not-throwing-away-my-shot",
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1f2jht3/weekly_puzzle_3a_3b_not_throwing_away_my_shot/",
-    coversAllWorlds: true,
-    worlds: [{ roles: { Sarah: "Imp", Hannah: "Spy" } }],
-  },
-  {
-    id: "puzzle-04-the-many-headed-monster",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1f823s4/weekly_puzzle_4_the_manyheaded_monster/",
-    coversAllWorlds: true,
-    worlds: [
-      {
-        roles: { Fraser: "Lord of Typhon", Anna: "Drunk" },
-        characterTypes: { Dan: CharacterType.Minion, Sarah: CharacterType.Minion },
-        poisoned: [
-          { player: "You", timing: "night_1" },
-          { player: "Matt", timing: "night_2" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "puzzle-05a-you-only-guess-twice",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1fcriex/weekly_puzzle_5a_5b_you_only_guess_twice/",
-    coversAllWorlds: true,
-    worlds: [{ roles: { Oscar: "Leviathan", Anna: "Goblin" } }, { roles: { Hannah: "Leviathan", Oscar: "Goblin" } }],
-  },
-  {
-    id: "puzzle-05b-you-only-guess-twice",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1fcriex/weekly_puzzle_5a_5b_you_only_guess_twice/",
-    coversAllWorlds: true,
-    worlds: [
-      { roles: { Aoife: "Leviathan", Sarah: "Goblin" } },
-      { roles: { Aoife: "Leviathan", Steph: "Goblin" } },
-      { roles: { Matthew: "Leviathan", Steph: "Goblin" } },
-      { roles: { Sarah: "Leviathan", Steph: "Goblin" } },
-    ],
-  },
-  {
-    id: "puzzle-06-super-marionette-bros",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1fj1h0c/weekly_puzzle_6_super_marionette_bros/",
-    worlds: [{ roles: { Matthew: "Vortox", You: "Marionette", Steph: "Drunk" } }],
-  },
-  {
-    id: "puzzle-07-the-savant-strikes-back",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1foeq4d/weekly_puzzle_7_the_savant_strikes_back/",
-    coversAllWorlds: true,
-    worlds: [
-      {
-        roles: {
-          Anna: "Leviathan",
-          Aoife: "Shugenja",
-          Steph: "Mutant",
-          Tim: "Village Idiot",
-          Fraser: "Village Idiot",
-          Sarah: "Fortune Teller",
-          Oscar: "Goblin",
-        },
-        drunk: ["Tim"],
-      },
-    ],
-  },
-  {
-    id: "puzzle-12a-thunderstruck",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1gexyoq/weekly_puzzle_12a_12b_thunderstruck/",
-    coversAllWorlds: true,
-    worlds: [{ roles: { Sarah: "Spy", Jasmine: "Vortox", Fraser: "Lunatic" } }],
-  },
-  {
-    id: "puzzle-12b-thunderstruck",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1gexyoq/weekly_puzzle_12a_12b_thunderstruck/",
-    coversAllWorlds: true,
-    worlds: [{ roles: { Steph: "Scarlet Woman", Oscar: "Vortox", Anna: "Lunatic" } }],
-  },
-  {
-    id: "puzzle-08-the-stitch-up",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1ftqc28/weekly_puzzle_8_the_stitchup/",
-    coversAllWorlds: true,
-    worlds: [
-      {
-        roleIn: { Josh: ["Imp", "Poisoner"], Steph: ["Imp", "Poisoner"] },
-        poisoned: [{ player: "You", timing: "night_1" }],
-      },
-    ],
-  },
-  {
-    id: "puzzle-09-the-new-acrobat",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1fz4jqe/weekly_puzzle_9_the_new_acrobat/",
-    coversAllWorlds: true,
-    worlds: [{ roles: { Anna: "Imp", Hannah: "Goblin", Josh: "Drunk" } }],
-  },
-  {
-    id: "puzzle-10-dont-overcook-it",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1g49r8j/weekly_puzzle_10_dont_overcook_it/",
-    worlds: [
-      {
-        roles: { Dan: "Imp", Fraser: "Poisoner" },
-        poisoned: [
-          { player: "Josh", timing: "night_1" },
-          { player: "Matthew", timing: "night_2" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "puzzle-11-false-is-the-new-black",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1g9k8ny/weekly_puzzle_11_false_is_the_new_black/",
-    coversAllWorlds: true,
-    worlds: [{ roles: { Aoife: "Vortox" }, roleIn: { Sarah: ["Cerenovus", "Pit-Hag"] } }],
-  },
-  {
-    id: "puzzle-13-clockblocking",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1gka3js/weekly_puzzle_13_clockblocking/",
-    worlds: [{ roles: { Fraser: "Imp", Oscar: "Baron", Tim: "Drunk" } }],
-  },
-  {
-    id: "puzzle-14-new-super-marionette-bros",
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1gpo1xo/weekly_puzzle_14_new_super_marionette_bros/",
-    worlds: [
-      {
-        roles: { Lav: "Imp", Lydia: "Poisoner" },
-        poisoned: [
-          { player: "Rob", timing: "night_1" },
-          { player: "Rob", timing: "night_2" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "puzzle-15-wake-up-and-choose-violets",
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1gv12ck/weekly_puzzle_15_wake_up_and_choose_violets/",
-    coversAllWorlds: true,
-    worlds: [{ roles: { Adam: "Vortox", Jasmine: "Evil Twin" } }],
-  },
-  {
-    id: "puzzle-16-who-watches-the-watchmen",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1h0f8se/weekly_puzzle_16_who_watches_the_watchmen/",
-    worlds: [
-      {
-        roles: { Oscar: "Imp", Fraser: "Poisoner" },
-        poisoned: [
-          { player: "Sarah", timing: "night_1" },
-          { player: "Olivia", timing: "night_2" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "puzzle-17-the-missing-piece",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1h5sgc7/weekly_puzzle_17_the_missing_piece/",
-    coversAllWorlds: true,
-    worlds: [{ drunk: ["Steph"] }],
-  },
-  {
-    id: "puzzle-18-x-and-the-city",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1hb72qg/weekly_puzzle_18_starring_the_xaan/",
-    worlds: [
-      {
-        roles: {
-          Aoife: "Balloonist",
-          Tim: "Saint",
-          Olivia: "Xaan",
-          Sarah: "Recluse",
-          You: "Drunk",
-          Steph: "Juggler",
-          Fraser: "Leviathan",
-          Dan: "Fortune Teller",
-        },
-        poisoned: [
-          { player: "Aoife", timing: "night_3" },
-          { player: "Steph", timing: "night_3" },
-          { player: "Dan", timing: "night_3" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "puzzle-19-he-could-be-you-he-could-be-me",
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1hgdsmp/weekly_puzzle_19_he_could_be_you_he_could_be_me/",
-    worlds: [{ roles: { Olivia: "Imp", Fraser: "Spy" } }],
-  },
-  {
-    id: "puzzle-20-the-three-wise-men",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1hlgh1w/weekly_puzzle_20_the_three_wise_men/",
-    worlds: [
-      {
-        roles: {
-          Melchior: "Village Idiot",
-          Mary: "Baron",
-          Balthazar: "Imp",
-          Gabriel: "Drunk",
-        },
-        drunk: ["Caspar"],
-      },
-    ],
-  },
-  {
-    id: "puzzle-21-eight-jugglers-juggling",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1hpqhai/weekly_puzzle_21_eight_jugglers_juggling/",
-    worlds: [{ roles: { Oscar: "Leviathan", Tim: "Goblin", Aoife: "Drunk" } }],
-  },
-  {
-    id: "puzzle-22-one-in-the-chamber",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1hvum3b/weekly_puzzle_22_one_in_the_chamber/",
-    coversAllWorlds: true,
-    worlds: [{ roles: { Sarah: "Imp", Steph: "Baron", You: "Drunk" } }],
-  },
-  {
-    id: "puzzle-23-goblincore",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1i199yv/weekly_puzzle_23_goblincore/",
-    coversAllWorlds: true,
-    worlds: [{ roles: { Sula: "Imp", Aoife: "Goblin", Fraser: "Lunatic" } }],
-  },
-  {
-    id: "puzzle-24-the-ultimate-blunder",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1i6m0ww/weekly_puzzle_24_the_ultimate_blunder/",
-    worlds: [{ roles: { Adam: "Imp", Josh: "Poisoner" } }],
-  },
-  {
-    id: "puzzle-26-a-major-problem",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1ihl8vs/weekly_puzzle_26_a_major_problem/",
-    coversAllWorlds: true,
-    worlds: [
-      {
-        roles: { Tom: "Imp", Matthew: "Poisoner" },
-        poisoned: [
-          { player: "Fraser", timing: "night_1" },
-          { player: "Josh", timing: "night_2" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "puzzle-27-is-this-a-legion-game",
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1in214z/weekly_puzzle_27_starring_the_legionary_from_fall/",
-    worlds: [
-      {
-        roles: { Adam: "Imp", Fraser: "Poisoner" },
-        poisoned: [
-          { player: "Sarah", timing: "night_1" },
-          { player: "Sarah", timing: "night_2" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "puzzle-28-a-study-in-scarlet",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1iu1vxo/weekly_puzzle_28_a_study_in_scarlet/",
-    worlds: [{ roles: { Olivia: "No Dashii", Fraser: "Scarlet Woman", Matt: "Drunk" } }],
-  },
-  {
-    id: "puzzle-29-a-dreamer-im-not-the-only-one",
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1ixykmz/weekly_puzzle_29_a_dreamer_im_not_the_only_one/",
-    worlds: [
-      {
-        roles: { Adam: "Imp", Jasmine: "Poisoner", Hannah: "Drunk" },
-        poisoned: [{ player: "Steph", timing: "night_1" }],
-      },
-    ],
-  },
-  {
-    id: "puzzle-30-the-babel-fish-is-a-dead-giveaway-left",
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1j46gtl/weekly_puzzle_30_which_is_the_atheist_game/",
-    worlds: [
-      {
-        roles: {
-          Sarah: "Seamstress",
-          Max: "Artist",
-          Erika: "Noble",
-          Lav: "Clockmaker",
-          Oli: "Atheist",
-          Callum: "Knight",
-        },
-      },
-    ],
-  },
-  {
-    id: "puzzle-30-the-babel-fish-is-a-dead-giveaway-right",
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1j46gtl/weekly_puzzle_30_which_is_the_atheist_game/",
-    worlds: [{ roles: { Owen: "Imp", Louisa: "Spy", Finn: "Drunk" } }],
-  },
-  {
-    id: "puzzle-31-no-your-other-left",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1j8ub5q/weekly_puzzle_31_no_your_other_left/",
-    worlds: [{ roles: { Adam: "Imp", Sarah: "Baron", Tim: "Drunk" } }],
-  },
-  {
-    id: "puzzle-32-prepare-for-juggle-and-make-it-double",
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1je8z17/weekly_puzzle_32_prepare_for_juggle_and_make_it/",
-    coversAllWorlds: true,
-    worlds: [
-      {
-        roles: { Olivia: "Imp", Matthew: "Poisoner", Fraser: "Saint" },
-        poisoned: [
-          { player: "You", timing: "night_1" },
-          { player: "Dan", timing: "night_2" },
-          { player: "Sula", timing: "night_3" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "puzzle-33-twice-is-coincidence-thrice-is-proof",
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1jl7cuv/weekly_puzzle_33_twice_is_coincidence_thrice_is/",
-    coversAllWorlds: true,
-    worlds: [{ roles: { Tom: "Imp", Sula: "Poisoner" } }],
-  },
-  {
-    id: "puzzle-34-the-vortox-conjecture",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1joxqgy/weekly_puzzle_34_the_vortox_conjecture/",
-    worlds: [{ roles: { Sula: "Vortox", Sarah: "Witch" } }],
-  },
-  {
-    id: "puzzle-35-typhon-season",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1jv7zh2/weekly_puzzle_35_typhon_season/",
-    worlds: [
-      {
-        roles: {
-          Olivia: "Lord of Typhon",
-          Oscar: "Spy",
-          Sarah: "Poisoner",
-          Jasmine: "Drunk",
-        },
-        poisoned: [
-          { player: "Tim", timing: "night_1" },
-          { player: "Sula", timing: "night_2" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "puzzle-36-what-is-your-weapon-of-choice",
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1k1exb7/weekly_puzzle_36_what_is_your_weapon_of_choice/",
-    worlds: [
-      {
-        roles: { Fraser: "Imp", Oscar: "Poisoner" },
-        poisoned: [
-          { player: "Sula", timing: "night_1" },
-          { player: "Josh", timing: "night_2" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "puzzle-37-new-super-marionette-bros-u",
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1k7n8hi/weekly_puzzle_37_new_super_marionette_bros_u/",
-    coversAllWorlds: true,
-    worlds: [
-      {
-        roles: { Fraser: "Imp", Jasmine: "Poisoner", Adam: "Drunk" },
-        poisoned: [
-          { player: "Sula", timing: "night_1" },
-          { player: "You", timing: "night_2" },
-          { player: "You", timing: "night_3" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "puzzle-38-snakes-on-a-plane",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1kccbp9/weekly_puzzle_38_snakes_on_a_plane/",
-    coversAllWorlds: true,
-    worlds: [{ roles: { Dan: "Imp", Tim: "Baron", Hannah: "Drunk" } }],
-  },
-  {
-    id: "puzzle-39-squid-game",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1kg6y94/weekly_puzzle_39_squid_game/",
-    coversAllWorlds: true,
-    worlds: [{ roles: { Jasmine: "No Dashii", Hannah: "Witch", Matt: "Mutant" } }],
-  },
-  {
-    id: "puzzle-40-nine-lives",
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1klqy8j/weekly_puzzle_40_nine_lives/",
-    worlds: [{ roles: { Adam: "Imp", Tim: "Baron", Jasmine: "Drunk" } }],
-  },
-];
-
-const sourceSpecificNightDeathTimingGap =
-  "The published solution assumes a night death happened before every same-night action; the solver only applies before-info timing when the matched source has that night-order slot.";
-
-const PUBLISHED_SOLUTION_GAPS: Readonly<Record<string, PublishedSolutionGap>> = {
-  "puzzle-19-he-could-be-you-he-could-be-me": {
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1hgdsmp/weekly_puzzle_19_he_could_be_you_he_could_be_me/",
-    reason: sourceSpecificNightDeathTimingGap,
-  },
-  "puzzle-24-the-ultimate-blunder": {
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1i6m0ww/weekly_puzzle_24_the_ultimate_blunder/",
-    reason: sourceSpecificNightDeathTimingGap,
-  },
-  "puzzle-40-nine-lives": {
-    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1klqy8j/weekly_puzzle_40_nine_lives/",
-    reason: sourceSpecificNightDeathTimingGap,
-  },
-};
-
-const EXAMPLES_BY_ID = new Map(PUZZLE_EXAMPLES.map((example) => [example.id, example]));
+const PUZZLE_SOLUTIONS = loadPuzzleSolutions();
+const SOLUTIONS_BY_ID = new Map(PUZZLE_SOLUTIONS.map((solutions) => [solutions.id, solutions]));
 
 const PUZZLE_SOLUTION_CASES: PuzzleSolutionCase[] = PUZZLE_EXAMPLES.flatMap((example): PuzzleSolutionCase[] => {
   if (example.id === "intro") return [];
-  const expectedCount = JSON_SOLUTION_COUNTS[example.id];
-  if (expectedCount === undefined) throw new Error(`Missing expected solution count for ${example.id}`);
-  return [{ id: example.id, data: example.data, expectedCount }];
+  const puzzleSolutions = SOLUTIONS_BY_ID.get(example.id);
+  if (puzzleSolutions === undefined) throw new Error(`Missing solution file for ${example.id}`);
+  return [{ id: example.id, data: example.data, solutions: puzzleSolutions.solutions }];
 });
 
 describe("JSON puzzle solutions", () => {
@@ -530,99 +52,221 @@ describe("JSON puzzle solutions", () => {
     backend = await KissatBackend.create();
   });
 
-  test("every numbered JSON puzzle has source and count coverage", () => {
+  test("every numbered JSON puzzle has solution coverage", () => {
     const catalogIds = PUZZLE_EXAMPLES.map((example) => example.id).filter((id) => id !== "intro");
-    const sourceIds = [...PUBLISHED_SOLUTION_LOCKS.map((lock) => lock.id), ...Object.keys(PUBLISHED_SOLUTION_GAPS)];
+    const solutionIds = PUZZLE_SOLUTIONS.map((solutions) => solutions.id);
 
-    expect(new Set(catalogIds)).toEqual(new Set(Object.keys(JSON_SOLUTION_COUNTS)));
-    expect(new Set(catalogIds)).toEqual(new Set(sourceIds));
+    expect(new Set(catalogIds)).toEqual(new Set(solutionIds));
   });
 
-  test("every multi-world puzzle has all-world Reddit solution coverage", () => {
-    const locksById = new Map(PUBLISHED_SOLUTION_LOCKS.map((lock) => [lock.id, lock]));
-    const uncoveredMultiWorldPuzzles = Object.entries(JSON_SOLUTION_COUNTS)
-      .filter(([, count]) => count > 1)
-      .filter(([id]) => locksById.get(id)?.coversAllWorlds !== true)
-      .filter(([id]) => PUBLISHED_SOLUTION_GAPS[id] === undefined)
-      .map(([id]) => id);
-
-    expect(uncoveredMultiWorldPuzzles).toEqual([]);
+  test("solution data is stably sorted", () => {
+    for (const puzzleSolutions of PUZZLE_SOLUTIONS) {
+      expect(JSON.stringify(puzzleSolutionsFile(puzzleSolutions)), puzzleSolutions.fileName).toBe(
+        JSON.stringify(canonicalPuzzleSolutionsFile(puzzleSolutions)),
+      );
+    }
   });
 
   test("puzzle 4 has the largest modeled JSON search space", () => {
-    const [id, count] = Object.entries(JSON_SOLUTION_COUNTS).sort(
-      ([leftId, leftCount], [rightId, rightCount]) => rightCount - leftCount || leftId.localeCompare(rightId),
-    )[0] as [string, number];
+    const [largestPuzzle] = [...PUZZLE_SOLUTIONS].sort(
+      (left, right) => right.solutions.length - left.solutions.length || left.id.localeCompare(right.id),
+    );
 
-    expect({ id, count }).toEqual({ id: "puzzle-04-the-many-headed-monster", count: 16 });
+    expect({ id: largestPuzzle?.id, count: largestPuzzle?.solutions.length }).toEqual({
+      id: "puzzle-04-the-many-headed-monster",
+      count: 16,
+    });
   });
 
   test.each(PUZZLE_SOLUTION_CASES)(
-    "$id solution count comes from JSON doc",
-    async ({ id, data, expectedCount }) => {
+    "$id solution set comes from JSON doc",
+    async ({ id, data, solutions }) => {
       const doc = validatePuzzleDoc(data);
       const worlds = await buildFromDoc(doc, backend).solveAll();
 
-      expect(worlds, id).toHaveLength(expectedCount);
+      expect(serializeWorlds(worlds, doc.players), id).toEqual(solutions);
     },
-    SOLUTION_COUNT_TIMEOUT_MS,
-  );
-
-  test.each([...PUBLISHED_SOLUTION_LOCKS])(
-    "$id includes each Reddit-published solution world",
-    async ({ id, source, worlds: expectedWorlds }: PublishedSolutionLock) => {
-      const example = EXAMPLES_BY_ID.get(id);
-      if (example === undefined) throw new Error(`Missing puzzle example for ${id}`);
-      const doc = validatePuzzleDoc(example.data);
-      const worlds = await buildFromDoc(doc, backend).solveAll();
-      const missingWorlds = expectedWorlds.filter(
-        (expectedWorld) => !worlds.some((world) => matchesWorldLock(world, expectedWorld, doc)),
-      );
-
-      expect(missingWorlds, `${id} did not include all published worlds from ${source}`).toEqual([]);
-    },
-    PUBLISHED_WORLD_TIMEOUT_MS,
-  );
-
-  test.each(PUBLISHED_SOLUTION_LOCKS.filter((lock) => lock.coversAllWorlds === true))(
-    "$id has only Reddit-published solution worlds",
-    async ({ id, source, worlds: expectedWorlds }: PublishedSolutionLock) => {
-      const example = EXAMPLES_BY_ID.get(id);
-      if (example === undefined) throw new Error(`Missing puzzle example for ${id}`);
-      const doc = validatePuzzleDoc(example.data);
-      const worlds = await buildFromDoc(doc, backend).solveAll();
-      const invalidWorlds = worlds.filter(
-        (world) => !expectedWorlds.some((expectedWorld) => matchesWorldLock(world, expectedWorld, doc)),
-      );
-
-      expect(invalidWorlds, `${id} included a world outside the published solution from ${source}`).toEqual([]);
-    },
-    PUBLISHED_WORLD_TIMEOUT_MS,
+    SOLUTION_TIMEOUT_MS,
   );
 });
 
-function matchesWorldLock(world: World, expected: PublishedWorldLock, doc: PuzzleDoc): boolean {
-  for (const [player, role] of Object.entries(expected.roles ?? {})) {
-    if (world.actualRole(player) !== role) return false;
+function serializeWorlds(worlds: readonly World[], players: readonly string[]): readonly SerializedWorld[] {
+  return worlds.map((world) => serializeWorld(world, players)).sort(compareSerializedWorlds);
+}
+
+function serializeWorld(world: World, players: readonly string[]): SerializedWorld {
+  const poisoned = serializeTimedPlayers(world.poisonedByTiming, players);
+  const drunkByTiming = serializeTimedPlayers(world.drunkByTiming, players);
+  const drunk = players.filter((player) => world.drunk.has(player)).sort(compareStrings);
+
+  return {
+    roles: sortRecord(Object.fromEntries(players.map((player) => [player, world.actualRole(player)]))),
+    ...(Object.keys(poisoned).length > 0 ? { poisoned } : {}),
+    ...(drunk.length > 0 ? { drunk } : {}),
+    ...(Object.keys(drunkByTiming).length > 0 ? { drunkByTiming } : {}),
+  };
+}
+
+function serializeTimedPlayers(
+  playersByTiming: ReadonlyMap<string, ReadonlySet<string>>,
+  players: readonly string[],
+): Record<Timing, readonly string[]> {
+  return Object.fromEntries(
+    [...playersByTiming.entries()]
+      .filter(([, matchingPlayers]) => matchingPlayers.size > 0)
+      .sort(([left], [right]) => compareTimings(left as Timing, right as Timing))
+      .map(([timing, matchingPlayers]) => [timing, [...matchingPlayers].sort(compareStrings)]),
+  ) as Record<Timing, readonly string[]>;
+}
+
+function loadPuzzleSolutions(): readonly PuzzleSolutions[] {
+  return readdirSync(EXAMPLES_DIR)
+    .filter((fileName) => fileName.endsWith(SOLUTION_FILE_SUFFIX))
+    .sort((left, right) => left.localeCompare(right))
+    .map((fileName) => {
+      const id = fileName.slice(0, -SOLUTION_FILE_SUFFIX.length);
+      const rawText = readFileSync(join(EXAMPLES_DIR, fileName), "utf8");
+      const parsed = JSON.parse(rawText) as unknown;
+
+      return {
+        id,
+        fileName,
+        ...parsePuzzleSolutionsFile(parsed, fileName),
+      };
+    });
+}
+
+function puzzleSolutionsFile({ solutions }: PuzzleSolutionsFile): PuzzleSolutionsFile {
+  return { solutions };
+}
+
+function parsePuzzleSolutionsFile(input: unknown, path: string): PuzzleSolutionsFile {
+  const value = expectRecord(input, path);
+  expectOnlyKeys(value, ["solutions"], path);
+  const solutionsInput = value["solutions"];
+
+  if (!Array.isArray(solutionsInput) || solutionsInput.length === 0) {
+    throw new Error(`Expected non-empty array at ${path}.solutions`);
   }
 
-  for (const [player, roles] of Object.entries(expected.roleIn ?? {})) {
-    if (!roles.includes(world.actualRole(player))) return false;
-  }
+  return {
+    solutions: solutionsInput.map((solution, index) => parseSerializedWorld(solution, `${path}.solutions[${index}]`)),
+  };
+}
 
-  for (const [player, type] of Object.entries(expected.characterTypes ?? {})) {
-    const actualRole = world.actualRole(player);
-    if (!doc.script.includes(actualRole)) return false;
-    if (roleCharacterType(roleByName(actualRole)) !== type) return false;
-  }
+function parseSerializedWorld(input: unknown, path: string): SerializedWorld {
+  const value = expectRecord(input, path);
+  expectOnlyKeys(value, ["roles", "poisoned", "drunk", "drunkByTiming"], path);
 
-  for (const { player, timing } of expected.poisoned ?? []) {
-    if (!world.isPoisoned(player, timing)) return false;
-  }
+  return {
+    roles: parseStringRecord(value["roles"], `${path}.roles`),
+    ...parseOptionalTimedPlayers(value["poisoned"], `${path}.poisoned`, "poisoned"),
+    ...parseOptionalStringArray(value["drunk"], `${path}.drunk`, "drunk"),
+    ...parseOptionalTimedPlayers(value["drunkByTiming"], `${path}.drunkByTiming`, "drunkByTiming"),
+  };
+}
 
-  for (const player of expected.drunk ?? []) {
-    if (!world.isDrunk(player)) return false;
+function parseStringRecord(input: unknown, path: string): Record<string, string> {
+  const value = expectRecord(input, path);
+  for (const [key, entry] of Object.entries(value)) {
+    if (typeof entry !== "string") throw new Error(`Expected string at ${path}.${key}`);
   }
+  return value as Record<string, string>;
+}
 
-  return true;
+function parseOptionalTimedPlayers(
+  input: unknown,
+  path: string,
+  field: "poisoned" | "drunkByTiming",
+): Pick<SerializedWorld, typeof field> | Record<string, never> {
+  if (input === undefined) return {};
+  const value = expectRecord(input, path);
+  const timings = Object.fromEntries(
+    Object.entries(value).map(([timing, players]) => [
+      expectTiming(timing, `${path}.${timing}`),
+      expectStringArray(players, `${path}.${timing}`),
+    ]),
+  ) as Record<Timing, readonly string[]>;
+  return { [field]: timings };
+}
+
+function parseOptionalStringArray(
+  input: unknown,
+  path: string,
+  field: "drunk",
+): Pick<SerializedWorld, "drunk"> | Record<string, never> {
+  if (input === undefined) return {};
+  return { [field]: expectStringArray(input, path) };
+}
+
+function canonicalPuzzleSolutionsFile(file: PuzzleSolutionsFile): PuzzleSolutionsFile {
+  return { solutions: [...file.solutions].map(canonicalWorld).sort(compareSerializedWorlds) };
+}
+
+function canonicalWorld(world: SerializedWorld): SerializedWorld {
+  return {
+    roles: sortRecord(world.roles),
+    ...(world.poisoned !== undefined ? { poisoned: sortTimedPlayers(world.poisoned) } : {}),
+    ...(world.drunk !== undefined ? { drunk: [...world.drunk].sort(compareStrings) } : {}),
+    ...(world.drunkByTiming !== undefined ? { drunkByTiming: sortTimedPlayers(world.drunkByTiming) } : {}),
+  };
+}
+
+function sortRecord<T>(record: Readonly<Record<string, T>>): Record<string, T> {
+  return Object.fromEntries(Object.entries(record).sort(([left], [right]) => left.localeCompare(right))) as Record<
+    string,
+    T
+  >;
+}
+
+function sortTimedPlayers(record: Readonly<Record<Timing, readonly string[]>>): Record<Timing, readonly string[]> {
+  return Object.fromEntries(
+    Object.entries(record)
+      .sort(([left], [right]) => compareTimings(left as Timing, right as Timing))
+      .map(([timing, players]) => [timing, [...players].sort(compareStrings)]),
+  ) as Record<Timing, readonly string[]>;
+}
+
+function compareSerializedWorlds(left: SerializedWorld, right: SerializedWorld): number {
+  return JSON.stringify(left).localeCompare(JSON.stringify(right));
+}
+
+function compareTimings(left: Timing, right: Timing): number {
+  return timingSortValue(left) - timingSortValue(right) || left.localeCompare(right);
+}
+
+function timingSortValue(timing: Timing): number {
+  const match = /^(night|day)_(\d+)$/.exec(timing);
+  if (match === null) return Number.MAX_SAFE_INTEGER;
+
+  return Number(match[2] ?? Number.MAX_SAFE_INTEGER) * 2 + (match[1] === "day" ? 1 : 0);
+}
+
+function compareStrings(left: string, right: string): number {
+  return left.localeCompare(right);
+}
+
+function expectRecord(input: unknown, path: string): Record<string, unknown> {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    throw new Error(`Expected object at ${path}`);
+  }
+  return input as Record<string, unknown>;
+}
+
+function expectOnlyKeys(input: Readonly<Record<string, unknown>>, allowedKeys: readonly string[], path: string): void {
+  const extraKeys = Object.keys(input).filter((key) => !allowedKeys.includes(key));
+  if (extraKeys.length > 0) throw new Error(`Unexpected key at ${path}: ${extraKeys[0]}`);
+}
+
+function expectStringArray(input: unknown, path: string): readonly string[] {
+  if (!Array.isArray(input)) throw new Error(`Expected array at ${path}`);
+  for (const [index, entry] of input.entries()) {
+    if (typeof entry !== "string") throw new Error(`Expected string at ${path}[${index}]`);
+  }
+  return input;
+}
+
+function expectTiming(input: unknown, path: string): Timing {
+  if (typeof input !== "string" || !/^(night|day)_\d+$/.test(input)) throw new Error(`Expected timing at ${path}`);
+  return input as Timing;
 }

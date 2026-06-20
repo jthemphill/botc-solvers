@@ -1,0 +1,19 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Dan": "Imp",
+        "Fraser": "Poisoner",
+        "Josh": "Washerwoman",
+        "Matthew": "Ravenkeeper",
+        "Sula": "Chef",
+        "Tom": "Fortune Teller",
+        "You": "Slayer"
+      },
+      "poisoned": {
+        "night_1": ["Josh"],
+        "night_2": ["Matthew"]
+      }
+    }
+  ]
+}

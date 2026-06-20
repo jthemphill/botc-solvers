@@ -1,0 +1,17 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Leviathan",
+        "Aoife": "Shugenja",
+        "Fraser": "Village Idiot",
+        "Oscar": "Goblin",
+        "Sarah": "Fortune Teller",
+        "Steph": "Mutant",
+        "Tim": "Village Idiot",
+        "You": "Savant"
+      },
+      "drunk": ["Tim"]
+    }
+  ]
+}

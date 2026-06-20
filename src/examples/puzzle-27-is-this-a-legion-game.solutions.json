@@ -1,0 +1,19 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Imp",
+        "Aoife": "Empath",
+        "Fraser": "Poisoner",
+        "Hannah": "Legionary",
+        "Sarah": "Legionary",
+        "Tom": "Fortune Teller",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Sarah"],
+        "night_2": ["Sarah"]
+      }
+    }
+  ]
+}

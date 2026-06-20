@@ -1,0 +1,19 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Balloonist",
+        "Dan": "Fortune Teller",
+        "Fraser": "Leviathan",
+        "Olivia": "Xaan",
+        "Sarah": "Recluse",
+        "Steph": "Juggler",
+        "Tim": "Saint",
+        "You": "Drunk"
+      },
+      "poisoned": {
+        "night_3": ["Aoife", "Dan", "Steph"]
+      }
+    }
+  ]
+}
