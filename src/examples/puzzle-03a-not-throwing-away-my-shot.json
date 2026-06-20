@@ -20,7 +20,7 @@
   "timeline": [
     {
       "timing": "day_1",
-      "type": "abilityDeath",
+      "type": "slayerShot",
       "players": ["Tom"]
     }
   ],

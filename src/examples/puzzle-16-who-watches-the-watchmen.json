@@ -32,7 +32,7 @@
     },
     {
       "timing": "night_2",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["You"]
     },
     {
@@ -42,7 +42,7 @@
     },
     {
       "timing": "night_3",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Olivia"]
     }
   ],
@@ -96,7 +96,6 @@
           "right": "Tim",
           "yes": false,
           "demonRole": "Imp",
-          "registers": true,
           "timing": "night_1"
         },
         {
@@ -104,7 +103,6 @@
           "right": "Tim",
           "yes": false,
           "demonRole": "Imp",
-          "registers": true,
           "timing": "night_2"
         },
         {
@@ -112,7 +110,6 @@
           "right": "Jasmine",
           "yes": false,
           "demonRole": "Imp",
-          "registers": true,
           "timing": "night_3"
         }
       ]

@@ -454,12 +454,6 @@ function LibrarianBody({
         value={claim.among ?? []}
         onChange={(v) => onChange({ ...claim, among: v })}
       />
-      <span>Registers</span>
-      <input
-        type="checkbox"
-        checked={claim.registers ?? true}
-        onChange={(e) => onChange({ ...claim, registers: e.target.checked })}
-      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
@@ -486,12 +480,6 @@ function WasherwomanBody({
       />
       <span>Among</span>
       <MultiPlayerSelect players={doc.players} value={claim.among} onChange={(v) => onChange({ ...claim, among: v })} />
-      <span>Registers</span>
-      <input
-        type="checkbox"
-        checked={claim.registers ?? true}
-        onChange={(e) => onChange({ ...claim, registers: e.target.checked })}
-      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
@@ -571,12 +559,6 @@ function FortuneTellerBody({
         value={check.demonRole}
         onChange={(v) => setCheck({ ...check, demonRole: v || undefined })}
         allowEmpty
-      />
-      <span>Registers</span>
-      <input
-        type="checkbox"
-        checked={check.registers ?? false}
-        onChange={(e) => setCheck({ ...check, registers: e.target.checked })}
       />
       <span>Timing</span>
       <TimingField value={check.timing} onChange={(t) => setCheck({ ...check, timing: t })} />

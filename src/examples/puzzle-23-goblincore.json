@@ -23,7 +23,7 @@
   "timeline": [
     {
       "timing": "night_2",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Aoife"]
     }
   ],
@@ -56,8 +56,7 @@
     {
       "type": "Chef",
       "name": "You",
-      "count": 0,
-      "registers": false
+      "count": 0
     },
     {
       "type": "Washerwoman",

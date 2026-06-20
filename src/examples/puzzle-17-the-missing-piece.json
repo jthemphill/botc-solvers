@@ -28,7 +28,7 @@
     },
     {
       "timing": "night_2",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Adam"]
     },
     {
@@ -38,7 +38,7 @@
     },
     {
       "timing": "night_3",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Hannah"]
     }
   ],
@@ -77,8 +77,7 @@
     {
       "type": "Chef",
       "name": "Adam",
-      "count": 0,
-      "registers": false
+      "count": 0
     },
     {
       "type": "Empath",

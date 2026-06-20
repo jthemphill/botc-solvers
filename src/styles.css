@@ -452,6 +452,16 @@ summary {
   --death-rgb: 181, 95, 32;
 }
 
+.seat-button.death-witch-curse {
+  --death-color: #7a4b9f;
+  --death-rgb: 122, 75, 159;
+}
+
+.seat-button.death-slayer-shot {
+  --death-color: #2f7d62;
+  --death-rgb: 47, 125, 98;
+}
+
 .seat-button.death-execution {
   --death-color: var(--red-ink);
   --death-rgb: 165, 43, 43;
@@ -463,6 +473,8 @@ summary {
 }
 
 .seat-button.death-nomination-death,
+.seat-button.death-witch-curse,
+.seat-button.death-slayer-shot,
 .seat-button.death-execution,
 .seat-button.death-night-kill {
   border-color: var(--death-color);
@@ -569,6 +581,14 @@ summary {
 
 .seat-death-badge.nomination-death {
   background: #b55f20;
+}
+
+.seat-death-badge.witch-curse {
+  background: #7a4b9f;
+}
+
+.seat-death-badge.slayer-shot {
+  background: #2f7d62;
 }
 
 .seat-death-badge.night-kill {
@@ -753,6 +773,16 @@ summary {
 .timeline-event.nomination-death {
   --death-color: #b55f20;
   --death-rgb: 181, 95, 32;
+}
+
+.timeline-event.witch-curse {
+  --death-color: #7a4b9f;
+  --death-rgb: 122, 75, 159;
+}
+
+.timeline-event.slayer-shot {
+  --death-color: #2f7d62;
+  --death-rgb: 47, 125, 98;
 }
 
 .timeline-event.execution {

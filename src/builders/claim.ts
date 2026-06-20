@@ -7,6 +7,7 @@ import {
   Courtier,
   Dreamer,
   Empath,
+  type EmpathNeighborOption,
   FortuneTeller,
   Gambler,
   Gossip,
@@ -42,11 +43,15 @@ import type { Claim } from "../schema/puzzleDoc";
 import { resolveRoleRef } from "./roleRef";
 import { roleByName } from "../model/roleRegistry";
 
+export type ClaimWithTimelineContext = Claim & {
+  readonly neighborOptions?: readonly EmpathNeighborOption[];
+};
+
 function timingOf(t: string | undefined): Timing | undefined {
   return t as Timing | undefined;
 }
 
-export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Role {
+export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx, "nameRoot">): Role {
   const timing = timingOf(claim.timing);
   const base = {
     name: claim.name,
@@ -78,17 +83,15 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
         role: claim.role ? resolveRoleRef(claim.role) : undefined,
         outsiderCount: claim.outsiderCount,
         among: claim.among,
-        registers: claim.registers,
       });
     case "Washerwoman":
       return new Washerwoman({
         ...base,
         role: claim.role ? resolveRoleRef(claim.role) : undefined,
         among: claim.among,
-        registers: claim.registers,
       });
     case "Chef":
-      return new Chef({ ...base, count: claim.count, registers: claim.registers });
+      return new Chef({ ...base, count: claim.count });
     case "Chambermaid":
       return new Chambermaid({
         ...base,
@@ -100,7 +103,13 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
         })),
       });
     case "Empath":
-      return new Empath({ ...base, count: claim.count, player: claim.player, neighbors: claim.neighbors });
+      return new Empath({
+        ...base,
+        count: claim.count,
+        player: claim.player,
+        neighbors: claim.neighbors,
+        neighborOptions: claim.neighborOptions,
+      });
     case "FortuneTeller":
       return new FortuneTeller({
         ...base,
@@ -109,7 +118,6 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
           right: c.right,
           yes: c.yes,
           demonRole: c.demonRole ? resolveRoleRef(c.demonRole) : undefined,
-          registers: c.registers,
           timing: timingOf(c.timing),
         })),
       });

@@ -32,12 +32,12 @@
     },
     {
       "timing": "night_2",
-      "type": "nightKillBeforeInfo",
+      "type": "nightDeath",
       "players": ["Matt"]
     },
     {
       "timing": "day_2",
-      "type": "nominationDeath",
+      "type": "slayerShot",
       "players": ["Oscar"]
     }
   ],
@@ -97,7 +97,8 @@
       "name": "Jasmine",
       "timing": "day_2",
       "target": "Oscar",
-      "killed": true
+      "killed": true,
+      "gameContinued": true
     }
   ]
 }

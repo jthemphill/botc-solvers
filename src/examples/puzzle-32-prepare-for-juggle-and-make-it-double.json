@@ -23,7 +23,7 @@
     },
     {
       "timing": "night_2",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Tim"]
     },
     {
@@ -33,7 +33,7 @@
     },
     {
       "timing": "night_3",
-      "type": "nightKillBeforeInfo",
+      "type": "nightDeath",
       "players": ["Fraser"]
     }
   ],

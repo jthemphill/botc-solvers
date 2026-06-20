@@ -31,7 +31,7 @@
     },
     {
       "timing": "night_2",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Anna"]
     },
     {
@@ -41,7 +41,7 @@
     },
     {
       "timing": "night_3",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Tom"]
     }
   ],

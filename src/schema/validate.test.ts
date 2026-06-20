@@ -56,15 +56,27 @@ describe("validatePuzzleDoc", () => {
     ).toThrow("Knight 'noDemonAmong' must have at most 2 players");
   });
 
-  test("drops legacy Investigator registration overrides", () => {
+  test("drops legacy registration overrides", () => {
     const doc = validatePuzzleDoc({
       ...baseDoc,
-      players: ["You", "A"],
-      script: ["Investigator"],
-      claims: [{ type: "Investigator", name: "You", among: ["A"], registers: false }],
+      players: ["You", "A", "B"],
+      script: ["Investigator", "Chef", "Fortune Teller"],
+      claims: [
+        { type: "Investigator", name: "You", among: ["A"], registers: false },
+        { type: "Chef", name: "A", count: 0, registers: false },
+        {
+          type: "FortuneTeller",
+          name: "B",
+          checks: [{ left: "You", right: "A", yes: false, registers: true }],
+        },
+      ],
     });
 
-    expect(doc.claims[0]).toEqual({ type: "Investigator", name: "You", among: ["A"] });
+    expect(doc.claims).toEqual([
+      { type: "Investigator", name: "You", among: ["A"] },
+      { type: "Chef", name: "A", count: 0 },
+      { type: "FortuneTeller", name: "B", checks: [{ left: "You", right: "A", yes: false }] },
+    ]);
   });
 
   test("accepts Artist custom info statements and forbidden roles", () => {
@@ -123,24 +135,22 @@ describe("validatePuzzleDoc", () => {
       script: ["Savant", "Imp"],
       timeline: [
         { timing: "day_1", type: "nominationDeath", players: ["You"] },
+        { timing: "day_1", type: "witchCurse", players: ["A"] },
+        { timing: "day_1", type: "slayerShot", players: ["You"] },
         { timing: "day_1", type: "execution", players: ["A"] },
         { timing: "day_1", type: "doomsayerDeath", players: ["A"], caller: "You" },
         { timing: "night_2", type: "nightDeath", players: ["You"] },
-        { timing: "night_2", type: "nightKill", players: ["A"] },
-        { timing: "night_2", type: "nightKillBeforeInfo", players: ["You"] },
-        { timing: "night_2", type: "abilityDeath", players: ["You"] },
       ],
       claims: [{ type: "Savant", name: "You", statements: [{ options: ["true", "false"] }] }],
     });
 
     expect(doc.timeline).toEqual([
       { timing: "day_1", type: "nominationDeath", players: ["You"] },
+      { timing: "day_1", type: "witchCurse", players: ["A"] },
+      { timing: "day_1", type: "slayerShot", players: ["You"] },
       { timing: "day_1", type: "execution", players: ["A"] },
       { timing: "day_1", type: "doomsayerDeath", players: ["A"], caller: "You" },
       { timing: "night_2", type: "nightDeath", players: ["You"] },
-      { timing: "night_2", type: "nightKill", players: ["A"] },
-      { timing: "night_2", type: "nightKillBeforeInfo", players: ["You"] },
-      { timing: "night_2", type: "abilityDeath", players: ["You"] },
     ]);
   });
 
@@ -152,7 +162,7 @@ describe("validatePuzzleDoc", () => {
         claims: [],
       }),
     ).toThrow(
-      'Timeline event type must be "nominationDeath", "execution", "nightDeath", "nightKill", "nightKillBeforeInfo", "abilityDeath", or "doomsayerDeath"',
+      'Timeline event type must be "nominationDeath", "witchCurse", "slayerShot", "execution", "nightDeath", or "doomsayerDeath"',
     );
   });
 

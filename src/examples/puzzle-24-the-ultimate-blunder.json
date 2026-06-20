@@ -29,7 +29,7 @@
     },
     {
       "timing": "night_2",
-      "type": "nightKillBeforeInfo",
+      "type": "nightDeath",
       "players": ["Olivia"]
     }
   ],

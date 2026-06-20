@@ -30,7 +30,7 @@
     },
     {
       "timing": "night_2",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Tim"]
     },
     {
@@ -40,7 +40,7 @@
     },
     {
       "timing": "night_3",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Dan"]
     }
   ],
@@ -50,8 +50,7 @@
       "name": "Sarah",
       "timing": "night_1",
       "role": "Drunk",
-      "among": ["You", "Hannah"],
-      "registers": false
+      "among": ["You", "Hannah"]
     },
     {
       "type": "Recluse",
@@ -81,8 +80,7 @@
       "name": "You",
       "timing": "night_1",
       "role": "Marionette",
-      "among": ["Matt", "Hannah"],
-      "registers": false
+      "among": ["Matt", "Hannah"]
     },
     {
       "type": "Empath",
@@ -106,7 +104,6 @@
           "right": "Tim",
           "yes": true,
           "demonRole": "Lord of Typhon",
-          "registers": true,
           "timing": "night_1"
         },
         {
@@ -114,7 +111,6 @@
           "right": "Fraser",
           "yes": false,
           "demonRole": "Lord of Typhon",
-          "registers": true,
           "timing": "night_2"
         },
         {
@@ -122,7 +118,6 @@
           "right": "Sarah",
           "yes": true,
           "demonRole": "Lord of Typhon",
-          "registers": true,
           "timing": "night_3"
         }
       ]

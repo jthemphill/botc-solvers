@@ -102,15 +102,14 @@ function validateTimeline(v: unknown, pathRoot: string): TimelineEventDoc[] {
     const type = expectString(entry["type"], `${path}.type`);
     if (
       type !== "nominationDeath" &&
+      type !== "witchCurse" &&
+      type !== "slayerShot" &&
       type !== "execution" &&
       type !== "nightDeath" &&
-      type !== "nightKill" &&
-      type !== "nightKillBeforeInfo" &&
-      type !== "abilityDeath" &&
       type !== "doomsayerDeath"
     ) {
       throw new ValidationError(
-        `Timeline event type must be "nominationDeath", "execution", "nightDeath", "nightKill", "nightKillBeforeInfo", "abilityDeath", or "doomsayerDeath"`,
+        `Timeline event type must be "nominationDeath", "witchCurse", "slayerShot", "execution", "nightDeath", or "doomsayerDeath"`,
         `${path}.type`,
       );
     }
@@ -174,7 +173,6 @@ function validateClaim(input: unknown, path: string): Claim {
         role: input["role"] as string | undefined,
         outsiderCount: input["outsiderCount"] as number | undefined,
         among: input["among"] === undefined ? undefined : expectStringArray(input["among"], `${path}.among`),
-        registers: input["registers"] as boolean | undefined,
       };
     case "Washerwoman":
       return {
@@ -182,14 +180,12 @@ function validateClaim(input: unknown, path: string): Claim {
         type: "Washerwoman",
         role: input["role"] === undefined ? undefined : expectString(input["role"], `${path}.role`),
         among: input["among"] === undefined ? [] : expectStringArray(input["among"], `${path}.among`),
-        registers: input["registers"] as boolean | undefined,
       };
     case "Chef":
       return {
         ...base,
         type: "Chef",
         count: input["count"] === undefined ? undefined : expectNumber(input["count"], `${path}.count`),
-        registers: input["registers"] as boolean | undefined,
       };
     case "Chambermaid": {
       const checks = input["checks"];
@@ -234,7 +230,6 @@ function validateClaim(input: unknown, path: string): Claim {
             right: expectString(c["right"], `${path}.checks[${i}].right`),
             yes: expectBool(c["yes"], `${path}.checks[${i}].yes`),
             demonRole: c["demonRole"] as string | undefined,
-            registers: c["registers"] as boolean | undefined,
             timing: c["timing"] as string | undefined,
           };
         }),
