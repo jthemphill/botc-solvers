@@ -78,17 +78,15 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
         role: claim.role ? resolveRoleRef(claim.role) : undefined,
         outsiderCount: claim.outsiderCount,
         among: claim.among,
-        registers: claim.registers,
       });
     case "Washerwoman":
       return new Washerwoman({
         ...base,
         role: claim.role ? resolveRoleRef(claim.role) : undefined,
         among: claim.among,
-        registers: claim.registers,
       });
     case "Chef":
-      return new Chef({ ...base, count: claim.count, registers: claim.registers });
+      return new Chef({ ...base, count: claim.count });
     case "Chambermaid":
       return new Chambermaid({
         ...base,
@@ -109,7 +107,6 @@ export function buildClaim(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Rol
           right: c.right,
           yes: c.yes,
           demonRole: c.demonRole ? resolveRoleRef(c.demonRole) : undefined,
-          registers: c.registers,
           timing: timingOf(c.timing),
         })),
       });

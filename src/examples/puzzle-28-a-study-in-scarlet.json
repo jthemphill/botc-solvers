@@ -30,7 +30,7 @@
     },
     {
       "timing": "night_2",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["You"]
     },
     {
@@ -40,7 +40,7 @@
     },
     {
       "timing": "night_3",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Sarah"]
     }
   ],

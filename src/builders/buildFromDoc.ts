@@ -1,5 +1,5 @@
 import { applyClaims } from "../model/characters";
-import { Alignment, CharacterType, roleAlignment, roleCharacterType, roleName } from "../model/core";
+import { Alignment, CharacterType, roleAlignment, roleCharacterType, roleName, type RoleRef } from "../model/core";
 import type { BoolLike, BOTCModel, Timing } from "../model/model";
 import type { SatBackend } from "../model/sat";
 import { buildPuzzleModel, type PuzzleSpec } from "../model/setup";
@@ -61,21 +61,25 @@ function applyTimelineConstraints(game: BOTCModel, doc: PuzzleDoc): void {
   if (deathEvents.length === 0) return;
 
   const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
-  const hasSoldier = doc.script.includes("Soldier");
   for (const event of deathEvents) {
     if (event.type === "doomsayerDeath" && event.caller !== undefined) {
       for (const player of event.players) {
         game.addTruth(doomsayerSameRegisteredAlignment(game, event.caller, player));
       }
     }
-    if (event.type === "abilityDeath" || event.type === "nightDeath") {
+    if (
+      event.type === "nightDeath" ||
+      event.type === "nightDeathBeforeInfo" ||
+      event.type === "witchCurse" ||
+      event.type === "slayerShot"
+    ) {
       for (const player of event.players) {
         for (const demonRole of demonRoles) {
           game.addImplication(
             game.actualIs(player, demonRole),
-            roleName(demonRole) === "Imp"
-              ? livingMinionCanCatchAbilityDeath(game, doc, event)
-              : livingScarletWomanCanCatchAbilityDeath(game, doc, event),
+            (event.type === "nightDeath" || event.type === "nightDeathBeforeInfo") && roleName(demonRole) === "Imp"
+              ? livingMinionCanCatchDemonDeath(game, doc, event)
+              : livingScarletWomanCanCatchDemonDeath(game, doc, event),
           );
         }
       }
@@ -83,17 +87,6 @@ function applyTimelineConstraints(game: BOTCModel, doc: PuzzleDoc): void {
     }
     if (event.type === "doomsayerDeath") continue;
     for (const player of event.players) {
-      if (hasSoldier && (event.type === "nightKill" || event.type === "nightKillBeforeInfo")) {
-        game.addFalse(
-          game.allOf(
-            [
-              game.hasRoleAt(player, "Soldier", event.timing as Timing),
-              game.soberAndHealthy(player, event.timing as Timing),
-            ],
-            `${player}_${event.timing}_sober_healthy_soldier_night_killed`,
-          ),
-        );
-      }
       for (const demonRole of demonRoles) game.fixNotActual(player, demonRole);
     }
   }
@@ -121,19 +114,19 @@ function doomsayerSameRegisteredAlignment(game: BOTCModel, caller: string, deadP
   );
 }
 
-function livingMinionCanCatchAbilityDeath(
+function livingMinionCanCatchDemonDeath(
   game: BOTCModel,
   doc: PuzzleDoc,
   event: NonNullable<PuzzleDoc["timeline"]>[number],
 ): BoolLike {
   const candidates = livingPlayersAfterDeathEvent(doc, event);
   return game.anyOf(
-    candidates.map((player) => game.isMinion(player)),
+    candidates.map((player) => isMinionBeforeEvent(game, doc, player, event)),
     `${event.timing}_minion_can_catch_imp_death`,
   );
 }
 
-function livingScarletWomanCanCatchAbilityDeath(
+function livingScarletWomanCanCatchDemonDeath(
   game: BOTCModel,
   doc: PuzzleDoc,
   event: NonNullable<PuzzleDoc["timeline"]>[number],
@@ -141,7 +134,7 @@ function livingScarletWomanCanCatchAbilityDeath(
   if (!doc.script.includes("Scarlet Woman")) return game.constantBool(false, "no_scarlet_woman_to_catch_demon");
   const candidates = livingPlayersAfterDeathEvent(doc, event);
   return game.anyOf(
-    candidates.map((player) => game.actualIs(player, "Scarlet Woman")),
+    candidates.map((player) => roleAtBeforeEvent(game, doc, player, "Scarlet Woman", event)),
     `${event.timing}_scarlet_woman_can_catch_demon_death`,
   );
 }
@@ -211,11 +204,14 @@ interface NightDeathSource {
   readonly id: string;
   readonly available: BoolLike;
   readonly players?: readonly string[];
+  readonly starpassesImp?: boolean;
+  readonly constrainAssignment?: (player: string, assignment: BoolLike) => void;
 }
 
 function applyNightDeathSourceConstraints(game: BOTCModel, doc: PuzzleDoc, ctx: Omit<CompileCtx, "nameRoot">): void {
+  const roleTimings = collectTimings(doc);
   for (const event of doc.timeline ?? []) {
-    if (event.type !== "nightDeath") continue;
+    if (event.type !== "nightDeath" && event.type !== "nightDeathBeforeInfo") continue;
     const sources = nightDeathSources(game, doc, event, ctx);
     const assignmentsBySource = new Map<NightDeathSource, BoolLike[]>();
 
@@ -226,6 +222,8 @@ function applyNightDeathSourceConstraints(game: BOTCModel, doc: PuzzleDoc, ctx: 
       const assignments = eligibleSources.map((source) => {
         const assignment = game.newBool(`${event.timing}_${player}_death_from_${source.id}`);
         game.addImplication(assignment, source.available);
+        source.constrainAssignment?.(player, assignment);
+        if (source.starpassesImp === true) applyImpStarpass(game, doc, event, player, assignment, roleTimings);
         assignmentsBySource.set(source, [...(assignmentsBySource.get(source) ?? []), assignment]);
         return assignment;
       });
@@ -247,14 +245,81 @@ function nightDeathSources(
 ): readonly NightDeathSource[] {
   const timing = event.timing as Timing;
   return [
-    {
-      id: `${timing}_demon_kill`,
-      available: livingDemonPathBeforeDeathEvent(game, doc, event),
-    },
+    demonKillDeathSource(game, doc, event),
     ...gossipDeathSources(game, doc, event, ctx),
     ...acrobatDeathSources(game, doc, timing),
     ...gamblerDeathSources(game, doc, timing),
   ];
+}
+
+function demonKillDeathSource(
+  game: BOTCModel,
+  doc: PuzzleDoc,
+  event: NonNullable<PuzzleDoc["timeline"]>[number],
+): NightDeathSource {
+  const timing = event.timing as Timing;
+  return {
+    id: `${timing}_demon_kill`,
+    available: livingDemonPathBeforeDeathEvent(game, doc, event),
+    starpassesImp: true,
+    constrainAssignment: (player, assignment) => {
+      if (!doc.script.includes("Soldier")) return;
+      const soberHealthySoldier = game.allOf(
+        [game.hasRoleAt(player, "Soldier", timing), game.soberAndHealthy(player, timing)],
+        `${timing}_${slug(player)}_sober_healthy_soldier`,
+      );
+      game.addImplication(
+        assignment,
+        game.not(soberHealthySoldier, `${timing}_${slug(player)}_not_sober_healthy_soldier_demon_kill`),
+      );
+    },
+  };
+}
+
+function applyImpStarpass(
+  game: BOTCModel,
+  doc: PuzzleDoc,
+  event: NonNullable<PuzzleDoc["timeline"]>[number],
+  deadPlayer: string,
+  assignment: BoolLike,
+  roleTimings: readonly Timing[],
+): void {
+  if (!doc.script.includes("Imp")) return;
+  const timing = event.timing as Timing;
+  const starpass = game.allOf(
+    [assignment, roleAtBeforeEvent(game, doc, deadPlayer, "Imp", event)],
+    `${timing}_${slug(deadPlayer)}_imp_starpass`,
+  );
+  const candidates = livingPlayersAfterDeathEvent(doc, event);
+  const successors = candidates.map((candidate) => {
+    const successor = game.newBool(`${timing}_${slug(deadPlayer)}_starpass_to_${slug(candidate)}`);
+    game.addImplication(successor, starpass);
+    game.addImplication(successor, isMinionBeforeEvent(game, doc, candidate, event));
+    return { player: candidate, value: successor };
+  });
+
+  game.addEnforcedExactlyN(
+    successors.map(({ value }) => value),
+    1,
+    starpass,
+  );
+  game.addEnforcedExactlyN(
+    successors.map(({ value }) => value),
+    0,
+    starpass.not(),
+  );
+
+  const futureTimings = roleTimings.filter((futureTiming) => phaseStartOrder(futureTiming) >= phaseStartOrder(timing));
+  for (const futureTiming of futureTimings) {
+    game.removeRoleAt(deadPlayer, "Imp", futureTiming, starpass);
+    for (const { player, value } of successors) {
+      game.addRoleAt(player, "Imp", futureTiming, value);
+      for (const role of doc.script) {
+        if (role === "Imp") continue;
+        game.removeRoleAt(player, resolveRoleRef(role), futureTiming, value);
+      }
+    }
+  }
 }
 
 function gossipDeathSources(
@@ -357,7 +422,9 @@ function livingDemonPathBeforeDeathEvent(
   const livingPlayerSet = new Set(livingPlayers);
   const deadPlayers = doc.players.filter((player) => !livingPlayerSet.has(player));
   const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
-  const livingStartingDemon = livingPlayers.flatMap((player) => demonRoles.map((role) => game.actualIs(player, role)));
+  const livingDemonBeforeDeath = livingPlayers.flatMap((player) =>
+    demonRoles.map((role) => roleAtBeforeEvent(game, doc, player, role, event)),
+  );
   const possibleSuccessions: BoolLike[] = [];
 
   if (doc.script.includes("Imp")) {
@@ -369,7 +436,7 @@ function livingDemonPathBeforeDeathEvent(
             `${event.timing}_dead_imp_before_death_event`,
           ),
           game.anyOf(
-            livingPlayers.map((player) => game.isMinion(player)),
+            livingPlayers.map((player) => isMinionBeforeEvent(game, doc, player, event)),
             `${event.timing}_living_minion_before_death_event`,
           ),
         ],
@@ -387,7 +454,7 @@ function livingDemonPathBeforeDeathEvent(
         [
           game.anyOf(deadNonImpDemons, `${event.timing}_dead_non_imp_demon_before_death_event`),
           game.anyOf(
-            livingPlayers.map((player) => game.actualIs(player, "Scarlet Woman")),
+            livingPlayers.map((player) => roleAtBeforeEvent(game, doc, player, "Scarlet Woman", event)),
             `${event.timing}_living_scarlet_woman_before_death_event`,
           ),
         ],
@@ -397,7 +464,7 @@ function livingDemonPathBeforeDeathEvent(
   }
 
   return game.anyOf(
-    [...livingStartingDemon, ...possibleSuccessions],
+    [...livingDemonBeforeDeath, ...possibleSuccessions],
     `${event.timing}_living_demon_path_before_death_event`,
   );
 }
@@ -491,9 +558,71 @@ function roleAliveAt(game: BOTCModel, doc: PuzzleDoc, role: string, timing: Timi
   const deadPlayers = deadPlayersBefore(doc, timing);
   const candidates = doc.players.filter((player) => !deadPlayers.has(player));
   return game.anyOf(
-    candidates.map((player) => game.actualIs(player, role)),
+    candidates.map((player) => game.hasRoleAt(player, role, timing)),
     `${slug(role)}_alive_at_${timing}`,
   );
+}
+
+function isMinionAt(game: BOTCModel, doc: PuzzleDoc, player: string, timing: Timing): BoolLike {
+  return characterTypeAt(game, doc, player, CharacterType.Minion, timing);
+}
+
+function isMinionBeforeEvent(
+  game: BOTCModel,
+  doc: PuzzleDoc,
+  player: string,
+  event: NonNullable<PuzzleDoc["timeline"]>[number],
+): BoolLike {
+  return characterTypeBeforeEvent(game, doc, player, CharacterType.Minion, event);
+}
+
+function characterTypeAt(
+  game: BOTCModel,
+  doc: PuzzleDoc,
+  player: string,
+  characterType: CharacterType,
+  timing: Timing,
+): BoolLike {
+  const roles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === characterType);
+  return game.anyOf(
+    roles.map((role) => game.hasRoleAt(player, role, timing)),
+    `${timing}_${slug(player)}_${characterType}_at_timing`,
+  );
+}
+
+function characterTypeBeforeEvent(
+  game: BOTCModel,
+  doc: PuzzleDoc,
+  player: string,
+  characterType: CharacterType,
+  event: NonNullable<PuzzleDoc["timeline"]>[number],
+): BoolLike {
+  const roles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === characterType);
+  return game.anyOf(
+    roles.map((role) => roleAtBeforeEvent(game, doc, player, role, event)),
+    `${event.timing}_${slug(player)}_${characterType}_before_death_event`,
+  );
+}
+
+function roleAtBeforeEvent(
+  game: BOTCModel,
+  doc: PuzzleDoc,
+  player: string,
+  role: RoleRef,
+  event: NonNullable<PuzzleDoc["timeline"]>[number],
+): BoolLike {
+  const previousTiming = latestTimingBeforeEvent(doc, event);
+  return previousTiming === undefined ? game.actualIs(player, role) : game.hasRoleAt(player, role, previousTiming);
+}
+
+function latestTimingBeforeEvent(
+  doc: PuzzleDoc,
+  event: NonNullable<PuzzleDoc["timeline"]>[number],
+): Timing | undefined {
+  const eventTimingOrder = phaseStartOrder(event.timing as Timing);
+  return collectTimings(doc)
+    .filter((timing) => phaseStartOrder(timing) < eventTimingOrder)
+    .at(-1);
 }
 
 function deadPlayersBefore(doc: PuzzleDoc, timing: Timing): ReadonlySet<string> {
@@ -521,6 +650,25 @@ function livingPlayersAt(doc: PuzzleDoc, timing: Timing): readonly string[] {
   return doc.players.filter((player) => !deadPlayers.has(player));
 }
 
+function collectTimings(value: unknown): readonly Timing[] {
+  const timings = new Set<Timing>();
+  const visit = (entry: unknown): void => {
+    if (typeof entry === "string") {
+      if (/^(night|day)_\d+$/.test(entry)) timings.add(entry as Timing);
+      return;
+    }
+    if (Array.isArray(entry)) {
+      for (const item of entry) visit(item);
+      return;
+    }
+    if (typeof entry !== "object" || entry === null) return;
+    for (const item of Object.values(entry)) visit(item);
+  };
+
+  visit(value);
+  return [...timings].sort((left, right) => phaseStartOrder(left) - phaseStartOrder(right));
+}
+
 function livingNeighborInDirection(
   players: readonly string[],
   playerIndex: number,
@@ -535,7 +683,7 @@ function livingNeighborInDirection(
 }
 
 function deathEventOrder(event: NonNullable<PuzzleDoc["timeline"]>[number]): number {
-  if (event.type === "nightKillBeforeInfo") return phaseStartOrder(event.timing as Timing) - 0.5;
+  if (event.type === "nightDeathBeforeInfo") return phaseStartOrder(event.timing as Timing) - 0.5;
   return phaseStartOrder(event.timing as Timing) + 0.5;
 }
 

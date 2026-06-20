@@ -198,7 +198,7 @@ describe("buildFromDoc", () => {
     expect(invalidWorlds).toEqual([]);
   });
 
-  test("timeline deaths exclude players from script demon roles", async () => {
+  test("night deaths without a catch exclude actual Imp deaths", async () => {
     const worlds = await buildFromDoc(
       {
         version: 1,
@@ -206,7 +206,7 @@ describe("buildFromDoc", () => {
         script: ["Imp", "Sage"],
         setup: "none",
         uniqueCharacters: true,
-        timeline: [{ timing: "night_2", type: "nightKill", players: ["B"] }],
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["B"] }],
         claims: [],
       },
       backend,
@@ -216,7 +216,7 @@ describe("buildFromDoc", () => {
     expect(new Set(worlds.map((world) => world.actualRole("B")))).not.toContain("Imp");
   });
 
-  test("night kills cannot kill sober healthy Soldiers", async () => {
+  test("Demon-sourced night deaths cannot kill sober healthy Soldiers", async () => {
     const worlds = await buildFromDoc(
       {
         version: 1,
@@ -229,7 +229,7 @@ describe("buildFromDoc", () => {
           { name: "B", roles: ["Imp"] },
           { name: "C", roles: ["Chef"] },
         ],
-        timeline: [{ timing: "night_2", type: "nightKill", players: ["A"] }],
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
         claims: [],
       },
       backend,
@@ -238,8 +238,8 @@ describe("buildFromDoc", () => {
     expect(worlds).toEqual([]);
   });
 
-  test("night-killed Soldiers can be poisoned", async () => {
-    const worlds = await buildFromDoc(
+  test("Demon-sourced night deaths can kill poisoned Soldiers", async () => {
+    const game = buildFromDoc(
       {
         version: 1,
         players: ["A", "B", "C"],
@@ -251,11 +251,13 @@ describe("buildFromDoc", () => {
           { name: "B", roles: ["Imp"] },
           { name: "C", roles: ["Poisoner"] },
         ],
-        timeline: [{ timing: "night_2", type: "nightKill", players: ["A"] }],
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
         claims: [],
       },
       backend,
-    ).solveAll();
+    );
+    game.fixPoisoned("A", true, "night_2");
+    const worlds = await game.solveAll();
 
     expect(worlds).toHaveLength(1);
     expect(worlds[0]?.poisonedByTiming.get("night_2")).toEqual(new Set(["A"]));
@@ -341,24 +343,8 @@ describe("buildFromDoc", () => {
     expect(spyWorlds).toHaveLength(1);
   });
 
-  test("ability and unknown night deaths require a living catch when they kill an actual demon", async () => {
+  test("night deaths require a living catch when they kill an actual demon", async () => {
     const impWithoutMinionWorlds = await buildFromDoc(
-      {
-        version: 1,
-        players: ["A", "B"],
-        script: ["Imp", "Chef"],
-        setup: "none",
-        uniqueCharacters: true,
-        fixedRoles: [
-          { name: "A", roles: ["Imp"] },
-          { name: "B", roles: ["Chef"] },
-        ],
-        timeline: [{ timing: "night_2", type: "abilityDeath", players: ["A"] }],
-        claims: [],
-      },
-      backend,
-    ).solveAll();
-    const unknownNightDeathWithoutCatchWorlds = await buildFromDoc(
       {
         version: 1,
         players: ["A", "B"],
@@ -385,7 +371,7 @@ describe("buildFromDoc", () => {
           { name: "A", roles: ["Imp"] },
           { name: "B", roles: ["Goblin"] },
         ],
-        timeline: [{ timing: "night_2", type: "abilityDeath", players: ["A"] }],
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
         claims: [],
       },
       backend,
@@ -402,7 +388,7 @@ describe("buildFromDoc", () => {
           { name: "B", roles: ["Goblin"] },
           { name: "C", roles: ["Chef"] },
         ],
-        timeline: [{ timing: "night_2", type: "abilityDeath", players: ["A", "B"] }],
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A", "B"] }],
         claims: [],
       },
       backend,
@@ -418,17 +404,71 @@ describe("buildFromDoc", () => {
           { name: "A", roles: ["Po"] },
           { name: "B", roles: ["Scarlet Woman"] },
         ],
-        timeline: [{ timing: "night_2", type: "abilityDeath", players: ["A"] }],
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
         claims: [],
       },
       backend,
     ).solveAll();
 
     expect(impWithoutMinionWorlds).toEqual([]);
-    expect(unknownNightDeathWithoutCatchWorlds).toEqual([]);
     expect(impWithMinionWorlds).toHaveLength(1);
     expect(dyingMinionWorlds).toEqual([]);
     expect(poWithScarletWomanWorlds).toHaveLength(1);
+  });
+
+  test("Slayer shots and Witch curses require a living catch when they kill an actual demon", async () => {
+    const slayerShotWithoutCatchWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Imp"] },
+          { name: "B", roles: ["Chef"] },
+        ],
+        timeline: [{ timing: "day_1", type: "slayerShot", players: ["A"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+    const slayerShotWithCatchWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Imp", "Scarlet Woman"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Imp"] },
+          { name: "B", roles: ["Scarlet Woman"] },
+        ],
+        timeline: [{ timing: "day_1", type: "slayerShot", players: ["A"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+    const witchCurseWithCatchWorlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Imp", "Scarlet Woman", "Witch"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Imp"] },
+          { name: "B", roles: ["Scarlet Woman"] },
+        ],
+        timeline: [{ timing: "day_1", type: "witchCurse", players: ["A"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(slayerShotWithoutCatchWorlds).toEqual([]);
+    expect(slayerShotWithCatchWorlds).toHaveLength(1);
+    expect(witchCurseWithCatchWorlds).toHaveLength(1);
   });
 
   test("standard puzzle docs require the final observed state to have a living demon path", async () => {
@@ -557,7 +597,7 @@ describe("buildFromDoc", () => {
     expect(worlds[0]?.isPoisoned("C", "night_2")).toBe(false);
   });
 
-  test("nightKillBeforeInfo stops same-night Poisoner effects", async () => {
+  test("nightDeathBeforeInfo stops same-night Poisoner effects", async () => {
     const worlds = await buildFromDoc(
       {
         version: 1,
@@ -570,7 +610,7 @@ describe("buildFromDoc", () => {
           { name: "B", roles: ["Investigator"] },
           { name: "C", roles: ["Imp"] },
         ],
-        timeline: [{ timing: "night_2", type: "nightKillBeforeInfo", players: ["A"] }],
+        timeline: [{ timing: "night_2", type: "nightDeathBeforeInfo", players: ["A"] }],
         claims: [
           {
             type: "Investigator",

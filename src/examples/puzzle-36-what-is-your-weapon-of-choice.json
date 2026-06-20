@@ -31,7 +31,7 @@
     },
     {
       "timing": "night_2",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Josh"]
     },
     {
@@ -41,7 +41,7 @@
     },
     {
       "timing": "night_3",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Olivia"]
     }
   ],
@@ -62,7 +62,6 @@
           "right": "Oscar",
           "yes": false,
           "demonRole": "Imp",
-          "registers": true,
           "timing": "night_1"
         },
         {
@@ -70,7 +69,6 @@
           "right": "Oscar",
           "yes": false,
           "demonRole": "Imp",
-          "registers": true,
           "timing": "night_2"
         }
       ]

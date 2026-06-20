@@ -31,7 +31,7 @@
     },
     {
       "timing": "night_2",
-      "type": "nightKillBeforeInfo",
+      "type": "nightDeathBeforeInfo",
       "players": ["Tim"]
     },
     {
@@ -41,7 +41,7 @@
     },
     {
       "timing": "night_3",
-      "type": "nightKillBeforeInfo",
+      "type": "nightDeathBeforeInfo",
       "players": ["Olivia"]
     }
   ],

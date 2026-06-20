@@ -25,11 +25,11 @@ export interface ForbiddenRoleConstraint {
 
 export type TimelineEventType =
   | "nominationDeath"
+  | "witchCurse"
+  | "slayerShot"
   | "execution"
   | "nightDeath"
-  | "nightKill"
-  | "nightKillBeforeInfo"
-  | "abilityDeath"
+  | "nightDeathBeforeInfo"
   | "doomsayerDeath";
 
 export interface TimelineEventDoc {
@@ -112,20 +112,17 @@ export interface LibrarianClaim extends BaseClaim {
   readonly role?: string;
   readonly outsiderCount?: number;
   readonly among?: readonly string[];
-  readonly registers?: boolean;
 }
 
 export interface WasherwomanClaim extends BaseClaim {
   readonly type: "Washerwoman";
   readonly role?: string;
   readonly among: readonly string[];
-  readonly registers?: boolean;
 }
 
 export interface ChefClaim extends BaseClaim {
   readonly type: "Chef";
   readonly count?: number;
-  readonly registers?: boolean;
 }
 
 export interface ChambermaidCheckDoc {
@@ -152,7 +149,6 @@ export interface FortuneTellerCheckDoc {
   readonly right: string;
   readonly yes: boolean;
   readonly demonRole?: string;
-  readonly registers?: boolean;
   readonly timing?: string;
 }
 

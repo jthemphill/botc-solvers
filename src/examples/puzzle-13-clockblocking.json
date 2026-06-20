@@ -31,7 +31,7 @@
     },
     {
       "timing": "night_2",
-      "type": "nightKillBeforeInfo",
+      "type": "nightDeathBeforeInfo",
       "players": ["Tim"]
     }
   ],
@@ -52,7 +52,6 @@
           "right": "Oscar",
           "yes": false,
           "demonRole": "Imp",
-          "registers": true,
           "timing": "night_1"
         },
         {
@@ -60,7 +59,6 @@
           "right": "Jasmine",
           "yes": false,
           "demonRole": "Imp",
-          "registers": true,
           "timing": "night_2"
         }
       ]

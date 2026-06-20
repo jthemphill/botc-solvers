@@ -8,15 +8,15 @@ test("loads puzzle 34 with structured role clues", async ({ page }) => {
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 34 - The Vortox Conjecture");
   await expect(page.getByLabel("Puzzle setup summary")).toHaveCount(0);
   const timeline = page.getByLabel("Puzzle timeline");
-  await expect(timeline).toContainText("D1 Nomination Death");
+  await expect(timeline).toContainText("D1 Witch Curse");
   await expect(timeline).toContainText("Steph");
   await expect(timeline).toContainText("D1 Execution");
   await expect(timeline).toContainText("Aoife");
   await expect(timeline).toContainText("N2 Night Death");
   await expect(timeline).toContainText("Fraser");
-  const stephSeat = page.getByRole("button", { name: /Seat 7: Steph, died while nominating/ });
-  await expect(stephSeat.locator(".seat-death-badge.nomination-death")).toHaveText("!");
-  await expect(stephSeat).toHaveCSS("border-top-color", "rgb(181, 95, 32)");
+  const stephSeat = page.getByRole("button", { name: /Seat 7: Steph, died to a Witch curse/ });
+  await expect(stephSeat.locator(".seat-death-badge.witch-curse")).toHaveText("🪄");
+  await expect(stephSeat).toHaveCSS("border-top-color", "rgb(122, 75, 159)");
   const aoifeSeat = page.getByRole("button", { name: /Seat 4: Aoife, executed/ });
   await expect(aoifeSeat.locator(".seat-death-badge.execution")).toHaveText("X");
   await expect(aoifeSeat).toHaveCSS("border-top-color", "rgb(165, 43, 43)");
@@ -46,6 +46,19 @@ test("loads puzzle 34 with structured role clues", async ({ page }) => {
   await expect(sula).toContainText("Vortox");
   await expect(sula).not.toContainText("Clockmaker");
   await expect(sula).toHaveCSS("border-top-color", "rgb(165, 43, 43)");
+});
+
+test("loads puzzle 19 with Slayer Shot death markers", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-19-he-could-be-you-he-could-be-me");
+
+  const timeline = page.getByLabel("Puzzle timeline");
+  await expect(timeline).toContainText("D2 Slayer Shot");
+  await expect(timeline).toContainText("Oscar");
+  const oscarSeat = page.getByRole("button", { name: /Seat 7: Oscar, died to a Slayer shot/ });
+  await expect(oscarSeat.locator(".seat-death-badge.slayer-shot")).toHaveText("🏹");
+  await expect(oscarSeat).toHaveCSS("border-top-color", "rgb(47, 125, 98)");
 });
 
 test("clears stale solve results when loading another puzzle", async ({ page }) => {

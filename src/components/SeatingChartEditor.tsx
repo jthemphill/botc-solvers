@@ -542,48 +542,57 @@ function deathMarkerForPlayer(timeline: PuzzleDoc["timeline"], player: string): 
   const events = timeline ?? [];
   const nominationDeath = events.find((event) => event.type === "nominationDeath" && event.players.includes(player));
   if (nominationDeath !== undefined) return nominationDeath;
+  const witchCurse = events.find((event) => event.type === "witchCurse" && event.players.includes(player));
+  if (witchCurse !== undefined) return witchCurse;
+  const slayerShot = events.find((event) => event.type === "slayerShot" && event.players.includes(player));
+  if (slayerShot !== undefined) return slayerShot;
   const execution = events.find((event) => event.type === "execution" && event.players.includes(player));
   if (execution !== undefined) return execution;
-  const nightDeath = events.find((event) => event.type === "nightDeath" && event.players.includes(player));
+  const nightDeath = events.find(
+    (event) => (event.type === "nightDeath" || event.type === "nightDeathBeforeInfo") && event.players.includes(player),
+  );
   if (nightDeath !== undefined) return nightDeath;
-  const abilityDeath = events.find((event) => event.type === "abilityDeath" && event.players.includes(player));
-  if (abilityDeath !== undefined) return abilityDeath;
-  const nightKill = events.find((event) => event.type === "nightKill" && event.players.includes(player));
-  if (nightKill !== undefined) return nightKill;
-  return events.find((event) => event.type === "nightKillBeforeInfo" && event.players.includes(player));
+  return undefined;
 }
 
 function visibleTimelineEventType(event: TimelineEventDoc): TimelineEventDoc["type"] {
-  return event.type === "abilityDeath" && event.timing.startsWith("night_") ? "nightKill" : event.type;
+  return event.type === "nightDeathBeforeInfo" ? "nightDeath" : event.type;
 }
 
-function deathMarkerClass(event: TimelineEventDoc): "nomination-death" | "execution" | "night-kill" {
+function deathMarkerClass(
+  event: TimelineEventDoc,
+): "nomination-death" | "witch-curse" | "slayer-shot" | "execution" | "night-kill" {
   const type = visibleTimelineEventType(event);
   if (type === "nominationDeath") return "nomination-death";
+  if (type === "witchCurse") return "witch-curse";
+  if (type === "slayerShot") return "slayer-shot";
   return type === "execution" ? "execution" : "night-kill";
 }
 
 function deathMarkerLabel(event: TimelineEventDoc): string {
   const type = visibleTimelineEventType(event);
   if (type === "nominationDeath") return "died while nominating";
+  if (type === "witchCurse") return "died to a Witch curse";
+  if (type === "slayerShot") return "died to a Slayer shot";
   if (type === "execution") return "executed";
-  if (type === "abilityDeath") return "died from an ability";
   return "killed at night";
 }
 
 function timelineEventAction(event: TimelineEventDoc): string {
   const type = visibleTimelineEventType(event);
   if (type === "nominationDeath") return "Nomination Death";
+  if (type === "witchCurse") return "Witch Curse";
+  if (type === "slayerShot") return "Slayer Shot";
   if (type === "execution") return "Execution";
-  if (type === "abilityDeath") return "Ability Death";
   return event.players.length === 1 ? "Night Death" : "Night Deaths";
 }
 
 function timelineEventGlyph(event: TimelineEventDoc): string {
   const type = visibleTimelineEventType(event);
   if (type === "nominationDeath") return "!";
+  if (type === "witchCurse") return "🪄";
+  if (type === "slayerShot") return "🏹";
   if (type === "execution") return "X";
-  if (type === "abilityDeath") return "*";
   return "N";
 }
 

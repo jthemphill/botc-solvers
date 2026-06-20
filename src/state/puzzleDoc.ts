@@ -232,9 +232,19 @@ function removeTimelineNames(timeline: PuzzleDoc["timeline"], removed: ReadonlyS
 }
 
 function normalizeClaim(claim: Claim): Claim {
-  if (claim.type === "Investigator") {
-    const { registers: _registers, ...normalized } = claim as Claim & { readonly registers?: boolean };
-    return normalized;
+  const { registers: _registers, ...claimWithoutLegacyRegisters } = claim as Claim & { readonly registers?: boolean };
+  if (claimWithoutLegacyRegisters.type === "FortuneTeller") {
+    claim = {
+      ...claimWithoutLegacyRegisters,
+      checks: claimWithoutLegacyRegisters.checks.map((check) => {
+        const { registers: _checkRegisters, ...checkWithoutLegacyRegisters } = check as typeof check & {
+          readonly registers?: boolean;
+        };
+        return checkWithoutLegacyRegisters;
+      }),
+    };
+  } else {
+    claim = claimWithoutLegacyRegisters;
   }
   if (claim.type === "Knight" && claim.noDemonAmong.length > KNIGHT_NO_DEMON_AMONG_MAX) {
     return { ...claim, noDemonAmong: claim.noDemonAmong.slice(0, KNIGHT_NO_DEMON_AMONG_MAX) };

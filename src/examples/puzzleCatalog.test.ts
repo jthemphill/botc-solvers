@@ -50,9 +50,34 @@ describe("puzzle catalog", () => {
     });
     expect(doc.claims.flatMap((claim) => claim.info ?? []).map((info) => "text" in info)).not.toContain(true);
     expect(doc.timeline).toEqual([
-      { timing: "day_1", type: "nominationDeath", players: ["Steph"] },
+      { timing: "day_1", type: "witchCurse", players: ["Steph"] },
       { timing: "day_1", type: "execution", players: ["Aoife"] },
-      { timing: "night_2", type: "nightKill", players: ["Fraser"] },
+      { timing: "night_2", type: "nightDeath", players: ["Fraser"] },
     ]);
+  });
+
+  test("uses specific Witch curse and Slayer shot timeline deaths", () => {
+    const examples = new Map(PUZZLE_EXAMPLES.map((example) => [example.id, validatePuzzleDoc(example.data)]));
+
+    expect(examples.get("puzzle-03a-not-throwing-away-my-shot")?.timeline?.[0]).toMatchObject({
+      type: "slayerShot",
+      players: ["Tom"],
+    });
+    expect(examples.get("puzzle-03b-not-throwing-away-my-shot")?.timeline?.[0]).toMatchObject({
+      type: "slayerShot",
+      players: ["Anna"],
+    });
+    expect(examples.get("puzzle-19-he-could-be-you-he-could-be-me")?.timeline?.[2]).toMatchObject({
+      type: "slayerShot",
+      players: ["Oscar"],
+    });
+    expect(examples.get("puzzle-34-the-vortox-conjecture")?.timeline?.[0]).toMatchObject({
+      type: "witchCurse",
+      players: ["Steph"],
+    });
+    expect(examples.get("puzzle-39-squid-game")?.timeline?.[0]).toMatchObject({
+      type: "witchCurse",
+      players: ["Tom"],
+    });
   });
 });

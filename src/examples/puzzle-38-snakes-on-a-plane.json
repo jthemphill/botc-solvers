@@ -25,7 +25,7 @@
     },
     {
       "timing": "night_2",
-      "type": "abilityDeath",
+      "type": "nightDeath",
       "players": ["Dan"]
     },
     {
@@ -35,7 +35,7 @@
     },
     {
       "timing": "night_3",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Matt"]
     }
   ],

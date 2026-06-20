@@ -25,7 +25,7 @@
     },
     {
       "timing": "night_2",
-      "type": "nightKill",
+      "type": "nightDeath",
       "players": ["Adam"]
     },
     {
@@ -35,7 +35,7 @@
     },
     {
       "timing": "night_3",
-      "type": "nightKillBeforeInfo",
+      "type": "nightDeathBeforeInfo",
       "players": ["Sula"]
     }
   ],
@@ -62,7 +62,6 @@
           "right": "Jasmine",
           "yes": true,
           "demonRole": "Imp",
-          "registers": true,
           "timing": "night_1"
         },
         {
@@ -70,7 +69,6 @@
           "right": "Sula",
           "yes": false,
           "demonRole": "Imp",
-          "registers": true,
           "timing": "night_2"
         }
       ]

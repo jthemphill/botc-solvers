@@ -721,6 +721,17 @@ export class BOTCModel {
     return result;
   }
 
+  registersAsCharacterTypeAt(player: string, characterType: CharacterType, timing: Timing, name: string): BoolVar {
+    this.checkPlayer(player);
+    const result = this.newBool(`${name}_${player}_registers_as_${characterType}_at_${timing}`);
+    for (const [role, character] of this.characters.entries()) {
+      const roleAt = this.hasRoleAt(player, role, timing);
+      if (this.roleCanFlexiblyRegisterAsType(role, characterType)) continue;
+      this.addImplication(roleAt, roleCharacterType(character) === characterType ? result : result.not());
+    }
+    return result;
+  }
+
   registersAsRole(player: string, role: RoleRef, name: string): BoolVar {
     this.checkPlayer(player);
     const roleRef = roleName(role);
@@ -730,6 +741,19 @@ export class BOTCModel {
       const actual = this.actualIs(player, actualRole);
       if (this.roleCanFlexiblyRegisterAsRole(actualRole, roleRef)) continue;
       this.addImplication(actual, actualRole === roleRef ? result : result.not());
+    }
+    return result;
+  }
+
+  registersAsRoleAt(player: string, role: RoleRef, timing: Timing, name: string): BoolVar {
+    this.checkPlayer(player);
+    const roleRef = roleName(role);
+    this.checkRole(roleRef);
+    const result = this.newBool(`${name}_${player}_registers_as_${roleRef}_at_${timing}`);
+    for (const actualRole of this.characters.keys()) {
+      const roleAt = this.hasRoleAt(player, actualRole, timing);
+      if (this.roleCanFlexiblyRegisterAsRole(actualRole, roleRef)) continue;
+      this.addImplication(roleAt, actualRole === roleRef ? result : result.not());
     }
     return result;
   }

@@ -161,7 +161,7 @@ describe("puzzle document reducer", () => {
       timeline: [
         { timing: "day_1", type: "execution", players: ["B"] },
         { timing: "day_1", type: "doomsayerDeath", players: ["B"], caller: "C" },
-        { timing: "night_2", type: "nightKill", players: ["C"], caller: "C" },
+        { timing: "night_2", type: "nightDeath", players: ["C"], caller: "C" },
       ],
       claims: [{ type: "Investigator", name: "A", among: ["B", "C"] }],
     };
@@ -250,7 +250,7 @@ describe("puzzle document reducer", () => {
       version: 1,
       players: ["A", "B"],
       script: [],
-      timeline: [{ timing: "night_2", type: "nightKill", players: ["B"] }],
+      timeline: [{ timing: "night_2", type: "nightDeath", players: ["B"] }],
       claims: [],
     };
 
@@ -290,13 +290,19 @@ describe("puzzle document reducer", () => {
     expect(next.claims).toEqual([{ type: "Knight", name: "A", noDemonAmong: ["A", "B"] }]);
   });
 
-  test("Investigator claims discard legacy registration overrides", () => {
+  test("claims discard legacy registration overrides", () => {
     const doc: PuzzleDoc = {
       version: 1,
-      players: ["A", "B"],
-      script: ["Investigator"],
+      players: ["A", "B", "C"],
+      script: ["Investigator", "Chef", "Fortune Teller"],
       claims: [
         { type: "Investigator", name: "A", among: ["B"], registers: false } as unknown as PuzzleDoc["claims"][number],
+        { type: "Chef", name: "B", count: 0, registers: false } as unknown as PuzzleDoc["claims"][number],
+        {
+          type: "FortuneTeller",
+          name: "C",
+          checks: [{ left: "A", right: "B", yes: false, registers: true }],
+        } as unknown as PuzzleDoc["claims"][number],
       ],
     };
 
@@ -306,7 +312,11 @@ describe("puzzle document reducer", () => {
       { type: "addClaim", claim: doc.claims[0] as PuzzleDoc["claims"][number] },
     );
 
-    expect(loaded.claims).toEqual([{ type: "Investigator", name: "A", among: ["B"] }]);
+    expect(loaded.claims).toEqual([
+      { type: "Investigator", name: "A", among: ["B"] },
+      { type: "Chef", name: "B", count: 0 },
+      { type: "FortuneTeller", name: "C", checks: [{ left: "A", right: "B", yes: false }] },
+    ]);
     expect(added.claims).toEqual([{ type: "Investigator", name: "A", among: ["B"] }]);
   });
 
