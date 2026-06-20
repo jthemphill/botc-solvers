@@ -48,7 +48,7 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-34-the-vortox-conjecture": 1,
   "puzzle-35-typhon-season": 1,
   "puzzle-36-what-is-your-weapon-of-choice": 1,
-  "puzzle-37-new-super-marionette-bros-u": 12,
+  "puzzle-37-new-super-marionette-bros-u": 1,
   "puzzle-38-snakes-on-a-plane": 1,
   "puzzle-39-squid-game": 1,
   "puzzle-40-nine-lives": 2,
@@ -464,6 +464,7 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
     id: "puzzle-37-new-super-marionette-bros-u",
     source:
       "https://www.reddit.com/r/BloodOnTheClocktower/comments/1k7n8hi/weekly_puzzle_37_new_super_marionette_bros_u/",
+    coversAllWorlds: true,
     worlds: [
       {
         roles: { Fraser: "Imp", Jasmine: "Poisoner", Adam: "Drunk" },
@@ -494,27 +495,22 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
   },
 ];
 
-const unobservableNightDeathTimingGap =
-  "The published solution assumes hidden night-death timing that the puzzle text cannot specify.";
+const sourceSpecificNightDeathTimingGap =
+  "The published solution assumes a night death happened before every same-night action; the solver only applies before-info timing when the matched source has that night-order slot.";
 
 const PUBLISHED_SOLUTION_GAPS: Readonly<Record<string, PublishedSolutionGap>> = {
   "puzzle-19-he-could-be-you-he-could-be-me": {
     source:
       "https://www.reddit.com/r/BloodOnTheClocktower/comments/1hgdsmp/weekly_puzzle_19_he_could_be_you_he_could_be_me/",
-    reason: unobservableNightDeathTimingGap,
+    reason: sourceSpecificNightDeathTimingGap,
   },
   "puzzle-24-the-ultimate-blunder": {
     source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1i6m0ww/weekly_puzzle_24_the_ultimate_blunder/",
-    reason: unobservableNightDeathTimingGap,
-  },
-  "puzzle-37-new-super-marionette-bros-u": {
-    source:
-      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1k7n8hi/weekly_puzzle_37_new_super_marionette_bros_u/",
-    reason: unobservableNightDeathTimingGap,
+    reason: sourceSpecificNightDeathTimingGap,
   },
   "puzzle-40-nine-lives": {
     source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1klqy8j/weekly_puzzle_40_nine_lives/",
-    reason: unobservableNightDeathTimingGap,
+    reason: sourceSpecificNightDeathTimingGap,
   },
 };
 

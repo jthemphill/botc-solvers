@@ -624,6 +624,29 @@ describe("buildFromDoc", () => {
     expect(worlds[0]?.isPoisoned("C", "night_2")).toBe(false);
   });
 
+  test("Demon-sourced night deaths affect same-night Empath neighbors", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C", "D"],
+        script: ["Empath", "Chef", "Imp", "Scarlet Woman"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Empath"] },
+          { name: "B", roles: ["Chef"] },
+          { name: "C", roles: ["Imp"] },
+          { name: "D", roles: ["Scarlet Woman"] },
+        ],
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["B"] }],
+        claims: [{ type: "Empath", name: "A", timing: "night_2", count: 2 }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
+
   test("timed Empath claims use living neighbors from the timeline", async () => {
     const worlds = await buildFromDoc(
       {

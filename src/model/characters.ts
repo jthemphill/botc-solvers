@@ -1077,17 +1077,20 @@ export class Empath extends Role {
   readonly count?: number;
   readonly player?: string;
   readonly neighbors?: readonly [string, string];
+  readonly neighborOptions?: readonly EmpathNeighborOption[];
   constructor(
     options: RoleBaseOptions & {
       readonly count?: number;
       readonly player?: string;
       readonly neighbors?: readonly [string, string];
+      readonly neighborOptions?: readonly EmpathNeighborOption[];
     },
   ) {
     super(options);
     this.count = options.count;
     this.player = options.player;
     this.neighbors = options.neighbors;
+    this.neighborOptions = options.neighborOptions;
   }
   static learnsCount(
     game: BOTCModel,
@@ -1103,17 +1106,37 @@ export class Empath extends Role {
       `${name}_empath_count_is_${count}`,
     );
   }
-  override learnedInfo(game: BOTCModel): BoolLike | undefined {
-    return this.count === undefined
-      ? undefined
-      : Empath.learnsCount(
-          game,
-          this.player ?? this.name,
-          this.count,
-          claimName(this.name, Empath, "count"),
-          this.neighbors,
-        );
+  static learnsConditionalCount(
+    game: BOTCModel,
+    player: string,
+    count: number,
+    name: string,
+    neighborOptions: readonly EmpathNeighborOption[],
+  ): BoolVar {
+    return game.anyOf(
+      neighborOptions.map((option, index) =>
+        game.allOf(
+          [option.activeIf, Empath.learnsCount(game, player, count, `${name}_option_${index + 1}`, option.neighbors)],
+          `${name}_option_${index + 1}_active`,
+        ),
+      ),
+      `${name}_conditional`,
+    );
   }
+  override learnedInfo(game: BOTCModel): BoolLike | undefined {
+    if (this.count === undefined) return undefined;
+    const player = this.player ?? this.name;
+    const name = claimName(this.name, Empath, "count");
+    if (this.neighborOptions !== undefined && this.neighbors === undefined) {
+      return Empath.learnsConditionalCount(game, player, this.count, name, this.neighborOptions);
+    }
+    return Empath.learnsCount(game, player, this.count, name, this.neighbors);
+  }
+}
+
+export interface EmpathNeighborOption {
+  readonly neighbors: readonly [string, string];
+  readonly activeIf: BoolLike;
 }
 
 export interface FortuneTellerCheck {
