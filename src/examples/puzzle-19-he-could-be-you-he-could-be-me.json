@@ -32,7 +32,7 @@
     },
     {
       "timing": "night_2",
-      "type": "nightDeathBeforeInfo",
+      "type": "nightDeath",
       "players": ["Matt"]
     },
     {

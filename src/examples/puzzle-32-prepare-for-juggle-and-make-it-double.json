@@ -33,7 +33,7 @@
     },
     {
       "timing": "night_3",
-      "type": "nightDeathBeforeInfo",
+      "type": "nightDeath",
       "players": ["Fraser"]
     }
   ],

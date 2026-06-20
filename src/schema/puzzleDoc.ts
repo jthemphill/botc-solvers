@@ -29,7 +29,6 @@ export type TimelineEventType =
   | "slayerShot"
   | "execution"
   | "nightDeath"
-  | "nightDeathBeforeInfo"
   | "doomsayerDeath";
 
 export interface TimelineEventDoc {

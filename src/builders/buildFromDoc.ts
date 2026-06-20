@@ -67,17 +67,12 @@ function applyTimelineConstraints(game: BOTCModel, doc: PuzzleDoc): void {
         game.addTruth(doomsayerSameRegisteredAlignment(game, event.caller, player));
       }
     }
-    if (
-      event.type === "nightDeath" ||
-      event.type === "nightDeathBeforeInfo" ||
-      event.type === "witchCurse" ||
-      event.type === "slayerShot"
-    ) {
+    if (event.type === "nightDeath" || event.type === "witchCurse" || event.type === "slayerShot") {
       for (const player of event.players) {
         for (const demonRole of demonRoles) {
           game.addImplication(
             game.actualIs(player, demonRole),
-            (event.type === "nightDeath" || event.type === "nightDeathBeforeInfo") && roleName(demonRole) === "Imp"
+            event.type === "nightDeath" && roleName(demonRole) === "Imp"
               ? livingMinionCanCatchDemonDeath(game, doc, event)
               : livingScarletWomanCanCatchDemonDeath(game, doc, event),
           );
@@ -211,7 +206,7 @@ interface NightDeathSource {
 function applyNightDeathSourceConstraints(game: BOTCModel, doc: PuzzleDoc, ctx: Omit<CompileCtx, "nameRoot">): void {
   const roleTimings = collectTimings(doc);
   for (const event of doc.timeline ?? []) {
-    if (event.type !== "nightDeath" && event.type !== "nightDeathBeforeInfo") continue;
+    if (event.type !== "nightDeath") continue;
     const sources = nightDeathSources(game, doc, event, ctx);
     const assignmentsBySource = new Map<NightDeathSource, BoolLike[]>();
 
@@ -683,7 +678,6 @@ function livingNeighborInDirection(
 }
 
 function deathEventOrder(event: NonNullable<PuzzleDoc["timeline"]>[number]): number {
-  if (event.type === "nightDeathBeforeInfo") return phaseStartOrder(event.timing as Timing) - 0.5;
   return phaseStartOrder(event.timing as Timing) + 0.5;
 }
 

@@ -548,15 +548,13 @@ function deathMarkerForPlayer(timeline: PuzzleDoc["timeline"], player: string): 
   if (slayerShot !== undefined) return slayerShot;
   const execution = events.find((event) => event.type === "execution" && event.players.includes(player));
   if (execution !== undefined) return execution;
-  const nightDeath = events.find(
-    (event) => (event.type === "nightDeath" || event.type === "nightDeathBeforeInfo") && event.players.includes(player),
-  );
+  const nightDeath = events.find((event) => event.type === "nightDeath" && event.players.includes(player));
   if (nightDeath !== undefined) return nightDeath;
   return undefined;
 }
 
 function visibleTimelineEventType(event: TimelineEventDoc): TimelineEventDoc["type"] {
-  return event.type === "nightDeathBeforeInfo" ? "nightDeath" : event.type;
+  return event.type;
 }
 
 function deathMarkerClass(

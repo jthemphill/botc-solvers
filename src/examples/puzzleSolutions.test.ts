@@ -30,12 +30,12 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-16-who-watches-the-watchmen": 1,
   "puzzle-17-the-missing-piece": 4,
   "puzzle-18-x-and-the-city": 1,
-  "puzzle-19-he-could-be-you-he-could-be-me": 1,
+  "puzzle-19-he-could-be-you-he-could-be-me": 2,
   "puzzle-20-the-three-wise-men": 1,
   "puzzle-21-eight-jugglers-juggling": 1,
   "puzzle-22-one-in-the-chamber": 1,
   "puzzle-23-goblincore": 1,
-  "puzzle-24-the-ultimate-blunder": 1,
+  "puzzle-24-the-ultimate-blunder": 5,
   "puzzle-26-a-major-problem": 8,
   "puzzle-27-is-this-a-legion-game": 1,
   "puzzle-28-a-study-in-scarlet": 1,
@@ -48,10 +48,10 @@ const JSON_SOLUTION_COUNTS: Readonly<Record<string, number>> = {
   "puzzle-34-the-vortox-conjecture": 1,
   "puzzle-35-typhon-season": 1,
   "puzzle-36-what-is-your-weapon-of-choice": 1,
-  "puzzle-37-new-super-marionette-bros-u": 1,
+  "puzzle-37-new-super-marionette-bros-u": 12,
   "puzzle-38-snakes-on-a-plane": 1,
   "puzzle-39-squid-game": 1,
-  "puzzle-40-nine-lives": 1,
+  "puzzle-40-nine-lives": 2,
 };
 
 interface PoisonLock {
@@ -464,7 +464,6 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
     id: "puzzle-37-new-super-marionette-bros-u",
     source:
       "https://www.reddit.com/r/BloodOnTheClocktower/comments/1k7n8hi/weekly_puzzle_37_new_super_marionette_bros_u/",
-    coversAllWorlds: true,
     worlds: [
       {
         roles: { Fraser: "Imp", Jasmine: "Poisoner", Adam: "Drunk" },
@@ -495,7 +494,29 @@ const PUBLISHED_SOLUTION_LOCKS: readonly PublishedSolutionLock[] = [
   },
 ];
 
-const PUBLISHED_SOLUTION_GAPS: Readonly<Record<string, PublishedSolutionGap>> = {};
+const unobservableNightDeathTimingGap =
+  "The published solution assumes hidden night-death timing that the puzzle text cannot specify.";
+
+const PUBLISHED_SOLUTION_GAPS: Readonly<Record<string, PublishedSolutionGap>> = {
+  "puzzle-19-he-could-be-you-he-could-be-me": {
+    source:
+      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1hgdsmp/weekly_puzzle_19_he_could_be_you_he_could_be_me/",
+    reason: unobservableNightDeathTimingGap,
+  },
+  "puzzle-24-the-ultimate-blunder": {
+    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1i6m0ww/weekly_puzzle_24_the_ultimate_blunder/",
+    reason: unobservableNightDeathTimingGap,
+  },
+  "puzzle-37-new-super-marionette-bros-u": {
+    source:
+      "https://www.reddit.com/r/BloodOnTheClocktower/comments/1k7n8hi/weekly_puzzle_37_new_super_marionette_bros_u/",
+    reason: unobservableNightDeathTimingGap,
+  },
+  "puzzle-40-nine-lives": {
+    source: "https://www.reddit.com/r/BloodOnTheClocktower/comments/1klqy8j/weekly_puzzle_40_nine_lives/",
+    reason: unobservableNightDeathTimingGap,
+  },
+};
 
 const EXAMPLES_BY_ID = new Map(PUZZLE_EXAMPLES.map((example) => [example.id, example]));
 

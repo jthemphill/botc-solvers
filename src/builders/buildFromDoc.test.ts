@@ -597,8 +597,8 @@ describe("buildFromDoc", () => {
     expect(worlds[0]?.isPoisoned("C", "night_2")).toBe(false);
   });
 
-  test("nightDeathBeforeInfo stops same-night Poisoner effects", async () => {
-    const worlds = await buildFromDoc(
+  test("nightDeath does not encode whether the killed player acted first", async () => {
+    const game = buildFromDoc(
       {
         version: 1,
         players: ["A", "B", "C"],
@@ -610,23 +610,17 @@ describe("buildFromDoc", () => {
           { name: "B", roles: ["Investigator"] },
           { name: "C", roles: ["Imp"] },
         ],
-        timeline: [{ timing: "night_2", type: "nightDeathBeforeInfo", players: ["A"] }],
-        claims: [
-          {
-            type: "Investigator",
-            name: "B",
-            timing: "night_2",
-            role: "Poisoner",
-            among: ["A", "C"],
-          },
-        ],
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
+        claims: [],
       },
       backend,
-    ).solveAll();
+    );
+    game.fixPoisoned("B", true, "night_2");
+    const worlds = await game.solveAll();
 
     expect(worlds).toHaveLength(1);
     expect(worlds[0]?.isPoisoned("A", "night_2")).toBe(false);
-    expect(worlds[0]?.isPoisoned("B", "night_2")).toBe(false);
+    expect(worlds[0]?.isPoisoned("B", "night_2")).toBe(true);
     expect(worlds[0]?.isPoisoned("C", "night_2")).toBe(false);
   });
 

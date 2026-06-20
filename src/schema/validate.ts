@@ -106,11 +106,10 @@ function validateTimeline(v: unknown, pathRoot: string): TimelineEventDoc[] {
       type !== "slayerShot" &&
       type !== "execution" &&
       type !== "nightDeath" &&
-      type !== "nightDeathBeforeInfo" &&
       type !== "doomsayerDeath"
     ) {
       throw new ValidationError(
-        `Timeline event type must be "nominationDeath", "witchCurse", "slayerShot", "execution", "nightDeath", "nightDeathBeforeInfo", or "doomsayerDeath"`,
+        `Timeline event type must be "nominationDeath", "witchCurse", "slayerShot", "execution", "nightDeath", or "doomsayerDeath"`,
         `${path}.type`,
       );
     }
