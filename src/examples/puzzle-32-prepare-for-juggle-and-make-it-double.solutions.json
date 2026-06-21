@@ -1,0 +1,21 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Dan": "Juggler",
+        "Fraser": "Saint",
+        "Jasmine": "Undertaker",
+        "Matthew": "Poisoner",
+        "Olivia": "Imp",
+        "Sula": "Empath",
+        "Tim": "Fortune Teller",
+        "You": "Dreamer"
+      },
+      "poisoned": {
+        "night_1": ["You"],
+        "night_2": ["Dan"],
+        "night_3": ["Sula"]
+      }
+    }
+  ]
+}

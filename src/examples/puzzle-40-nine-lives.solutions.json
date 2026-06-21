@@ -1,0 +1,34 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Imp",
+        "Fraser": "Librarian",
+        "Hannah": "Saint",
+        "Jasmine": "Drunk",
+        "Josh": "Butler",
+        "Matthew": "Fortune Teller",
+        "Steph": "Recluse",
+        "Tim": "Baron",
+        "You": "Investigator"
+      }
+    },
+    {
+      "roles": {
+        "Adam": "Slayer",
+        "Fraser": "Poisoner",
+        "Hannah": "Imp",
+        "Jasmine": "Washerwoman",
+        "Josh": "Butler",
+        "Matthew": "Fortune Teller",
+        "Steph": "Recluse",
+        "Tim": "Empath",
+        "You": "Investigator"
+      },
+      "poisoned": {
+        "night_1": ["Tim"],
+        "night_2": ["Matthew"]
+      }
+    }
+  ]
+}

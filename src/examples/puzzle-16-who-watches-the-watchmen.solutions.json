@@ -1,0 +1,20 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Fraser": "Poisoner",
+        "Hannah": "Washerwoman",
+        "Jasmine": "Fortune Teller",
+        "Olivia": "Empath",
+        "Oscar": "Imp",
+        "Sarah": "Investigator",
+        "Tim": "Chef",
+        "You": "Saint"
+      },
+      "poisoned": {
+        "night_1": ["Sarah"],
+        "night_2": ["Olivia"]
+      }
+    }
+  ]
+}

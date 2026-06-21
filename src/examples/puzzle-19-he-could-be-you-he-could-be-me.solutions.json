@@ -1,0 +1,32 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Empath",
+        "Fraser": "Imp",
+        "Jasmine": "Slayer",
+        "Matt": "Poisoner",
+        "Olivia": "Undertaker",
+        "Oscar": "Recluse",
+        "Sula": "Washerwoman",
+        "You": "Librarian"
+      },
+      "poisoned": {
+        "night_1": ["You"],
+        "night_2": ["Olivia"]
+      }
+    },
+    {
+      "roles": {
+        "Aoife": "Empath",
+        "Fraser": "Spy",
+        "Jasmine": "Slayer",
+        "Matt": "Ravenkeeper",
+        "Olivia": "Imp",
+        "Oscar": "Recluse",
+        "Sula": "Washerwoman",
+        "You": "Librarian"
+      }
+    }
+  ]
+}

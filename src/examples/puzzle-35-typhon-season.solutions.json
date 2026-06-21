@@ -1,0 +1,20 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Fraser": "Fortune Teller",
+        "Jasmine": "Drunk",
+        "Olivia": "Lord of Typhon",
+        "Oscar": "Spy",
+        "Sarah": "Poisoner",
+        "Sula": "Undertaker",
+        "Tim": "Clockmaker",
+        "You": "Librarian"
+      },
+      "poisoned": {
+        "night_1": ["Tim"],
+        "night_2": ["Sula"]
+      }
+    }
+  ]
+}

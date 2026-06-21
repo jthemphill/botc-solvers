@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Investigator",
+        "Aoife": "Slayer",
+        "Fraser": "Recluse",
+        "Oscar": "Librarian",
+        "Sarah": "Imp",
+        "Steph": "Baron",
+        "Tim": "Saint",
+        "You": "Drunk"
+      }
+    }
+  ]
+}

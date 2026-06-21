@@ -1,0 +1,84 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Drunk",
+        "Fraser": "Washerwoman",
+        "Josh": "Empath",
+        "Olivia": "Poisoner",
+        "Oscar": "Imp",
+        "Steph": "Fortune Teller",
+        "Sula": "Virgin",
+        "You": "Investigator"
+      },
+      "poisoned": {
+        "night_1": ["Josh"],
+        "night_2": ["Steph"]
+      }
+    },
+    {
+      "roles": {
+        "Adam": "Drunk",
+        "Fraser": "Washerwoman",
+        "Josh": "Imp",
+        "Olivia": "Poisoner",
+        "Oscar": "Librarian",
+        "Steph": "Fortune Teller",
+        "Sula": "Virgin",
+        "You": "Investigator"
+      },
+      "poisoned": {
+        "night_1": ["Oscar"],
+        "night_2": ["Steph"]
+      }
+    },
+    {
+      "roles": {
+        "Adam": "Imp",
+        "Fraser": "Washerwoman",
+        "Josh": "Empath",
+        "Olivia": "Poisoner",
+        "Oscar": "Drunk",
+        "Steph": "Fortune Teller",
+        "Sula": "Virgin",
+        "You": "Investigator"
+      },
+      "poisoned": {
+        "night_1": ["Steph"],
+        "night_2": ["Josh"]
+      }
+    },
+    {
+      "roles": {
+        "Adam": "Imp",
+        "Fraser": "Washerwoman",
+        "Josh": "Empath",
+        "Olivia": "Poisoner",
+        "Oscar": "Librarian",
+        "Steph": "Drunk",
+        "Sula": "Virgin",
+        "You": "Investigator"
+      },
+      "poisoned": {
+        "night_1": ["Oscar"],
+        "night_2": ["Josh"]
+      }
+    },
+    {
+      "roles": {
+        "Adam": "Imp",
+        "Fraser": "Washerwoman",
+        "Josh": "Poisoner",
+        "Olivia": "Klutz",
+        "Oscar": "Librarian",
+        "Steph": "Fortune Teller",
+        "Sula": "Virgin",
+        "You": "Investigator"
+      },
+      "poisoned": {
+        "night_1": ["Steph"],
+        "night_2": ["Olivia"]
+      }
+    }
+  ]
+}

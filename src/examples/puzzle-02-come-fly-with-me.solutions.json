@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Clockmaker",
+        "Fraser": "Fortune Teller",
+        "Matthew": "Leviathan",
+        "Sarah": "Goblin",
+        "Steph": "Knight",
+        "Sula": "Balloonist",
+        "Tim": "Saint",
+        "You": "Drunk"
+      }
+    }
+  ]
+}

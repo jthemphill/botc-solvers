@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Investigator",
+        "Dan": "Imp",
+        "Fraser": "Snake Charmer",
+        "Hannah": "Drunk",
+        "Matt": "Saint",
+        "Sula": "Fortune Teller",
+        "Tim": "Baron",
+        "You": "Recluse"
+      }
+    }
+  ]
+}

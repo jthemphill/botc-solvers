@@ -1,0 +1,14 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Ben": "Clockmaker",
+        "Finn": "Drunk",
+        "Louisa": "Spy",
+        "Lydia": "Seamstress",
+        "Owen": "Imp",
+        "Shan": "Artist"
+      }
+    }
+  ]
+}

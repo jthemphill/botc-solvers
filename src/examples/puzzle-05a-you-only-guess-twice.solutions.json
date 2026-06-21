@@ -1,0 +1,26 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Empath",
+        "Dan": "Noble",
+        "Hannah": "Leviathan",
+        "Matt": "Investigator",
+        "Oscar": "Goblin",
+        "Tom": "Knight",
+        "You": "Alsaahir"
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Goblin",
+        "Dan": "Noble",
+        "Hannah": "Steward",
+        "Matt": "Investigator",
+        "Oscar": "Leviathan",
+        "Tom": "Knight",
+        "You": "Alsaahir"
+      }
+    }
+  ]
+}

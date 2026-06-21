@@ -1,0 +1,56 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Chef",
+        "Fraser": "Imp",
+        "Hannah": "Scarlet Woman",
+        "Sarah": "Undertaker",
+        "Steph": "Empath",
+        "Sula": "Washerwoman",
+        "Tom": "Slayer",
+        "You": "Puzzlemaster"
+      },
+      "drunk": ["Steph"]
+    },
+    {
+      "roles": {
+        "Adam": "Chef",
+        "Fraser": "Scarlet Woman",
+        "Hannah": "Imp",
+        "Sarah": "Undertaker",
+        "Steph": "Empath",
+        "Sula": "Washerwoman",
+        "Tom": "Slayer",
+        "You": "Puzzlemaster"
+      },
+      "drunk": ["Steph"]
+    },
+    {
+      "roles": {
+        "Adam": "Chef",
+        "Fraser": "Scarlet Woman",
+        "Hannah": "Investigator",
+        "Sarah": "Undertaker",
+        "Steph": "Empath",
+        "Sula": "Washerwoman",
+        "Tom": "Imp",
+        "You": "Puzzlemaster"
+      },
+      "drunk": ["Steph"]
+    },
+    {
+      "roles": {
+        "Adam": "Imp",
+        "Fraser": "Scarlet Woman",
+        "Hannah": "Investigator",
+        "Sarah": "Undertaker",
+        "Steph": "Empath",
+        "Sula": "Washerwoman",
+        "Tom": "Slayer",
+        "You": "Puzzlemaster"
+      },
+      "drunk": ["Steph"]
+    }
+  ]
+}

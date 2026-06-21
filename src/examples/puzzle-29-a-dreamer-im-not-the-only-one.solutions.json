@@ -1,0 +1,19 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Imp",
+        "Fraser": "Dreamer",
+        "Hannah": "Drunk",
+        "Jasmine": "Poisoner",
+        "Sarah": "Dreamer",
+        "Steph": "Dreamer",
+        "Sula": "Dreamer",
+        "You": "Dreamer"
+      },
+      "poisoned": {
+        "night_1": ["Steph"]
+      }
+    }
+  ]
+}
