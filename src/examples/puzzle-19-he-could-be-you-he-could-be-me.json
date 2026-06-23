@@ -67,15 +67,13 @@
       "type": "Empath",
       "name": "Aoife",
       "timing": "night_1",
-      "count": 0,
-      "neighbors": ["You", "Sula"]
+      "count": 0
     },
     {
       "type": "Empath",
       "name": "Aoife",
       "timing": "night_2",
-      "count": 1,
-      "neighbors": ["Fraser", "Sula"]
+      "count": 1
     },
     {
       "type": "Librarian",

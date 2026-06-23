@@ -44,6 +44,7 @@ import { resolveRoleRef } from "./roleRef";
 import { roleByName } from "../model/roleRegistry";
 
 export type ClaimWithTimelineContext = Claim & {
+  readonly neighbors?: readonly [string, string];
   readonly neighborOptions?: readonly EmpathNeighborOption[];
 };
 
@@ -106,7 +107,6 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
       return new Empath({
         ...base,
         count: claim.count,
-        player: claim.player,
         neighbors: claim.neighbors,
         neighborOptions: claim.neighborOptions,
       });
@@ -117,7 +117,6 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
           left: c.left,
           right: c.right,
           yes: c.yes,
-          demonRole: c.demonRole ? resolveRoleRef(c.demonRole) : undefined,
           timing: timingOf(c.timing),
         })),
       });

@@ -103,21 +103,18 @@
           "left": "Anna",
           "right": "Tim",
           "yes": true,
-          "demonRole": "Lord of Typhon",
           "timing": "night_1"
         },
         {
           "left": "You",
           "right": "Fraser",
           "yes": false,
-          "demonRole": "Lord of Typhon",
           "timing": "night_2"
         },
         {
           "left": "You",
           "right": "Sarah",
           "yes": true,
-          "demonRole": "Lord of Typhon",
           "timing": "night_3"
         }
       ]

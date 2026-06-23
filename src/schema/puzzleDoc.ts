@@ -139,15 +139,12 @@ export interface ChambermaidClaim extends BaseClaim {
 export interface EmpathClaim extends BaseClaim {
   readonly type: "Empath";
   readonly count?: number;
-  readonly player?: string;
-  readonly neighbors?: readonly [string, string];
 }
 
 export interface FortuneTellerCheckDoc {
   readonly left: string;
   readonly right: string;
   readonly yes: boolean;
-  readonly demonRole?: string;
   readonly timing?: string;
 }
 

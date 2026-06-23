@@ -42,7 +42,6 @@
           "left": "You",
           "right": "Fraser",
           "yes": false,
-          "demonRole": "Imp",
           "timing": "night_1"
         }
       ]
@@ -51,15 +50,13 @@
       "type": "Empath",
       "name": "Aoife",
       "timing": "night_1",
-      "count": 0,
-      "neighbors": ["Tom", "Hannah"]
+      "count": 0
     },
     {
       "type": "Empath",
       "name": "Aoife",
       "timing": "night_2",
-      "count": 0,
-      "neighbors": ["Sarah", "Hannah"]
+      "count": 0
     },
     {
       "type": "Legionary",

@@ -88,21 +88,18 @@
           "left": "Tim",
           "right": "Sarah",
           "yes": false,
-          "demonRole": "Leviathan",
           "timing": "night_1"
         },
         {
           "left": "Steph",
           "right": "Aoife",
           "yes": false,
-          "demonRole": "Leviathan",
           "timing": "night_2"
         },
         {
           "left": "Fraser",
           "right": "Olivia",
           "yes": false,
-          "demonRole": "Leviathan",
           "timing": "night_3"
         }
       ]

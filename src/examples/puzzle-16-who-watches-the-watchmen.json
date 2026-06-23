@@ -95,21 +95,18 @@
           "left": "Hannah",
           "right": "Tim",
           "yes": false,
-          "demonRole": "Imp",
           "timing": "night_1"
         },
         {
           "left": "Olivia",
           "right": "Tim",
           "yes": false,
-          "demonRole": "Imp",
           "timing": "night_2"
         },
         {
           "left": "Sarah",
           "right": "Jasmine",
           "yes": false,
-          "demonRole": "Imp",
           "timing": "night_3"
         }
       ]

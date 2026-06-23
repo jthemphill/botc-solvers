@@ -1075,20 +1075,17 @@ export class Empath extends Role {
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
   readonly count?: number;
-  readonly player?: string;
   readonly neighbors?: readonly [string, string];
   readonly neighborOptions?: readonly EmpathNeighborOption[];
   constructor(
     options: RoleBaseOptions & {
       readonly count?: number;
-      readonly player?: string;
       readonly neighbors?: readonly [string, string];
       readonly neighborOptions?: readonly EmpathNeighborOption[];
     },
   ) {
     super(options);
     this.count = options.count;
-    this.player = options.player;
     this.neighbors = options.neighbors;
     this.neighborOptions = options.neighborOptions;
   }
@@ -1125,12 +1122,11 @@ export class Empath extends Role {
   }
   override learnedInfo(game: BOTCModel): BoolLike | undefined {
     if (this.count === undefined) return undefined;
-    const player = this.player ?? this.name;
     const name = claimName(this.name, Empath, "count");
     if (this.neighborOptions !== undefined && this.neighbors === undefined) {
-      return Empath.learnsConditionalCount(game, player, this.count, name, this.neighborOptions);
+      return Empath.learnsConditionalCount(game, this.name, this.count, name, this.neighborOptions);
     }
-    return Empath.learnsCount(game, player, this.count, name, this.neighbors);
+    return Empath.learnsCount(game, this.name, this.count, name, this.neighbors);
   }
 }
 
@@ -1144,7 +1140,6 @@ export interface FortuneTellerCheck {
   readonly right: string;
   readonly yes: boolean;
   readonly name?: string;
-  readonly demonRole?: RoleRef;
   readonly timing?: Timing;
 }
 
@@ -1169,16 +1164,11 @@ export class FortuneTeller extends Role {
       readonly yes: boolean;
       readonly name: string;
       readonly timing: Timing;
-      readonly demonRole?: RoleRef;
       readonly redHerrings?: ReturnType<BOTCModel["addFortuneTellerRedHerring"]>;
     },
   ): BoolVar {
-    const isDemon =
-      options.demonRole === undefined
-        ? (player: string, name: string) =>
-            game.registersAsCharacterTypeAt(player, CharacterType.Demon, options.timing, name)
-        : (player: string, name: string) =>
-            game.registersAsRoleAt(player, options.demonRole as RoleRef, options.timing, name);
+    const isDemon = (player: string, name: string) =>
+      game.registersAsCharacterTypeAt(player, CharacterType.Demon, options.timing, name);
     if (options.redHerrings !== undefined) {
       return options.yes
         ? game.fortuneTellerYes(options.redHerrings, [left, right], options.name, isDemon)
@@ -1204,7 +1194,6 @@ export class FortuneTeller extends Role {
         yes: check.yes,
         name,
         timing: check.timing ?? night(index + 1),
-        demonRole: check.demonRole,
         redHerrings,
       });
       this.applyInfoClaimBuilders(

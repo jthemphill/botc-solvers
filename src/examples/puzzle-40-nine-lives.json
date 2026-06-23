@@ -63,15 +63,13 @@
       "type": "Empath",
       "name": "Tim",
       "timing": "night_1",
-      "count": 2,
-      "neighbors": ["Fraser", "Josh"]
+      "count": 2
     },
     {
       "type": "Empath",
       "name": "Tim",
       "timing": "night_2",
-      "count": 1,
-      "neighbors": ["Adam", "Hannah"]
+      "count": 1
     },
     {
       "type": "Butler",

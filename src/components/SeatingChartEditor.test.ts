@@ -8,16 +8,15 @@ describe("claimSummary", () => {
     );
   });
 
-  test("summarizes timed Empath neighbor pairs", () => {
+  test("summarizes timed Empath counts", () => {
     expect(
       claimSummary({
         type: "Empath",
         name: "Aoife",
         timing: "night_2",
         count: 1,
-        neighbors: ["Adam", "Olivia"],
       }),
-    ).toBe("N2: Adam + Olivia -> 1 evil");
+    ).toBe("N2: 1 evil neighbor");
   });
 
   test("summarizes every Fortune Teller check with timing", () => {

@@ -141,11 +141,7 @@ function empathSummary(claim: Extract<Claim, { readonly type: "Empath" }>): stri
   const timing = claim.timing === undefined ? "" : `${compactTimingLabel(claim.timing)}: `;
   const count = claim.count === undefined ? "unknown" : String(claim.count);
   const evil = `${count} evil`;
-  const neighbors = claim.neighbors?.filter(Boolean) ?? [];
-  if (neighbors.length === 2) return `${timing}${neighbors[0]} + ${neighbors[1]} -> ${evil}`;
-
-  const subject = claim.player ? `${claim.player}: ` : "";
-  return `${timing}${subject}${evil} neighbor${claim.count === 1 ? "" : "s"}`;
+  return `${timing}${evil} neighbor${claim.count === 1 ? "" : "s"}`;
 }
 
 function fortuneTellerSummary(claim: Extract<Claim, { readonly type: "FortuneTeller" }>): string {
