@@ -106,24 +106,18 @@
       "type": "Empath",
       "name": "Hannah",
       "timing": "night_1",
-      "player": "Hannah",
-      "neighbors": ["You", "Dan"],
       "count": 0
     },
     {
       "type": "Empath",
       "name": "Hannah",
       "timing": "night_2",
-      "player": "Hannah",
-      "neighbors": ["Adam", "Matt"],
       "count": 1
     },
     {
       "type": "Empath",
       "name": "Hannah",
       "timing": "night_3",
-      "player": "Hannah",
-      "neighbors": ["Adam", "Fraser"],
       "count": 1
     },
     {

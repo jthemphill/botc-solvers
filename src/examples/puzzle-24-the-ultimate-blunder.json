@@ -58,15 +58,13 @@
       "type": "Empath",
       "name": "Josh",
       "timing": "night_1",
-      "count": 1,
-      "neighbors": ["You", "Adam"]
+      "count": 1
     },
     {
       "type": "Empath",
       "name": "Josh",
       "timing": "night_2",
-      "count": 0,
-      "neighbors": ["Steph", "Adam"]
+      "count": 0
     },
     {
       "type": "Investigator",

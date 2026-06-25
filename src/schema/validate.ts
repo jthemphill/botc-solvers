@@ -214,8 +214,6 @@ function validateClaim(input: unknown, path: string): Claim {
         ...base,
         type: "Empath",
         count: input["count"] === undefined ? undefined : expectNumber(input["count"], `${path}.count`),
-        player: input["player"] as string | undefined,
-        neighbors: input["neighbors"] === undefined ? undefined : validatePair(input["neighbors"], `${path}.neighbors`),
       };
     case "FortuneTeller": {
       const checks = input["checks"];
@@ -229,7 +227,6 @@ function validateClaim(input: unknown, path: string): Claim {
             left: expectString(c["left"], `${path}.checks[${i}].left`),
             right: expectString(c["right"], `${path}.checks[${i}].right`),
             yes: expectBool(c["yes"], `${path}.checks[${i}].yes`),
-            demonRole: c["demonRole"] as string | undefined,
             timing: c["timing"] as string | undefined,
           };
         }),

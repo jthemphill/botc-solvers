@@ -57,9 +57,6 @@ export function claimScriptRoles(claim: Claim): string[] {
     case "Courtier":
       roles.push(claim.role);
       break;
-    case "FortuneTeller":
-      roles.push(...claim.checks.map((check) => check.demonRole));
-      break;
     case "Undertaker":
       roles.push(claim.role);
       break;

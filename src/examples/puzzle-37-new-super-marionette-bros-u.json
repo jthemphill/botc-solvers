@@ -61,14 +61,12 @@
           "left": "You",
           "right": "Jasmine",
           "yes": true,
-          "demonRole": "Imp",
           "timing": "night_1"
         },
         {
           "left": "Jasmine",
           "right": "Sula",
           "yes": false,
-          "demonRole": "Imp",
           "timing": "night_2"
         }
       ]

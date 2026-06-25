@@ -219,32 +219,6 @@ describe("puzzle document reducer", () => {
     expect(next.claims).toEqual([{ type: "Slayer", name: "A", timing: "day_1", target: "Bea", killed: false }]);
   });
 
-  test("renamePlayer updates Empath neighbor overrides", () => {
-    const doc: PuzzleDoc = {
-      version: 1,
-      players: ["A", "B", "C"],
-      script: ["Empath"],
-      claims: [{ type: "Empath", name: "A", timing: "night_1", count: 1, neighbors: ["B", "C"] }],
-    };
-
-    const next = reducer(doc, { type: "renamePlayer", index: 1, name: "Bea" });
-
-    expect(next.claims).toEqual([{ type: "Empath", name: "A", timing: "night_1", count: 1, neighbors: ["Bea", "C"] }]);
-  });
-
-  test("removePlayer clears Empath neighbor overrides that reference the removed player", () => {
-    const doc: PuzzleDoc = {
-      version: 1,
-      players: ["A", "B", "C"],
-      script: ["Empath"],
-      claims: [{ type: "Empath", name: "A", timing: "night_1", count: 1, neighbors: ["B", "C"] }],
-    };
-
-    const next = reducer(doc, { type: "removePlayer", index: 1 });
-
-    expect(next.claims).toEqual([{ type: "Empath", name: "A", timing: "night_1", count: 1, neighbors: undefined }]);
-  });
-
   test("removePlayer removes empty timeline events", () => {
     const doc: PuzzleDoc = {
       version: 1,
@@ -288,36 +262,6 @@ describe("puzzle document reducer", () => {
     });
 
     expect(next.claims).toEqual([{ type: "Knight", name: "A", noDemonAmong: ["A", "B"] }]);
-  });
-
-  test("claims discard legacy registration overrides", () => {
-    const doc: PuzzleDoc = {
-      version: 1,
-      players: ["A", "B", "C"],
-      script: ["Investigator", "Chef", "Fortune Teller"],
-      claims: [
-        { type: "Investigator", name: "A", among: ["B"], registers: false } as unknown as PuzzleDoc["claims"][number],
-        { type: "Chef", name: "B", count: 0, registers: false } as unknown as PuzzleDoc["claims"][number],
-        {
-          type: "FortuneTeller",
-          name: "C",
-          checks: [{ left: "A", right: "B", yes: false, registers: true }],
-        } as unknown as PuzzleDoc["claims"][number],
-      ],
-    };
-
-    const loaded = reducer(doc, { type: "load", doc });
-    const added = reducer(
-      { ...doc, claims: [] },
-      { type: "addClaim", claim: doc.claims[0] as PuzzleDoc["claims"][number] },
-    );
-
-    expect(loaded.claims).toEqual([
-      { type: "Investigator", name: "A", among: ["B"] },
-      { type: "Chef", name: "B", count: 0 },
-      { type: "FortuneTeller", name: "C", checks: [{ left: "A", right: "B", yes: false }] },
-    ]);
-    expect(added.claims).toEqual([{ type: "Investigator", name: "A", among: ["B"] }]);
   });
 
   test("solve action stores current results and ignores stale completions", () => {

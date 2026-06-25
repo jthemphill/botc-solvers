@@ -56,29 +56,6 @@ describe("validatePuzzleDoc", () => {
     ).toThrow("Knight 'noDemonAmong' must have at most 2 players");
   });
 
-  test("drops legacy registration overrides", () => {
-    const doc = validatePuzzleDoc({
-      ...baseDoc,
-      players: ["You", "A", "B"],
-      script: ["Investigator", "Chef", "Fortune Teller"],
-      claims: [
-        { type: "Investigator", name: "You", among: ["A"], registers: false },
-        { type: "Chef", name: "A", count: 0, registers: false },
-        {
-          type: "FortuneTeller",
-          name: "B",
-          checks: [{ left: "You", right: "A", yes: false, registers: true }],
-        },
-      ],
-    });
-
-    expect(doc.claims).toEqual([
-      { type: "Investigator", name: "You", among: ["A"] },
-      { type: "Chef", name: "A", count: 0 },
-      { type: "FortuneTeller", name: "B", checks: [{ left: "You", right: "A", yes: false }] },
-    ]);
-  });
-
   test("accepts Artist custom info statements and forbidden roles", () => {
     const doc = validatePuzzleDoc({
       ...baseDoc,

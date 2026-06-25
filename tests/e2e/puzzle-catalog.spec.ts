@@ -142,7 +142,7 @@ test("formats remaining structured claim summaries with their details", async ({
   await page.getByLabel("Load example puzzle").selectOption("puzzle-31-no-your-other-left");
   await expect(
     page.getByRole("button", {
-      name: /N1: You \+ Tim -> 0 evil; N2: Adam \+ Olivia -> 1 evil; N3: Adam \+ Fraser -> 1 evil/,
+      name: /N1: 0 evil neighbors; N2: 1 evil neighbor; N3: 1 evil neighbor/,
     }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: /N1: Aoife \+ Tim -> no; N2: Aoife \+ Olivia -> no/ })).toBeVisible();

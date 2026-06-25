@@ -112,22 +112,19 @@
       "type": "Empath",
       "name": "Sula",
       "timing": "night_1",
-      "count": 1,
-      "neighbors": ["Olivia", "Dan"]
+      "count": 1
     },
     {
       "type": "Empath",
       "name": "Sula",
       "timing": "night_2",
-      "count": 1,
-      "neighbors": ["Olivia", "Dan"]
+      "count": 1
     },
     {
       "type": "Empath",
       "name": "Sula",
       "timing": "night_3",
-      "count": 0,
-      "neighbors": ["Olivia", "Jasmine"]
+      "count": 0
     }
   ]
 }

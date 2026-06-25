@@ -92,10 +92,7 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
           claim.seamstress === undefined ? undefined : { ...claim.seamstress, among: remapArr(claim.seamstress.among) },
       };
     case "Empath": {
-      const renamed = { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
-      return claim.neighbors === undefined
-        ? renamed
-        : { ...renamed, neighbors: [remap(claim.neighbors[0]), remap(claim.neighbors[1])] };
+      return { ...claim, name };
     }
     case "Undertaker":
       return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
@@ -165,11 +162,7 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
     case "Oracle":
       return { ...claim, deadPlayers: stripArr(claim.deadPlayers) };
     case "Empath":
-      return {
-        ...claim,
-        player: claim.player === name ? undefined : claim.player,
-        neighbors: claim.neighbors?.includes(name) ? undefined : claim.neighbors,
-      };
+      return claim;
     case "Philosopher":
       return claim.seamstress?.among.includes(name) ? { ...claim, seamstress: undefined } : claim;
     case "Steward":
@@ -237,10 +230,15 @@ function normalizeClaim(claim: Claim): Claim {
     claim = {
       ...claimWithoutLegacyRegisters,
       checks: claimWithoutLegacyRegisters.checks.map((check) => {
-        const { registers: _checkRegisters, ...checkWithoutLegacyRegisters } = check as typeof check & {
+        const {
+          registers: _checkRegisters,
+          demonRole: _demonRole,
+          ...checkWithoutLegacyOverrides
+        } = check as typeof check & {
           readonly registers?: boolean;
+          readonly demonRole?: string;
         };
-        return checkWithoutLegacyRegisters;
+        return checkWithoutLegacyOverrides;
       }),
     };
   } else {

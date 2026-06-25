@@ -97,22 +97,19 @@
       "type": "Empath",
       "name": "Aoife",
       "timing": "night_1",
-      "count": 0,
-      "neighbors": ["You", "Tim"]
+      "count": 0
     },
     {
       "type": "Empath",
       "name": "Aoife",
       "timing": "night_2",
-      "count": 1,
-      "neighbors": ["Adam", "Olivia"]
+      "count": 1
     },
     {
       "type": "Empath",
       "name": "Aoife",
       "timing": "night_3",
-      "count": 1,
-      "neighbors": ["Adam", "Fraser"]
+      "count": 1
     },
     {
       "type": "Ravenkeeper",

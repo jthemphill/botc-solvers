@@ -61,14 +61,12 @@
           "left": "Josh",
           "right": "Oscar",
           "yes": false,
-          "demonRole": "Imp",
           "timing": "night_1"
         },
         {
           "left": "Adam",
           "right": "Oscar",
           "yes": false,
-          "demonRole": "Imp",
           "timing": "night_2"
         }
       ]

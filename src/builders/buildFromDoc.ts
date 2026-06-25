@@ -546,15 +546,10 @@ function applyTimelineClaimContext(
       }),
     };
   }
-  if (
-    claim.type !== "Empath" ||
-    claim.count === undefined ||
-    claim.neighbors !== undefined ||
-    claim.timing === undefined
-  ) {
+  if (claim.type !== "Empath" || claim.count === undefined || claim.timing === undefined) {
     return claim;
   }
-  const player = claim.player ?? claim.name;
+  const player = claim.name;
   const timing = claim.timing as Timing;
   const neighborOptions = livingNeighborOptionsAt(game, doc, player, timing, nightDeathTiming);
   if (neighborOptions.length === 1) return { ...claim, neighbors: neighborOptions[0]?.neighbors };

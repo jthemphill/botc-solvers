@@ -51,14 +51,12 @@
           "left": "You",
           "right": "Oscar",
           "yes": false,
-          "demonRole": "Imp",
           "timing": "night_1"
         },
         {
           "left": "You",
           "right": "Jasmine",
           "yes": false,
-          "demonRole": "Imp",
           "timing": "night_2"
         }
       ]
