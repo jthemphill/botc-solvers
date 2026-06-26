@@ -243,7 +243,7 @@ function RoleSelect({
       {allowEmpty && <option value="">—</option>}
       {roles.map((r) => (
         <option key={r} value={r}>
-          {r}
+          {roleEmojiLabel(r)}
         </option>
       ))}
     </select>
