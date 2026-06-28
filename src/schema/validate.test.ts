@@ -87,6 +87,16 @@ describe("validatePuzzleDoc", () => {
     ]);
   });
 
+  test("accepts Widow call flags on claims", () => {
+    const doc = validatePuzzleDoc({
+      ...baseDoc,
+      script: ["Chef", "Widow"],
+      claims: [{ type: "Chef", name: "You", count: 0, heardWidowCall: true }],
+    });
+
+    expect(doc.claims[0]).toEqual({ type: "Chef", name: "You", count: 0, heardWidowCall: true });
+  });
+
   test("rejects custom info expressions on non-Artist claims", () => {
     expect(() =>
       validatePuzzleDoc({

@@ -1269,6 +1269,15 @@ summary {
   align-items: center;
 }
 
+.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  color: var(--muted-ink);
+  font-size: 0.88rem;
+}
+
 .solve-panel {
   border-bottom: 0;
 }

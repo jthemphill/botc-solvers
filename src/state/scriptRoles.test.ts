@@ -8,6 +8,7 @@ describe("script role helpers", () => {
 
     expect(options).toContain("Imp");
     expect(options).toContain("Poisoner");
+    expect(options).toContain("Widow");
     expect(options).toContain("Damsel");
     expect(options).toContain("Drunk");
     expect(options).toContain("Mutant");

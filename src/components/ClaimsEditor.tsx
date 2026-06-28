@@ -1,8 +1,10 @@
 import { Fragment, useId, useState, type Dispatch } from "react";
 import { DslError, lex } from "../dsl/lex";
 import { parse } from "../dsl/parse";
+import { Alignment } from "../model/core";
 import { roleEmojiLabel } from "../model/roleEmoji";
-import { ALL_ROLE_NAMES, jugglerGuessRoleOptions } from "../state/scriptRoles";
+import { ROLE_CLASSES } from "../model/roleRegistry";
+import { ALL_ROLE_NAMES, canonicalRoleName, jugglerGuessRoleOptions } from "../state/scriptRoles";
 import type {
   BalloonistClaim,
   Claim,
@@ -272,6 +274,7 @@ function PlayerSelect({
 }
 
 export function ClaimBody({ doc, claim, onChange }: BodyProps) {
+  const showWidowCall = doc.script.includes("Widow") && isGoodClaimType(claim.type);
   const body = (() => {
     switch (claim.type) {
       case "Investigator":
@@ -335,9 +338,30 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
   return (
     <>
       {body}
+      {showWidowCall && (
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            checked={claim.heardWidowCall === true}
+            onChange={(event) =>
+              onChange({
+                ...claim,
+                heardWidowCall: event.target.checked ? true : undefined,
+              } as Claim)
+            }
+          />
+          <span>Heard the Widow's call</span>
+        </label>
+      )}
       {claim.type === "Artist" && <CustomInfoEditor claim={claim} onChange={onChange} />}
     </>
   );
+}
+
+function isGoodClaimType(type: Claim["type"]): boolean {
+  const role = canonicalRoleName(type);
+  if (role === undefined) return false;
+  return ROLE_CLASSES.get(role)?.alignment === Alignment.Good;
 }
 
 function validateDslExpression(src: string): string | undefined {

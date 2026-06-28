@@ -120,6 +120,9 @@ export class BOTCModel {
   private readonly clauses: Clause[] = [];
   private readonly actual = new Map<string, BoolVar>();
   private readonly poisonedVars = new Map<string, BoolVar>();
+  private readonly activePoisonSourcesByTiming = new Map<string, BoolLike[]>();
+  private readonly poisonSourceTargetsByTimingPlayer = new Map<string, BoolLike[]>();
+  private readonly poisonOverridesByTimingPlayer = new Map<string, BoolLike[]>();
   private readonly drunkVars = new Map<string, BoolVar>();
   private readonly globalDrunkVars = new Map<string, BoolVar>();
   private readonly roleAtVars = new Map<string, BoolVar>();
@@ -417,7 +420,6 @@ export class BOTCModel {
   ): void {
     const poisonTiming = timing;
     this.poisonSourceTimingKeys.add(poisonTiming);
-    const poisoned = this.players.map((player) => this.poisoned(player, timing));
     const poisonerRole = options.poisonerRole ?? "Poisoner";
     const poisonerInPlay = this.roleInPlay(poisonerRole);
     let poisonerActive: BoolVar;
@@ -434,8 +436,43 @@ export class BOTCModel {
         `${poisonTiming}_${roleName(poisonerRole)}_active`,
       );
     }
-    this.addEnforcedExactlyN(poisoned, 1, poisonerActive);
-    this.addEnforcedExactlyN(poisoned, 0, poisonerActive.not());
+    this.addOnePlayerPoisonSource(timing, poisonerActive, slug(roleName(poisonerRole)));
+  }
+
+  addWidowEffect(
+    options: {
+      readonly widowRole?: RoleRef;
+      readonly activeIf?: BoolLike | boolean;
+      readonly timings?: readonly Timing[];
+    } = {},
+  ): void {
+    const widowRole = options.widowRole ?? "Widow";
+    const widowInPlay = this.roleInPlay(widowRole);
+    let widowActive: BoolVar;
+    if (options.activeIf === undefined) {
+      widowActive = widowInPlay;
+    } else if (typeof options.activeIf === "boolean") {
+      widowActive = this.allOf(
+        [widowInPlay, this.constantBool(options.activeIf, `${roleName(widowRole)}_active_if`)],
+        `${roleName(widowRole)}_active`,
+      );
+    } else {
+      widowActive = this.allOf([widowInPlay, options.activeIf], `${roleName(widowRole)}_active`);
+    }
+    if ((options.timings ?? []).length === 0) return;
+    const sourcePoisoned = this.players.map((player) =>
+      this.newBool(`${slug(roleName(widowRole))}_poisons_${slug(player)}`),
+    );
+    this.addEnforcedExactlyN(sourcePoisoned, 1, widowActive);
+    this.addEnforcedExactlyN(sourcePoisoned, 0, widowActive.not());
+    for (const timing of options.timings ?? []) {
+      this.poisonSourceTimingKeys.add(timing);
+      this.poisonTimingKeys.add(timing);
+      this.registerActivePoisonSource(timing, widowActive);
+      for (const [index, player] of this.players.entries()) {
+        this.registerPoisonSourceTarget(player, timing, sourcePoisoned[index] as BoolLike);
+      }
+    }
   }
 
   addXaanEffect(
@@ -460,15 +497,46 @@ export class BOTCModel {
     }
 
     for (const player of this.players) {
-      const poisoned = this.poisoned(player, timing);
-      const townsfolk = this.isTownsfolk(player);
-      this.addImplication(this.allOf([xaanActive, townsfolk], `${poisonTiming}_${player}_xaan_poisoned`), poisoned);
-      this.addImplication(
-        this.allOf([xaanActive, townsfolk.not()], `${poisonTiming}_${player}_xaan_not_townsfolk`),
-        poisoned.not(),
-      );
-      this.addImplication(xaanActive.not(), poisoned.not());
+      const override = this.allOf([xaanActive, this.isTownsfolk(player)], `${poisonTiming}_${player}_xaan_poisoned`);
+      this.registerPoisonOverride(player, poisonTiming, override);
     }
+  }
+
+  private registerActivePoisonSource(timing: string, sourceActive: BoolLike): void {
+    this.activePoisonSourcesByTiming.set(timing, [
+      ...(this.activePoisonSourcesByTiming.get(timing) ?? []),
+      sourceActive,
+    ]);
+  }
+
+  private addOnePlayerPoisonSource(timing: Timing, sourceActive: BoolLike, sourceName: string): void {
+    const poisonTiming = timing;
+    this.registerActivePoisonSource(poisonTiming, sourceActive);
+    const sourcePoisoned = this.players.map((player) =>
+      this.newBool(`${poisonTiming}_${sourceName}_poisons_${slug(player)}`),
+    );
+    this.addEnforcedExactlyN(sourcePoisoned, 1, sourceActive);
+    this.addEnforcedExactlyN(sourcePoisoned, 0, negate(lit(sourceActive)));
+    for (const [index, player] of this.players.entries()) {
+      this.registerPoisonSourceTarget(player, timing, sourcePoisoned[index] as BoolLike);
+    }
+  }
+
+  private registerPoisonSourceTarget(player: string, timing: string, target: BoolLike): void {
+    const timingArg = timing === DEFAULT_TIMING_KEY ? undefined : (timing as Timing);
+    this.addImplication(target, this.poisoned(player, timingArg));
+    const key = this.timingPlayerKey(timing, player);
+    this.poisonSourceTargetsByTimingPlayer.set(key, [
+      ...(this.poisonSourceTargetsByTimingPlayer.get(key) ?? []),
+      target,
+    ]);
+  }
+
+  private registerPoisonOverride(player: string, timing: string, override: BoolLike): void {
+    const timingArg = timing === DEFAULT_TIMING_KEY ? undefined : (timing as Timing);
+    this.addImplication(override, this.poisoned(player, timingArg));
+    const key = this.timingPlayerKey(timing, player);
+    this.poisonOverridesByTimingPlayer.set(key, [...(this.poisonOverridesByTimingPlayer.get(key) ?? []), override]);
   }
 
   allowPoisonAt(timing?: Timing): void {
@@ -1234,16 +1302,13 @@ export class BOTCModel {
   }
 
   private applyDefaultSoberConstraints(): void {
+    this.applyDefaultPoisonCapacityConstraints();
     for (const [key, poisoned] of this.poisonedVars.entries()) {
       const [timing] = key.split("\u0000") as [string | undefined, string | undefined];
       const defaultKey = `poison:${key}`;
-      if (
-        timing === undefined ||
-        this.poisonSourceTimingKeys.has(timing) ||
-        this.explicitPoisonedTrue.has(key) ||
-        this.defaultSoberConstraints.has(defaultKey)
-      )
-        continue;
+      if (timing === undefined || this.defaultSoberConstraints.has(defaultKey)) continue;
+      if (this.poisonSourceTimingKeys.has(timing)) continue;
+      if (this.explicitPoisonedTrue.has(key)) continue;
       this.addFalse(poisoned);
       this.defaultSoberConstraints.add(defaultKey);
     }
@@ -1266,6 +1331,55 @@ export class BOTCModel {
       if (this.defaultSoberConstraints.has(key)) continue;
       this.addFalse(drunk);
       this.defaultSoberConstraints.add(key);
+    }
+  }
+
+  private applyDefaultPoisonCapacityConstraints(): void {
+    const overrideTimings = [...this.poisonOverridesByTimingPlayer.keys()].map(
+      (key) => key.split("\u0000")[0] as string,
+    );
+    const targetTimings = [...this.poisonSourceTargetsByTimingPlayer.keys()].map(
+      (key) => key.split("\u0000")[0] as string,
+    );
+    const timings = new Set([...this.activePoisonSourcesByTiming.keys(), ...overrideTimings, ...targetTimings]);
+    for (const timing of timings) {
+      const key = `poison_capacity:${timing}`;
+      if (this.defaultSoberConstraints.has(key)) continue;
+      const activeSources = this.activePoisonSourcesByTiming.get(timing) ?? [];
+      const timingArg = timing === DEFAULT_TIMING_KEY ? undefined : (timing as Timing);
+      const cappedPoisonedPlayers = this.players.map((player) => {
+        const poisoned = this.poisoned(player, timingArg);
+        const overrides = this.poisonOverridesByTimingPlayer.get(this.timingPlayerKey(timing, player)) ?? [];
+        if (overrides.length === 0) return poisoned;
+        const overridden = this.anyOf(overrides, `${timing}_${player}_poison_capacity_override`);
+        return this.allOf([poisoned, overridden.not()], `${timing}_${player}_capacity_counted_poison`);
+      });
+      for (const player of this.players) {
+        const poisoned = this.poisoned(player, timingArg);
+        const sourceTargets = this.poisonSourceTargetsByTimingPlayer.get(this.timingPlayerKey(timing, player)) ?? [];
+        const overrides = this.poisonOverridesByTimingPlayer.get(this.timingPlayerKey(timing, player)) ?? [];
+        if (sourceTargets.length === 0 && overrides.length === 0) continue;
+        this.addImplication(
+          poisoned,
+          this.anyOf([...sourceTargets, ...overrides], `${timing}_${player}_poison_source_or_override`),
+        );
+      }
+      this.addCountAtMostCount(cappedPoisonedPlayers, activeSources);
+      this.defaultSoberConstraints.add(key);
+    }
+  }
+
+  private addCountAtMostCount(leftValues: readonly BoolLike[], rightValues: readonly BoolLike[]): void {
+    const leftLiterals = leftValues.map(lit);
+    const rightLiterals = rightValues.map(lit);
+    const maxLeftSubsetSize = Math.min(leftLiterals.length, rightLiterals.length + 1);
+    for (let leftSubsetSize = 1; leftSubsetSize <= maxLeftSubsetSize; leftSubsetSize += 1) {
+      const falseRightSubsetSize = rightLiterals.length - leftSubsetSize + 1;
+      for (const leftSubset of combinations(leftLiterals, leftSubsetSize)) {
+        for (const falseRightSubset of combinations(rightLiterals, falseRightSubsetSize)) {
+          this.addClause([...leftSubset.map(negate), ...falseRightSubset]);
+        }
+      }
     }
   }
 }

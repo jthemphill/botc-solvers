@@ -43,6 +43,8 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
   if (doc.setup !== "atheist") {
     applyPoisonerSources(game, doc);
     applyXaanSources(game, doc);
+    applyWidowSources(game, doc);
+    applyWidowCallClaims(game, doc);
     applyPuzzlemasterSources(game, doc);
     applyVillageIdiotSources(game, doc);
   }
@@ -626,6 +628,31 @@ function applyXaanSources(game: BOTCModel, doc: PuzzleDoc): void {
       activeIf: game.outsiderCountIs(count, { name: `xaan_${count}_outsiders` }),
     });
   }
+}
+
+function applyWidowSources(game: BOTCModel, doc: PuzzleDoc): void {
+  if (!doc.script.includes("Widow")) return;
+  const timings = [...game.poisonTimingKeys].filter((timing): timing is Timing => timing !== "default");
+  game.addWidowEffect({ timings, activeIf: roleAliveAt(game, doc, "Widow", "night_1") });
+}
+
+function applyWidowCallClaims(game: BOTCModel, doc: PuzzleDoc): void {
+  const heardCallClaims = doc.claims.filter((claim) => claim.heardWidowCall === true);
+  for (const claim of doc.claims) {
+    if (claim.heardWidowCall !== true) continue;
+    const widowInPlay = doc.script.includes("Widow")
+      ? game.roleInPlay("Widow")
+      : game.constantBool(false, `${slug(claim.name)}_heard_widow_without_widow_on_script`);
+    game.addImplication(game.isGood(claim.name), widowInPlay);
+  }
+  if (!doc.script.includes("Widow")) return;
+  game.addImplication(
+    game.roleInPlay("Widow"),
+    game.anyOf(
+      heardCallClaims.map((claim) => game.isGood(claim.name)),
+      "good_player_heard_widow_call",
+    ),
+  );
 }
 
 function applyPuzzlemasterSources(game: BOTCModel, doc: PuzzleDoc): void {
