@@ -17,16 +17,14 @@ export function claimSummary(claim: Claim): string {
       return empathSummary(claim);
     case "Investigator": {
       const role = claim.role ?? claim.minionRole ?? "a Minion";
-      const subject =
-        claim.among.length === 2 ? `Either ${claim.among[0]} or ${claim.among[1]}` : formatList(claim.among);
-      return `${subject} is ${rolePhrase(role, "a Minion")}.`;
+      return `${formatList(claim.among)} is ${rolePhrase(role, "a Minion")}.`;
     }
     case "Librarian":
       return claim.outsiderCount !== undefined
         ? `${claim.outsiderCount} Outsider${claim.outsiderCount === 1 ? "" : "s"}`
-        : `${formatList(claim.among ?? [])} could be ${claim.role || "an Outsider"}`;
+        : `${formatList(claim.among ?? [])} is ${rolePhrase(claim.role, "an Outsider")}.`;
     case "Washerwoman":
-      return `${formatList(claim.among)} could be ${claim.role || "a Townsfolk"}`;
+      return `${formatList(claim.among)} is ${rolePhrase(claim.role, "a Townsfolk")}.`;
     case "FortuneTeller":
       return fortuneTellerSummary(claim);
     case "Undertaker":

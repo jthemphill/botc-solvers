@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "title": "Puzzle 15 - Wake Up And Choose Violets",
   "players": ["Fraser", "Aoife", "Adam", "Jasmine", "You", "Oscar", "Sarah", "Hannah"],
   "script": [
@@ -51,20 +50,41 @@
     {
       "type": "Snake Charmer",
       "name": "Jasmine",
-      "checks": [{ "player": "Fraser", "demon": false, "timing": "night_1" }],
-      "evilTwin": { "player": "Hannah", "timing": "night_1" },
+      "checks": [
+        {
+          "player": "Fraser",
+          "demon": false,
+          "timing": "night_1"
+        }
+      ],
+      "evilTwin": {
+        "player": "Hannah",
+        "timing": "night_1"
+      },
       "extraPossibleActualRoles": ["Mutant"]
     },
     {
       "type": "Snake Charmer",
       "name": "Jasmine",
-      "checks": [{ "player": "Aoife", "demon": false, "timing": "night_2" }],
+      "checks": [
+        {
+          "player": "Aoife",
+          "demon": false,
+          "timing": "night_2"
+        }
+      ],
       "extraPossibleActualRoles": ["Mutant"]
     },
     {
       "type": "Snake Charmer",
       "name": "Jasmine",
-      "checks": [{ "player": "Adam", "demon": false, "timing": "night_3" }],
+      "checks": [
+        {
+          "player": "Adam",
+          "demon": false,
+          "timing": "night_3"
+        }
+      ],
       "extraPossibleActualRoles": ["Mutant"]
     },
     {
@@ -104,20 +124,41 @@
     {
       "type": "Snake Charmer",
       "name": "Hannah",
-      "checks": [{ "player": "Sarah", "demon": false, "timing": "night_1" }],
-      "evilTwin": { "player": "Jasmine", "timing": "night_1" },
+      "checks": [
+        {
+          "player": "Sarah",
+          "demon": false,
+          "timing": "night_1"
+        }
+      ],
+      "evilTwin": {
+        "player": "Jasmine",
+        "timing": "night_1"
+      },
       "extraPossibleActualRoles": ["Mutant"]
     },
     {
       "type": "Snake Charmer",
       "name": "Hannah",
-      "checks": [{ "player": "Oscar", "demon": false, "timing": "night_2" }],
+      "checks": [
+        {
+          "player": "Oscar",
+          "demon": false,
+          "timing": "night_2"
+        }
+      ],
       "extraPossibleActualRoles": ["Mutant"]
     },
     {
       "type": "Snake Charmer",
       "name": "Hannah",
-      "checks": [{ "player": "Aoife", "demon": false, "timing": "night_3" }],
+      "checks": [
+        {
+          "player": "Aoife",
+          "demon": false,
+          "timing": "night_3"
+        }
+      ],
       "extraPossibleActualRoles": ["Mutant"]
     }
   ]

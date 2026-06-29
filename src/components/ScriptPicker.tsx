@@ -4,7 +4,7 @@ import { ROLE_CLASSES } from "../model/roleRegistry";
 import { roleEmoji } from "../model/roleEmoji";
 import type { PuzzleDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
-import { canonicalRoleName, hiddenScriptRoleOptions, protectedScriptRoles } from "../state/scriptRoles";
+import { ALL_ROLE_NAMES, canonicalRoleName, protectedScriptRoles } from "../state/scriptRoles";
 
 interface Props {
   doc: PuzzleDoc;
@@ -22,18 +22,18 @@ export function ScriptPicker({ doc, dispatch }: Props) {
   const [search, setSearch] = useState("");
   const selected = new Set(doc.script);
   const protectedRoles = new Set(protectedScriptRoles(doc));
-  const hiddenRoles = useMemo(() => hiddenScriptRoleOptions(), []);
-  const hiddenRoleSet = useMemo(() => new Set(hiddenRoles), [hiddenRoles]);
+  const roleOptions = useMemo(() => ALL_ROLE_NAMES, []);
+  const roleOptionSet = useMemo(() => new Set(roleOptions), [roleOptions]);
   const query = search.trim();
   const normalizedQuery = query.toLowerCase();
-  const selectedHiddenRoles = hiddenRoles.filter((name) => selected.has(name));
+  const selectedRoles = roleOptions.filter((name) => selected.has(name));
   const matchingRoles =
     normalizedQuery === ""
       ? []
-      : hiddenRoles.filter((name) => !selected.has(name) && name.toLowerCase().includes(normalizedQuery)).slice(0, 8);
+      : roleOptions.filter((name) => !selected.has(name) && name.toLowerCase().includes(normalizedQuery)).slice(0, 8);
   const exactRole = canonicalRoleName(query);
   const addableRole =
-    exactRole !== undefined && hiddenRoleSet.has(exactRole) && !selected.has(exactRole) ? exactRole : undefined;
+    exactRole !== undefined && roleOptionSet.has(exactRole) && !selected.has(exactRole) ? exactRole : undefined;
 
   const setRole = (name: string, on: boolean) => {
     if (selected.has(name) === on) return;
@@ -63,22 +63,54 @@ export function ScriptPicker({ doc, dispatch }: Props) {
       <header className="panel-heading-row">
         <div>
           <h3>Script</h3>
-          <span>{selectedHiddenRoles.length} hidden roles selected</span>
+          <span>{selectedRoles.length} roles selected</span>
         </div>
       </header>
+
+      <div className="script-rules-grid">
+        <label>
+          <span>Setup</span>
+          <select
+            value={doc.setup ?? "standard"}
+            onChange={(event) =>
+              dispatch({
+                type: "setSetup",
+                setup: event.target.value === "standard" ? undefined : (event.target.value as PuzzleDoc["setup"]),
+              })
+            }
+          >
+            <option value="standard">Standard</option>
+            <option value="none">No setup</option>
+            <option value="atheist">Atheist</option>
+          </select>
+        </label>
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            checked={doc.uniqueCharacters !== false}
+            onChange={(event) =>
+              dispatch({
+                type: "setUniqueCharacters",
+                uniqueCharacters: event.target.checked ? undefined : false,
+              })
+            }
+          />
+          <span>Unique characters</span>
+        </label>
+      </div>
 
       <div className="hidden-role-search">
         <input
           type="text"
-          list="hidden-role-options"
+          list="role-options"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           onKeyDown={onSearchKeyDown}
-          placeholder="Search hidden roles"
-          aria-label="Search hidden roles"
+          placeholder="Search roles"
+          aria-label="Search roles"
         />
-        <datalist id="hidden-role-options">
-          {hiddenRoles
+        <datalist id="role-options">
+          {roleOptions
             .filter((name) => !selected.has(name))
             .map((name) => (
               <option key={name} value={name} />
@@ -105,7 +137,7 @@ export function ScriptPicker({ doc, dispatch }: Props) {
       )}
 
       <div className="role-palette script-role-palette">
-        {selectedHiddenRoles.map((name) => {
+        {selectedRoles.map((name) => {
           const locked = protectedRoles.has(name);
           const type = ROLE_CLASSES.get(name)?.characterType;
           return (
@@ -123,7 +155,7 @@ export function ScriptPicker({ doc, dispatch }: Props) {
             </button>
           );
         })}
-        {selectedHiddenRoles.length === 0 && <p className="palette-empty">No hidden roles selected.</p>}
+        {selectedRoles.length === 0 && <p className="palette-empty">No roles selected.</p>}
       </div>
     </section>
   );

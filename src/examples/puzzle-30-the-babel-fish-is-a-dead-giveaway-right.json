@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "title": "Puzzle 30 - The Babel Fish Is A Dead Giveaway (right game)",
   "players": ["Ben", "Owen", "Lydia", "Finn", "Louisa", "Shan"],
   "script": ["Imp", "Spy", "Drunk", "Artist", "Atheist", "Clockmaker", "Knight", "Noble", "Seamstress"],
@@ -60,7 +59,12 @@
       "type": "Artist",
       "name": "Shan",
       "timing": "day_1",
-      "info": [{ "timing": "day_1", "expression": "registers_as(Louisa, Drunk)" }]
+      "info": [
+        {
+          "timing": "day_1",
+          "expression": "registers_as(Louisa, Drunk)"
+        }
+      ]
     }
   ]
 }

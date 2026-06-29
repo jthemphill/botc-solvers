@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "title": "Puzzle 39 - Squid Game",
   "players": ["Fraser", "Tom", "Sula", "Hannah", "You", "Jasmine", "Matt", "Aoife"],
   "script": [
@@ -70,8 +69,14 @@
       "type": "Mathematician",
       "name": "Sula",
       "malfunctions": [
-        { "timing": "night_1", "count": 0 },
-        { "timing": "night_2", "count": 1 }
+        {
+          "timing": "night_1",
+          "count": 0
+        },
+        {
+          "timing": "night_2",
+          "count": 1
+        }
       ]
     },
     {

@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "title": "Puzzle 18 - X And The City",
   "players": ["Aoife", "Tim", "Olivia", "Sarah", "You", "Steph", "Fraser", "Dan"],
   "script": [
@@ -68,17 +67,35 @@
     {
       "type": "Snake Charmer",
       "name": "Fraser",
-      "checks": [{ "player": "Olivia", "demon": false, "timing": "night_1" }]
+      "checks": [
+        {
+          "player": "Olivia",
+          "demon": false,
+          "timing": "night_1"
+        }
+      ]
     },
     {
       "type": "Snake Charmer",
       "name": "Fraser",
-      "checks": [{ "player": "Steph", "demon": false, "timing": "night_2" }]
+      "checks": [
+        {
+          "player": "Steph",
+          "demon": false,
+          "timing": "night_2"
+        }
+      ]
     },
     {
       "type": "Snake Charmer",
       "name": "Fraser",
-      "checks": [{ "player": "Aoife", "demon": false, "timing": "night_3" }]
+      "checks": [
+        {
+          "player": "Aoife",
+          "demon": false,
+          "timing": "night_3"
+        }
+      ]
     },
     {
       "type": "FortuneTeller",

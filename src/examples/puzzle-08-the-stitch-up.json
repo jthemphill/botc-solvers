@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "title": "Puzzle 8 - The Stitch Up",
   "players": ["Anna", "Tim", "Matthew", "Fraser", "You", "Josh", "Steph"],
   "script": ["Imp", "Poisoner", "Drunk", "Seamstress"],

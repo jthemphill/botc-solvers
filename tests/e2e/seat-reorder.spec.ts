@@ -32,6 +32,18 @@ test("renames a seat inline after double-clicking it", async ({ page }) => {
   await expect(page.locator(".selected-player-panel")).toHaveCount(0);
 });
 
+test("player count input does not retain a leading zero", async ({ page }) => {
+  await page.goto("/");
+
+  const countInput = page.getByLabel("Players");
+  await countInput.fill("");
+  await countInput.press("0");
+  await countInput.press("9");
+
+  await expect(countInput).toHaveValue("9");
+  await expect(page.locator(".seat-button")).toHaveCount(9);
+});
+
 test("removes a seat by dragging it to the trash zone", async ({ page }) => {
   await page.goto("/");
 

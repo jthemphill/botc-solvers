@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "title": "Puzzle 27 - Is This A Legion Game",
   "players": ["Sarah", "Tom", "Aoife", "Hannah", "You", "Fraser", "Adam"],
   "script": ["Imp", "Poisoner", "Empath", "Fortune Teller", "Investigator", "Legionary", "Washerwoman"],

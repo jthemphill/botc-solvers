@@ -32,7 +32,6 @@ export function ResultsView({ worlds, players, error }: Props) {
         <article key={i} className="solution-card">
           <header>
             <strong>Solution {i + 1}</strong>
-            <span>100%</span>
           </header>
           <div className="solution-strip">
             {players.map((player) => {

@@ -1,15 +1,19 @@
 {
-  "version": 1,
   "title": "Puzzle 1 — Sober Savant",
   "players": ["Oscar", "Matt", "Anna", "You", "Tim", "Sula"],
   "script": ["Imp", "Scarlet Woman", "Drunk", "Investigator", "Knight", "Noble", "Savant", "Seamstress", "Steward"],
-  "fixedRoles": [{ "name": "You", "roles": ["Savant"] }],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Savant"]
+    }
+  ],
   "claims": [
     {
       "type": "Investigator",
       "name": "Oscar",
-      "minionRole": "Scarlet Woman",
-      "among": ["Anna", "Sula"]
+      "among": ["Anna", "Sula"],
+      "role": "Scarlet Woman"
     },
     {
       "type": "Noble",

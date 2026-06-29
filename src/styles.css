@@ -204,6 +204,23 @@ summary {
   font-size: 0.82rem;
 }
 
+.script-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.script-rules-grid label {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.script-rules-grid .checkbox-row {
+  display: inline-flex;
+  margin-top: 0;
+}
+
 .primary-action {
   border-color: #0f0c09;
   background: #191512;
@@ -1193,6 +1210,60 @@ summary {
 .field-grid input[type="number"],
 .field-grid select {
   width: 100%;
+}
+
+.claim-footer-fields {
+  margin-top: 0.55rem;
+}
+
+.advanced-claim-fields {
+  border-top: 1px solid var(--paper-soft-line);
+  padding-top: 0.55rem;
+}
+
+.advanced-claim-fields summary {
+  color: var(--muted-ink);
+  font-size: 0.86rem;
+}
+
+.advanced-claim-fields .field-grid {
+  margin-top: 0.55rem;
+}
+
+.role-list-editor {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.role-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-height: 2.1rem;
+  align-items: center;
+}
+
+.role-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.22rem 0.5rem;
+  border-color: rgba(14, 119, 169, 0.26);
+  background: rgba(14, 119, 169, 0.08);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.role-chip span {
+  color: var(--muted-ink);
+  font-weight: 900;
+}
+
+.role-chip-empty {
+  color: var(--muted-ink);
+  font-size: 0.84rem;
 }
 
 .radio-tile-group {

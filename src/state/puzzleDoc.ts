@@ -17,6 +17,8 @@ export type PuzzleDocAction =
   | { type: "renamePlayer"; index: number; name: string }
   | { type: "movePlayer"; index: number; direction: "up" | "down" }
   | { type: "movePlayerTo"; fromIndex: number; toIndex: number }
+  | { type: "setSetup"; setup: PuzzleDoc["setup"] }
+  | { type: "setUniqueCharacters"; uniqueCharacters: PuzzleDoc["uniqueCharacters"] }
   | { type: "setScript"; script: readonly string[] }
   | { type: "setFixedRoles"; fixedRoles: PuzzleDoc["fixedRoles"] }
   | { type: "setForbiddenRoles"; forbiddenRoles: PuzzleDoc["forbiddenRoles"] }
@@ -34,7 +36,6 @@ export type SolveAction =
 export type PuzzleAction = PuzzleDocAction | SolveAction;
 
 export const initialDoc: PuzzleDoc = {
-  version: 1,
   title: "Untitled puzzle",
   players: ["Player 1", "Player 2", "Player 3", "Player 4", "Player 5", "Player 6", "Player 7"],
   script: [],
@@ -339,6 +340,20 @@ function normalizeClaim(claim: Claim): Claim {
   if (claim.type === "Knight" && claim.noDemonAmong.length > KNIGHT_NO_DEMON_AMONG_MAX) {
     return { ...claim, noDemonAmong: claim.noDemonAmong.slice(0, KNIGHT_NO_DEMON_AMONG_MAX) };
   }
+  if (claim.type === "Investigator") {
+    const { minionRole, ...investigatorClaim } = claim;
+    return {
+      ...investigatorClaim,
+      role: investigatorClaim.role ?? minionRole,
+      among: investigatorClaim.among.slice(0, 2),
+    };
+  }
+  if (claim.type === "Librarian" && claim.among !== undefined && claim.among.length > 2) {
+    return { ...claim, among: claim.among.slice(0, 2) };
+  }
+  if (claim.type === "Washerwoman" && claim.among.length > 2) {
+    return { ...claim, among: claim.among.slice(0, 2) };
+  }
   if (claim.type === "Slayer") {
     const { gameContinued: _gameContinued, ...slayerClaim } = claim;
     return slayerClaim;
@@ -462,6 +477,10 @@ export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc
       players.splice(toIndex, 0, player);
       return { ...state, players };
     }
+    case "setSetup":
+      return { ...state, setup: action.setup };
+    case "setUniqueCharacters":
+      return { ...state, uniqueCharacters: action.uniqueCharacters };
     case "setScript": {
       const script = scriptWithProtectedRoles(action.script, state);
       return { ...state, script };

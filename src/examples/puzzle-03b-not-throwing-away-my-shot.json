@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "title": "Puzzle 3b - Not Throwing Away My Shot",
   "players": ["Dan", "Anna", "Matt", "Fraser", "You", "Tim", "Sarah", "Hannah"],
   "script": [
@@ -51,8 +50,7 @@
       "name": "You",
       "timing": "day_1",
       "target": "Anna",
-      "killed": true,
-      "gameContinued": true
+      "killed": true
     },
     {
       "type": "Librarian",

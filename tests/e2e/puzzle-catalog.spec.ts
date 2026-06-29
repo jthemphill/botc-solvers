@@ -41,6 +41,7 @@ test("loads puzzle 34 with structured role clues", async ({ page }) => {
 
   await expect(page.getByText("Satisfying worlds:")).toBeVisible();
   await expect(page.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(page.locator(".solve-panel").getByText("100%")).toHaveCount(0);
   const sula = page.getByLabel("Sula: Vortox, claimed Clockmaker");
   await expect(sula).toBeVisible();
   await expect(sula).toContainText("Vortox");

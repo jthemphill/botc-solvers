@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "title": "Puzzle 34 - The Vortox Conjecture",
   "players": ["Sula", "Sarah", "Josh", "Aoife", "You", "Fraser", "Steph"],
   "script": [
@@ -14,11 +13,28 @@
     "Seamstress",
     "Snake Charmer"
   ],
-  "fixedRoles": [{ "name": "You", "roles": ["Mathematician"] }],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Mathematician"]
+    }
+  ],
   "timeline": [
-    { "timing": "day_1", "type": "witchCurse", "players": ["Steph"] },
-    { "timing": "day_1", "type": "execution", "players": ["Aoife"] },
-    { "timing": "night_2", "type": "nightDeath", "players": ["Fraser"] }
+    {
+      "timing": "day_1",
+      "type": "witchCurse",
+      "players": ["Steph"]
+    },
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Aoife"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Fraser"]
+    }
   ],
   "claims": [
     {
@@ -37,20 +53,35 @@
       "type": "Juggler",
       "name": "Josh",
       "timing": "night_2",
-      "guesses": { "Steph": "Artist", "Sula": "Clockmaker" },
+      "guesses": {
+        "Steph": "Artist",
+        "Sula": "Clockmaker"
+      },
       "correctCount": 0
     },
     {
       "type": "Snake Charmer",
       "name": "Aoife",
-      "checks": [{ "player": "Josh", "demon": false, "timing": "night_1" }]
+      "checks": [
+        {
+          "player": "Josh",
+          "demon": false,
+          "timing": "night_1"
+        }
+      ]
     },
     {
       "type": "Mathematician",
       "name": "You",
       "malfunctions": [
-        { "timing": "night_1", "count": 1 },
-        { "timing": "night_2", "count": 0 }
+        {
+          "timing": "night_1",
+          "count": 1
+        },
+        {
+          "timing": "night_2",
+          "count": 0
+        }
       ]
     },
     {
