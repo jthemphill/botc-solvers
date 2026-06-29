@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "title": "Puzzle 30 - The Babel Fish Is A Dead Giveaway (left game)",
   "players": ["Sarah", "Max", "Erika", "Lav", "Oli", "Callum"],
   "script": ["Imp", "Spy", "Drunk", "Artist", "Atheist", "Clockmaker", "Knight", "Noble", "Seamstress"],
@@ -42,7 +41,12 @@
       "type": "Artist",
       "name": "Max",
       "timing": "day_1",
-      "info": [{ "timing": "day_1", "expression": "Erika.role == Drunk" }]
+      "info": [
+        {
+          "timing": "day_1",
+          "expression": "Erika.role == Drunk"
+        }
+      ]
     },
     {
       "type": "Noble",

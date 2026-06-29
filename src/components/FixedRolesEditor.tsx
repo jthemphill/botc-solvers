@@ -1,6 +1,7 @@
 import type { Dispatch } from "react";
 import type { FixedRoleConstraint, ForbiddenRoleConstraint, PuzzleDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
+import { RoleListEditor, sortedRoleNames } from "./RolePicker";
 
 interface Props {
   doc: PuzzleDoc;
@@ -27,7 +28,7 @@ export function FixedRolesEditor({ doc, dispatch }: Props) {
         constraints={fixedRoles}
         roleLabel="Possible roles"
         addLabel="+ Add fixed role"
-        emptyRole={doc.script[0] === undefined ? [] : [doc.script[0]]}
+        emptyRole={[]}
         setConstraints={setFixedRoles}
       />
       <RoleConstraintList
@@ -75,15 +76,9 @@ function RoleConstraintList<T extends FixedRoleConstraint | ForbiddenRoleConstra
     setConstraints(constraints.filter((_, i) => i !== index));
   };
 
-  const toggleRole = (fixedRole: FixedRoleConstraint, role: string, checked: boolean): FixedRoleConstraint => ({
-    ...fixedRole,
-    roles: checked ? [...fixedRole.roles, role] : fixedRole.roles.filter((existing) => existing !== role),
-  });
-
   return (
     <>
       {constraints.map((fixedRole, index) => {
-        const selected = new Set(fixedRole.roles);
         return (
           <div key={`${roleLabel}-${index}`} className="claim-block">
             <header>
@@ -106,18 +101,12 @@ function RoleConstraintList<T extends FixedRoleConstraint | ForbiddenRoleConstra
                 ))}
               </select>
               <span>{roleLabel}</span>
-              <div className="script-grid">
-                {doc.script.map((role) => (
-                  <label key={role}>
-                    <input
-                      type="checkbox"
-                      checked={selected.has(role)}
-                      onChange={(e) => updateFixedRole(index, toggleRole(fixedRole, role, e.target.checked))}
-                    />
-                    {role}
-                  </label>
-                ))}
-              </div>
+              <RoleListEditor
+                value={fixedRole.roles}
+                onChange={(roles) => updateFixedRole(index, { ...fixedRole, roles })}
+                options={sortedRoleNames(doc.script)}
+                label={roleLabel}
+              />
             </div>
           </div>
         );

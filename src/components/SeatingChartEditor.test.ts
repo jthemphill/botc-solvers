@@ -31,4 +31,16 @@ describe("claimSummary", () => {
       }),
     ).toBe("N1: Aoife + Tim -> no; N2: Aoife + Olivia -> no");
   });
+
+  test("uses consistent role-info wording for top-three claims", () => {
+    expect(claimSummary({ type: "Investigator", name: "You", role: "Poisoner", among: ["A", "B"] })).toBe(
+      "A or B is the Poisoner.",
+    );
+    expect(claimSummary({ type: "Washerwoman", name: "You", role: "Chef", among: ["A", "B"] })).toBe(
+      "A or B is the Chef.",
+    );
+    expect(claimSummary({ type: "Librarian", name: "You", role: "Drunk", among: ["A", "B"] })).toBe(
+      "A or B is the Drunk.",
+    );
+  });
 });

@@ -1,12 +1,14 @@
 import { Fragment, useId, useState, type Dispatch } from "react";
 import { DslError, lex } from "../dsl/lex";
 import { parse } from "../dsl/parse";
-import { Alignment } from "../model/core";
+import { Alignment, CharacterType } from "../model/core";
 import { roleEmojiLabel } from "../model/roleEmoji";
 import { ROLE_CLASSES } from "../model/roleRegistry";
-import { ALL_ROLE_NAMES, canonicalRoleName, jugglerGuessRoleOptions } from "../state/scriptRoles";
+import { canonicalRoleName, jugglerGuessRoleOptions } from "../state/scriptRoles";
 import type {
+  AcrobatChoiceDoc,
   BalloonistClaim,
+  ChambermaidCheckDoc,
   Claim,
   ClockmakerClaim,
   CourtierClaim,
@@ -16,14 +18,22 @@ import type {
   EmpathClaim,
   FortuneTellerCheckDoc,
   FortuneTellerClaim,
+  GamblerGuessDoc,
+  GossipStatementDoc,
   InvestigatorClaim,
   JugglerClaim,
+  KlutzClaim,
+  LegionaryCountDoc,
+  LegionaryClaim,
   KnightClaim,
   LibrarianClaim,
   MathematicianClaim,
+  NightwatchmanClaim,
   NobleClaim,
+  OracleClaim,
   PhilosopherClaim,
   PuzzleDoc,
+  RavenkeeperClaim,
   SageClaim,
   SavantClaim,
   SeamstressClaim,
@@ -32,11 +42,13 @@ import type {
   SnakeCharmerClaim,
   StewardClaim,
   UndertakerClaim,
+  VirginClaim,
   VillageIdiotClaim,
   WasherwomanClaim,
 } from "../schema/puzzleDoc";
 import { KNIGHT_NO_DEMON_AMONG_MAX, SUPPORTED_CLAIM_TYPES } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
+import { RoleListEditor, RoleTypeahead, sortedRoleNames } from "./RolePicker";
 
 interface Props {
   doc: PuzzleDoc;
@@ -106,22 +118,30 @@ export function ClaimsEditor({ doc, dispatch }: Props) {
 
 export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
   switch (type) {
+    case "Acrobat":
+      return { type: "Acrobat", name, choices: [] };
     case "Investigator":
       return { type: "Investigator", name, among: [] };
     case "Librarian":
       return { type: "Librarian", name };
     case "Washerwoman":
-      return { type: "Washerwoman", name, role: "", among: [] };
+      return { type: "Washerwoman", name, among: [] };
+    case "Chambermaid":
+      return { type: "Chambermaid", name, checks: [] };
     case "Chef":
       return { type: "Chef", name, count: 0 };
     case "Empath":
       return { type: "Empath", name, count: 0 };
     case "FortuneTeller":
-      return { type: "FortuneTeller", name, checks: [{ left: "", right: "", yes: false, timing: "night_1" }] };
+      return { type: "FortuneTeller", name, checks: [{ left: "", right: "", yes: false }] };
     case "Undertaker":
       return { type: "Undertaker", name, player: "", role: "" };
+    case "Legionary":
+      return { type: "Legionary", name, counts: [] };
     case "Noble":
       return { type: "Noble", name, oneEvilAmong: [] };
+    case "Oracle":
+      return { type: "Oracle", name, deadPlayers: [] };
     case "Philosopher":
       return { type: "Philosopher", name, timing: "night_1", role: "" };
     case "Steward":
@@ -142,6 +162,8 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
       return { type: "Courtier", name, timing: "night_1", role: "", drunkTimings: ["night_1"] };
     case "Mathematician":
       return { type: "Mathematician", name, malfunctions: [{ timing: "night_1", count: 0 }] };
+    case "Ravenkeeper":
+      return { type: "Ravenkeeper", name, player: "", role: "", timing: "night_2" };
     case "Sage":
       return { type: "Sage", name, demonAmong: [] };
     case "Slayer":
@@ -150,10 +172,20 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
       return { type: "Snake Charmer", name, checks: [{ player: "", demon: false, timing: "night_1" }] };
     case "VillageIdiot":
       return { type: "VillageIdiot", name, checks: [] };
+    case "Klutz":
+      return { type: "Klutz", name };
+    case "Virgin":
+      return { type: "Virgin", name, timing: "day_1" };
     case "Balloonist":
       return { type: "Balloonist", name, differentCharacterTypePairs: [] };
     case "Savant":
       return { type: "Savant", name, timing: "day_1", statements: [{ options: ["", ""] }] };
+    case "Gambler":
+      return { type: "Gambler", name, guesses: [] };
+    case "Gossip":
+      return { type: "Gossip", name, statements: [] };
+    case "Nightwatchman":
+      return { type: "Nightwatchman", name, timing: "night_1" };
     default:
       return { type, name } as Claim;
   }
@@ -230,26 +262,36 @@ function RoleSelect({
   onChange,
   allowEmpty = false,
   options,
+  ariaLabel = "Role",
 }: {
   script: readonly string[];
   value: string | undefined;
   onChange: (v: string) => void;
   allowEmpty?: boolean;
   options?: readonly string[];
+  ariaLabel?: string;
 }) {
-  const baseRoles = options ?? ALL_ROLE_NAMES;
-  const roles = value && !baseRoles.includes(value) && options === undefined ? [value, ...baseRoles] : baseRoles;
-  void script;
   return (
-    <select value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
-      {allowEmpty && <option value="">—</option>}
-      {roles.map((r) => (
-        <option key={r} value={r}>
-          {roleEmojiLabel(r)}
-        </option>
-      ))}
-    </select>
+    <RoleTypeahead
+      value={value}
+      onChange={onChange}
+      allowEmpty={allowEmpty}
+      options={options ?? roleOptionsForScript(script)}
+      ariaLabel={ariaLabel}
+    />
   );
+}
+
+function roleOptionsForScript(script: readonly string[]): string[] {
+  return sortedRoleNames(script);
+}
+
+function roleOptionsByCharacterType(script: readonly string[], types: readonly CharacterType[]): string[] {
+  const typeSet = new Set(types);
+  return roleOptionsForScript(script).filter((role) => {
+    const type = ROLE_CLASSES.get(role)?.characterType;
+    return type !== undefined && typeSet.has(type);
+  });
 }
 
 function PlayerSelect({
@@ -277,12 +319,16 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
   const showWidowCall = doc.script.includes("Widow") && isGoodClaimType(claim.type);
   const body = (() => {
     switch (claim.type) {
+      case "Acrobat":
+        return <AcrobatBody doc={doc} claim={claim} onChange={onChange} />;
       case "Investigator":
         return <InvestigatorBody doc={doc} claim={claim} onChange={onChange} />;
       case "Librarian":
         return <LibrarianBody doc={doc} claim={claim} onChange={onChange} />;
       case "Washerwoman":
         return <WasherwomanBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Chambermaid":
+        return <ChambermaidBody doc={doc} claim={claim} onChange={onChange} />;
       case "Chef":
         return <ChefBody claim={claim} onChange={onChange} />;
       case "Empath":
@@ -291,8 +337,12 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         return <FortuneTellerBody doc={doc} claim={claim} onChange={onChange} />;
       case "Undertaker":
         return <UndertakerBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Legionary":
+        return <LegionaryBody claim={claim} onChange={onChange} />;
       case "Noble":
         return <NobleBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Oracle":
+        return <OracleBody doc={doc} claim={claim} onChange={onChange} />;
       case "Philosopher":
         return <PhilosopherBody doc={doc} claim={claim} onChange={onChange} />;
       case "Steward":
@@ -313,6 +363,8 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         return <CourtierBody doc={doc} claim={claim} onChange={onChange} />;
       case "Mathematician":
         return <MathematicianBody claim={claim} onChange={onChange} />;
+      case "Ravenkeeper":
+        return <RavenkeeperBody doc={doc} claim={claim} onChange={onChange} />;
       case "Sage":
         return <SageBody doc={doc} claim={claim} onChange={onChange} />;
       case "Slayer":
@@ -321,10 +373,20 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         return <SnakeCharmerBody doc={doc} claim={claim} onChange={onChange} />;
       case "VillageIdiot":
         return <VillageIdiotBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Klutz":
+        return <KlutzBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Virgin":
+        return <VirginBody doc={doc} claim={claim} onChange={onChange} />;
       case "Balloonist":
         return <BalloonistBody doc={doc} claim={claim} onChange={onChange} />;
       case "Savant":
         return <SavantBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Gambler":
+        return <GamblerBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Gossip":
+        return <GossipBody claim={claim} onChange={onChange} />;
+      case "Nightwatchman":
+        return <NightwatchmanBody doc={doc} claim={claim} onChange={onChange} />;
       default:
         return (
           <div className="field-grid">
@@ -338,6 +400,7 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
   return (
     <>
       {body}
+      <AdvancedClaimFields doc={doc} claim={claim} onChange={onChange} />
       {showWidowCall && (
         <label className="checkbox-row">
           <input
@@ -423,6 +486,105 @@ function CustomInfoEditor({ claim, onChange }: { claim: Claim; onChange: (c: Cla
   );
 }
 
+function AdvancedClaimFields({ doc, claim, onChange }: BodyProps) {
+  const extraPossibleActualRoles = claim.extraPossibleActualRoles ?? [];
+  const setExtraPossibleActualRoles = (roles: readonly string[]) => {
+    onChange({
+      ...claim,
+      extraPossibleActualRoles: roles.length === 0 ? undefined : roles,
+    } as Claim);
+  };
+
+  return (
+    <details className="advanced-claim-fields" open={extraPossibleActualRoles.length > 0}>
+      <summary>Advanced</summary>
+      <div className="field-grid">
+        <span>Possible actual roles</span>
+        <RoleListEditor
+          value={extraPossibleActualRoles}
+          onChange={setExtraPossibleActualRoles}
+          options={roleOptionsForScript(doc.script)}
+          label="Possible actual roles"
+        />
+      </div>
+    </details>
+  );
+}
+
+function OptionalBooleanSelect({
+  value,
+  onChange,
+  trueLabel = "yes",
+  falseLabel = "no",
+}: {
+  value: boolean | undefined;
+  onChange: (value: boolean | undefined) => void;
+  trueLabel?: string;
+  falseLabel?: string;
+}) {
+  return (
+    <select
+      value={value === undefined ? "" : value ? "true" : "false"}
+      onChange={(event) => onChange(event.target.value === "" ? undefined : event.target.value === "true")}
+    >
+      <option value="">-</option>
+      <option value="true">{trueLabel}</option>
+      <option value="false">{falseLabel}</option>
+    </select>
+  );
+}
+
+function AcrobatBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: Extract<Claim, { readonly type: "Acrobat" }>;
+  onChange: (c: Claim) => void;
+}) {
+  const choices = claim.choices ?? [];
+  const setChoice = (index: number, choice: AcrobatChoiceDoc) =>
+    onChange({ ...claim, choices: choices.map((entry, i) => (i === index ? choice : entry)) });
+  const addChoice = () =>
+    onChange({
+      ...claim,
+      choices: [...choices, { player: doc.players[0] ?? "", died: false }],
+    });
+  const removeChoice = (index: number) =>
+    onChange({ ...claim, choices: choices.filter((_, choiceIndex) => choiceIndex !== index) });
+
+  return (
+    <div>
+      {choices.map((choice, index) => (
+        <div key={index} className="field-grid">
+          <span>Choice timing</span>
+          <TimingField value={choice.timing} onChange={(timing) => setChoice(index, { ...choice, timing })} />
+          <span>Chosen player</span>
+          <PlayerSelect
+            players={doc.players}
+            value={choice.player}
+            onChange={(player) => setChoice(index, { ...choice, player })}
+          />
+          <span>Died</span>
+          <input
+            type="checkbox"
+            checked={choice.died}
+            onChange={(event) => setChoice(index, { ...choice, died: event.target.checked })}
+          />
+          <span />
+          <button type="button" onClick={() => removeChoice(index)}>
+            Remove choice
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addChoice}>
+        + Add choice
+      </button>
+    </div>
+  );
+}
+
 function InvestigatorBody({
   doc,
   claim,
@@ -437,16 +599,21 @@ function InvestigatorBody({
       <span>Minion role</span>
       <RoleSelect
         script={doc.script}
-        value={claim.minionRole}
-        onChange={(v) => onChange({ ...claim, minionRole: v })}
+        value={claim.role ?? claim.minionRole}
+        onChange={(v) => onChange({ ...claim, role: v || undefined, minionRole: undefined })}
         allowEmpty
+        options={roleOptionsByCharacterType(doc.script, [CharacterType.Minion])}
+        ariaLabel="Investigator minion role"
       />
-      <span>Specific role</span>
-      <RoleSelect script={doc.script} value={claim.role} onChange={(v) => onChange({ ...claim, role: v })} allowEmpty />
       <span>Among</span>
-      <MultiPlayerSelect players={doc.players} value={claim.among} onChange={(v) => onChange({ ...claim, among: v })} />
+      <MultiPlayerSelect
+        players={doc.players}
+        value={claim.among}
+        onChange={(v) => onChange({ ...claim, among: v })}
+        maxSelections={2}
+      />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} defaultValue="night_2" />
+      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
   );
 }
@@ -463,20 +630,26 @@ function LibrarianBody({
   return (
     <div className="field-grid">
       <span>Role</span>
-      <RoleSelect script={doc.script} value={claim.role} onChange={(v) => onChange({ ...claim, role: v })} allowEmpty />
-      <span>Outsider count (alt)</span>
+      <RoleSelect
+        script={doc.script}
+        value={claim.role}
+        onChange={(v) => onChange({ ...claim, role: v || undefined, outsiderCount: undefined })}
+        allowEmpty
+        options={roleOptionsByCharacterType(doc.script, [CharacterType.Outsider])}
+        ariaLabel="Librarian outsider role"
+      />
+      <span>No Outsiders</span>
       <input
-        type="number"
-        value={claim.outsiderCount ?? ""}
-        onChange={(e) =>
-          onChange({ ...claim, outsiderCount: e.target.value === "" ? undefined : Number(e.target.value) })
-        }
+        type="checkbox"
+        checked={claim.outsiderCount === 0}
+        onChange={(event) => onChange({ ...claim, outsiderCount: event.target.checked ? 0 : undefined })}
       />
       <span>Among</span>
       <MultiPlayerSelect
         players={doc.players}
         value={claim.among ?? []}
         onChange={(v) => onChange({ ...claim, among: v })}
+        maxSelections={2}
       />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
@@ -501,11 +674,76 @@ function WasherwomanBody({
         value={claim.role}
         onChange={(v) => onChange({ ...claim, role: v || undefined })}
         allowEmpty
+        options={roleOptionsByCharacterType(doc.script, [CharacterType.Townsfolk])}
+        ariaLabel="Washerwoman townsfolk role"
       />
       <span>Among</span>
-      <MultiPlayerSelect players={doc.players} value={claim.among} onChange={(v) => onChange({ ...claim, among: v })} />
+      <MultiPlayerSelect
+        players={doc.players}
+        value={claim.among}
+        onChange={(v) => onChange({ ...claim, among: v })}
+        maxSelections={2}
+      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+    </div>
+  );
+}
+
+function ChambermaidBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: Extract<Claim, { readonly type: "Chambermaid" }>;
+  onChange: (c: Claim) => void;
+}) {
+  const checks = claim.checks ?? [];
+  const setCheck = (index: number, check: ChambermaidCheckDoc) =>
+    onChange({ ...claim, checks: checks.map((entry, i) => (i === index ? check : entry)) });
+  const addCheck = () =>
+    onChange({
+      ...claim,
+      checks: [...checks, { left: doc.players[0] ?? "", right: doc.players[1] ?? "", count: 0 }],
+    });
+  const removeCheck = (index: number) =>
+    onChange({ ...claim, checks: checks.filter((_, checkIndex) => checkIndex !== index) });
+
+  return (
+    <div>
+      {checks.map((check, index) => (
+        <div key={index} className="field-grid">
+          <span>Left</span>
+          <PlayerSelect
+            players={doc.players}
+            value={check.left}
+            onChange={(left) => setCheck(index, { ...check, left })}
+          />
+          <span>Right</span>
+          <PlayerSelect
+            players={doc.players}
+            value={check.right}
+            onChange={(right) => setCheck(index, { ...check, right })}
+          />
+          <span>Count</span>
+          <input
+            type="number"
+            min={0}
+            value={check.count}
+            onChange={(event) => setCheck(index, { ...check, count: Number(event.target.value) })}
+          />
+          <span>Timing</span>
+          <TimingField value={check.timing} onChange={(timing) => setCheck(index, { ...check, timing })} />
+          <span />
+          <button type="button" onClick={() => removeCheck(index)}>
+            Remove check
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addCheck}>
+        + Add check
+      </button>
     </div>
   );
 }
@@ -589,9 +827,44 @@ function UndertakerBody({
         value={claim.role}
         onChange={(v) => onChange({ ...claim, role: v || undefined })}
         allowEmpty
+        ariaLabel="Undertaker learned role"
       />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} defaultValue="night_2" />
+    </div>
+  );
+}
+
+function LegionaryBody({ claim, onChange }: { claim: LegionaryClaim; onChange: (c: Claim) => void }) {
+  const counts = claim.counts ?? [];
+  const setCount = (index: number, count: LegionaryCountDoc) =>
+    onChange({ ...claim, counts: counts.map((entry, i) => (i === index ? count : entry)) });
+  const addCount = () => onChange({ ...claim, counts: [...counts, { count: 0 }] });
+  const removeCount = (index: number) =>
+    onChange({ ...claim, counts: counts.filter((_, countIndex) => countIndex !== index) });
+
+  return (
+    <div>
+      {counts.map((entry, index) => (
+        <div key={index} className="field-grid">
+          <span>Living evil</span>
+          <input
+            type="number"
+            min={0}
+            value={entry.count}
+            onChange={(event) => setCount(index, { ...entry, count: Number(event.target.value) })}
+          />
+          <span>Timing</span>
+          <TimingField value={entry.timing} onChange={(timing) => setCount(index, { ...entry, timing })} />
+          <span />
+          <button type="button" onClick={() => removeCount(index)}>
+            Remove count
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addCount}>
+        + Add count
+      </button>
     </div>
   );
 }
@@ -605,6 +878,30 @@ function NobleBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: NobleClaim
         value={claim.oneEvilAmong ?? []}
         onChange={(v) => onChange({ ...claim, oneEvilAmong: v })}
       />
+    </div>
+  );
+}
+
+function OracleBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: OracleClaim; onChange: (c: Claim) => void }) {
+  return (
+    <div className="field-grid">
+      <span>Dead evil count</span>
+      <input
+        type="number"
+        min={0}
+        value={claim.count ?? ""}
+        onChange={(event) =>
+          onChange({ ...claim, count: event.target.value === "" ? undefined : Number(event.target.value) })
+        }
+      />
+      <span>Dead players</span>
+      <MultiPlayerSelect
+        players={doc.players}
+        value={claim.deadPlayers ?? []}
+        onChange={(deadPlayers) => onChange({ ...claim, deadPlayers })}
+      />
+      <span>Timing</span>
+      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
     </div>
   );
 }
@@ -633,7 +930,13 @@ function PhilosopherBody({
   return (
     <div className="field-grid">
       <span>Chosen role</span>
-      <RoleSelect script={doc.script} value={claim.role} onChange={setRole} allowEmpty />
+      <RoleSelect
+        script={doc.script}
+        value={claim.role}
+        onChange={setRole}
+        allowEmpty
+        ariaLabel="Philosopher chosen role"
+      />
       <span>Choice timing</span>
       <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
       {claim.role === "Seamstress" && (
@@ -763,7 +1066,8 @@ function JugglerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: JugglerC
               value={claim.guesses[p]}
               onChange={(v) => setGuess(p, v)}
               allowEmpty
-              options={jugglerGuessRoleOptions(doc, p)}
+              options={sortedRoleNames(jugglerGuessRoleOptions(doc, p))}
+              ariaLabel={`${p} Juggler guessed role`}
             />
           </Fragment>
         ))}
@@ -780,23 +1084,13 @@ function DreamerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: DreamerC
       <span>Player checked</span>
       <PlayerSelect players={doc.players} value={claim.player} onChange={(v) => onChange({ ...claim, player: v })} />
       <span>Possible roles</span>
-      <div className="row">
-        {doc.script.map((r) => (
-          <label key={r} style={{ display: "inline-flex", gap: "0.2rem" }}>
-            <input
-              type="checkbox"
-              checked={claim.roles.includes(r)}
-              onChange={(e) =>
-                onChange({
-                  ...claim,
-                  roles: e.target.checked ? [...claim.roles, r] : claim.roles.filter((x) => x !== r),
-                })
-              }
-            />
-            {r}
-          </label>
-        ))}
-      </div>
+      <RoleListEditor
+        value={claim.roles}
+        onChange={(roles) => onChange({ ...claim, roles })}
+        options={roleOptionsForScript(doc.script)}
+        label="Dreamer possible roles"
+        maxSelections={2}
+      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
@@ -864,6 +1158,7 @@ function CourtierBody({
           value={claim.role}
           onChange={(role) => onChange({ ...claim, role: role || undefined })}
           allowEmpty
+          ariaLabel="Courtier chosen role"
         />
         <span>Choice timing</span>
         <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
@@ -921,6 +1216,37 @@ function MathematicianBody({ claim, onChange }: { claim: MathematicianClaim; onC
       <button type="button" onClick={addCount}>
         + Add count
       </button>
+    </div>
+  );
+}
+
+function RavenkeeperBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: RavenkeeperClaim;
+  onChange: (c: Claim) => void;
+}) {
+  return (
+    <div className="field-grid">
+      <span>Player seen</span>
+      <PlayerSelect
+        players={doc.players}
+        value={claim.player}
+        onChange={(player) => onChange({ ...claim, player: player || undefined })}
+      />
+      <span>Role seen</span>
+      <RoleSelect
+        script={doc.script}
+        value={claim.role}
+        onChange={(role) => onChange({ ...claim, role: role || undefined })}
+        allowEmpty
+        ariaLabel="Ravenkeeper seen role"
+      />
+      <span>Timing</span>
+      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="night_2" />
     </div>
   );
 }
@@ -1067,6 +1393,40 @@ function VillageIdiotBody({
   );
 }
 
+function KlutzBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: KlutzClaim; onChange: (c: Claim) => void }) {
+  return (
+    <div className="field-grid">
+      <span>Chosen player</span>
+      <PlayerSelect
+        players={doc.players}
+        value={claim.chosen}
+        onChange={(chosen) => onChange({ ...claim, chosen: chosen || undefined })}
+      />
+      <span>Lost</span>
+      <OptionalBooleanSelect value={claim.lost} onChange={(lost) => onChange({ ...claim, lost })} />
+      <span>Timing</span>
+      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="day_1" />
+    </div>
+  );
+}
+
+function VirginBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: VirginClaim; onChange: (c: Claim) => void }) {
+  return (
+    <div className="field-grid">
+      <span>Nominator</span>
+      <PlayerSelect
+        players={doc.players}
+        value={claim.nominator}
+        onChange={(nominator) => onChange({ ...claim, nominator: nominator || undefined })}
+      />
+      <span>Nominator executed</span>
+      <OptionalBooleanSelect value={claim.executed} onChange={(executed) => onChange({ ...claim, executed })} />
+      <span>Timing</span>
+      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="day_1" />
+    </div>
+  );
+}
+
 function BalloonistBody({
   doc,
   claim,
@@ -1102,6 +1462,120 @@ function BalloonistBody({
         </div>
       ))}
       <button onClick={addPair}>+ Add pair</button>
+      <div className="field-grid claim-footer-fields">
+        <span>Timing</span>
+        <TimingField
+          value={claim.timing}
+          onChange={(timing) => onChange({ ...claim, timing })}
+          defaultValue="night_2"
+        />
+      </div>
+    </div>
+  );
+}
+
+function GamblerBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: Extract<Claim, { readonly type: "Gambler" }>;
+  onChange: (c: Claim) => void;
+}) {
+  const guesses = claim.guesses ?? [];
+  const setGuess = (index: number, guess: GamblerGuessDoc) =>
+    onChange({ ...claim, guesses: guesses.map((entry, i) => (i === index ? guess : entry)) });
+  const addGuess = () =>
+    onChange({
+      ...claim,
+      guesses: [...guesses, { player: doc.players[0] ?? "", role: "" }],
+    });
+  const removeGuess = (index: number) =>
+    onChange({ ...claim, guesses: guesses.filter((_, guessIndex) => guessIndex !== index) });
+
+  return (
+    <div>
+      {guesses.map((guess, index) => (
+        <div key={index} className="field-grid">
+          <span>Player</span>
+          <PlayerSelect
+            players={doc.players}
+            value={guess.player}
+            onChange={(player) => setGuess(index, { ...guess, player })}
+          />
+          <span>Role</span>
+          <RoleSelect
+            script={doc.script}
+            value={guess.role}
+            onChange={(role) => setGuess(index, { ...guess, role })}
+            allowEmpty
+            ariaLabel="Gambler guessed role"
+          />
+          <span>Survived</span>
+          <OptionalBooleanSelect
+            value={guess.survived}
+            onChange={(survived) => setGuess(index, { ...guess, survived })}
+          />
+          <span>Timing</span>
+          <TimingField value={guess.timing} onChange={(timing) => setGuess(index, { ...guess, timing })} />
+          <span />
+          <button type="button" onClick={() => removeGuess(index)}>
+            Remove guess
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addGuess}>
+        + Add guess
+      </button>
+    </div>
+  );
+}
+
+function GossipBody({
+  claim,
+  onChange,
+}: {
+  claim: Extract<Claim, { readonly type: "Gossip" }>;
+  onChange: (c: Claim) => void;
+}) {
+  const statements = claim.statements ?? [];
+  const setStatement = (index: number, statement: GossipStatementDoc) =>
+    onChange({ ...claim, statements: statements.map((entry, i) => (i === index ? statement : entry)) });
+  const addStatement = () => onChange({ ...claim, statements: [...statements, { expression: "" }] });
+  const removeStatement = (index: number) =>
+    onChange({ ...claim, statements: statements.filter((_, statementIndex) => statementIndex !== index) });
+
+  return (
+    <div>
+      {statements.map((statement, index) => {
+        const expressionError = validateDslExpression(statement.expression);
+        return (
+          <div key={index} className="field-grid">
+            <span>Timing</span>
+            <TimingField
+              value={statement.timing}
+              onChange={(timing) => setStatement(index, { ...statement, timing })}
+              defaultValue="day_1"
+            />
+            <span>Statement</span>
+            <div>
+              <textarea
+                value={statement.expression}
+                onChange={(event) => setStatement(index, { ...statement, expression: event.target.value })}
+              />
+              {expressionError && <div className="error">{expressionError}</div>}
+            </div>
+            <span />
+            <button type="button" onClick={() => removeStatement(index)}>
+              Remove statement
+            </button>
+          </div>
+        );
+      })}
+      <button type="button" onClick={addStatement}>
+        + Add statement
+      </button>
     </div>
   );
 }
@@ -1156,6 +1630,31 @@ function SavantBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SavantCla
         })}
         <button onClick={() => setOptions([...statement.options, ""])}>+ Add option</button>
       </div>
+    </div>
+  );
+}
+
+function NightwatchmanBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: NightwatchmanClaim;
+  onChange: (c: Claim) => void;
+}) {
+  return (
+    <div className="field-grid">
+      <span>Chosen player</span>
+      <PlayerSelect
+        players={doc.players}
+        value={claim.chosen}
+        onChange={(chosen) => onChange({ ...claim, chosen: chosen || undefined })}
+      />
+      <span>Learned</span>
+      <OptionalBooleanSelect value={claim.learned} onChange={(learned) => onChange({ ...claim, learned })} />
+      <span>Timing</span>
+      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
     </div>
   );
 }

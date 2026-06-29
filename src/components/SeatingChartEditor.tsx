@@ -240,13 +240,7 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
       <div className="sheet-tools">
         <label>
           Players
-          <input
-            type="number"
-            min={0}
-            max={20}
-            value={players.length}
-            onChange={(event) => dispatch({ type: "setPlayerCount", count: Number(event.target.value) })}
-          />
+          <PlayerCountInput value={players.length} onChange={(count) => dispatch({ type: "setPlayerCount", count })} />
         </label>
         <SetupCountSummary setupCounts={setupCounts} />
         {draggedIndex !== undefined && (
@@ -380,6 +374,52 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
         onAllowDrop={allowSeatDrop}
       />
     </div>
+  );
+}
+
+function PlayerCountInput({ value, onChange }: { value: number; onChange: (value: number) => void }) {
+  const [draft, setDraft] = useState(String(value));
+  const [focused, setFocused] = useState(false);
+
+  useEffect(() => {
+    if (!focused) setDraft(String(value));
+  }, [focused, value]);
+
+  const commit = () => {
+    setFocused(false);
+    if (draft === "") {
+      setDraft(String(value));
+      return;
+    }
+    const next = Number(draft);
+    if (Number.isFinite(next)) onChange(next);
+    setDraft(String(Number.isFinite(next) ? Math.max(0, Math.floor(next)) : value));
+  };
+
+  return (
+    <input
+      type="number"
+      min={0}
+      max={20}
+      value={draft}
+      onFocus={() => setFocused(true)}
+      onChange={(event) => {
+        const nextDraft = event.target.value;
+        if (nextDraft === "") {
+          setDraft("");
+          return;
+        }
+        const next = Number(nextDraft);
+        if (!Number.isFinite(next)) {
+          setDraft(nextDraft);
+          return;
+        }
+        const normalized = Math.max(0, Math.floor(next));
+        setDraft(String(normalized));
+        onChange(normalized);
+      }}
+      onBlur={commit}
+    />
   );
 }
 

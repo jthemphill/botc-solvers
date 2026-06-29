@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "title": "Puzzle 3a - Not Throwing Away My Shot",
   "players": ["Sula", "Matthew", "Oscar", "Josh", "You", "Aoife", "Tom"],
   "script": [
@@ -53,8 +52,7 @@
       "name": "You",
       "timing": "day_1",
       "target": "Tom",
-      "killed": true,
-      "gameContinued": true
+      "killed": true
     },
     {
       "type": "Chef",

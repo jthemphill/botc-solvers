@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "title": "Puzzle 38 - Snakes On A Plane",
   "players": ["Tim", "Fraser", "Sula", "Matt", "You", "Hannah", "Dan", "Adam"],
   "script": [
@@ -49,32 +48,68 @@
     {
       "type": "Snake Charmer",
       "name": "Tim",
-      "checks": [{ "player": "Matt", "demon": false, "timing": "night_1" }]
+      "checks": [
+        {
+          "player": "Matt",
+          "demon": false,
+          "timing": "night_1"
+        }
+      ]
     },
     {
       "type": "Snake Charmer",
       "name": "Tim",
-      "checks": [{ "player": "Sula", "demon": false, "timing": "night_2" }]
+      "checks": [
+        {
+          "player": "Sula",
+          "demon": false,
+          "timing": "night_2"
+        }
+      ]
     },
     {
       "type": "Snake Charmer",
       "name": "Tim",
-      "checks": [{ "player": "Hannah", "demon": false, "timing": "night_3" }]
+      "checks": [
+        {
+          "player": "Hannah",
+          "demon": false,
+          "timing": "night_3"
+        }
+      ]
     },
     {
       "type": "Snake Charmer",
       "name": "Fraser",
-      "checks": [{ "player": "Sula", "demon": false, "timing": "night_1" }]
+      "checks": [
+        {
+          "player": "Sula",
+          "demon": false,
+          "timing": "night_1"
+        }
+      ]
     },
     {
       "type": "Snake Charmer",
       "name": "Fraser",
-      "checks": [{ "player": "Hannah", "demon": false, "timing": "night_2" }]
+      "checks": [
+        {
+          "player": "Hannah",
+          "demon": false,
+          "timing": "night_2"
+        }
+      ]
     },
     {
       "type": "Snake Charmer",
       "name": "Fraser",
-      "checks": [{ "player": "Adam", "demon": false, "timing": "night_3" }]
+      "checks": [
+        {
+          "player": "Adam",
+          "demon": false,
+          "timing": "night_3"
+        }
+      ]
     },
     {
       "type": "FortuneTeller",

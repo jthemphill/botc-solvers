@@ -45,6 +45,7 @@ export function withProtectedScript(doc: PuzzleDoc): PuzzleDoc {
 export function claimScriptRoles(claim: Claim): string[] {
   const roles = [
     claimTypeRoleName(claim.type),
+    ...(claim.extraPossibleActualRoles ?? []),
     ...(claim.info ?? []).flatMap((info) => extractDslRoleNames(info.expression ?? "")),
   ];
 
@@ -99,7 +100,12 @@ function isJugglerHiddenGuessRole(role: string): boolean {
 
 function extractDslRoleNames(src: string): string[] {
   try {
-    return mergeRoleNames(lex(src).map((token) => (token.kind === "ident" ? token.text : undefined)));
+    const tokens = lex(src);
+    return mergeRoleNames(
+      tokens.map((token, index) =>
+        token.kind === "ident" && tokens[index + 1]?.kind !== "lparen" ? token.text : undefined,
+      ),
+    );
   } catch {
     return [];
   }

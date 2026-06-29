@@ -63,6 +63,26 @@ describe("puzzle document reducer", () => {
     expect(loaded.script).toContain("No Dashii");
   });
 
+  test("savant DSL function names do not protect matching role names", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B"],
+      script: [],
+      claims: [
+        {
+          type: "Savant",
+          name: "A",
+          statements: [{ options: ["chef(1)", "B.role == Empath"] }],
+        },
+      ],
+    };
+
+    const loaded = reducer(doc, { type: "load", doc });
+
+    expect(loaded.script).not.toContain("Chef");
+    expect(loaded.script).toContain("Empath");
+  });
+
   test("custom info DSL role identifiers protect matching script roles", () => {
     const doc: PuzzleDoc = {
       version: 1,

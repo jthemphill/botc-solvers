@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "title": "Puzzle 11 - False Is The New Black",
   "players": ["Matthew", "Anna", "Aoife", "Hannah", "You", "Sula", "Sarah", "Tom"],
   "script": [
@@ -75,17 +74,35 @@
     {
       "type": "Snake Charmer",
       "name": "Aoife",
-      "checks": [{ "player": "Tom", "demon": false, "timing": "night_1" }]
+      "checks": [
+        {
+          "player": "Tom",
+          "demon": false,
+          "timing": "night_1"
+        }
+      ]
     },
     {
       "type": "Snake Charmer",
       "name": "Aoife",
-      "checks": [{ "player": "Hannah", "demon": false, "timing": "night_2" }]
+      "checks": [
+        {
+          "player": "Hannah",
+          "demon": false,
+          "timing": "night_2"
+        }
+      ]
     },
     {
       "type": "Snake Charmer",
       "name": "Aoife",
-      "checks": [{ "player": "Matthew", "demon": false, "timing": "night_3" }]
+      "checks": [
+        {
+          "player": "Matthew",
+          "demon": false,
+          "timing": "night_3"
+        }
+      ]
     },
     {
       "type": "Artist",
@@ -112,7 +129,13 @@
     {
       "type": "Snake Charmer",
       "name": "Sula",
-      "checks": [{ "player": "Sarah", "demon": false, "timing": "night_2" }],
+      "checks": [
+        {
+          "player": "Sarah",
+          "demon": false,
+          "timing": "night_2"
+        }
+      ],
       "extraPossibleActualRoles": ["Philosopher"]
     },
     {
