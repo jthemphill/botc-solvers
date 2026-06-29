@@ -22,6 +22,7 @@ export function protectedScriptRoles(doc: PuzzleDoc): string[] {
     ...doc.claims.flatMap(claimScriptRoles),
     ...(doc.fixedRoles ?? []).flatMap((fixedRole) => fixedRole.roles),
     ...(doc.forbiddenRoles ?? []).flatMap((forbiddenRole) => forbiddenRole.roles),
+    ...(doc.constraints ?? []).flatMap((constraint) => extractDslRoleNames(constraint.expression)),
   ]);
 }
 
@@ -60,6 +61,9 @@ export function claimScriptRoles(claim: Claim): string[] {
       break;
     case "Undertaker":
       roles.push(claim.role);
+      break;
+    case "Prodigy":
+      roles.push("Solar Prodigy", "Lunar Prodigy");
       break;
     case "Juggler":
       roles.push(...Object.values(claim.guesses));

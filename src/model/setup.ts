@@ -129,6 +129,22 @@ const STANDARD_SETUP_MODIFIERS: readonly SetupModifier[] = [
     },
   },
   {
+    roleName: "Fang Gu",
+    activeWhenInPlay: true,
+    delta: {
+      [CharacterType.Townsfolk]: -1,
+      [CharacterType.Outsider]: 1,
+    },
+  },
+  {
+    roleName: "Vigormortis",
+    activeWhenInPlay: true,
+    delta: {
+      [CharacterType.Townsfolk]: 1,
+      [CharacterType.Outsider]: -1,
+    },
+  },
+  {
     roleName: "Balloonist",
     activeWhenInPlay: false,
     delta: {

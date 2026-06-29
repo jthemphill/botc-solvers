@@ -586,6 +586,24 @@ class Compiler {
         span: node.span,
       };
     }
+    if (node.name === "role_at") {
+      if (node.args.length !== 3) throw new DslError(`role_at() takes (player, role, timing)`, node.span);
+      const playerArg = node.args[0] as AstCall["args"][number];
+      const roleArg = node.args[1] as AstCall["args"][number];
+      const timingArg = node.args[2] as AstCall["args"][number];
+      if (playerArg.name !== undefined || roleArg.name !== undefined || timingArg.name !== undefined)
+        throw new DslError(`role_at arguments are positional`, node.span);
+      const player = this.evalNode(playerArg.value, env);
+      const role = this.evalNode(roleArg.value, env);
+      const timing = this.expectTimingArg(timingArg);
+      if (player.kind !== "player") throw new DslError(`role_at expected a player first`, player.span);
+      if (role.kind !== "role") throw new DslError(`role_at expected a role second`, role.span);
+      return {
+        kind: "bool",
+        value: this.game.hasRoleAt(player.name, role.name, timing),
+        span: node.span,
+      };
+    }
     if (node.name === "fortune_teller_red_herring") {
       if (node.args.length !== 2)
         throw new DslError(`fortune_teller_red_herring() takes (fortuneTeller, player)`, node.span);
@@ -612,6 +630,17 @@ class Compiler {
       const player = this.evalNode(playerArg.value, env);
       if (player.kind !== "player") throw new DslError(`globally_drunk expected a player`, player.span);
       return { kind: "bool", value: this.game.globalDrunk(player.name), span: node.span };
+    }
+    if (node.name === "poisoned") {
+      if (node.args.length !== 2) throw new DslError(`poisoned() takes (player, timing)`, node.span);
+      const playerArg = node.args[0] as AstCall["args"][number];
+      const timingArg = node.args[1] as AstCall["args"][number];
+      if (playerArg.name !== undefined || timingArg.name !== undefined)
+        throw new DslError(`poisoned arguments are positional`, node.span);
+      const player = this.evalNode(playerArg.value, env);
+      const timing = this.expectTimingArg(timingArg);
+      if (player.kind !== "player") throw new DslError(`poisoned expected a player first`, player.span);
+      return { kind: "bool", value: this.game.poisoned(player.name, timing), span: node.span };
     }
     if (node.name === "chef") {
       if (node.args.length !== 1) throw new DslError(`chef() takes (n)`, node.span);

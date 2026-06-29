@@ -16,6 +16,10 @@ import type {
   ChefClaim,
   DreamerClaim,
   EmpathClaim,
+  ExorcistChoiceDoc,
+  ExorcistClaim,
+  FlowergirlClaim,
+  FlowergirlVoteDoc,
   FortuneTellerCheckDoc,
   FortuneTellerClaim,
   GamblerGuessDoc,
@@ -32,6 +36,12 @@ import type {
   NobleClaim,
   OracleClaim,
   PhilosopherClaim,
+  PrincessNominationDoc,
+  PrincessClaim,
+  ProdigyCheckDoc,
+  ProdigyClaim,
+  PuzzlemasterClaim,
+  PuzzlemasterGuessDoc,
   PuzzleDoc,
   RavenkeeperClaim,
   SageClaim,
@@ -57,7 +67,18 @@ interface Props {
 
 export const CLAIM_TYPES = [...SUPPORTED_CLAIM_TYPES];
 
-const TIMING_OPTIONS = ["night_1", "day_1", "night_2", "day_2", "night_3", "day_3"];
+const TIMING_OPTIONS = [
+  "night_1",
+  "day_1",
+  "night_2",
+  "day_2",
+  "night_3",
+  "day_3",
+  "night_4",
+  "day_4",
+  "night_5",
+  "day_5",
+];
 
 function timingLabel(timing: string): string {
   const match = /^(night|day)_(\d+)$/.exec(timing);
@@ -132,6 +153,10 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
       return { type: "Chef", name, count: 0 };
     case "Empath":
       return { type: "Empath", name, count: 0 };
+    case "Exorcist":
+      return { type: "Exorcist", name, choices: [] };
+    case "Flowergirl":
+      return { type: "Flowergirl", name, votes: [] };
     case "FortuneTeller":
       return { type: "FortuneTeller", name, checks: [{ left: "", right: "", yes: false }] };
     case "Undertaker":
@@ -144,6 +169,12 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
       return { type: "Oracle", name, deadPlayers: [] };
     case "Philosopher":
       return { type: "Philosopher", name, timing: "night_1", role: "" };
+    case "Princess":
+      return { type: "Princess", name, nominations: [] };
+    case "Prodigy":
+      return { type: "Prodigy", name, checks: [] };
+    case "Puzzlemaster":
+      return { type: "Puzzlemaster", name, guesses: [] };
     case "Steward":
       return { type: "Steward", name, goodPlayer: "" };
     case "Knight":
@@ -332,7 +363,11 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
       case "Chef":
         return <ChefBody claim={claim} onChange={onChange} />;
       case "Empath":
-        return <EmpathBody claim={claim} onChange={onChange} />;
+        return <EmpathBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Exorcist":
+        return <ExorcistBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Flowergirl":
+        return <FlowergirlBody doc={doc} claim={claim} onChange={onChange} />;
       case "FortuneTeller":
         return <FortuneTellerBody doc={doc} claim={claim} onChange={onChange} />;
       case "Undertaker":
@@ -345,6 +380,12 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         return <OracleBody doc={doc} claim={claim} onChange={onChange} />;
       case "Philosopher":
         return <PhilosopherBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Princess":
+        return <PrincessBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Prodigy":
+        return <ProdigyBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Puzzlemaster":
+        return <PuzzlemasterBody doc={doc} claim={claim} onChange={onChange} />;
       case "Steward":
         return <StewardBody doc={doc} claim={claim} onChange={onChange} />;
       case "Knight":
@@ -358,7 +399,7 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
       case "Shugenja":
         return <ShugenjaBody claim={claim} onChange={onChange} />;
       case "Clockmaker":
-        return <ClockmakerBody claim={claim} onChange={onChange} />;
+        return <ClockmakerBody doc={doc} claim={claim} onChange={onChange} />;
       case "Courtier":
         return <CourtierBody doc={doc} claim={claim} onChange={onChange} />;
       case "Mathematician":
@@ -763,7 +804,14 @@ function ChefBody({ claim, onChange }: { claim: ChefClaim; onChange: (c: Claim) 
   );
 }
 
-function EmpathBody({ claim, onChange }: { claim: EmpathClaim; onChange: (c: Claim) => void }) {
+function EmpathBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: EmpathClaim; onChange: (c: Claim) => void }) {
+  const setNeighbors = (neighbors: readonly string[]) => {
+    onChange({
+      ...claim,
+      neighbors: neighbors.length === 0 ? undefined : neighbors.slice(0, 2),
+    });
+  };
+
   return (
     <div className="field-grid">
       <span>Count</span>
@@ -774,6 +822,107 @@ function EmpathBody({ claim, onChange }: { claim: EmpathClaim; onChange: (c: Cla
       />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <span>Neighbors</span>
+      <MultiPlayerSelect
+        players={doc.players}
+        value={claim.neighbors ?? []}
+        onChange={setNeighbors}
+        maxSelections={2}
+      />
+    </div>
+  );
+}
+
+function FlowergirlBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: FlowergirlClaim;
+  onChange: (c: Claim) => void;
+}) {
+  const votes = claim.votes ?? [];
+  const setVote = (index: number, vote: FlowergirlVoteDoc) =>
+    onChange({ ...claim, votes: votes.map((entry, voteIndex) => (voteIndex === index ? vote : entry)) });
+  const addVote = () => onChange({ ...claim, votes: [...votes, { timing: "day_1", voters: [], demonVoted: false }] });
+  const removeVote = (index: number) =>
+    onChange({ ...claim, votes: votes.filter((_, voteIndex) => voteIndex !== index) });
+
+  return (
+    <div>
+      {votes.map((vote, index) => (
+        <div key={index} className="field-grid">
+          <span>Vote timing</span>
+          <TimingField
+            value={vote.timing}
+            onChange={(timing) => setVote(index, { ...vote, timing: timing ?? "day_1" })}
+          />
+          <span>Voters</span>
+          <MultiPlayerSelect
+            players={doc.players}
+            value={vote.voters}
+            onChange={(voters) => setVote(index, { ...vote, voters })}
+          />
+          <span>Demon voted</span>
+          <OptionalBooleanSelect
+            value={vote.demonVoted}
+            onChange={(demonVoted) => setVote(index, { ...vote, demonVoted: demonVoted ?? false })}
+          />
+          <span />
+          <button type="button" onClick={() => removeVote(index)}>
+            Remove vote
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addVote}>
+        + Add vote
+      </button>
+    </div>
+  );
+}
+
+function ExorcistBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: ExorcistClaim;
+  onChange: (c: Claim) => void;
+}) {
+  const choices = claim.choices ?? [];
+  const setChoice = (index: number, choice: ExorcistChoiceDoc) =>
+    onChange({ ...claim, choices: choices.map((entry, choiceIndex) => (choiceIndex === index ? choice : entry)) });
+  const addChoice = () => onChange({ ...claim, choices: [...choices, { player: doc.players[0] ?? "" }] });
+  const removeChoice = (index: number) =>
+    onChange({ ...claim, choices: choices.filter((_, choiceIndex) => choiceIndex !== index) });
+
+  return (
+    <div>
+      {choices.map((choice, index) => (
+        <div key={index} className="field-grid">
+          <span>Choice timing</span>
+          <TimingField
+            value={choice.timing}
+            onChange={(timing) => setChoice(index, { ...choice, timing })}
+            defaultValue="night_2"
+          />
+          <span>Chosen player</span>
+          <PlayerSelect
+            players={doc.players}
+            value={choice.player}
+            onChange={(player) => setChoice(index, { ...choice, player })}
+          />
+          <span />
+          <button type="button" onClick={() => removeChoice(index)}>
+            Remove choice
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addChoice}>
+        + Add choice
+      </button>
     </div>
   );
 }
@@ -970,6 +1119,152 @@ function PhilosopherBody({
   );
 }
 
+function PrincessBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: PrincessClaim;
+  onChange: (c: Claim) => void;
+}) {
+  const nominations = claim.nominations ?? [];
+  const setNomination = (index: number, nomination: PrincessNominationDoc) =>
+    onChange({
+      ...claim,
+      nominations: nominations.map((entry, nominationIndex) => (nominationIndex === index ? nomination : entry)),
+    });
+  const addNomination = () =>
+    onChange({ ...claim, nominations: [...nominations, { player: doc.players[0] ?? "", timing: "day_1" }] });
+  const removeNomination = (index: number) =>
+    onChange({ ...claim, nominations: nominations.filter((_, nominationIndex) => nominationIndex !== index) });
+
+  return (
+    <div>
+      {nominations.map((nomination, index) => (
+        <div key={index} className="field-grid">
+          <span>Nomination timing</span>
+          <TimingField
+            value={nomination.timing}
+            onChange={(timing) => setNomination(index, { ...nomination, timing })}
+            defaultValue="day_1"
+          />
+          <span>Nominated player</span>
+          <PlayerSelect
+            players={doc.players}
+            value={nomination.player}
+            onChange={(player) => setNomination(index, { ...nomination, player })}
+          />
+          <span />
+          <button type="button" onClick={() => removeNomination(index)}>
+            Remove nomination
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addNomination}>
+        + Add nomination
+      </button>
+    </div>
+  );
+}
+
+function ProdigyBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: ProdigyClaim; onChange: (c: Claim) => void }) {
+  const setCheck = (index: number, check: ProdigyCheckDoc) =>
+    onChange({ ...claim, checks: claim.checks.map((entry, checkIndex) => (checkIndex === index ? check : entry)) });
+  const addCheck = () =>
+    onChange({
+      ...claim,
+      checks: [...claim.checks, { chosen: doc.players[0] ?? "", learned: doc.players[1] ?? "" }],
+    });
+  const removeCheck = (index: number) =>
+    onChange({ ...claim, checks: claim.checks.filter((_, checkIndex) => checkIndex !== index) });
+
+  return (
+    <div>
+      {claim.checks.map((check, index) => (
+        <div key={index} className="field-grid">
+          <span>Check timing</span>
+          <TimingField value={check.timing} onChange={(timing) => setCheck(index, { ...check, timing })} />
+          <span>Chosen player</span>
+          <PlayerSelect
+            players={doc.players}
+            value={check.chosen}
+            onChange={(chosen) => setCheck(index, { ...check, chosen })}
+          />
+          <span>Learned player</span>
+          <PlayerSelect
+            players={doc.players}
+            value={check.learned}
+            onChange={(learned) => setCheck(index, { ...check, learned })}
+          />
+          <span />
+          <button type="button" onClick={() => removeCheck(index)}>
+            Remove check
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addCheck}>
+        + Add check
+      </button>
+    </div>
+  );
+}
+
+function PuzzlemasterBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: PuzzlemasterClaim;
+  onChange: (c: Claim) => void;
+}) {
+  const guesses = claim.guesses ?? [];
+  const setGuess = (index: number, guess: PuzzlemasterGuessDoc) =>
+    onChange({ ...claim, guesses: guesses.map((entry, guessIndex) => (guessIndex === index ? guess : entry)) });
+  const addGuess = () =>
+    onChange({
+      ...claim,
+      guesses: [...guesses, { player: doc.players[0] ?? "", learnedDemon: doc.players[1] ?? "", timing: "day_1" }],
+    });
+  const removeGuess = (index: number) =>
+    onChange({ ...claim, guesses: guesses.filter((_, guessIndex) => guessIndex !== index) });
+
+  return (
+    <div>
+      {guesses.map((guess, index) => (
+        <div key={index} className="field-grid">
+          <span>Guess timing</span>
+          <TimingField value={guess.timing} onChange={(timing) => setGuess(index, { ...guess, timing })} />
+          <span>Guessed drunk</span>
+          <PlayerSelect
+            players={doc.players}
+            value={guess.player}
+            onChange={(player) => setGuess(index, { ...guess, player })}
+          />
+          <span>Learned Demon</span>
+          <PlayerSelect
+            players={doc.players}
+            value={guess.learnedDemon}
+            onChange={(learnedDemon) => setGuess(index, { ...guess, learnedDemon })}
+          />
+          <span />
+          <button type="button" onClick={() => removeGuess(index)}>
+            Remove guess
+          </button>
+        </div>
+      ))}
+      <div className="field-grid">
+        <span>Timing</span>
+        <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
+      </div>
+      <button type="button" onClick={addGuess}>
+        + Add guess
+      </button>
+    </div>
+  );
+}
+
 function StewardBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: StewardClaim; onChange: (c: Claim) => void }) {
   return (
     <div className="field-grid">
@@ -1114,7 +1409,15 @@ function ShugenjaBody({ claim, onChange }: { claim: ShugenjaClaim; onChange: (c:
   );
 }
 
-function ClockmakerBody({ claim, onChange }: { claim: ClockmakerClaim; onChange: (c: Claim) => void }) {
+function ClockmakerBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: ClockmakerClaim;
+  onChange: (c: Claim) => void;
+}) {
   return (
     <div className="field-grid">
       <span>Demon-minion distance</span>
@@ -1126,6 +1429,12 @@ function ClockmakerBody({ claim, onChange }: { claim: ClockmakerClaim; onChange:
       />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <span>Seating override</span>
+      <MultiPlayerSelect
+        players={doc.players}
+        value={claim.seating ?? []}
+        onChange={(seating) => onChange({ ...claim, seating: seating.length === 0 ? undefined : seating })}
+      />
     </div>
   );
 }
@@ -1361,8 +1670,12 @@ function VillageIdiotBody({
   return (
     <div>
       {claim.checks.map((chk, i) => (
-        <div key={i} className="row">
+        <div key={i} className="field-grid">
+          <span>Timing</span>
+          <TimingField value={chk.timing} onChange={(timing) => setCheck(i, { ...chk, timing })} />
+          <span>Checked player</span>
           <PlayerSelect players={doc.players} value={chk.player} onChange={(v) => setCheck(i, { ...chk, player: v })} />
+          <span>Registers as</span>
           <div className="radio-tile-group" role="radiogroup" aria-label="Registers as">
             <label className="radio-tile good">
               <input
@@ -1385,10 +1698,15 @@ function VillageIdiotBody({
               <span>Evil</span>
             </label>
           </div>
-          <button onClick={() => removeCheck(i)}>×</button>
+          <span />
+          <button type="button" onClick={() => removeCheck(i)}>
+            Remove check
+          </button>
         </div>
       ))}
-      <button onClick={addCheck}>+ Add check</button>
+      <button type="button" onClick={addCheck}>
+        + Add check
+      </button>
     </div>
   );
 }
@@ -1653,6 +1971,12 @@ function NightwatchmanBody({
       />
       <span>Learned</span>
       <OptionalBooleanSelect value={claim.learned} onChange={(learned) => onChange({ ...claim, learned })} />
+      <span>Confirmed by chosen</span>
+      <input
+        type="checkbox"
+        checked={claim.confirmedByChosen === true}
+        onChange={(event) => onChange({ ...claim, confirmedByChosen: event.target.checked ? true : undefined })}
+      />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
     </div>

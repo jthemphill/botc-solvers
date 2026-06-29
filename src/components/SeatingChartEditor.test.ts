@@ -32,6 +32,39 @@ describe("claimSummary", () => {
     ).toBe("N1: Aoife + Tim -> no; N2: Aoife + Olivia -> no");
   });
 
+  test("summarizes Prodigy checks", () => {
+    expect(
+      claimSummary({
+        type: "Prodigy",
+        name: "Matt",
+        checks: [
+          { chosen: "Dan", learned: "Tim", timing: "night_1" },
+          { chosen: "Sarah", learned: "Dan", timing: "night_2" },
+        ],
+      }),
+    ).toBe("I checked: N1: Dan -> Tim, N2: Sarah -> Dan.");
+  });
+
+  test("summarizes Exorcist and Princess claims", () => {
+    expect(
+      claimSummary({
+        type: "Exorcist",
+        name: "Matthew",
+        choices: [
+          { player: "Jasmine", timing: "night_2" },
+          { player: "Aoife", timing: "night_3" },
+        ],
+      }),
+    ).toBe("N2: chose Jasmine; N3: chose Aoife");
+    expect(
+      claimSummary({
+        type: "Princess",
+        name: "Jasmine",
+        nominations: [{ player: "You", timing: "day_1" }],
+      }),
+    ).toBe("Nominated You on day 1");
+  });
+
   test("uses consistent role-info wording for top-three claims", () => {
     expect(claimSummary({ type: "Investigator", name: "You", role: "Poisoner", among: ["A", "B"] })).toBe(
       "A or B is the Poisoner.",

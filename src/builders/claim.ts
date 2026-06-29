@@ -7,7 +7,9 @@ import {
   Courtier,
   Dreamer,
   Empath,
+  Exorcist,
   type EmpathNeighborOption,
+  Flowergirl,
   FortuneTeller,
   Gambler,
   Gossip,
@@ -22,6 +24,9 @@ import {
   Nightwatchman,
   Oracle,
   Philosopher,
+  Princess,
+  Prodigy,
+  Puzzlemaster,
   Ravenkeeper,
   Sage,
   Savant,
@@ -44,7 +49,7 @@ import { resolveRoleRef } from "./roleRef";
 import { roleByName } from "../model/roleRegistry";
 
 export type ClaimWithTimelineContext = Claim & {
-  readonly neighbors?: readonly [string, string];
+  readonly neighbors?: readonly string[];
   readonly neighborOptions?: readonly EmpathNeighborOption[];
 };
 
@@ -107,8 +112,28 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
       return new Empath({
         ...base,
         count: claim.count,
-        neighbors: claim.neighbors,
+        neighbors:
+          claim.neighbors?.length === 2
+            ? ([claim.neighbors[0] as string, claim.neighbors[1] as string] as readonly [string, string])
+            : undefined,
         neighborOptions: claim.neighborOptions,
+      });
+    case "Exorcist":
+      return new Exorcist({
+        ...base,
+        choices: claim.choices?.map((choice) => ({
+          player: choice.player,
+          timing: timingOf(choice.timing),
+        })),
+      });
+    case "Flowergirl":
+      return new Flowergirl({
+        ...base,
+        votes: claim.votes?.map((vote) => ({
+          timing: timingOf(vote.timing) as Timing,
+          voters: vote.voters,
+          demonVoted: vote.demonVoted,
+        })),
       });
     case "FortuneTeller":
       return new FortuneTeller({
@@ -176,6 +201,32 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
         role: claim.role ? resolveRoleRef(claim.role) : undefined,
         infoClaims: [...base.infoClaims, ...philosopherInfoClaims(claim)],
       });
+    case "Princess":
+      return new Princess({
+        ...base,
+        nominations: claim.nominations?.map((nomination) => ({
+          player: nomination.player,
+          timing: timingOf(nomination.timing),
+        })),
+      });
+    case "Prodigy":
+      return new Prodigy({
+        ...base,
+        checks: claim.checks.map((check) => ({
+          chosen: check.chosen,
+          learned: check.learned,
+          timing: timingOf(check.timing),
+        })),
+      });
+    case "Puzzlemaster":
+      return new Puzzlemaster({
+        ...base,
+        guesses: claim.guesses?.map((guess) => ({
+          player: guess.player,
+          learnedDemon: guess.learnedDemon,
+          timing: timingOf(guess.timing),
+        })),
+      });
     case "Klutz":
       return new Klutz({ ...base, chosen: claim.chosen, lost: claim.lost });
     case "Seamstress":
@@ -190,7 +241,7 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
     case "Shugenja":
       return new Shugenja({ ...base, evilDirection: claim.evilDirection });
     case "Clockmaker":
-      return new Clockmaker({ ...base, distance: claim.distance });
+      return new Clockmaker({ ...base, distance: claim.distance, seating: claim.seating });
     case "Courtier":
       return new Courtier({
         ...base,
@@ -252,7 +303,12 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
         ),
       });
     case "Nightwatchman":
-      return new Nightwatchman({ ...base, chosen: claim.chosen, learned: claim.learned });
+      return new Nightwatchman({
+        ...base,
+        chosen: claim.chosen,
+        learned: claim.learned,
+        confirmedByChosen: claim.confirmedByChosen,
+      });
     default: {
       const klass = roleByName(claim.type) as unknown as new (opts: { name: string; timing?: Timing }) => Role;
       return new klass({ ...base });
@@ -299,10 +355,11 @@ function philosopherInfoClaims(claim: Extract<Claim, { readonly type: "Philosoph
 function snakeCharmerInfoClaims(claim: Extract<Claim, { readonly type: "Snake Charmer" }>): InfoClaimBuilder[] {
   const checkClaims = claim.checks.map((check, index): InfoClaimBuilder => {
     const nameRoot = `${slug(claim.name)}_snake_charmer_check_${index + 1}`;
+    const timing = timingOf(check.timing) as Timing;
     return {
-      timing: timingOf(check.timing),
+      timing,
       learned: (game) => {
-        const checkedIsDemon = game.isDemon(check.player);
+        const checkedIsDemon = game.isDemonAt(check.player, timing);
         return check.demon ? checkedIsDemon : game.not(checkedIsDemon, `${nameRoot}_not_demon`);
       },
     };

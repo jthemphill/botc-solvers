@@ -7,6 +7,7 @@ export interface PuzzleDoc {
   readonly uniqueCharacters?: boolean;
   readonly fixedRoles?: readonly FixedRoleConstraint[];
   readonly forbiddenRoles?: readonly ForbiddenRoleConstraint[];
+  readonly constraints?: readonly PuzzleConstraintDoc[];
   readonly timeline?: readonly TimelineEventDoc[];
   readonly claims: readonly Claim[];
 }
@@ -23,11 +24,16 @@ export interface ForbiddenRoleConstraint {
   readonly roles: readonly string[];
 }
 
+export interface PuzzleConstraintDoc {
+  readonly expression: string;
+}
+
 export type TimelineEventType =
   | "nominationDeath"
   | "witchCurse"
   | "slayerShot"
   | "execution"
+  | "survivedExecution"
   | "nightDeath"
   | "doomsayerDeath";
 
@@ -38,6 +44,24 @@ export interface TimelineEventDoc {
   readonly caller?: string;
 }
 
+export const TIMELINE_DEATH_EVENT_TYPES = [
+  "nominationDeath",
+  "witchCurse",
+  "slayerShot",
+  "execution",
+  "nightDeath",
+  "doomsayerDeath",
+] as const satisfies readonly TimelineEventType[];
+
+export const TIMELINE_EVENT_TYPES = [
+  ...TIMELINE_DEATH_EVENT_TYPES,
+  "survivedExecution",
+] as const satisfies readonly TimelineEventType[];
+
+export function isTimelineDeathEvent(event: TimelineEventDoc): boolean {
+  return (TIMELINE_DEATH_EVENT_TYPES as readonly string[]).includes(event.type);
+}
+
 export type Claim =
   | AcrobatClaim
   | InvestigatorClaim
@@ -46,6 +70,8 @@ export type Claim =
   | ChefClaim
   | ChambermaidClaim
   | EmpathClaim
+  | ExorcistClaim
+  | FlowergirlClaim
   | FortuneTellerClaim
   | UndertakerClaim
   | LegionaryClaim
@@ -56,6 +82,9 @@ export type Claim =
   | GamblerClaim
   | GossipClaim
   | PhilosopherClaim
+  | PrincessClaim
+  | ProdigyClaim
+  | PuzzlemasterClaim
   | SeamstressClaim
   | JugglerClaim
   | DreamerClaim
@@ -140,6 +169,17 @@ export interface ChambermaidClaim extends BaseClaim {
 export interface EmpathClaim extends BaseClaim {
   readonly type: "Empath";
   readonly count?: number;
+  readonly neighbors?: readonly string[];
+}
+
+export interface ExorcistChoiceDoc {
+  readonly player: string;
+  readonly timing?: string;
+}
+
+export interface ExorcistClaim extends BaseClaim {
+  readonly type: "Exorcist";
+  readonly choices?: readonly ExorcistChoiceDoc[];
 }
 
 export interface FortuneTellerCheckDoc {
@@ -147,6 +187,17 @@ export interface FortuneTellerCheckDoc {
   readonly right: string;
   readonly yes: boolean;
   readonly timing?: string;
+}
+
+export interface FlowergirlVoteDoc {
+  readonly timing: string;
+  readonly voters: readonly string[];
+  readonly demonVoted: boolean;
+}
+
+export interface FlowergirlClaim extends BaseClaim {
+  readonly type: "Flowergirl";
+  readonly votes?: readonly FlowergirlVoteDoc[];
 }
 
 export interface FortuneTellerClaim extends BaseClaim {
@@ -222,10 +273,42 @@ export interface PhilosopherClaim extends BaseClaim {
   readonly seamstress?: PhilosopherSeamstressInfoDoc;
 }
 
+export interface PrincessNominationDoc {
+  readonly player: string;
+  readonly timing?: string;
+}
+
+export interface PrincessClaim extends BaseClaim {
+  readonly type: "Princess";
+  readonly nominations?: readonly PrincessNominationDoc[];
+}
+
 export interface PhilosopherSeamstressInfoDoc {
   readonly among: readonly string[];
   readonly aligned?: boolean;
   readonly timing?: string;
+}
+
+export interface ProdigyCheckDoc {
+  readonly chosen: string;
+  readonly learned: string;
+  readonly timing?: string;
+}
+
+export interface ProdigyClaim extends BaseClaim {
+  readonly type: "Prodigy";
+  readonly checks: readonly ProdigyCheckDoc[];
+}
+
+export interface PuzzlemasterGuessDoc {
+  readonly player: string;
+  readonly learnedDemon: string;
+  readonly timing?: string;
+}
+
+export interface PuzzlemasterClaim extends BaseClaim {
+  readonly type: "Puzzlemaster";
+  readonly guesses?: readonly PuzzlemasterGuessDoc[];
 }
 
 export interface SeamstressClaim extends BaseClaim {
@@ -254,6 +337,7 @@ export interface ShugenjaClaim extends BaseClaim {
 export interface ClockmakerClaim extends BaseClaim {
   readonly type: "Clockmaker";
   readonly distance?: number;
+  readonly seating?: readonly string[];
 }
 
 export interface CourtierClaim extends BaseClaim {
@@ -348,6 +432,7 @@ export interface NightwatchmanClaim extends BaseClaim {
   readonly type: "Nightwatchman";
   readonly chosen?: string;
   readonly learned?: boolean;
+  readonly confirmedByChosen?: boolean;
 }
 
 export const BARE_CLAIM_TYPES = [
@@ -355,15 +440,22 @@ export const BARE_CLAIM_TYPES = [
   "Artist",
   "Atheist",
   "Baron",
+  "Boffin",
   "Butler",
   "Cerenovus",
   "Damsel",
+  "Devil's Advocate",
   "Drunk",
   "Evil Twin",
+  "Golem",
   "Goblin",
+  "Hermit",
   "Imp",
+  "Kazali",
+  "Legion",
   "Leviathan",
   "Lord of Typhon",
+  "Lunar Prodigy",
   "Lunatic",
   "Marionette",
   "Mayor",
@@ -372,14 +464,18 @@ export const BARE_CLAIM_TYPES = [
   "Pit-Hag",
   "Po",
   "Poisoner",
+  "Politician",
+  "Poppy Grower",
   "Pukka",
-  "Puzzlemaster",
   "Recluse",
+  "Riot",
   "Saint",
   "Scarlet Woman",
   "Soldier",
+  "Solar Prodigy",
   "Spy",
   "Sweetheart",
+  "Tea Lady",
   "Vortox",
   "Widow",
   "Witch",
@@ -400,6 +496,8 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Chef",
   "Chambermaid",
   "Empath",
+  "Exorcist",
+  "Flowergirl",
   "FortuneTeller",
   "Undertaker",
   "Legionary",
@@ -410,6 +508,9 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Gambler",
   "Gossip",
   "Philosopher",
+  "Princess",
+  "Prodigy",
+  "Puzzlemaster",
   "Seamstress",
   "Juggler",
   "Dreamer",

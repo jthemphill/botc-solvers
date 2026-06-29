@@ -176,7 +176,7 @@ describe("DSL", () => {
     expect(await game.solveAll()).toHaveLength(1);
   });
 
-  test("fortune_teller_red_herring and globally_drunk expose model state", async () => {
+  test("fortune_teller_red_herring, globally_drunk, and poisoned expose model state", async () => {
     const game = buildPuzzleModel(
       { players: ["FT", "Red", "VI", "Demon"], characters: [FortuneTeller, Leviathan, VillageIdiot], setup: false },
       backend,
@@ -194,10 +194,30 @@ describe("DSL", () => {
     game.addVillageIdiotDrunking();
     game.addTruth(game.fortuneTellerRedHerring("FT", "Red"));
     game.addTruth(game.globalDrunk("VI"));
+    game.fixPoisoned("Red", true, "night_1");
     game.addTruth(compile("fortune_teller_red_herring(FT, Red)", game, ctx) as BoolLike);
     game.addTruth(compile("globally_drunk(VI)", game, ctx) as BoolLike);
+    game.addTruth(compile("poisoned(Red, night_1)", game, ctx) as BoolLike);
     game.addFalse(compile("fortune_teller_red_herring(FT, VI)", game, ctx) as BoolLike);
     game.addFalse(compile("globally_drunk(Red)", game, ctx) as BoolLike);
+    game.addFalse(compile("poisoned(FT, night_1)", game, ctx) as BoolLike);
+
+    expect(await game.solveAll()).toHaveLength(1);
+  });
+
+  test("role_at exposes timed role state", async () => {
+    const game = buildPuzzleModel({ players: ["A", "B"], characters: script(Imp, Chef), setup: false }, backend);
+    const ctx: CompileCtx = {
+      players: ["A", "B"],
+      script: ["Imp", "Chef"],
+      nameRoot: "role_at",
+    };
+
+    game.fixActual("A", Chef);
+    game.fixActual("B", Imp);
+    game.addRoleAt("A", Imp, "night_2");
+    game.addTruth(compile("role_at(A, Imp, night_2)", game, ctx) as BoolLike);
+    game.addFalse(compile("role_at(A, Imp, night_1)", game, ctx) as BoolLike);
 
     expect(await game.solveAll()).toHaveLength(1);
   });

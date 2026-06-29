@@ -10,11 +10,14 @@ import {
   Chef,
   Drunk,
   Empath,
+  FangGu,
   Imp,
   Investigator,
+  Klutz,
   Librarian,
   Leviathan,
   LordOfTyphon,
+  Mutant,
   Marionette,
   Poisoner,
   Recluse,
@@ -22,6 +25,10 @@ import {
   ScarletWoman,
   Slayer,
   Spy,
+  Washerwoman,
+  Vortox,
+  Vigormortis,
+  Witch,
   Xaan,
   script,
 } from "./characters";
@@ -80,6 +87,7 @@ describe("standard setup lowering", () => {
       Investigator,
       Librarian,
       Slayer,
+      Washerwoman,
     );
 
     const withBaron = buildPuzzleModel({ players: players(7), characters }, backend);
@@ -96,6 +104,74 @@ describe("standard setup lowering", () => {
     expect(characterTypeCounts((await withoutBaron.solveAll({ limit: 1 }))[0] as World, characters)).toEqual({
       [CharacterType.Townsfolk]: 5,
       [CharacterType.Outsider]: 0,
+      [CharacterType.Minion]: 1,
+      [CharacterType.Demon]: 1,
+    });
+  });
+
+  test("conditions Fang Gu outsider modification on Fang Gu being in play", async () => {
+    const characters = script(
+      FangGu,
+      Vortox,
+      Witch,
+      Mutant,
+      Klutz,
+      Chef,
+      Empath,
+      Investigator,
+      Librarian,
+      Slayer,
+      Washerwoman,
+    );
+
+    const withFangGu = buildPuzzleModel({ players: players(8), characters }, backend);
+    withFangGu.fixActual("A", FangGu);
+    expect(characterTypeCounts((await withFangGu.solveAll({ limit: 1 }))[0] as World, characters)).toEqual({
+      [CharacterType.Townsfolk]: 4,
+      [CharacterType.Outsider]: 2,
+      [CharacterType.Minion]: 1,
+      [CharacterType.Demon]: 1,
+    });
+
+    const withoutFangGu = buildPuzzleModel({ players: players(8), characters }, backend);
+    withoutFangGu.addFalse(withoutFangGu.roleInPlay(FangGu));
+    expect(characterTypeCounts((await withoutFangGu.solveAll({ limit: 1 }))[0] as World, characters)).toEqual({
+      [CharacterType.Townsfolk]: 5,
+      [CharacterType.Outsider]: 1,
+      [CharacterType.Minion]: 1,
+      [CharacterType.Demon]: 1,
+    });
+  });
+
+  test("conditions Vigormortis outsider modification on Vigormortis being in play", async () => {
+    const characters = script(
+      Vigormortis,
+      Vortox,
+      Witch,
+      Mutant,
+      Klutz,
+      Chef,
+      Empath,
+      Investigator,
+      Librarian,
+      Slayer,
+      Washerwoman,
+    );
+
+    const withVigormortis = buildPuzzleModel({ players: players(8), characters }, backend);
+    withVigormortis.fixActual("A", Vigormortis);
+    expect(characterTypeCounts((await withVigormortis.solveAll({ limit: 1 }))[0] as World, characters)).toEqual({
+      [CharacterType.Townsfolk]: 6,
+      [CharacterType.Outsider]: 0,
+      [CharacterType.Minion]: 1,
+      [CharacterType.Demon]: 1,
+    });
+
+    const withoutVigormortis = buildPuzzleModel({ players: players(8), characters }, backend);
+    withoutVigormortis.addFalse(withoutVigormortis.roleInPlay(Vigormortis));
+    expect(characterTypeCounts((await withoutVigormortis.solveAll({ limit: 1 }))[0] as World, characters)).toEqual({
+      [CharacterType.Townsfolk]: 5,
+      [CharacterType.Outsider]: 1,
       [CharacterType.Minion]: 1,
       [CharacterType.Demon]: 1,
     });

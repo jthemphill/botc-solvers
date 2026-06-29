@@ -11,19 +11,24 @@ import {
   Drunk,
   Empath,
   FortuneTeller,
+  Hermit,
   Imp,
   Investigator,
   Juggler,
   Knight,
+  Legion,
   Librarian,
+  LunarProdigy,
   NoDashii,
   Noble,
   Poisoner,
+  Prodigy,
   Recluse,
   Savant,
   ScarletWoman,
   Seamstress,
   SnakeCharmer,
+  SolarProdigy,
   Spy,
   VillageIdiot,
   Vortox,
@@ -70,6 +75,23 @@ describe("predicates and helpers", () => {
     expect(await invalid.solveAll({ limit: 1 })).toEqual([]);
   });
 
+  test("Hermit can think they are an out-of-play Townsfolk", async () => {
+    const characters = script(Imp, Hermit, Investigator, Chef);
+    const valid = new BOTCModel(["A", "B", "C"], { characters, backend });
+    valid.addRoleClaim({ player: "A", apparentRole: "Investigator" });
+    valid.fixActual("A", Hermit);
+    valid.fixActual("B", Imp);
+    valid.fixActual("C", Chef);
+    expect(await valid.solveAll({ limit: 1 })).toHaveLength(1);
+
+    const invalid = new BOTCModel(["A", "B", "C"], { characters, backend });
+    invalid.addRoleClaim({ player: "A", apparentRole: "Investigator" });
+    invalid.fixActual("A", Hermit);
+    invalid.fixActual("B", Imp);
+    invalid.fixActual("C", Investigator);
+    expect(await invalid.solveAll({ limit: 1 })).toEqual([]);
+  });
+
   test("evil role claims exclude the exact apparent evil role", async () => {
     const valid = new BOTCModel(["A", "B", "C"], { characters: script(Imp, ScarletWoman, Chef), backend });
     valid.addRoleClaim({ player: "A", apparentRole: "Imp" });
@@ -86,6 +108,32 @@ describe("predicates and helpers", () => {
     expect(await invalid.solveAll({ limit: 1 })).toEqual([]);
   });
 
+  test("Prodigy token claims permit either Prodigy role and use the actual role's alignment rule", async () => {
+    const characters = script(SolarProdigy, LunarProdigy, Drunk, Imp, ScarletWoman, Chef);
+
+    const validLunar = new BOTCModel(["A", "B", "C", "D"], { characters, backend });
+    new Prodigy({
+      name: "A",
+      checks: [{ chosen: "B", learned: "C", timing: night(1) }],
+    }).apply(validLunar);
+    validLunar.fixActual("A", LunarProdigy);
+    validLunar.fixActual("B", Chef);
+    validLunar.fixActual("C", Imp);
+    validLunar.fixActual("D", ScarletWoman);
+    expect(await validLunar.solveAll({ limit: 1 })).toHaveLength(1);
+
+    const invalidSolar = new BOTCModel(["A", "B", "C", "D"], { characters, backend });
+    new Prodigy({
+      name: "A",
+      checks: [{ chosen: "B", learned: "C", timing: night(1) }],
+    }).apply(invalidSolar);
+    invalidSolar.fixActual("A", SolarProdigy);
+    invalidSolar.fixActual("B", Chef);
+    invalidSolar.fixActual("C", Imp);
+    invalidSolar.fixActual("D", ScarletWoman);
+    expect(await invalidSolar.solveAll({ limit: 1 })).toEqual([]);
+  });
+
   test("actual Drunk is an info malfunction source", async () => {
     const drunk = new BOTCModel(["A", "B", "C"], { characters: script(Imp, Drunk, Empath, Chef), backend });
     drunk.fixActual("A", Drunk);
@@ -100,6 +148,17 @@ describe("predicates and helpers", () => {
     sober.fixActual("C", Drunk);
     applyClaims(sober, [new Empath({ name: "A", count: 0 })]);
     expect(await sober.solveAll({ limit: 1 })).toEqual([]);
+  });
+
+  test("actual Hermit is drunk and can register as evil", async () => {
+    const game = new BOTCModel(["A", "B", "C"], { characters: script(Imp, ScarletWoman, Hermit, Chef), backend });
+    game.fixActual("A", Hermit);
+    game.fixActual("B", Imp);
+    game.fixActual("C", Chef);
+    game.addTruth(game.isDrunkAt("A", night(1)));
+    game.addTruth(game.registersAsEvil("A", "hermit_registers_evil"));
+
+    expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
   });
 
   test("poisoned true information does not count as a Mathematician malfunction", async () => {
@@ -200,6 +259,47 @@ describe("predicates and helpers", () => {
     expect(await dedup.solveAll()).toHaveLength(1);
   });
 
+  test("Noble count uses evil registration", async () => {
+    const game = new BOTCModel(["Noble", "Recluse", "Spy", "Demon"], {
+      characters: script(Imp, Spy, Recluse, Noble),
+      backend,
+    });
+    game.fixActual("Noble", "Noble");
+    game.fixActual("Recluse", "Recluse");
+    game.fixActual("Spy", "Spy");
+    game.fixActual("Demon", "Imp");
+    game.addTruth(Noble.learnsEvilCount(game, ["Recluse", "Spy", "Demon"], 1));
+
+    expect(await game.solveAll()).toHaveLength(1);
+  });
+
+  test("Juggler count uses role registration", async () => {
+    const game = new BOTCModel(["Juggler", "Spy", "Demon"], {
+      characters: script(Imp, Spy, Juggler, Drunk),
+      backend,
+    });
+    game.fixActual("Juggler", "Juggler");
+    game.fixActual("Spy", "Spy");
+    game.fixActual("Demon", "Imp");
+    game.addTruth(Juggler.learnsCorrectCount(game, { Spy: "Drunk", Demon: "Imp" }, 2, "juggler"));
+
+    expect(await game.solveAll()).toHaveLength(1);
+  });
+
+  test("Seamstress alignment uses registration", async () => {
+    const game = new BOTCModel(["Seamstress", "Spy", "Chef", "Demon"], {
+      characters: script(Imp, Spy, Seamstress, Chef),
+      backend,
+    });
+    game.fixActual("Seamstress", "Seamstress");
+    game.fixActual("Spy", "Spy");
+    game.fixActual("Chef", "Chef");
+    game.fixActual("Demon", "Imp");
+    game.addTruth(Seamstress.learnsSameAlignment(game, "Spy", "Chef"));
+
+    expect(await game.solveAll()).toHaveLength(1);
+  });
+
   test("Chef count can register Recluse per adjacent pair", async () => {
     const game = new BOTCModel(["Adam", "Fraser", "Sarah", "Olivia", "You", "Aoife", "Tim"], {
       characters: REGISTRATION_CHARACTERS,
@@ -213,6 +313,19 @@ describe("predicates and helpers", () => {
     game.fixActual("Aoife", "Spy");
     game.fixActual("Tim", "Drunk");
     game.addTruth(chefCountRegistersAs(game, 1, "chef"));
+
+    expect(await game.solveAll()).toHaveLength(1);
+  });
+
+  test("Legion can register as a Minion role", async () => {
+    const game = new BOTCModel(["A", "B", "C"], {
+      characters: script(Legion, Spy, Investigator),
+      backend,
+    });
+    game.fixActual("A", Investigator);
+    game.fixActual("B", Legion);
+    game.fixActual("C", Legion);
+    game.addTruth(Investigator.learnsRoleAmong(game, ["B", "C"], Spy, "investigator"));
 
     expect(await game.solveAll()).toHaveLength(1);
   });
@@ -243,6 +356,20 @@ describe("predicates and helpers", () => {
       timing: "night_1",
     });
     expect(await soberInfo.solveAll()).toEqual([]);
+  });
+
+  test("No Dashii poisoning wraps around the seating order", async () => {
+    const game = new BOTCModel(["A", "B", "C", "D"], {
+      characters: script(NoDashii, Chef, Empath, Investigator),
+      backend,
+    });
+    game.fixActual("A", Chef);
+    game.fixActual("B", Empath);
+    game.fixActual("C", Investigator);
+    game.fixActual("D", NoDashii);
+    game.addTruth(game.noDashiiPoisonedAt("A", "night_1"));
+
+    expect(await game.solveAll()).toHaveLength(1);
   });
 
   test("timing role state can add and remove roles", async () => {
@@ -408,9 +535,55 @@ describe("predicates and helpers", () => {
     applyClaims(trueClockmakerInfo, [new Clockmaker({ name: "Clockmaker", distance: 1 })]);
     expect(await trueClockmakerInfo.solveAll({ limit: 1 })).toEqual([]);
 
+    const drunkTrueClockmakerInfo = makeGame();
+    drunkTrueClockmakerInfo.addRoleDrunking(Clockmaker, ["night_1"]);
+    applyClaims(drunkTrueClockmakerInfo, [new Clockmaker({ name: "Clockmaker", distance: 1 })]);
+    expect(await drunkTrueClockmakerInfo.solveAll({ limit: 1 })).toEqual([]);
+
     const falseSnakeCharmerCheck = makeGame();
     applyClaims(falseSnakeCharmerCheck, [new SnakeCharmer({ name: "Snake Charmer", checked: "Demon", demon: false })]);
     expect(await falseSnakeCharmerCheck.solveAll({ limit: 1 })).toEqual([]);
+
+    const makeSavantGame = () => {
+      const game = new BOTCModel(["Savant", "Demon", "Minion"], {
+        characters: script(Vortox, Witch, Savant),
+        backend,
+      });
+      game.fixActual("Savant", Savant);
+      game.fixActual("Demon", Vortox);
+      game.fixActual("Minion", Witch);
+      return game;
+    };
+
+    const bothSavantOptionsFalse = makeSavantGame();
+    applyClaims(bothSavantOptionsFalse, [
+      new Savant({
+        name: "Savant",
+        timing: "day_1",
+        statements: [(game) => [game.actualIs("Minion", Vortox), game.actualIs("Savant", Witch)]],
+      }),
+    ]);
+    expect(await bothSavantOptionsFalse.solveAll({ limit: 1 })).toHaveLength(1);
+
+    const oneSavantOptionTrue = makeSavantGame();
+    applyClaims(oneSavantOptionTrue, [
+      new Savant({
+        name: "Savant",
+        timing: "day_1",
+        statements: [(game) => [game.actualIs("Demon", Vortox), game.actualIs("Savant", Witch)]],
+      }),
+    ]);
+    expect(await oneSavantOptionTrue.solveAll({ limit: 1 })).toEqual([]);
+
+    const bothSavantOptionsTrue = makeSavantGame();
+    applyClaims(bothSavantOptionsTrue, [
+      new Savant({
+        name: "Savant",
+        timing: "day_1",
+        statements: [(game) => [game.actualIs("Demon", Vortox), game.isEvil("Demon")]],
+      }),
+    ]);
+    expect(await bothSavantOptionsTrue.solveAll({ limit: 1 })).toEqual([]);
   });
 
   test("village idiot can have up to three copies under default uniqueness", async () => {

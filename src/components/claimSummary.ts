@@ -15,6 +15,10 @@ export function claimSummary(claim: Claim): string {
       return chambermaidSummary(claim);
     case "Empath":
       return empathSummary(claim);
+    case "Exorcist":
+      return exorcistSummary(claim);
+    case "Flowergirl":
+      return flowergirlSummary(claim);
     case "Investigator": {
       const role = claim.role ?? claim.minionRole ?? "a Minion";
       return `${formatList(claim.among)} is ${rolePhrase(role, "a Minion")}.`;
@@ -65,6 +69,12 @@ export function claimSummary(claim: Claim): string {
       return oracleSummary(claim);
     case "Philosopher":
       return philosopherSummary(claim);
+    case "Princess":
+      return princessSummary(claim);
+    case "Prodigy":
+      return prodigySummary(claim);
+    case "Puzzlemaster":
+      return puzzlemasterSummary(claim);
     case "Ravenkeeper":
       return claim.player === undefined
         ? "No Ravenkeeper pick yet"
@@ -142,6 +152,24 @@ function empathSummary(claim: Extract<Claim, { readonly type: "Empath" }>): stri
   return `${timing}${evil} neighbor${claim.count === 1 ? "" : "s"}`;
 }
 
+function exorcistSummary(claim: Extract<Claim, { readonly type: "Exorcist" }>): string {
+  const choices = (claim.choices ?? [])
+    .filter((choice) => choice.player.trim() !== "")
+    .map((choice, index) => {
+      const timing = choice.timing === undefined ? defaultNightLabel(index + 1) : compactTimingLabel(choice.timing);
+      return `${timing}: chose ${choice.player}`;
+    });
+  return choices.length === 0 ? "No Exorcist choices" : choices.join("; ");
+}
+
+function flowergirlSummary(claim: Extract<Claim, { readonly type: "Flowergirl" }>): string {
+  const votes = (claim.votes ?? []).map(
+    (vote) =>
+      `${compactTimingLabel(vote.timing)}: ${formatList(vote.voters)} voted -> ${vote.demonVoted ? "yes" : "no"}`,
+  );
+  return votes.length === 0 ? "No Flowergirl votes" : votes.join("; ");
+}
+
 function fortuneTellerSummary(claim: Extract<Claim, { readonly type: "FortuneTeller" }>): string {
   const checks = claim.checks
     .filter((check) => check.left.trim() !== "" && check.right.trim() !== "")
@@ -205,6 +233,36 @@ function philosopherSummary(claim: Extract<Claim, { readonly type: "Philosopher"
   const [left, right] = seamstress.among;
   const alignment = seamstress.aligned === undefined ? "unknown alignment" : seamstress.aligned ? "same" : "different";
   return `Chose Seamstress; ${left}/${right} ${alignment}.`;
+}
+
+function puzzlemasterSummary(claim: Extract<Claim, { readonly type: "Puzzlemaster" }>): string {
+  const guesses = (claim.guesses ?? [])
+    .filter((guess) => guess.player.trim() !== "" && guess.learnedDemon.trim() !== "")
+    .map((guess, index) => {
+      const timing = guess.timing === undefined ? `Guess ${index + 1}` : compactTimingLabel(guess.timing);
+      return `${timing}: guessed ${guess.player}, learned ${guess.learnedDemon} is Demon`;
+    });
+  return guesses.length === 0 ? "No Puzzlemaster guesses" : guesses.join("; ");
+}
+
+function princessSummary(claim: Extract<Claim, { readonly type: "Princess" }>): string {
+  const nominations = (claim.nominations ?? [])
+    .filter((nomination) => nomination.player.trim() !== "")
+    .map((nomination) => {
+      const timing = nomination.timing === undefined ? "a day" : sentenceTimingLabel(nomination.timing);
+      return `Nominated ${nomination.player} on ${timing}`;
+    });
+  return nominations.length === 0 ? "No Princess nominations" : nominations.join("; ");
+}
+
+function prodigySummary(claim: Extract<Claim, { readonly type: "Prodigy" }>): string {
+  const checks = claim.checks
+    .filter((check) => check.chosen.trim() !== "" && check.learned.trim() !== "")
+    .map((check, index) => {
+      const timing = check.timing === undefined ? defaultNightLabel(index) : compactTimingLabel(check.timing);
+      return `${timing}: ${check.chosen} -> ${check.learned}`;
+    });
+  return checks.length === 0 ? "No Prodigy checks" : `I checked: ${checks.join(", ")}.`;
 }
 
 function snakeCharmerSummary(claim: Extract<Claim, { readonly type: "Snake Charmer" }>): string {

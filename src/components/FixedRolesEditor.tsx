@@ -1,5 +1,5 @@
 import type { Dispatch } from "react";
-import type { FixedRoleConstraint, ForbiddenRoleConstraint, PuzzleDoc } from "../schema/puzzleDoc";
+import type { FixedRoleConstraint, ForbiddenRoleConstraint, PuzzleConstraintDoc, PuzzleDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
 import { RoleListEditor, sortedRoleNames } from "./RolePicker";
 
@@ -11,6 +11,7 @@ interface Props {
 export function FixedRolesEditor({ doc, dispatch }: Props) {
   const fixedRoles = doc.fixedRoles ?? [];
   const forbiddenRoles = doc.forbiddenRoles ?? [];
+  const customConstraints = doc.constraints ?? [];
 
   const setFixedRoles = (next: readonly FixedRoleConstraint[]) => {
     dispatch({ type: "setFixedRoles", fixedRoles: next.length === 0 ? undefined : next });
@@ -18,6 +19,10 @@ export function FixedRolesEditor({ doc, dispatch }: Props) {
 
   const setForbiddenRoles = (next: readonly ForbiddenRoleConstraint[]) => {
     dispatch({ type: "setForbiddenRoles", forbiddenRoles: next.length === 0 ? undefined : next });
+  };
+
+  const setCustomConstraints = (next: readonly PuzzleConstraintDoc[]) => {
+    dispatch({ type: "setConstraints", constraints: next.length === 0 ? undefined : next });
   };
 
   return (
@@ -39,7 +44,50 @@ export function FixedRolesEditor({ doc, dispatch }: Props) {
         emptyRole={[]}
         setConstraints={setForbiddenRoles}
       />
+      <CustomConstraintList constraints={customConstraints} setConstraints={setCustomConstraints} />
     </section>
+  );
+}
+
+function CustomConstraintList({
+  constraints,
+  setConstraints,
+}: {
+  constraints: readonly PuzzleConstraintDoc[];
+  setConstraints: (next: readonly PuzzleConstraintDoc[]) => void;
+}) {
+  const updateConstraint = (index: number, expression: string) => {
+    setConstraints(constraints.map((constraint, i) => (i === index ? { ...constraint, expression } : constraint)));
+  };
+
+  const addConstraint = () => {
+    setConstraints([...constraints, { expression: "" }]);
+  };
+
+  const removeConstraint = (index: number) => {
+    setConstraints(constraints.filter((_, i) => i !== index));
+  };
+
+  return (
+    <>
+      {constraints.map((constraint, index) => (
+        <div key={`custom-constraint-${index}`} className="claim-block">
+          <header>
+            <strong>Custom constraint {index + 1}</strong>
+            <button type="button" onClick={() => removeConstraint(index)}>
+              Remove
+            </button>
+          </header>
+          <div className="field-grid">
+            <span>Expression</span>
+            <textarea value={constraint.expression} onChange={(event) => updateConstraint(index, event.target.value)} />
+          </div>
+        </div>
+      ))}
+      <button type="button" onClick={addConstraint}>
+        + Add custom constraint
+      </button>
+    </>
   );
 }
 
