@@ -42,6 +42,14 @@ export interface AstPath {
   readonly span: Span;
 }
 
+export interface AstJoin {
+  readonly kind: "join";
+  readonly left: AstNode;
+  readonly field: string;
+  readonly fieldSpan: Span;
+  readonly span: Span;
+}
+
 export interface AstNumber {
   readonly kind: "number";
   readonly value: number;
@@ -94,6 +102,7 @@ export type AstNode =
   | AstBinOp
   | AstNot
   | AstPath
+  | AstJoin
   | AstNumber
   | AstSetLit
   | AstComprehension

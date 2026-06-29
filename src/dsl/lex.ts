@@ -86,6 +86,11 @@ export function lex(src: string): Token[] {
       tokens.push({ kind: "implies", text: "=>", span: { start, end: i } });
       continue;
     }
+    if (ch === "=") {
+      i += 1;
+      tokens.push({ kind: "eq", text: "=", span: { start, end: i } });
+      continue;
+    }
     if (ch === "!") {
       i += 1;
       tokens.push({ kind: "bang", text: "!", span: { start, end: i } });

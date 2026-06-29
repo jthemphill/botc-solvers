@@ -155,6 +155,31 @@ describe("DSL", () => {
     expect(await game.solveAll()).toHaveLength(1);
   });
 
+  test("Alloy-style joins expose distinct character types in a player set", async () => {
+    const game = buildPuzzleModel(
+      { players: ["A", "B", "C", "D"], characters: [Imp, Savant, Clockmaker, Goblin], setup: false },
+      backend,
+    );
+    const ctx: CompileCtx = {
+      players: ["A", "B", "C", "D"],
+      script: ["Imp", "Savant", "Clockmaker", "Goblin"],
+      nameRoot: "set_join_type",
+    };
+
+    game.fixActual("A", Savant);
+    game.fixActual("B", Clockmaker);
+    game.fixActual("C", Imp);
+    game.fixActual("D", Goblin);
+    game.addTruth(compile("#((A + B + C + D).type) = 3", game, ctx) as BoolLike);
+    game.addTruth(compile("#({A, B, C, D}.type) == 3", game, ctx) as BoolLike);
+    game.addTruth(compile("Townsfolk in {A, B, C, D}.type", game, ctx) as BoolLike);
+    game.addTruth(compile("Townsfolk in A.type", game, ctx) as BoolLike);
+    game.addFalse(compile("#((A + B + C + D).type) = 2", game, ctx) as BoolLike);
+    game.addFalse(compile("Demon in A.type", game, ctx) as BoolLike);
+
+    expect(await game.solveAll()).toHaveLength(1);
+  });
+
   test("role_distance matches exact circular seating distance", async () => {
     const game = buildPuzzleModel(
       { players: ["A", "B", "C", "D"], characters: [Leviathan, Goblin, Savant, Clockmaker], setup: false },

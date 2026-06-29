@@ -1,7 +1,7 @@
 import { CharacterType, type RoleClass } from "../model/core";
 import { Chef } from "../model/characters";
 import type { BoolLike, BoolVar, BOTCModel, Timing } from "../model/model";
-import type { AstCall, AstNode, AstPath } from "./ast";
+import type { AstCall, AstJoin, AstNode, AstPath } from "./ast";
 import { DslError, lex } from "./lex";
 import { parse } from "./parse";
 import type { Span } from "./tokens";
@@ -12,14 +12,19 @@ export interface CompileCtx {
   readonly nameRoot: string;
 }
 
+type AtomKind = "player" | "role" | "type" | "alignment";
+type AlignmentName = "Good" | "Evil";
+
 type DslValue =
   | { kind: "playerSet"; names: readonly string[]; span: Span }
   | { kind: "player"; name: string; span: Span }
   | { kind: "roleSet"; names: readonly string[]; span: Span }
   | { kind: "role"; name: string; span: Span }
-  | { kind: "dynamicSet"; atomKind: "player" | "role"; elements: readonly SetElement[]; span: Span }
+  | { kind: "typeSet"; values: readonly CharacterType[]; span: Span }
+  | { kind: "alignmentSet"; values: readonly AlignmentName[]; span: Span }
+  | { kind: "dynamicSet"; atomKind: AtomKind; elements: readonly SetElement[]; span: Span }
   | { kind: "cardinality"; literals: readonly BoolLike[]; span: Span }
-  | { kind: "alignment"; value: "Good" | "Evil"; span: Span }
+  | { kind: "alignment"; value: AlignmentName; span: Span }
   | { kind: "type"; value: CharacterType; span: Span }
   | { kind: "playerRole"; player: string; span: Span }
   | { kind: "playerAlignment"; player: string; span: Span }
@@ -27,12 +32,14 @@ type DslValue =
   | { kind: "bool"; value: BoolLike; span: Span }
   | { kind: "number"; value: number; span: Span };
 
-type SetAtom = DslValue & ({ kind: "player" } | { kind: "role" });
+type SetAtom = DslValue & ({ kind: "player" } | { kind: "role" } | { kind: "type" } | { kind: "alignment" });
 
 interface SetElement {
   readonly atom: SetAtom;
   readonly present: BoolLike;
 }
+
+type PlayerSetElement = SetElement & { readonly atom: Extract<SetAtom, { kind: "player" }> };
 
 const CHARACTER_TYPES: Record<string, CharacterType> = {
   Townsfolk: CharacterType.Townsfolk,
@@ -40,6 +47,15 @@ const CHARACTER_TYPES: Record<string, CharacterType> = {
   Minion: CharacterType.Minion,
   Demon: CharacterType.Demon,
 };
+
+const ALL_CHARACTER_TYPES: readonly CharacterType[] = [
+  CharacterType.Townsfolk,
+  CharacterType.Outsider,
+  CharacterType.Minion,
+  CharacterType.Demon,
+];
+
+const ALIGNMENTS: readonly AlignmentName[] = ["Good", "Evil"];
 
 class Compiler {
   private counter = 0;
@@ -72,6 +88,8 @@ class Compiler {
         return { kind: "number", value: node.value, span: node.span };
       case "path":
         return this.evalPath(node, env);
+      case "join":
+        return this.evalJoin(node, env);
       case "setlit":
         return this.evalSetLit(
           node.elements.map((e) => this.evalNode(e, env)),
@@ -113,6 +131,11 @@ class Compiler {
     return cur;
   }
 
+  private evalJoin(node: AstJoin, env: ReadonlyMap<string, DslValue>): DslValue {
+    const left = this.evalNode(node.left, env);
+    return this.applyField(left, node.field, node.fieldSpan, node.span);
+  }
+
   private resolveRoot(name: string, span: Span, env: ReadonlyMap<string, DslValue>): DslValue {
     const bound = env.get(name);
     if (bound !== undefined) return { ...bound, span };
@@ -147,7 +170,76 @@ class Compiler {
       if (field === "type") return { kind: "playerType", player: value.name, span: fullSpan };
       throw new DslError(`Unknown field '${field}' on a player`, fieldSpan);
     }
+    if (value.kind === "playerSet" || (value.kind === "dynamicSet" && value.atomKind === "player")) {
+      return this.applyPlayerSetField(value, field, fieldSpan, fullSpan);
+    }
     throw new DslError(`Cannot apply '.${field}' to a ${value.kind}`, fieldSpan);
+  }
+
+  private applyPlayerSetField(value: DslValue, field: string, fieldSpan: Span, fullSpan: Span): DslValue {
+    const source = this.setElements(value, value.span);
+    if (source.kind !== "player") throw new DslError(`Cannot apply '.${field}' to a ${value.kind}`, fieldSpan);
+    const playerEntries: readonly PlayerSetElement[] = source.elements.map((entry) => {
+      if (entry.atom.kind !== "player") throw new DslError(`Cannot apply '.${field}' to a ${value.kind}`, fieldSpan);
+      return entry as PlayerSetElement;
+    });
+
+    if (field === "left" || field === "right" || field === "neighbors") {
+      const elements = playerEntries.flatMap((entry) => {
+        const player = entry.atom.name;
+        const [left, right] = this.game.neighbors(player);
+        const names = field === "left" ? [left] : field === "right" ? [right] : [left, right];
+        return names.map((name) => ({
+          atom: { kind: "player" as const, name, span: fullSpan },
+          present: entry.present,
+        }));
+      });
+      return { kind: "dynamicSet", atomKind: "player", elements: this.mergeElements(elements), span: fullSpan };
+    }
+
+    if (field === "role") {
+      const elements = playerEntries.flatMap((entry) =>
+        this.ctx.script.map((name) => ({
+          atom: { kind: "role" as const, name, span: fullSpan },
+          present: this.game.allOf(
+            [entry.present, this.game.actualIs(entry.atom.name, name)],
+            this.freshName("join_role"),
+          ),
+        })),
+      );
+      return { kind: "dynamicSet", atomKind: "role", elements: this.mergeElements(elements), span: fullSpan };
+    }
+
+    if (field === "type") {
+      const elements = playerEntries.flatMap((entry) =>
+        ALL_CHARACTER_TYPES.map((type) => ({
+          atom: { kind: "type" as const, value: type, span: fullSpan },
+          present: this.game.allOf(
+            [entry.present, this.game.hasCharacterType(entry.atom.name, type)],
+            this.freshName("join_type"),
+          ),
+        })),
+      );
+      return { kind: "dynamicSet", atomKind: "type", elements: this.mergeElements(elements), span: fullSpan };
+    }
+
+    if (field === "alignment") {
+      const elements = playerEntries.flatMap((entry) =>
+        ALIGNMENTS.map((alignment) => ({
+          atom: { kind: "alignment" as const, value: alignment, span: fullSpan },
+          present: this.game.allOf(
+            [
+              entry.present,
+              alignment === "Evil" ? this.game.isEvil(entry.atom.name) : this.game.isGood(entry.atom.name),
+            ],
+            this.freshName("join_alignment"),
+          ),
+        })),
+      );
+      return { kind: "dynamicSet", atomKind: "alignment", elements: this.mergeElements(elements), span: fullSpan };
+    }
+
+    throw new DslError(`Unknown field '${field}' on a player set`, fieldSpan);
   }
 
   private evalSetLit(values: readonly DslValue[], span: Span): DslValue {
@@ -169,7 +261,23 @@ class Compiler {
       }
       return { kind: "roleSet", names, span };
     }
-    throw new DslError(`Set literals support only players or roles`, span);
+    if (first.kind === "type") {
+      const typeValues: CharacterType[] = [];
+      for (const v of values) {
+        if (v.kind !== "type") throw new DslError(`Mixed-type set literal; expected a character type`, v.span);
+        if (!typeValues.includes(v.value)) typeValues.push(v.value);
+      }
+      return { kind: "typeSet", values: typeValues, span };
+    }
+    if (first.kind === "alignment") {
+      const alignmentValues: AlignmentName[] = [];
+      for (const v of values) {
+        if (v.kind !== "alignment") throw new DslError(`Mixed-type set literal; expected an alignment`, v.span);
+        if (!alignmentValues.includes(v.value)) alignmentValues.push(v.value);
+      }
+      return { kind: "alignmentSet", values: alignmentValues, span };
+    }
+    throw new DslError(`Set literals support only players, roles, character types, or alignments`, span);
   }
 
   private evalQuant(node: Extract<AstNode, { kind: "quant" }>, env: ReadonlyMap<string, DslValue>): DslValue {
@@ -270,7 +378,7 @@ class Compiler {
   private setElements(
     value: DslValue,
     span: Span,
-  ): { readonly kind: "player" | "role"; readonly elements: readonly SetElement[] } {
+  ): { readonly kind: AtomKind; readonly elements: readonly SetElement[] } {
     if (value.kind === "dynamicSet") return { kind: value.atomKind, elements: value.elements };
     if (value.kind === "playerSet")
       return {
@@ -298,6 +406,32 @@ class Compiler {
         kind: "role",
         elements: [{ atom: value, present: this.game.constantBool(true, this.freshName("static_role")) }],
       };
+    if (value.kind === "typeSet")
+      return {
+        kind: "type",
+        elements: value.values.map((type) => ({
+          atom: { kind: "type", value: type, span },
+          present: this.game.constantBool(true, this.freshName("static_type_set")),
+        })),
+      };
+    if (value.kind === "type")
+      return {
+        kind: "type",
+        elements: [{ atom: value, present: this.game.constantBool(true, this.freshName("static_type")) }],
+      };
+    if (value.kind === "alignmentSet")
+      return {
+        kind: "alignment",
+        elements: value.values.map((alignment) => ({
+          atom: { kind: "alignment", value: alignment, span },
+          present: this.game.constantBool(true, this.freshName("static_alignment_set")),
+        })),
+      };
+    if (value.kind === "alignment")
+      return {
+        kind: "alignment",
+        elements: [{ atom: value, present: this.game.constantBool(true, this.freshName("static_alignment")) }],
+      };
     if (value.kind === "playerRole")
       return {
         kind: "role",
@@ -306,7 +440,31 @@ class Compiler {
           present: this.game.actualIs(value.player, name),
         })),
       };
+    if (value.kind === "playerType")
+      return {
+        kind: "type",
+        elements: ALL_CHARACTER_TYPES.map((type) => ({
+          atom: { kind: "type", value: type, span },
+          present: this.game.hasCharacterType(value.player, type),
+        })),
+      };
+    if (value.kind === "playerAlignment")
+      return {
+        kind: "alignment",
+        elements: ALIGNMENTS.map((alignment) => ({
+          atom: { kind: "alignment", value: alignment, span },
+          present: alignment === "Evil" ? this.game.isEvil(value.player) : this.game.isGood(value.player),
+        })),
+      };
     throw new DslError(`Expected a set, got ${value.kind}`, span);
+  }
+
+  private mergeElements(elements: readonly SetElement[]): readonly SetElement[] {
+    return [...this.groupElements(elements).values()].map(({ atom, presences }) => ({
+      atom,
+      present:
+        presences.length === 1 ? (presences[0] as BoolLike) : this.game.anyOf(presences, this.freshName("set_merge")),
+    }));
   }
 
   private unionElements(left: readonly SetElement[], right: readonly SetElement[]): readonly SetElement[] {
@@ -488,13 +646,11 @@ class Compiler {
   }
 
   private compileMembership(lhs: DslValue, rhs: DslValue, span: Span): BoolLike {
-    if (lhs.kind === "player" && rhs.kind === "playerSet")
-      return this.game.constantBool(rhs.names.includes(lhs.name), this.freshName("in_player"));
-    if (lhs.kind === "role" && rhs.kind === "roleSet")
-      return this.game.constantBool(rhs.names.includes(lhs.name), this.freshName("in_role"));
-    if ((lhs.kind === "player" || lhs.kind === "role") && rhs.kind === "dynamicSet") {
-      const matches = rhs.elements.filter((entry) => sameAtom(entry.atom, lhs)).map((entry) => entry.present);
-      return this.game.anyOf(matches, this.freshName("in_dynamic_set"));
+    if (isSetAtom(lhs)) {
+      const rhsSet = this.setElements(rhs, rhs.span);
+      if (rhsSet.kind !== lhs.kind) throw new DslError(`'in' requires matching atom and set types`, span);
+      const matches = rhsSet.elements.filter((entry) => sameAtom(entry.atom, lhs)).map((entry) => entry.present);
+      return this.game.anyOf(matches, this.freshName("in_set"));
     }
     throw new DslError(`'in' requires an atom on the left and a set on the right`, span);
   }
@@ -724,11 +880,24 @@ class Compiler {
 function sameAtom(a: DslValue, b: DslValue): boolean {
   if (a.kind === "player" && b.kind === "player") return a.name === b.name;
   if (a.kind === "role" && b.kind === "role") return a.name === b.name;
+  if (a.kind === "type" && b.kind === "type") return a.value === b.value;
+  if (a.kind === "alignment" && b.kind === "alignment") return a.value === b.value;
   return false;
 }
 
 function atomKey(atom: SetAtom): string {
-  return `${atom.kind}:${atom.name}`;
+  switch (atom.kind) {
+    case "player":
+    case "role":
+      return `${atom.kind}:${atom.name}`;
+    case "type":
+    case "alignment":
+      return `${atom.kind}:${atom.value}`;
+  }
+}
+
+function isSetAtom(value: DslValue): value is SetAtom {
+  return value.kind === "player" || value.kind === "role" || value.kind === "type" || value.kind === "alignment";
 }
 
 function orderPair(a: DslValue, b: DslValue): readonly [DslValue, DslValue] {

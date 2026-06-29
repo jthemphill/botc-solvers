@@ -157,11 +157,27 @@ class Parser {
   }
 
   private parseSetIntersect(): AstNode {
-    let left = this.parsePrimary();
+    let left = this.parseJoin();
     while (this.peek().kind === "amp") {
       this.consume();
-      const right = this.parsePrimary();
+      const right = this.parseJoin();
       left = { kind: "binop", op: "amp", left, right, span: spanOf(left, right) };
+    }
+    return left;
+  }
+
+  private parseJoin(): AstNode {
+    let left = this.parsePrimary();
+    while (this.peek().kind === "dot") {
+      this.consume();
+      const field = this.expect("ident", "field name");
+      left = {
+        kind: "join",
+        left,
+        field: field.text,
+        fieldSpan: field.span,
+        span: { start: left.span.start, end: field.span.end },
+      };
     }
     return left;
   }
@@ -204,7 +220,7 @@ class Parser {
 
     if (tok.kind === "hash") {
       this.consume();
-      const set = this.parsePrimary();
+      const set = this.parseJoin();
       return { kind: "cardinality", set, span: { start: tok.span.start, end: set.span.end } };
     }
 
@@ -243,15 +259,7 @@ class Parser {
         span: { start: root.span.start, end: end.span.end },
       };
     }
-    const fields: { name: string; span: Span }[] = [];
-    let end = root.span.end;
-    while (this.peek().kind === "dot") {
-      this.consume();
-      const field = this.expect("ident", "field name");
-      fields.push({ name: field.text, span: field.span });
-      end = field.span.end;
-    }
-    return { kind: "path", root: root.text, rootSpan: root.span, fields, span: { start: root.span.start, end } };
+    return { kind: "path", root: root.text, rootSpan: root.span, fields: [], span: root.span };
   }
 
   private parseCallArg(): AstCallArg {
