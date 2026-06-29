@@ -933,20 +933,13 @@ function SlayerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SlayerCla
         value={claim.killed === undefined ? "" : claim.killed ? "yes" : "no"}
         onChange={(event) => {
           const killed = event.target.value === "" ? undefined : event.target.value === "yes";
-          onChange({ ...claim, killed, gameContinued: killed ? claim.gameContinued : undefined });
+          onChange({ ...claim, killed, gameContinued: undefined });
         }}
       >
         <option value="">-</option>
         <option value="yes">yes</option>
         <option value="no">no</option>
       </select>
-      <span>Game continued</span>
-      <input
-        type="checkbox"
-        checked={claim.gameContinued ?? false}
-        disabled={!claim.killed}
-        onChange={(event) => onChange({ ...claim, gameContinued: event.target.checked })}
-      />
     </div>
   );
 }

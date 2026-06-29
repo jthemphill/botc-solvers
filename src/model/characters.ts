@@ -468,7 +468,7 @@ export class Slayer extends Role {
     super(options);
     this.target = options.target;
     this.killed = options.killed;
-    this.gameContinued = options.gameContinued ?? false;
+    this.gameContinued = options.gameContinued ?? options.killed === true;
   }
 
   static shotResult(game: BOTCModel, target: string, killed: boolean, timing: Timing, name: string): BoolVar {

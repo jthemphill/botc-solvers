@@ -12,7 +12,7 @@ import { CharacterType } from "../model/core";
 import { ROLE_CLASSES } from "../model/roleRegistry";
 import { roleEmoji, roleEmojiLabel } from "../model/roleEmoji";
 import { standardSetupCounts } from "../model/setup";
-import type { Claim, PuzzleDoc, TimelineEventDoc } from "../schema/puzzleDoc";
+import type { Claim, PuzzleDoc, TimelineEventDoc, TimelineEventType } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
 import { hiddenScriptRoleOptions } from "../state/scriptRoles";
 import { CLAIM_TYPES, ClaimBody, makeEmptyClaim } from "./ClaimsEditor";
@@ -49,6 +49,16 @@ const TYPE_LABEL: Record<CharacterType, string> = {
 
 const SEAT_DRAG_TYPE = "application/x-botc-seat-index";
 const DOUBLE_TAP_WINDOW_MS = 450;
+const TIMELINE_DAY_OPTIONS = ["day_1", "day_2", "day_3", "day_4", "day_5"];
+const TIMELINE_NIGHT_OPTIONS = ["night_1", "night_2", "night_3", "night_4", "night_5"];
+const TIMELINE_EVENT_TYPE_OPTIONS: Array<{ type: TimelineEventType; label: string }> = [
+  { type: "execution", label: "Execution" },
+  { type: "nightDeath", label: "Night Death" },
+  { type: "slayerShot", label: "Slayer Shot" },
+  { type: "witchCurse", label: "Witch Curse" },
+  { type: "nominationDeath", label: "Nomination Death" },
+  { type: "doomsayerDeath", label: "Doomsayer Death" },
+];
 
 export function SeatingChartEditor({ doc, dispatch }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -64,9 +74,10 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
   const players = doc.players;
   const selectedName = players[selectedIndex];
   const setupCounts = countSetupRoles(doc);
-  const hasTimeline = doc.timeline !== undefined && doc.timeline.length > 0;
+  const timeline = doc.timeline ?? [];
   const [draggedIndex, setDraggedIndex] = useState<number | undefined>(undefined);
   const [editingIndex, setEditingIndex] = useState<number | undefined>(undefined);
+  const [selectedTimelineIndex, setSelectedTimelineIndex] = useState<number | undefined>(undefined);
   const [draftName, setDraftName] = useState("");
   const [trashDropActive, setTrashDropActive] = useState(false);
   const lastSeatTap = useRef<{ index: number; time: number }>({ index: -1, time: 0 });
@@ -83,6 +94,49 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
       setDraftName("");
     }
   }, [editingIndex, players.length]);
+
+  useEffect(() => {
+    if (selectedTimelineIndex !== undefined && selectedTimelineIndex >= timeline.length) {
+      setSelectedTimelineIndex(timeline.length === 0 ? undefined : timeline.length - 1);
+    }
+  }, [selectedTimelineIndex, timeline.length]);
+
+  const setTimeline = (next: PuzzleDoc["timeline"]) => {
+    dispatch({ type: "setTimeline", timeline: next });
+  };
+
+  const updateTimelineEvent = (index: number, event: TimelineEventDoc) => {
+    setTimeline(timeline.map((entry, eventIndex) => (eventIndex === index ? event : entry)));
+  };
+
+  const removeTimelineEvent = (index: number) => {
+    setTimeline(timeline.filter((_, eventIndex) => eventIndex !== index));
+    setSelectedTimelineIndex((current) => {
+      if (current === undefined) return undefined;
+      if (current === index) return undefined;
+      return current > index ? current - 1 : current;
+    });
+  };
+
+  const dropSeatOnTimeline = (
+    event: DragEvent<HTMLElement>,
+    type: Extract<TimelineEventType, "execution" | "nightDeath">,
+  ) => {
+    event.preventDefault();
+    const fromIndex = draggedSeatIndex(event);
+    setDraggedIndex(undefined);
+    setTrashDropActive(false);
+    if (fromIndex === undefined || fromIndex < 0 || fromIndex >= players.length) return;
+    const player = players[fromIndex];
+    if (player === undefined) return;
+    const nextEvent: TimelineEventDoc = {
+      timing: nextTimelineTiming(timeline, type),
+      type,
+      players: [player],
+    };
+    setTimeline([...timeline, nextEvent]);
+    setSelectedTimelineIndex(timeline.length);
+  };
 
   const beginRename = (index: number, name: string) => {
     setDraggedIndex(undefined);
@@ -307,12 +361,17 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
 
       <ClaimQuoteDeck cards={quoteCards} onSelect={onSelect} />
 
-      {hasTimeline && (
-        <>
-          <div className="sheet-divider" />
-          <TimelineStrip timeline={doc.timeline ?? []} />
-        </>
-      )}
+      <div className="sheet-divider" />
+      <TimelineStrip
+        timeline={timeline}
+        players={players}
+        selectedIndex={selectedTimelineIndex}
+        onSelect={setSelectedTimelineIndex}
+        onUpdate={updateTimelineEvent}
+        onRemove={removeTimelineEvent}
+        onDropPlayer={dropSeatOnTimeline}
+        onAllowDrop={allowSeatDrop}
+      />
     </div>
   );
 }
@@ -400,6 +459,95 @@ export function DrawWorkbench({ doc, dispatch, selectedIndex }: DrawWorkbenchPro
   );
 }
 
+function TimelineTimingSelect({
+  type,
+  value,
+  onChange,
+}: {
+  type: TimelineEventType;
+  value: string;
+  onChange: (timing: string) => void;
+}) {
+  return (
+    <select value={value} onChange={(event) => onChange(event.target.value)}>
+      {timingOptionsForType(type, value).map((timing) => (
+        <option key={timing} value={timing}>
+          {timingLabel(timing)}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function TimelinePlayerPicker({
+  players,
+  value,
+  onChange,
+  maxSelections,
+}: {
+  players: readonly string[];
+  value: readonly string[];
+  onChange: (players: readonly string[]) => void;
+  maxSelections?: number;
+}) {
+  return (
+    <div className="timeline-player-picker">
+      {players.map((player) => {
+        const selected = value.includes(player);
+        const limitReached = maxSelections !== undefined && value.length >= maxSelections;
+        return (
+          <label key={player}>
+            <input
+              type="checkbox"
+              checked={selected}
+              disabled={!selected && limitReached}
+              onChange={(event) => {
+                if (event.target.checked) {
+                  if (!selected && (maxSelections === undefined || value.length < maxSelections)) {
+                    onChange([...value, player]);
+                  }
+                  return;
+                }
+                onChange(value.filter((name) => name !== player));
+              }}
+            />
+            {player}
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+function defaultTimingForType(type: TimelineEventType, currentTiming: string): string {
+  if (type === "nightDeath") return currentTiming.startsWith("night_") ? currentTiming : "night_2";
+  return currentTiming.startsWith("day_") ? currentTiming : "day_1";
+}
+
+function timingOptionsForType(type: TimelineEventType, currentTiming: string): readonly string[] {
+  const base = type === "nightDeath" ? TIMELINE_NIGHT_OPTIONS : TIMELINE_DAY_OPTIONS;
+  return base.includes(currentTiming) ? base : [currentTiming, ...base];
+}
+
+function normalizeTimelinePlayers(type: TimelineEventType, players: readonly string[]): readonly string[] {
+  const uniquePlayers = players.filter((player, index) => players.indexOf(player) === index);
+  return type === "nightDeath" ? uniquePlayers : uniquePlayers.slice(0, 1);
+}
+
+function nextTimelineTiming(
+  timeline: readonly TimelineEventDoc[],
+  type: Extract<TimelineEventType, "execution" | "nightDeath">,
+): string {
+  const prefix = type === "execution" ? "day" : "night";
+  const fallback = type === "execution" ? 1 : 2;
+  const latest = timeline.reduce((max, event) => {
+    const match = new RegExp(`^${prefix}_(\\d+)$`).exec(event.timing);
+    if (match === null) return max;
+    return Math.max(max, Number(match[1]));
+  }, 0);
+  return `${prefix}_${Math.max(fallback, latest + 1)}`;
+}
+
 function HiddenRolesTray({ roles }: { roles: readonly string[] }) {
   const selected = new Set(roles);
   const hiddenRoles = hiddenScriptRoleOptions().filter((role) => selected.has(role));
@@ -449,39 +597,172 @@ function SetupCountPill({ label, count, tone = "good" }: { label: string; count:
   );
 }
 
-function TimelineStrip({ timeline }: { timeline: readonly TimelineEventDoc[] }) {
+function TimelineStrip({
+  timeline,
+  players,
+  selectedIndex,
+  onSelect,
+  onUpdate,
+  onRemove,
+  onDropPlayer,
+  onAllowDrop,
+}: {
+  timeline: readonly TimelineEventDoc[];
+  players: readonly string[];
+  selectedIndex: number | undefined;
+  onSelect: (index: number | undefined) => void;
+  onUpdate: (index: number, event: TimelineEventDoc) => void;
+  onRemove: (index: number) => void;
+  onDropPlayer: (event: DragEvent<HTMLElement>, type: Extract<TimelineEventType, "execution" | "nightDeath">) => void;
+  onAllowDrop: (event: DragEvent<HTMLElement>) => void;
+}) {
   const deathCount = timeline.reduce((sum, event) => sum + event.players.length, 0);
+  const selectedEvent = selectedIndex === undefined ? undefined : timeline[selectedIndex];
   return (
     <div className="timeline-strip" aria-label="Puzzle timeline">
-      <div className="timeline-legend">
-        <strong>Timeline</strong>
-        <span>Deaths and executions</span>
+      <div
+        className="timeline-drop-zone execution"
+        onDragEnter={onAllowDrop}
+        onDragOver={onAllowDrop}
+        onDrop={(event) => onDropPlayer(event, "execution")}
+      >
+        <span aria-hidden="true">X</span>
+        <strong>Execution</strong>
+        <em>Drop a player here</em>
       </div>
-      <ol className="timeline-event-list">
-        {timeline.map((event, index) => {
-          const deathClass = deathMarkerClass(event);
-          return (
-            <li
-              key={`${event.timing}-${event.type}-${index}`}
-              className={`timeline-event ${deathClass}`}
-              aria-label={`${timingLabel(event.timing)} ${timelineEventAction(event)}: ${event.players.join(", ")}`}
-            >
-              <span className={`timeline-node ${deathClass}`} aria-hidden="true">
-                {timelineEventGlyph(event)}
-              </span>
-              <div>
-                <strong>
-                  {compactTimingLabel(event.timing)} {timelineEventAction(event)}
-                </strong>
-                <span>{formatList(event.players)}</span>
-              </div>
-            </li>
-          );
-        })}
-      </ol>
-      <div className="sheet-footnote">
-        {deathCount} death{deathCount === 1 ? "" : "s"} tracked
+
+      <div className="timeline-main">
+        <div className="timeline-legend">
+          <strong>Timeline</strong>
+          <span>
+            {deathCount} death{deathCount === 1 ? "" : "s"} tracked
+          </span>
+        </div>
+        {timeline.length === 0 ? (
+          <p className="timeline-empty">Drag a player to record the first death.</p>
+        ) : (
+          <ol className="timeline-event-list">
+            {timeline.map((event, index) => {
+              const deathClass = deathMarkerClass(event);
+              const selected = index === selectedIndex;
+              return (
+                <li key={`${event.timing}-${event.type}-${index}`} className={`timeline-event ${deathClass}`}>
+                  <button
+                    type="button"
+                    className={selected ? "selected" : undefined}
+                    aria-pressed={selected}
+                    aria-label={`${timingLabel(event.timing)} ${timelineEventAction(event)}: ${event.players.join(", ")}`}
+                    onClick={() => onSelect(selected ? undefined : index)}
+                  >
+                    <span className={`timeline-node ${deathClass}`} aria-hidden="true">
+                      {timelineEventGlyph(event)}
+                    </span>
+                    <span className="timeline-event-card">
+                      <strong>
+                        {compactTimingLabel(event.timing)} {timelineEventAction(event)}
+                      </strong>
+                      <span>{formatList(event.players)}</span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+
+        {selectedEvent !== undefined && selectedIndex !== undefined && (
+          <TimelineEventDetails
+            event={selectedEvent}
+            players={players}
+            onChange={(event) => onUpdate(selectedIndex, event)}
+            onRemove={() => onRemove(selectedIndex)}
+          />
+        )}
       </div>
+
+      <div
+        className="timeline-drop-zone night-kill"
+        onDragEnter={onAllowDrop}
+        onDragOver={onAllowDrop}
+        onDrop={(event) => onDropPlayer(event, "nightDeath")}
+      >
+        <span aria-hidden="true">N</span>
+        <strong>Night Death</strong>
+        <em>Drop a player here</em>
+      </div>
+    </div>
+  );
+}
+
+function TimelineEventDetails({
+  event,
+  players,
+  onChange,
+  onRemove,
+}: {
+  event: TimelineEventDoc;
+  players: readonly string[];
+  onChange: (event: TimelineEventDoc) => void;
+  onRemove: () => void;
+}) {
+  const setType = (type: TimelineEventType) => {
+    onChange({
+      ...event,
+      type,
+      timing: defaultTimingForType(type, event.timing),
+      players: normalizeTimelinePlayers(type, event.players),
+      caller: type === "doomsayerDeath" ? event.caller : undefined,
+    });
+  };
+
+  return (
+    <div className="timeline-event-details">
+      <label>
+        Cause
+        <select value={event.type} onChange={(changeEvent) => setType(changeEvent.target.value as TimelineEventType)}>
+          {TIMELINE_EVENT_TYPE_OPTIONS.map((option) => (
+            <option key={option.type} value={option.type}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Timing
+        <TimelineTimingSelect
+          type={event.type}
+          value={event.timing}
+          onChange={(timing) => onChange({ ...event, timing })}
+        />
+      </label>
+      <div className="timeline-detail-players">
+        <span>Players</span>
+        <TimelinePlayerPicker
+          players={players}
+          value={event.players}
+          onChange={(nextPlayers) => onChange({ ...event, players: normalizeTimelinePlayers(event.type, nextPlayers) })}
+          maxSelections={event.type === "nightDeath" ? undefined : 1}
+        />
+      </div>
+      {event.type === "doomsayerDeath" && (
+        <label>
+          Caller
+          <select
+            value={event.caller ?? ""}
+            onChange={(changeEvent) => onChange({ ...event, caller: changeEvent.target.value || undefined })}
+          >
+            <option value="">-</option>
+            {players.map((player) => (
+              <option key={player} value={player}>
+                {player}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      <button type="button" onClick={onRemove}>
+        Remove Event
+      </button>
     </div>
   );
 }

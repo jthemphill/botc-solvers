@@ -214,7 +214,12 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
     case "Sage":
       return new Sage({ ...base, demonAmong: claim.demonAmong });
     case "Slayer":
-      return new Slayer({ ...base, target: claim.target, killed: claim.killed, gameContinued: claim.gameContinued });
+      return new Slayer({
+        ...base,
+        target: claim.target,
+        killed: claim.killed,
+        gameContinued: claim.killed === true ? true : claim.gameContinued,
+      });
     case "Snake Charmer":
       return new SnakeCharmer({
         ...base,
