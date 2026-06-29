@@ -102,6 +102,156 @@ describe("buildFromDoc", () => {
     expect(worlds[0]?.actualRole("A")).toBe("Lunatic");
   });
 
+  test("Widow in play poisons one player across info timings", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Widow", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Widow"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Chef"] },
+        ],
+        claims: [{ type: "Chef", name: "C", count: 0, heardWidowCall: true }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.poisonedByTiming.get("night_1")).toEqual(new Set(["C"]));
+  });
+
+  test("heard Widow call claims require Widow in play when the claimant is good", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Widow", "Poisoner", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: false,
+        fixedRoles: [
+          { name: "A", roles: ["Chef"] },
+          { name: "B", roles: ["Imp"] },
+        ],
+        claims: [{ type: "Chef", name: "A", count: 0, heardWidowCall: true }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds.length).toBeGreaterThan(0);
+    expect(worlds.every((world) => world.holder("Widow") !== undefined)).toBe(true);
+  });
+
+  test("Widow in play requires a good player to hear the Widow call", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Widow", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Widow"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Chef"] },
+        ],
+        claims: [{ type: "Chef", name: "A", count: 0, heardWidowCall: true }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
+  });
+
+  test("evil heard Widow call claims do not force Widow in play", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C"],
+        script: ["Widow", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: false,
+        fixedRoles: [
+          { name: "A", roles: ["Imp"] },
+          { name: "B", roles: ["Chef"] },
+        ],
+        claims: [{ type: "Chef", name: "A", count: 0, heardWidowCall: true }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds.length).toBeGreaterThan(0);
+    expect(worlds.some((world) => world.holder("Widow") === undefined)).toBe(true);
+  });
+
+  test("Widow and Poisoner on script allow only one active poison source", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C", "D"],
+        script: ["Widow", "Poisoner", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: false,
+        fixedRoles: [
+          { name: "A", roles: ["Widow"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Chef"] },
+          { name: "D", roles: ["Chef"] },
+        ],
+        claims: [{ type: "Chef", name: "C", count: 0, heardWidowCall: true }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds.length).toBeGreaterThan(0);
+    expect(worlds.every((world) => world.holder("Poisoner") === undefined)).toBe(true);
+    expect(worlds.every((world) => (world.poisonedByTiming.get("night_1")?.size ?? 0) <= 1)).toBe(true);
+  });
+
+  test("ordinary poison sources cap the number of poisoned players", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B", "C", "D"],
+        script: ["Poisoner", "Imp", "Chef", "Empath"],
+        setup: "none",
+        uniqueCharacters: true,
+        fixedRoles: [
+          { name: "A", roles: ["Poisoner"] },
+          { name: "B", roles: ["Imp"] },
+          { name: "C", roles: ["Chef"] },
+          { name: "D", roles: ["Empath"] },
+        ],
+        claims: [
+          { type: "Chef", name: "C", count: 0 },
+          { type: "Empath", name: "D", count: 0 },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
+  });
+
+  test("heard Widow call claims cannot be true for good players when Widow is off script", async () => {
+    const worlds = await buildFromDoc(
+      {
+        version: 1,
+        players: ["A", "B"],
+        script: ["Imp", "Chef"],
+        setup: "none",
+        fixedRoles: [{ name: "A", roles: ["Chef"] }],
+        claims: [{ type: "Chef", name: "A", count: 0, heardWidowCall: true }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
+  });
+
   test("custom info statements and forbidden roles constrain the model", async () => {
     const worlds = await buildFromDoc(
       {

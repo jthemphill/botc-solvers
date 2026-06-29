@@ -79,6 +79,7 @@ interface BaseClaim {
   readonly name: string;
   readonly timing?: string;
   readonly extraPossibleActualRoles?: readonly string[];
+  readonly heardWidowCall?: boolean;
   readonly info?: readonly CustomInfoStatementDoc[];
 }
 
@@ -380,6 +381,7 @@ export const BARE_CLAIM_TYPES = [
   "Spy",
   "Sweetheart",
   "Vortox",
+  "Widow",
   "Witch",
   "Xaan",
 ] as const;

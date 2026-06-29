@@ -66,6 +66,7 @@ const ROLE_CLASS_LIST: readonly RoleClass[] = [
   characters.Virgin,
   characters.Vortox,
   characters.Washerwoman,
+  characters.Widow,
   characters.Witch,
   characters.Xaan,
 ];

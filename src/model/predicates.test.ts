@@ -156,6 +156,22 @@ describe("predicates and helpers", () => {
     expect(await claim.solveAll({ limit: 1 })).toEqual([]);
   });
 
+  test("active Poisoner must poison one player", async () => {
+    const game = new BOTCModel(["A", "B", "C"], { characters: POISON_CHARACTERS, backend });
+    game.fixActual("A", "Poisoner");
+    game.fixActual("B", "Imp");
+    game.fixActual("C", "Investigator");
+    game.addPoisonerEffect(day(1));
+
+    const worlds = await game.solveAll();
+
+    expect(worlds).toHaveLength(3);
+    expect(worlds.every((world) => (world.poisonedByTiming.get(day(1))?.size ?? 0) === 1)).toBe(true);
+    expect(new Set(worlds.flatMap((world) => [...(world.poisonedByTiming.get(day(1)) ?? [])]))).toEqual(
+      new Set(["A", "B", "C"]),
+    );
+  });
+
   test("registration remains separate from actual worlds", async () => {
     const spy = new BOTCModel(["A", "B"], { characters: REGISTRATION_CHARACTERS, backend });
     spy.fixActual("A", "Spy");

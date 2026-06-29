@@ -133,8 +133,10 @@ function validateClaim(input: unknown, path: string): Claim {
     input["extraPossibleActualRoles"] === undefined
       ? undefined
       : expectStringArray(input["extraPossibleActualRoles"], `${path}.extraPossibleActualRoles`);
+  const heardWidowCall =
+    input["heardWidowCall"] === undefined ? undefined : expectBool(input["heardWidowCall"], `${path}.heardWidowCall`);
   const info = input["info"] === undefined ? undefined : validateCustomInfo(input["info"], `${path}.info`, type);
-  const base = { name, timing, extraPossibleActualRoles, info };
+  const base = { name, timing, extraPossibleActualRoles, heardWidowCall, info };
 
   switch (type as Claim["type"]) {
     case "Acrobat": {

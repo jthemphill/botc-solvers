@@ -351,6 +351,11 @@ export class Poisoner extends Role {
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Minion;
 }
+export class Widow extends Role {
+  static readonly roleName = "Widow";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+}
 export class ScarletWoman extends Role {
   static readonly roleName = "Scarlet Woman";
   static readonly alignment = Alignment.Evil;

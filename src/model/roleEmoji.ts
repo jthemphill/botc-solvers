@@ -65,6 +65,7 @@ const ROLE_EMOJI_ENTRIES = [
   ["Virgin", "💍"],
   ["Vortox", "🌀"],
   ["Washerwoman", "🧺"],
+  ["Widow", "🕷️"],
   ["Witch", "🪄"],
   ["Xaan", "⚡"],
 ] as const;
