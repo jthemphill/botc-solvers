@@ -83,6 +83,28 @@ describe("puzzle document reducer", () => {
     expect(loaded.script).toContain("No Dashii");
   });
 
+  test("load sorts timeline events", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B", "C"],
+      script: [],
+      timeline: [
+        { timing: "night_2", type: "nightDeath", players: ["B"] },
+        { timing: "day_1", type: "execution", players: ["A"] },
+        { timing: "night_1", type: "nightDeath", players: ["C"] },
+      ],
+      claims: [],
+    };
+
+    const loaded = reducer(doc, { type: "load", doc });
+
+    expect(loaded.timeline).toEqual([
+      { timing: "night_1", type: "nightDeath", players: ["C"] },
+      { timing: "day_1", type: "execution", players: ["A"] },
+      { timing: "night_2", type: "nightDeath", players: ["B"] },
+    ]);
+  });
+
   test("Fortune Teller checks normalize into one claim per night", () => {
     const doc: PuzzleDoc = {
       version: 1,
@@ -253,6 +275,32 @@ describe("puzzle document reducer", () => {
     expect(next.timeline).toEqual([
       { timing: "day_1", type: "execution", players: ["A"] },
       { timing: "night_2", type: "nightDeath", players: ["B", "C"] },
+    ]);
+  });
+
+  test("setTimeline sorts modified events by timing", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B", "C", "D"],
+      script: [],
+      claims: [],
+    };
+
+    const next = reducer(doc, {
+      type: "setTimeline",
+      timeline: [
+        { timing: "night_2", type: "nightDeath", players: ["B"] },
+        { timing: "day_1", type: "execution", players: ["A"] },
+        { timing: "day_1", type: "doomsayerDeath", players: ["C"], caller: "D" },
+        { timing: "night_1", type: "nightDeath", players: ["D"] },
+      ],
+    });
+
+    expect(next.timeline).toEqual([
+      { timing: "night_1", type: "nightDeath", players: ["D"] },
+      { timing: "day_1", type: "execution", players: ["A"] },
+      { timing: "day_1", type: "doomsayerDeath", players: ["C"], caller: "D" },
+      { timing: "night_2", type: "nightDeath", players: ["B"] },
     ]);
   });
 

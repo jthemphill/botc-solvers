@@ -13,7 +13,7 @@ import { ROLE_CLASSES } from "../model/roleRegistry";
 import { roleEmoji, roleEmojiLabel } from "../model/roleEmoji";
 import { standardSetupCounts } from "../model/setup";
 import type { Claim, PuzzleDoc, TimelineEventDoc, TimelineEventType } from "../schema/puzzleDoc";
-import type { PuzzleAction } from "../state/puzzleDoc";
+import { sortTimelineEvents, type PuzzleAction } from "../state/puzzleDoc";
 import { hiddenScriptRoleOptions } from "../state/scriptRoles";
 import { CLAIM_TYPES, ClaimBody, makeEmptyClaim } from "./ClaimsEditor";
 import { claimSummary, compactTimingLabel, formatList, timingLabel } from "./claimSummary";
@@ -106,7 +106,12 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
   };
 
   const updateTimelineEvent = (index: number, event: TimelineEventDoc) => {
-    setTimeline(timeline.map((entry, eventIndex) => (eventIndex === index ? event : entry)));
+    const nextTimeline = sortTimelineEvents(
+      timeline.map((entry, eventIndex) => (eventIndex === index ? event : entry)),
+    );
+    setTimeline(nextTimeline);
+    const nextIndex = nextTimeline.indexOf(event);
+    setSelectedTimelineIndex(nextIndex === -1 ? undefined : nextIndex);
   };
 
   const removeTimelineEvent = (index: number) => {
@@ -134,8 +139,10 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
       type,
       players: [player],
     };
-    setTimeline([...timeline, nextEvent]);
-    setSelectedTimelineIndex(timeline.length);
+    const nextTimeline = sortTimelineEvents([...timeline, nextEvent]);
+    setTimeline(nextTimeline);
+    const nextIndex = nextTimeline.indexOf(nextEvent);
+    setSelectedTimelineIndex(nextIndex === -1 ? undefined : nextIndex);
   };
 
   const beginRename = (index: number, name: string) => {
