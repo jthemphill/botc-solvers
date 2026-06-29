@@ -97,6 +97,21 @@ describe("validatePuzzleDoc", () => {
     expect(doc.claims[0]).toEqual({ type: "Chef", name: "You", count: 0, heardWidowCall: true });
   });
 
+  test("accepts Prodigy checks", () => {
+    const doc = validatePuzzleDoc({
+      ...baseDoc,
+      players: ["You", "A", "B"],
+      script: ["Solar Prodigy", "Lunar Prodigy"],
+      claims: [{ type: "Prodigy", name: "You", checks: [{ chosen: "A", learned: "B", timing: "night_1" }] }],
+    });
+
+    expect(doc.claims[0]).toEqual({
+      type: "Prodigy",
+      name: "You",
+      checks: [{ chosen: "A", learned: "B", timing: "night_1" }],
+    });
+  });
+
   test("rejects custom info expressions on non-Artist claims", () => {
     expect(() =>
       validatePuzzleDoc({
@@ -141,6 +156,16 @@ describe("validatePuzzleDoc", () => {
     ]);
   });
 
+  test("accepts top-level constraints", () => {
+    const doc = validatePuzzleDoc({
+      ...baseDoc,
+      constraints: [{ expression: "#{p : players | p.role == Imp} == 1" }],
+      claims: [],
+    });
+
+    expect(doc.constraints).toEqual([{ expression: "#{p : players | p.role == Imp} == 1" }]);
+  });
+
   test("rejects unknown timeline event types", () => {
     expect(() =>
       validatePuzzleDoc({
@@ -149,7 +174,7 @@ describe("validatePuzzleDoc", () => {
         claims: [],
       }),
     ).toThrow(
-      'Timeline event type must be "nominationDeath", "witchCurse", "slayerShot", "execution", "nightDeath", or "doomsayerDeath"',
+      'Timeline event type must be "nominationDeath", "witchCurse", "slayerShot", "execution", "nightDeath", "doomsayerDeath", "survivedExecution"',
     );
   });
 
@@ -160,7 +185,7 @@ describe("validatePuzzleDoc", () => {
       script: ["Chambermaid", "Clockmaker", "Courtier", "Klutz", "Mathematician", "Oracle", "Sage", "Snake Charmer"],
       claims: [
         { type: "Chambermaid", name: "You", checks: [{ left: "A", right: "B", timing: "night_1", count: 1 }] },
-        { type: "Clockmaker", name: "You", distance: 3 },
+        { type: "Clockmaker", name: "You", distance: 3, seating: ["You", "A", "B"] },
         { type: "Courtier", name: "You", timing: "night_1", role: "Vortox", drunkTimings: ["night_1"] },
         { type: "Klutz", name: "You", timing: "night_2", chosen: "A", lost: false },
         { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
@@ -172,7 +197,7 @@ describe("validatePuzzleDoc", () => {
 
     expect(doc.claims).toEqual([
       { type: "Chambermaid", name: "You", checks: [{ left: "A", right: "B", timing: "night_1", count: 1 }] },
-      { type: "Clockmaker", name: "You", distance: 3 },
+      { type: "Clockmaker", name: "You", distance: 3, seating: ["You", "A", "B"] },
       { type: "Courtier", name: "You", timing: "night_1", role: "Vortox", drunkTimings: ["night_1"] },
       { type: "Klutz", name: "You", timing: "night_2", chosen: "A", lost: false },
       { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },

@@ -880,6 +880,11 @@ summary {
   --death-rgb: 165, 43, 43;
 }
 
+.timeline-event.survived-execution {
+  --death-color: #2f7d62;
+  --death-rgb: 47, 125, 98;
+}
+
 .timeline-event.night-kill {
   --death-color: #305f8f;
   --death-rgb: 48, 95, 143;

@@ -125,6 +125,9 @@ export class BOTCModel {
   private readonly poisonOverridesByTimingPlayer = new Map<string, BoolLike[]>();
   private readonly drunkVars = new Map<string, BoolVar>();
   private readonly globalDrunkVars = new Map<string, BoolVar>();
+  private readonly globalDrunkSourceVarByKey = new Map<string, BoolVar>();
+  private readonly globalDrunkSourceVars = new Map<string, BoolVar[]>();
+  private readonly puzzlemasterDrunkSourceVars = new Map<string, BoolVar[]>();
   private readonly roleAtVars = new Map<string, BoolVar>();
   private readonly roleAtSources = new Map<string, BoolLike[]>();
   private readonly roleAtRemovals = new Map<string, BoolLike[]>();
@@ -134,6 +137,7 @@ export class BOTCModel {
   private readonly explicitPoisonedTrue = new Set<string>();
   private readonly explicitDrunkTrue = new Set<string>();
   private hasGlobalDrunkSource = false;
+  private globalDrunkSourceConstraintsApplied = false;
   private readonly defaultSoberConstraints = new Set<string>();
   private readonly predicateCache = new Map<string, BoolVar>();
   private readonly fortuneTellerRedHerringVars = new Map<string, RedHerrings>();
@@ -269,11 +273,16 @@ export class BOTCModel {
       ...(options.extraPossibleActualRoles ?? []).map(roleName),
     ];
     const drunkRole = roleName(options.drunkRole ?? "Drunk");
+    const drunkLikeRoles = [
+      ...(this.characters.has(drunkRole) ? [drunkRole] : []),
+      ...(drunkRole !== "Hermit" && this.characters.has("Hermit") ? ["Hermit"] : []),
+    ];
     const claimedTownsfolk = roleCharacterType(claimedRole) === CharacterType.Townsfolk;
-    if (claimedTownsfolk && this.characters.has(drunkRole)) possibleRoles.push(drunkRole);
+    if (claimedTownsfolk) possibleRoles.push(...drunkLikeRoles);
     this.setPossibleActualRoles(claim.player, possibleRoles);
-    if (claimedTownsfolk && this.characters.has(drunkRole))
-      this.addDrunkThinksOutOfPlayRole(claim.player, apparentRole, drunkRole);
+    if (claimedTownsfolk)
+      for (const drunkLikeRole of drunkLikeRoles)
+        this.addDrunkThinksOutOfPlayRole(claim.player, apparentRole, drunkLikeRole);
   }
 
   addClaim(
@@ -350,15 +359,97 @@ export class BOTCModel {
     if (value) this.explicitDrunkTrue.add(this.timingPlayerKey(drunkTiming, player));
   }
 
-  addPuzzlemasterDrunking(options: { readonly excludedPlayers?: readonly string[] } = {}): void {
+  addPersistentDrunking(
+    timings: readonly Timing[],
+    options: {
+      readonly activeIf?: BoolLike | boolean;
+      readonly activeByTiming?: readonly { readonly timing: Timing; readonly activeIf: BoolLike | boolean }[];
+      readonly excludedPlayers?: readonly string[];
+      readonly sourceName?: string;
+    } = {},
+  ): void {
+    if (timings.length === 0) return;
+
+    const sourceName = options.sourceName ?? "persistent";
+    const excludedPlayers = new Set(options.excludedPlayers ?? []);
+    const candidates = this.players.filter((player) => !excludedPlayers.has(player));
+    const sourceTargets = new Map(
+      candidates.map((player) => [player, this.newBool(`${sourceName}_${player}_drunk_target`)] as const),
+    );
+    const targetVars = [...sourceTargets.values()];
+    const activeByTiming = new Map(
+      (options.activeByTiming ?? []).map((entry) => [
+        entry.timing,
+        typeof entry.activeIf === "boolean"
+          ? this.constantBool(entry.activeIf, `${sourceName}_${entry.timing}_drunking_active`)
+          : entry.activeIf,
+      ]),
+    );
+    const active =
+      options.activeIf === undefined
+        ? activeByTiming.size === 0
+          ? this.constantBool(true, `${sourceName}_drunking_active`)
+          : this.anyOf([...activeByTiming.values()], `${sourceName}_drunking_active`)
+        : typeof options.activeIf === "boolean"
+          ? this.constantBool(options.activeIf, `${sourceName}_drunking_active`)
+          : options.activeIf;
+
+    this.addEnforcedExactlyN(targetVars, 1, active);
+    this.addEnforcedExactlyN(targetVars, 0, negate(lit(active)));
+
+    for (const timing of timings) {
+      this.drunkSourceTimingKeys.add(timing);
+      const activeAtTiming = activeByTiming.get(timing) ?? active;
+      for (const player of this.players) {
+        const drunk = this.drunk(player, timing);
+        const sourceTarget = sourceTargets.get(player);
+        if (sourceTarget === undefined) {
+          this.addFalse(drunk);
+          continue;
+        }
+        const activeTarget = this.allOf(
+          [activeAtTiming, sourceTarget],
+          `${sourceName}_${timing}_${player}_drunk_active_target`,
+        );
+        this.addImplication(activeTarget, drunk);
+        this.addImplication(drunk, activeTarget);
+      }
+    }
+  }
+
+  addPuzzlemasterDrunking(
+    options: {
+      readonly excludedPlayers?: readonly string[];
+      readonly activeIf?: BoolLike;
+      readonly sourceName?: string;
+    } = {},
+  ): void {
     this.hasGlobalDrunkSource = true;
     const excluded = new Set(options.excludedPlayers ?? []);
     const candidates = this.players.filter((player) => !excluded.has(player));
-    this.addExactlyN(
-      candidates.map((player) => this.globalDrunk(player)),
-      1,
-    );
-    for (const player of this.players) if (excluded.has(player)) this.addFalse(this.globalDrunk(player));
+    const sourceName = options.sourceName ?? "puzzlemaster";
+    const sourceDrunks = candidates.map((player) => {
+      const sourceDrunk = this.globalDrunkFromSource(sourceName, player);
+      this.puzzlemasterDrunkSourceVars.set(player, [
+        ...(this.puzzlemasterDrunkSourceVars.get(player) ?? []),
+        sourceDrunk,
+      ]);
+      return sourceDrunk;
+    });
+    if (options.activeIf === undefined) {
+      this.addExactlyN(sourceDrunks, 1);
+      for (const player of this.players) {
+        if (excluded.has(player)) this.addFalse(this.globalDrunkFromSource(sourceName, player));
+      }
+      return;
+    }
+
+    this.addEnforcedExactlyN(sourceDrunks, 1, options.activeIf);
+    this.addEnforcedExactlyN(sourceDrunks, 0, negate(lit(options.activeIf)));
+    for (const player of this.players) {
+      if (excluded.has(player))
+        this.addImplication(options.activeIf, this.globalDrunkFromSource(sourceName, player).not());
+    }
   }
 
   addVillageIdiotDrunking(options: { readonly villageIdiotRole?: RoleRef } = {}): void {
@@ -373,21 +464,40 @@ export class BOTCModel {
       ),
       "at_least_two_village_idiots_in_play",
     );
-    const drunkPlayers = this.players.map((player) => this.globalDrunk(player));
+    const drunkPlayers = this.players.map((player) => this.globalDrunkFromSource("village_idiot", player));
 
     for (const player of this.players)
-      this.addImplication(this.globalDrunk(player), this.actualIs(player, villageIdiotRole));
+      this.addImplication(this.globalDrunkFromSource("village_idiot", player), this.actualIs(player, villageIdiotRole));
     this.addEnforcedExactlyN(drunkPlayers, 1, atLeastTwoVillageIdiots);
     this.addEnforcedExactlyN(drunkPlayers, 0, atLeastTwoVillageIdiots.not());
+  }
+
+  private globalDrunkFromSource(sourceName: string, player: string): BoolVar {
+    this.checkPlayer(player);
+    const key = keyOf([sourceName, player]);
+    const existing = this.globalDrunkSourceVarByKey.get(key);
+    if (existing !== undefined) return existing;
+    const variable = this.newBool(`${sourceName}_${player}_global_drunk`);
+    this.addImplication(variable, this.globalDrunk(player));
+    this.globalDrunkSourceVarByKey.set(key, variable);
+    this.globalDrunkSourceVars.set(player, [...(this.globalDrunkSourceVars.get(player) ?? []), variable]);
+    return variable;
+  }
+
+  puzzlemasterDrunk(player: string, name: string): BoolVar {
+    this.checkPlayer(player);
+    const sources = this.puzzlemasterDrunkSourceVars.get(player) ?? [];
+    return this.anyOf(sources, name);
   }
 
   addRoleDrunking(
     role: RoleRef,
     timings: readonly Timing[],
-    options: { readonly activeIf?: BoolLike | boolean } = {},
+    options: { readonly activeIf?: BoolLike | boolean; readonly excludedPlayers?: readonly string[] } = {},
   ): void {
     const roleRef = roleName(role);
     this.checkRole(roleRef);
+    const excludedPlayers = new Set(options.excludedPlayers ?? []);
     for (const timing of timings) {
       this.drunkSourceTimingKeys.add(timing);
       const roleInPlay = this.roleInPlay(roleRef);
@@ -403,6 +513,10 @@ export class BOTCModel {
 
       for (const player of this.players) {
         const drunk = this.drunk(player, timing);
+        if (excludedPlayers.has(player)) {
+          this.addFalse(drunk);
+          continue;
+        }
         const hasRole = this.hasRoleAt(player, roleRef, timing);
         this.addImplication(this.allOf([active, hasRole], `${timing}_${player}_${roleRef}_is_drunked_role`), drunk);
         this.addImplication(
@@ -758,6 +872,7 @@ export class BOTCModel {
   isDrunkAt(player: string, timing: Timing): BoolVar {
     const sources: BoolLike[] = [this.drunk(player, timing), this.globalDrunk(player)];
     if (this.characters.has("Drunk")) sources.push(this.actualIs(player, "Drunk"));
+    if (this.characters.has("Hermit")) sources.push(this.actualIs(player, "Hermit"));
     return this.anyOf(sources, `${player}_drunk_at_${timing}`);
   }
 
@@ -929,7 +1044,7 @@ export class BOTCModel {
       claim.learned,
     );
     this.addImplication(
-      this.allOf([activeHealthy, activeVortox], `${claim.player}_${roleRef}_${claimTimingName}_vortox`),
+      this.allOf([activeRole, activeVortox], `${claim.player}_${roleRef}_${claimTimingName}_vortox`),
       this.not(claim.learned, `${claim.player}_${roleRef}_${claimTimingName}_vortox_false`),
     );
   }
@@ -1174,19 +1289,25 @@ export class BOTCModel {
   }
 
   private roleCanFlexiblyRegisterAsAlignment(actualRole: string): boolean {
-    return (actualRole === "Spy" || actualRole === "Recluse") && this.characters.has(actualRole);
+    return (
+      (actualRole === "Spy" || actualRole === "Recluse" || actualRole === "Hermit") && this.characters.has(actualRole)
+    );
   }
 
   private roleCanFlexiblyRegisterAsType(actualRole: string, characterType: CharacterType): boolean {
+    if (actualRole === "Legion" && this.characters.has(actualRole)) return characterType === CharacterType.Minion;
     if (actualRole === "Spy" && this.characters.has(actualRole))
       return [CharacterType.Minion, CharacterType.Outsider, CharacterType.Townsfolk].includes(characterType);
-    if (actualRole === "Recluse" && this.characters.has(actualRole))
+    if ((actualRole === "Recluse" || actualRole === "Hermit") && this.characters.has(actualRole))
       return [CharacterType.Demon, CharacterType.Minion, CharacterType.Outsider].includes(characterType);
     return false;
   }
 
   private roleCanFlexiblyRegisterAsRole(actualRole: string, observedRole: string): boolean {
     const observedCharacter = this.characters.get(observedRole) as RoleRef;
+    if (actualRole === "Legion" && this.characters.has(actualRole)) {
+      return observedRole === "Legion" || roleCharacterType(observedCharacter) === CharacterType.Minion;
+    }
     if (actualRole === "Spy" && this.characters.has(actualRole)) {
       return (
         observedRole === "Spy" ||
@@ -1194,9 +1315,9 @@ export class BOTCModel {
           [CharacterType.Outsider, CharacterType.Townsfolk].includes(roleCharacterType(observedCharacter)))
       );
     }
-    if (actualRole === "Recluse" && this.characters.has(actualRole)) {
+    if ((actualRole === "Recluse" || actualRole === "Hermit") && this.characters.has(actualRole)) {
       return (
-        observedRole === "Recluse" ||
+        observedRole === actualRole ||
         (roleAlignment(observedCharacter) === Alignment.Evil &&
           [CharacterType.Demon, CharacterType.Minion].includes(roleCharacterType(observedCharacter)))
       );
@@ -1216,7 +1337,8 @@ export class BOTCModel {
     const demonIndex = players.indexOf(demon);
     const targetIndex = players.indexOf(target);
     const distance =
-      (direction === 1 ? targetIndex - demonIndex : demonIndex - targetIndex + players.length) % players.length;
+      (direction === 1 ? targetIndex - demonIndex + players.length : demonIndex - targetIndex + players.length) %
+      players.length;
     if (distance <= 0) return this.constantBool(false, `${demon}_${target}_not_in_direction_${direction}`);
     const between = Array.from({ length: distance - 1 }, (_ignored, offset) => {
       const index = (demonIndex + direction * (offset + 1) + players.length) % players.length;
@@ -1325,13 +1447,31 @@ export class BOTCModel {
       this.addFalse(drunk);
       this.defaultSoberConstraints.add(defaultKey);
     }
-    if (this.hasGlobalDrunkSource) return;
+    if (this.hasGlobalDrunkSource) {
+      this.applyGlobalDrunkSourceConstraints();
+      return;
+    }
     for (const [player, drunk] of this.globalDrunkVars.entries()) {
       const key = keyOf(["global_drunk", player]);
       if (this.defaultSoberConstraints.has(key)) continue;
       this.addFalse(drunk);
       this.defaultSoberConstraints.add(key);
     }
+  }
+
+  private applyGlobalDrunkSourceConstraints(): void {
+    if (this.globalDrunkSourceConstraintsApplied) return;
+    for (const [player, drunk] of this.globalDrunkVars.entries()) {
+      const sources = this.globalDrunkSourceVars.get(player) ?? [];
+      if (sources.length === 0) {
+        this.addFalse(drunk);
+        continue;
+      }
+      const sourceActive =
+        sources.length === 1 ? sources[0] : this.anyOf(sources, `${player}_global_drunk_source_active`);
+      this.addImplication(drunk, sourceActive as BoolLike);
+    }
+    this.globalDrunkSourceConstraintsApplied = true;
   }
 
   private applyDefaultPoisonCapacityConstraints(): void {

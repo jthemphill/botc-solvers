@@ -22,6 +22,7 @@ export type PuzzleDocAction =
   | { type: "setScript"; script: readonly string[] }
   | { type: "setFixedRoles"; fixedRoles: PuzzleDoc["fixedRoles"] }
   | { type: "setForbiddenRoles"; forbiddenRoles: PuzzleDoc["forbiddenRoles"] }
+  | { type: "setConstraints"; constraints: PuzzleDoc["constraints"] }
   | { type: "setTimeline"; timeline: PuzzleDoc["timeline"] }
   | { type: "addClaim"; claim: Claim }
   | { type: "updateClaim"; index: number; claim: Claim }
@@ -94,8 +95,10 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
           claim.seamstress === undefined ? undefined : { ...claim.seamstress, among: remapArr(claim.seamstress.among) },
       };
     case "Empath": {
-      return { ...claim, name };
+      return { ...claim, name, neighbors: claim.neighbors?.map(remap) };
     }
+    case "Clockmaker":
+      return { ...claim, name, seating: claim.seating?.map(remap) };
     case "Undertaker":
       return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
     case "Dreamer":
@@ -127,8 +130,24 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
         name,
         checks: claim.checks.map((c) => ({ ...c, left: remap(c.left), right: remap(c.right) })),
       };
+    case "Flowergirl":
+      return {
+        ...claim,
+        name,
+        votes: claim.votes?.map((vote) => ({ ...vote, voters: vote.voters.map(remap) })),
+      };
     case "VillageIdiot":
       return { ...claim, name, checks: claim.checks.map((c) => ({ ...c, player: remap(c.player) })) };
+    case "Puzzlemaster":
+      return {
+        ...claim,
+        name,
+        guesses: claim.guesses?.map((guess) => ({
+          ...guess,
+          player: remap(guess.player),
+          learnedDemon: remap(guess.learnedDemon),
+        })),
+      };
     case "Balloonist":
       return {
         ...claim,
@@ -164,7 +183,9 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
     case "Oracle":
       return { ...claim, deadPlayers: stripArr(claim.deadPlayers) };
     case "Empath":
-      return claim;
+      return claim.neighbors?.includes(name) ? { ...claim, neighbors: undefined } : claim;
+    case "Clockmaker":
+      return { ...claim, seating: stripArr(claim.seating) };
     case "Philosopher":
       return claim.seamstress?.among.includes(name) ? { ...claim, seamstress: undefined } : claim;
     case "Steward":
@@ -178,8 +199,18 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
       return claim.among.includes(name) ? { ...claim, among: [] } : claim;
     case "FortuneTeller":
       return { ...claim, checks: claim.checks.filter((c) => c.left !== name && c.right !== name) };
+    case "Flowergirl":
+      return {
+        ...claim,
+        votes: claim.votes?.map((vote) => ({ ...vote, voters: vote.voters.filter((p) => p !== name) })),
+      };
     case "VillageIdiot":
       return { ...claim, checks: claim.checks.filter((c) => c.player !== name) };
+    case "Puzzlemaster":
+      return {
+        ...claim,
+        guesses: claim.guesses?.filter((guess) => guess.player !== name && guess.learnedDemon !== name),
+      };
     case "Dreamer":
     case "Undertaker":
       return claim.player === name ? { ...claim, player: undefined } : claim;
@@ -252,7 +283,7 @@ function normalizeTimeline(timeline: PuzzleDoc["timeline"], players: readonly st
       );
       return {
         ...event,
-        players: event.type === "execution" ? eventPlayers.slice(0, 1) : eventPlayers,
+        players: event.type === "nightDeath" ? eventPlayers : eventPlayers.slice(0, 1),
         caller: event.caller === undefined || knownPlayers.has(event.caller) ? event.caller : undefined,
       };
     })
@@ -489,6 +520,8 @@ export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc
       return withProtectedScript({ ...state, fixedRoles: action.fixedRoles });
     case "setForbiddenRoles":
       return withProtectedScript({ ...state, forbiddenRoles: action.forbiddenRoles });
+    case "setConstraints":
+      return withProtectedScript({ ...state, constraints: action.constraints });
     case "setTimeline":
       return { ...state, timeline: normalizeTimeline(action.timeline, state.players) };
     case "addClaim":

@@ -12,7 +12,13 @@ import { CharacterType } from "../model/core";
 import { ROLE_CLASSES } from "../model/roleRegistry";
 import { roleEmoji, roleEmojiLabel } from "../model/roleEmoji";
 import { standardSetupCounts } from "../model/setup";
-import type { Claim, PuzzleDoc, TimelineEventDoc, TimelineEventType } from "../schema/puzzleDoc";
+import {
+  isTimelineDeathEvent,
+  type Claim,
+  type PuzzleDoc,
+  type TimelineEventDoc,
+  type TimelineEventType,
+} from "../schema/puzzleDoc";
 import { sortTimelineEvents, type PuzzleAction } from "../state/puzzleDoc";
 import { hiddenScriptRoleOptions } from "../state/scriptRoles";
 import { CLAIM_TYPES, ClaimBody, makeEmptyClaim } from "./ClaimsEditor";
@@ -53,6 +59,7 @@ const TIMELINE_DAY_OPTIONS = ["day_1", "day_2", "day_3", "day_4", "day_5"];
 const TIMELINE_NIGHT_OPTIONS = ["night_1", "night_2", "night_3", "night_4", "night_5"];
 const TIMELINE_EVENT_TYPE_OPTIONS: Array<{ type: TimelineEventType; label: string }> = [
   { type: "execution", label: "Execution" },
+  { type: "survivedExecution", label: "Survived Execution" },
   { type: "nightDeath", label: "Night Death" },
   { type: "slayerShot", label: "Slayer Shot" },
   { type: "witchCurse", label: "Witch Curse" },
@@ -663,7 +670,7 @@ function TimelineStrip({
   onDropPlayer: (event: DragEvent<HTMLElement>, type: Extract<TimelineEventType, "execution" | "nightDeath">) => void;
   onAllowDrop: (event: DragEvent<HTMLElement>) => void;
 }) {
-  const deathCount = timeline.reduce((sum, event) => sum + event.players.length, 0);
+  const deathCount = timeline.reduce((sum, event) => sum + (isTimelineDeathEvent(event) ? event.players.length : 0), 0);
   const selectedEvent = selectedIndex === undefined ? undefined : timeline[selectedIndex];
   return (
     <div className="timeline-strip" aria-label="Puzzle timeline">
@@ -758,7 +765,7 @@ function TimelineEventDetails({
       type,
       timing: defaultTimingForType(type, event.timing),
       players: normalizeTimelinePlayers(type, event.players),
-      caller: type === "doomsayerDeath" ? event.caller : undefined,
+      caller: timelineEventHasCaller(type) ? event.caller : undefined,
     });
   };
 
@@ -791,7 +798,7 @@ function TimelineEventDetails({
           maxSelections={event.type === "nightDeath" ? undefined : 1}
         />
       </div>
-      {event.type === "doomsayerDeath" && (
+      {timelineEventHasCaller(event.type) && (
         <label>
           Caller
           <select
@@ -812,6 +819,10 @@ function TimelineEventDetails({
       </button>
     </div>
   );
+}
+
+function timelineEventHasCaller(type: TimelineEventType): boolean {
+  return type === "doomsayerDeath" || type === "witchCurse" || type === "nominationDeath" || type === "slayerShot";
 }
 
 function claimIndexesForPlayer(doc: PuzzleDoc, player: string): Array<[Claim, number]> {
@@ -887,11 +898,12 @@ function visibleTimelineEventType(event: TimelineEventDoc): TimelineEventDoc["ty
 
 function deathMarkerClass(
   event: TimelineEventDoc,
-): "nomination-death" | "witch-curse" | "slayer-shot" | "execution" | "night-kill" {
+): "nomination-death" | "witch-curse" | "slayer-shot" | "execution" | "survived-execution" | "night-kill" {
   const type = visibleTimelineEventType(event);
   if (type === "nominationDeath") return "nomination-death";
   if (type === "witchCurse") return "witch-curse";
   if (type === "slayerShot") return "slayer-shot";
+  if (type === "survivedExecution") return "survived-execution";
   return type === "execution" ? "execution" : "night-kill";
 }
 
@@ -900,6 +912,7 @@ function deathMarkerLabel(event: TimelineEventDoc): string {
   if (type === "nominationDeath") return "died while nominating";
   if (type === "witchCurse") return "died to a Witch curse";
   if (type === "slayerShot") return "died to a Slayer shot";
+  if (type === "survivedExecution") return "survived execution";
   if (type === "execution") return "executed";
   return "killed at night";
 }
@@ -909,6 +922,7 @@ function timelineEventAction(event: TimelineEventDoc): string {
   if (type === "nominationDeath") return "Nomination Death";
   if (type === "witchCurse") return "Witch Curse";
   if (type === "slayerShot") return "Slayer Shot";
+  if (type === "survivedExecution") return "Survived Execution";
   if (type === "execution") return "Execution";
   return event.players.length === 1 ? "Night Death" : "Night Deaths";
 }
@@ -918,6 +932,7 @@ function timelineEventGlyph(event: TimelineEventDoc): string {
   if (type === "nominationDeath") return "!";
   if (type === "witchCurse") return "🪄";
   if (type === "slayerShot") return "🏹";
+  if (type === "survivedExecution") return "S";
   if (type === "execution") return "X";
   return "N";
 }

@@ -20,6 +20,7 @@ type PuzzleDoc = {
   readonly uniqueCharacters?: boolean;
   readonly fixedRoles?: readonly RoleConstraint[];
   readonly forbiddenRoles?: readonly RoleConstraint[];
+  readonly constraints?: readonly PuzzleConstraintDoc[];
   readonly timeline?: readonly TimelineEventDoc[];
   readonly claims: readonly Claim[];
 };
@@ -27,6 +28,10 @@ type PuzzleDoc = {
 type RoleConstraint = {
   readonly name: string;
   readonly roles: readonly string[];
+};
+
+type PuzzleConstraintDoc = {
+  readonly expression: string;
 };
 
 type TimelineEventDoc = {
@@ -75,7 +80,8 @@ async function setTitleAndPlayers(page: Page, doc: PuzzleDoc) {
   for (const [index, name] of doc.players.entries()) {
     const currentName = currentNames[index] as string;
     if (currentName === name) continue;
-    await seatFor(page, currentName).dblclick();
+    await seatFor(page, currentName).focus();
+    await page.keyboard.press("F2");
     const input = page.getByLabel(`Rename ${currentName}`);
     await input.fill(name);
     await input.press("Enter");
@@ -120,7 +126,7 @@ async function setTimeline(page: Page, timeline: readonly TimelineEventDoc[]) {
     for (const player of event.players) {
       await details.locator(".timeline-detail-players").getByLabel(player, { exact: true }).check();
     }
-    if (event.type === "doomsayerDeath" && event.caller !== undefined) {
+    if (event.caller !== undefined) {
       await details.getByLabel("Caller").selectOption(event.caller);
     }
   }
@@ -184,9 +190,28 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
       }
       break;
     case "Chef":
+      if (claim.count !== undefined) await fillField(block, "Count", String(claim.count));
+      if (claim.timing !== undefined) await selectField(block, "Timing", claim.timing);
+      break;
     case "Empath":
       if (claim.count !== undefined) await fillField(block, "Count", String(claim.count));
       if (claim.timing !== undefined) await selectField(block, "Timing", claim.timing);
+      await checkPlayers(block, "Neighbors", claim.neighbors ?? []);
+      break;
+    case "Exorcist":
+      for (const [index, choice] of (claim.choices ?? []).entries()) {
+        await block.getByRole("button", { name: "+ Add choice" }).click();
+        if (choice.timing !== undefined) await selectField(block, "Choice timing", choice.timing, index);
+        await selectField(block, "Chosen player", choice.player, index);
+      }
+      break;
+    case "Flowergirl":
+      for (const [index, vote] of (claim.votes ?? []).entries()) {
+        await block.getByRole("button", { name: "+ Add vote" }).click();
+        await selectField(block, "Vote timing", vote.timing, index);
+        await checkPlayers(block, "Voters", vote.voters, index);
+        await selectField(block, "Demon voted", vote.demonVoted ? "true" : "false", index);
+      }
       break;
     case "FortuneTeller": {
       const check = claim.checks[0];
@@ -237,6 +262,7 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
     case "Clockmaker":
       if (claim.distance !== undefined) await fillField(block, "Demon-minion distance", String(claim.distance));
       if (claim.timing !== undefined) await selectField(block, "Timing", claim.timing);
+      await checkPlayers(block, "Seating override", claim.seating ?? []);
       break;
     case "Courtier":
       if (claim.role !== undefined) await fillRoleField(block, "Chosen role", claim.role);
@@ -287,9 +313,12 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
     case "VillageIdiot":
       for (const [index, check] of claim.checks.entries()) {
         await block.getByRole("button", { name: "+ Add check" }).click();
-        const row = villageIdiotRows(block).nth(index);
-        await row.locator("select").selectOption(check.player);
-        await row.getByLabel(check.good ? "Good" : "Evil").check();
+        if (check.timing !== undefined) await selectField(block, "Timing", check.timing, index);
+        await selectField(block, "Checked player", check.player, index);
+        await block
+          .getByLabel(check.good ? "Good" : "Evil")
+          .nth(index)
+          .check();
       }
       break;
     case "Balloonist":
@@ -318,6 +347,30 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
           await selectField(block, "Survived", guess.survived ? "true" : "false", index);
         if (guess.timing !== undefined) await selectField(block, "Timing", guess.timing, index);
       }
+      break;
+    case "Princess":
+      for (const [index, nomination] of (claim.nominations ?? []).entries()) {
+        await block.getByRole("button", { name: "+ Add nomination" }).click();
+        if (nomination.timing !== undefined) await selectField(block, "Nomination timing", nomination.timing, index);
+        await selectField(block, "Nominated player", nomination.player, index);
+      }
+      break;
+    case "Prodigy":
+      for (const [index, check] of (claim.checks ?? []).entries()) {
+        await block.getByRole("button", { name: "+ Add check" }).click();
+        if (check.timing !== undefined) await selectField(block, "Check timing", check.timing, index);
+        await selectField(block, "Chosen player", check.chosen, index);
+        await selectField(block, "Learned player", check.learned, index);
+      }
+      break;
+    case "Puzzlemaster":
+      for (const [index, guess] of (claim.guesses ?? []).entries()) {
+        await block.getByRole("button", { name: "+ Add guess" }).click();
+        if (guess.timing !== undefined) await selectField(block, "Guess timing", guess.timing, index);
+        await selectField(block, "Guessed drunk", guess.player, index);
+        await selectField(block, "Learned Demon", guess.learnedDemon, index);
+      }
+      if (claim.timing !== undefined) await selectField(block, "Timing", claim.timing);
       break;
     case "Gossip":
       for (const [index, statement] of (claim.statements ?? []).entries()) {
@@ -364,6 +417,7 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
     case "Nightwatchman":
       if (claim.chosen !== undefined) await selectField(block, "Chosen player", claim.chosen);
       if (claim.learned !== undefined) await selectField(block, "Learned", claim.learned ? "true" : "false");
+      if (claim.confirmedByChosen === true) await checkboxField(block, "Confirmed by chosen").check();
       if (claim.timing !== undefined) await selectField(block, "Timing", claim.timing);
       break;
     case "Artist":
@@ -375,6 +429,7 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
   }
 
   for (const role of claim.extraPossibleActualRoles ?? []) await addAdvancedRole(block, role);
+  if (claim.heardWidowCall === true) await block.getByLabel("Heard the Widow's call").check();
   if (claim.type === "Artist") await fillArtistInfo(block, claim.info ?? []);
 }
 
@@ -388,7 +443,12 @@ async function fillArtistInfo(block: Locator, info: readonly Record<string, stri
 }
 
 async function setRoleConstraints(page: Page, doc: PuzzleDoc) {
-  if ((doc.fixedRoles ?? []).length === 0 && (doc.forbiddenRoles ?? []).length === 0) return;
+  if (
+    (doc.fixedRoles ?? []).length === 0 &&
+    (doc.forbiddenRoles ?? []).length === 0 &&
+    (doc.constraints ?? []).length === 0
+  )
+    return;
   await openWorkbenchTab(page, "Script");
   const panel = page.locator("section.panel", { hasText: "Role constraints" });
 
@@ -404,6 +464,12 @@ async function setRoleConstraints(page: Page, doc: PuzzleDoc) {
     const block = panel.locator(":scope > .claim-block").last();
     await block.locator("select").selectOption(forbiddenRole.name);
     for (const role of forbiddenRole.roles) await addRoleToList(block, "Excluded roles", role);
+  }
+
+  for (const constraint of doc.constraints ?? []) {
+    await panel.getByRole("button", { name: "+ Add custom constraint" }).click();
+    const block = panel.locator(":scope > .claim-block").last();
+    await fillField(block, "Expression", constraint.expression);
   }
 }
 
@@ -466,8 +532,8 @@ function checkboxField(scope: Locator, label: string, index = 0): Locator {
   return fieldRoot(scope, label, index).locator("xpath=self::input[@type='checkbox'] | .//input[@type='checkbox']");
 }
 
-async function checkPlayers(scope: Locator, label: string, players: readonly string[]) {
-  const root = fieldRoot(scope, label);
+async function checkPlayers(scope: Locator, label: string, players: readonly string[], index = 0) {
+  const root = fieldRoot(scope, label, index);
   for (const player of players) await root.getByLabel(player, { exact: true }).check();
 }
 
@@ -482,12 +548,6 @@ async function addRoleToList(scope: Locator, label: string, role: string) {
   const input = scope.getByLabel(`Add ${label}`).last();
   await input.fill(role);
   await expect(scope.getByRole("button", { name: new RegExp(escapeRegExp(role)) }).last()).toBeVisible();
-}
-
-function villageIdiotRows(block: Locator): Locator {
-  return block.locator(
-    "xpath=.//*[contains(concat(' ', normalize-space(@class), ' '), ' radio-tile-group ')]/ancestor::*[contains(concat(' ', normalize-space(@class), ' '), ' row ')][1]",
-  );
 }
 
 async function control(root: Locator, selector: string): Promise<Locator> {
@@ -513,6 +573,9 @@ function manualClaimsFor(claims: readonly Claim[]): Claim[] {
       return claim.checks.map((check: unknown, index: number) =>
         index === 0 ? { ...claim, checks: [check] } : { ...claimWithoutSharedInfo, checks: [check] },
       );
+    }
+    if (claim.type === "Juggler" && claim.timing === undefined) {
+      return [{ ...claim, timing: "night_2" }];
     }
     return [claim];
   });

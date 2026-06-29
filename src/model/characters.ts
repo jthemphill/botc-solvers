@@ -64,10 +64,36 @@ function claimName(player: string, role: RoleRef, suffix: string): string {
   return `${slug(player)}_${slug(roleName(role))}_${suffix}`;
 }
 
-function buildStatement(game: BOTCModel, player: string, index: number, statement: StatementBuilder): BoolVar {
+function buildStatement(
+  game: BOTCModel,
+  player: string,
+  index: number,
+  statement: StatementBuilder,
+  timing?: Timing,
+): BoolVar {
   const resolved = typeof statement === "function" ? statement(game) : statement;
-  if (Array.isArray(resolved))
-    return Savant.learnsExactlyOne(game, resolved, claimName(player, Savant, `statement_${index}`));
+  if (Array.isArray(resolved)) {
+    const exactlyOne = Savant.learnsExactlyOne(game, resolved, claimName(player, Savant, `statement_${index}`));
+    if (timing === undefined || !game.characters.has("Vortox")) return exactlyOne;
+
+    const activeVortox = game.anyOf(
+      game.players.map((candidate) =>
+        game.allOf(
+          [game.hasRoleAt(candidate, "Vortox", timing), game.soberAndHealthy(candidate, timing)],
+          claimName(player, Savant, `statement_${index}_vortox_${candidate}`),
+        ),
+      ),
+      claimName(player, Savant, `statement_${index}_active_vortox`),
+    );
+    const anyOptionTrue = game.anyOf(resolved, claimName(player, Savant, `statement_${index}_any_option_true`));
+    return game.anyOf(
+      [
+        game.allOf([activeVortox.not(), exactlyOne], claimName(player, Savant, `statement_${index}_normal`)),
+        game.allOf([activeVortox, anyOptionTrue], claimName(player, Savant, `statement_${index}_vortox`)),
+      ],
+      claimName(player, Savant, `statement_${index}_reported`),
+    );
+  }
   return resolved instanceof Object && "id" in resolved
     ? (resolved as BoolVar)
     : game.constantBool(Boolean(resolved), claimName(player, Savant, `statement_${index}_constant`));
@@ -272,13 +298,34 @@ export class Imp extends Role {
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Demon;
 }
+export class FangGu extends Role {
+  static readonly roleName = "Fang Gu";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
 export class NoDashii extends Role {
   static readonly roleName = "No Dashii";
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Demon;
 }
+export class Kazali extends Role {
+  static readonly roleName = "Kazali";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
 export class Leviathan extends Role {
   static readonly roleName = "Leviathan";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
+export class Legion extends Role {
+  static readonly roleName = "Legion";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+  static readonly maxCopies = 6;
+}
+export class Riot extends Role {
+  static readonly roleName = "Riot";
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Demon;
 }
@@ -302,8 +349,18 @@ export class Vortox extends Role {
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Demon;
 }
+export class Vigormortis extends Role {
+  static readonly roleName = "Vigormortis";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
 export class Baron extends Role {
   static readonly roleName = "Baron";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+}
+export class Boffin extends Role {
+  static readonly roleName = "Boffin";
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Minion;
 }
@@ -312,8 +369,18 @@ export class Goblin extends Role {
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Minion;
 }
+export class Godfather extends Role {
+  static readonly roleName = "Godfather";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+}
 export class Cerenovus extends Role {
   static readonly roleName = "Cerenovus";
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+}
+export class DevilsAdvocate extends Role {
+  static readonly roleName = "Devil's Advocate";
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Minion;
 }
@@ -415,13 +482,77 @@ export class Klutz extends Role {
     this.applyInfoClaimBuilders(game, Klutz, this.infoClaims, options);
   }
 }
+export class Politician extends Role {
+  static readonly roleName = "Politician";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
 export class Puzzlemaster extends Role {
   static readonly roleName = "Puzzlemaster";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Outsider;
+  readonly guesses: readonly {
+    readonly player: string;
+    readonly learnedDemon: string;
+    readonly timing?: Timing;
+  }[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly guesses?: readonly {
+        readonly player: string;
+        readonly learnedDemon: string;
+        readonly timing?: Timing;
+      }[];
+    },
+  ) {
+    super(options);
+    this.guesses = options.guesses ?? [];
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Puzzlemaster, options);
+    for (const [index, guess] of this.guesses.entries()) {
+      const timing = this.claimTiming(guess.timing ?? explicitTiming(options), index);
+      const activeHealthy = game.allOf(
+        [
+          game.hasRoleAt(this.name, Puzzlemaster, timing),
+          game.soberAndHealthy(this.name, healthTimingForAbility(timing)),
+        ],
+        claimName(this.name, Puzzlemaster, `guess_${index + 1}_active`),
+      );
+      const guessedCorrect = game.puzzlemasterDrunk(
+        guess.player,
+        claimName(this.name, Puzzlemaster, `guess_${index + 1}_correct`),
+      );
+      const learnedDemon = game.isDemon(guess.learnedDemon);
+      game.addImplication(
+        game.allOf([activeHealthy, guessedCorrect], claimName(this.name, Puzzlemaster, `guess_${index + 1}_true`)),
+        learnedDemon,
+      );
+      game.addImplication(
+        game.allOf(
+          [activeHealthy, guessedCorrect.not()],
+          claimName(this.name, Puzzlemaster, `guess_${index + 1}_false`),
+        ),
+        learnedDemon.not(),
+      );
+    }
+    this.applyInfoClaimBuilders(game, Puzzlemaster, this.infoClaims, options);
+  }
 }
 export class Drunk extends Role {
   static readonly roleName = "Drunk";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
+export class Hermit extends Role {
+  static readonly roleName = "Hermit";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
+export class Golem extends Role {
+  static readonly roleName = "Golem";
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Outsider;
 }
@@ -567,6 +698,88 @@ export class Philosopher extends Role {
   }
 }
 
+export class PoppyGrower extends Role {
+  static readonly roleName = "Poppy Grower";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class SolarProdigy extends Role {
+  static readonly roleName = "Solar Prodigy";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class LunarProdigy extends Role {
+  static readonly roleName = "Lunar Prodigy";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export interface ProdigyCheck {
+  readonly chosen: string;
+  readonly learned: string;
+  readonly timing?: Timing;
+  readonly name?: string;
+}
+
+export class Prodigy extends Role {
+  static readonly roleName = "Solar Prodigy";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+  readonly checks: readonly ProdigyCheck[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly checks?: readonly ProdigyCheck[];
+    },
+  ) {
+    super(options);
+    this.checks = options.checks ?? [];
+  }
+
+  static learnsCheck(game: BOTCModel, check: ProdigyCheck, solar: boolean): BoolVar {
+    return solar
+      ? predicates.sameAlignment(game, check.chosen, check.learned)
+      : predicates.differentAlignments(game, check.chosen, check.learned);
+  }
+
+  protected override defaultInfoTiming(claimIndex: number): Timing | undefined {
+    return this.timing ?? night(claimIndex + 1);
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    const evilRoles =
+      options.evilRoles ??
+      [...game.characters.values()].filter((role) => roleAlignment(role) === Alignment.Evil).map(roleName);
+    const possibleRoles: RoleRef[] = [
+      SolarProdigy,
+      LunarProdigy,
+      ...evilRoles,
+      ...(game.characters.has(Drunk.roleName) ? [Drunk] : []),
+      ...this.extraPossibleActualRoles,
+      ...(options.extraPossibleActualRoles ?? []),
+    ];
+    game.setPossibleActualRoles(this.name, possibleRoles);
+    this.checks.forEach((check, index) => {
+      const timing = this.claimTiming(check.timing ?? explicitTiming(options), index);
+      game.addInfoClaim({
+        player: this.name,
+        role: SolarProdigy,
+        learned: Prodigy.learnsCheck(game, check, true),
+        timing,
+      });
+      game.addInfoClaim({
+        player: this.name,
+        role: LunarProdigy,
+        learned: Prodigy.learnsCheck(game, check, false),
+        timing,
+      });
+    });
+    this.applyInfoClaimBuilders(game, SolarProdigy, this.infoClaims, options);
+  }
+}
+
 export class Acrobat extends Role {
   static readonly roleName = "Acrobat";
   static readonly alignment = Alignment.Good;
@@ -660,6 +873,32 @@ export class Gambler extends Role {
   }
 }
 
+export interface ExorcistChoice {
+  readonly player: string;
+  readonly timing?: Timing;
+}
+
+export class Exorcist extends Role {
+  static readonly roleName = "Exorcist";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+  readonly choices: readonly ExorcistChoice[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly choices?: readonly ExorcistChoice[];
+    },
+  ) {
+    super(options);
+    this.choices = options.choices ?? [];
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Exorcist, options);
+    this.applyInfoClaimBuilders(game, Exorcist, this.infoClaims, options);
+  }
+}
+
 export interface GamblerGuess {
   readonly player: string;
   readonly role: RoleRef;
@@ -723,6 +962,32 @@ export class Mathematician extends Role {
       options,
     );
     this.applyInfoClaimBuilders(game, Mathematician, this.infoClaims, options);
+  }
+}
+
+export interface PrincessNomination {
+  readonly player: string;
+  readonly timing?: Timing;
+}
+
+export class Princess extends Role {
+  static readonly roleName = "Princess";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+  readonly nominations: readonly PrincessNomination[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly nominations?: readonly PrincessNomination[];
+    },
+  ) {
+    super(options);
+    this.nominations = options.nominations ?? [];
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Princess, options);
+    this.applyInfoClaimBuilders(game, Princess, this.infoClaims, options);
   }
 }
 
@@ -857,6 +1122,7 @@ const FIRST_NIGHT_WAKE_ROLES = new Set([
   "Chef",
   "Clockmaker",
   "Investigator",
+  "Knight",
   "Librarian",
   "Noble",
   "Shugenja",
@@ -865,16 +1131,20 @@ const FIRST_NIGHT_WAKE_ROLES = new Set([
 ]);
 const EVERY_NIGHT_WAKE_ROLES = new Set([
   "Balloonist",
+  "Butler",
   "Chambermaid",
   "Dreamer",
   "Empath",
   "Fortune Teller",
+  "Lunar Prodigy",
   "Mathematician",
+  "Poisoner",
   "Pukka",
+  "Solar Prodigy",
   "Snake Charmer",
   "Village Idiot",
 ]);
-const SECOND_NIGHT_PLUS_WAKE_ROLES = new Set(["Oracle", "Undertaker"]);
+const SECOND_NIGHT_PLUS_WAKE_ROLES = new Set(["Exorcist", "Oracle", "Undertaker"]);
 const SECOND_NIGHT_WAKE_ROLES = new Set(["Juggler"]);
 
 function nightNumber(timing: Timing): number | undefined {
@@ -962,27 +1232,35 @@ export class Clockmaker extends Role {
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
   readonly distance?: number;
+  readonly seating?: readonly string[];
   constructor(
     options: RoleBaseOptions & {
       readonly distance?: number;
+      readonly seating?: readonly string[];
     },
   ) {
     super(options);
     this.distance = options.distance;
+    this.seating = options.seating;
   }
   static learnsDemonNextToMinion(game: BOTCModel, name: string): BoolVar {
     return Clockmaker.learnsDemonMinionDistance(game, 1, name);
   }
-  static learnsDemonMinionDistance(game: BOTCModel, distance: number, name: string): BoolVar {
+  static learnsDemonMinionDistance(
+    game: BOTCModel,
+    distance: number,
+    name: string,
+    seating: readonly string[] = game.players,
+  ): BoolVar {
     return game.anyOf(
-      game.players.map((demon, demonIndex) => {
-        const minionsAtDistance = game.players.flatMap((minion, minionIndex) =>
-          Clockmaker.seatingDistance(game.players.length, demonIndex, minionIndex) === distance
+      seating.map((demon, demonIndex) => {
+        const minionsAtDistance = seating.flatMap((minion, minionIndex) =>
+          Clockmaker.seatingDistance(seating.length, demonIndex, minionIndex) === distance
             ? [game.isMinion(minion)]
             : [],
         );
-        const closerSeatsAreNotMinions = game.players.flatMap((minion, minionIndex) =>
-          Clockmaker.seatingDistance(game.players.length, demonIndex, minionIndex) < distance
+        const closerSeatsAreNotMinions = seating.flatMap((minion, minionIndex) =>
+          Clockmaker.seatingDistance(seating.length, demonIndex, minionIndex) < distance
             ? [game.isMinion(minion).not()]
             : [],
         );
@@ -1008,6 +1286,7 @@ export class Clockmaker extends Role {
         game,
         this.distance,
         claimName(this.name, Clockmaker, `demon_${this.distance}_from_minion`),
+        this.seating,
       );
     return undefined;
   }
@@ -1140,6 +1419,76 @@ export interface EmpathNeighborOption {
   readonly activeIf: BoolLike;
 }
 
+export interface FlowergirlVote {
+  readonly timing: Timing;
+  readonly voters: readonly string[];
+  readonly demonVoted: boolean;
+}
+
+export class Flowergirl extends Role {
+  static readonly roleName = "Flowergirl";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+  readonly votes: readonly FlowergirlVote[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly votes?: readonly FlowergirlVote[];
+    },
+  ) {
+    super(options);
+    this.votes = options.votes ?? [];
+  }
+
+  static learnsDemonVoted(
+    game: BOTCModel,
+    voters: readonly string[],
+    demonVoted: boolean,
+    timing: Timing,
+    name: string,
+  ): BoolVar {
+    const anyDemonVoted = game.anyOf(
+      voters.map((player) => game.registersAsCharacterTypeAt(player, CharacterType.Demon, timing, `${name}_${player}`)),
+      `${name}_any_demon_voted`,
+    );
+    return demonVoted ? anyDemonVoted : game.not(anyDemonVoted, `${name}_no_demon_voted`);
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    if (this.votes.length === 0) {
+      super.apply(game, options);
+      return;
+    }
+    this.applyRoleClaim(game, Flowergirl, options);
+    this.votes.forEach((vote, index) => {
+      this.applyInfoClaimBuilders(
+        game,
+        Flowergirl,
+        [
+          {
+            learned: Flowergirl.learnsDemonVoted(
+              game,
+              vote.voters,
+              vote.demonVoted,
+              vote.timing,
+              claimName(this.name, Flowergirl, `vote_${index + 1}`),
+            ),
+            timing: vote.timing,
+          },
+        ],
+        options,
+      );
+    });
+    this.applyInfoClaimBuilders(game, Flowergirl, this.infoClaims, options);
+  }
+}
+
+export class TeaLady extends Role {
+  static readonly roleName = "Tea Lady";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
 export interface FortuneTellerCheck {
   readonly left: string;
   readonly right: string;
@@ -1266,7 +1615,7 @@ export class Juggler extends Role {
   ): BoolVar {
     const items = guesses instanceof Map ? [...guesses.entries()] : Object.entries(guesses);
     return game.boolSumEquals(
-      items.map(([player, role]) => game.actualIs(player, role)),
+      items.map(([player, role]) => game.registersAsRole(player, role, name)),
       count,
       name,
     );
@@ -1438,11 +1787,23 @@ export class Virgin extends Role {
       [game.hasRoleAt(this.name, Virgin, timing), game.soberAndHealthy(this.name, healthTimingForAbility(timing))],
       claimName(this.name, Virgin, "nomination_active"),
     );
+    if (this.executed) game.addTruth(activeHealthy);
     game.addImplication(
       activeHealthy,
       this.executed
-        ? game.isTownsfolk(this.nominator)
-        : game.not(game.isTownsfolk(this.nominator), claimName(this.name, Virgin, "nominator_not_townsfolk")),
+        ? game.registersAsCharacterType(
+            this.nominator,
+            CharacterType.Townsfolk,
+            claimName(this.name, Virgin, "nominator_townsfolk"),
+          )
+        : game.not(
+            game.registersAsCharacterType(
+              this.nominator,
+              CharacterType.Townsfolk,
+              claimName(this.name, Virgin, "nominator_townsfolk"),
+            ),
+            claimName(this.name, Virgin, "nominator_not_townsfolk"),
+          ),
     );
     this.applyInfoClaimBuilders(game, Virgin, this.infoClaims, options);
   }
@@ -1585,6 +1946,12 @@ export class Mayor extends Role {
   static readonly characterType = CharacterType.Townsfolk;
 }
 
+export class Monk extends Role {
+  static readonly roleName = "Monk";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
 export class Noble extends Role {
   static readonly roleName = "Noble";
   static readonly alignment = Alignment.Good;
@@ -1605,7 +1972,7 @@ export class Noble extends Role {
     this.evilCount = options.evilCount;
   }
   static learnsEvilCount(game: BOTCModel, players: readonly string[], count: number): BoolVar {
-    return predicates.exactlyNEvil(game, players, count);
+    return predicates.exactlyNRegisteredEvil(game, players, count);
   }
   override learnedInfo(game: BOTCModel): BoolLike | undefined {
     if (this.oneEvilAmong.length > 0) return Noble.learnsEvilCount(game, this.oneEvilAmong, 1);
@@ -1648,16 +2015,19 @@ export class Nightwatchman extends Role {
   static readonly characterType = CharacterType.Townsfolk;
   readonly chosen?: string;
   readonly learned?: boolean;
+  readonly confirmedByChosen: boolean;
 
   constructor(
     options: RoleBaseOptions & {
       readonly chosen?: string;
       readonly learned?: boolean;
+      readonly confirmedByChosen?: boolean;
     },
   ) {
     super(options);
     this.chosen = options.chosen;
     this.learned = options.learned;
+    this.confirmedByChosen = options.confirmedByChosen ?? false;
   }
 
   override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
@@ -1676,6 +2046,9 @@ export class Nightwatchman extends Role {
       activeHealthy,
       game.constantBool(this.learned, claimName(this.chosen, Nightwatchman, "learned")),
     );
+    if (this.learned && this.confirmedByChosen) {
+      game.addImplication(game.isGood(this.chosen), activeHealthy);
+    }
     this.applyInfoClaimBuilders(game, Nightwatchman, this.infoClaims, options);
   }
 }
@@ -1700,7 +2073,7 @@ export class Savant extends Role {
     return this.statements.length === 0
       ? undefined
       : game.allOf(
-          this.statements.map((statement, index) => buildStatement(game, this.name, index + 1, statement)),
+          this.statements.map((statement, index) => buildStatement(game, this.name, index + 1, statement, this.timing)),
           claimName(this.name, Savant, "all_statements"),
         );
   }
@@ -1772,7 +2145,7 @@ export class Undertaker extends Role {
     this.role = options.role;
   }
   static learnsRole(game: BOTCModel, player: string, role: RoleRef): BoolVar {
-    return game.actualIs(player, role);
+    return game.registersAsRole(player, role, claimName(player, Undertaker, `registers_as_${roleName(role)}`));
   }
   override learnedInfo(game: BOTCModel): BoolLike | undefined {
     return this.player === undefined || this.role === undefined

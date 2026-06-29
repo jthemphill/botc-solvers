@@ -67,17 +67,6 @@ describe("JSON puzzle solutions", () => {
     }
   });
 
-  test("puzzle 4 has the largest modeled JSON search space", () => {
-    const [largestPuzzle] = [...PUZZLE_SOLUTIONS].sort(
-      (left, right) => right.solutions.length - left.solutions.length || left.id.localeCompare(right.id),
-    );
-
-    expect({ id: largestPuzzle?.id, count: largestPuzzle?.solutions.length }).toEqual({
-      id: "puzzle-04-the-many-headed-monster",
-      count: 16,
-    });
-  });
-
   test.each(PUZZLE_SOLUTION_CASES)(
     "$id solution set comes from JSON doc",
     async ({ id, data, solutions }) => {

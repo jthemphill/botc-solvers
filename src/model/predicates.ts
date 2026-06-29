@@ -9,8 +9,20 @@ export function exactlyNEvil(game: BOTCModel, players: readonly string[], count:
   );
 }
 
+export function exactlyNRegisteredEvil(game: BOTCModel, players: readonly string[], count: number): BoolVar {
+  return game.boolSumEquals(
+    players.map((player) => game.registersAsEvil(player, `registered_evil_${players.join("_")}`)),
+    count,
+    `exactly_${count}_registered_evil_among_${players.join("_")}`,
+  );
+}
+
 export function differentAlignments(game: BOTCModel, left: string, right: string): BoolVar {
-  return game.xor(game.isEvil(left), game.isEvil(right), `${left}_${right}_different_alignments`);
+  return game.xor(
+    game.registersAsEvil(left, `${left}_${right}_different_alignments_left`),
+    game.registersAsEvil(right, `${left}_${right}_different_alignments_right`),
+    `${left}_${right}_different_alignments`,
+  );
 }
 
 export function sameAlignment(game: BOTCModel, left: string, right: string): BoolVar {
