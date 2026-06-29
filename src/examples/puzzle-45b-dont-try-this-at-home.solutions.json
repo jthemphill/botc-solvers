@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Spy",
+        "Dan": "Empath",
+        "Fraser": "Chef",
+        "Oscar": "Ravenkeeper",
+        "Sarah": "Investigator",
+        "Sula": "Imp",
+        "Tim": "Hermit",
+        "You": "Slayer"
+      }
+    }
+  ]
+}

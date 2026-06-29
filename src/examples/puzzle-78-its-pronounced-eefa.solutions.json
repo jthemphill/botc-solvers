@@ -1,0 +1,17 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Recluse",
+        "Charlotte": "Fortune Teller",
+        "Dan": "Imp",
+        "Fraser": "Baron",
+        "Jasmine": "Chef",
+        "Matt": "Butler",
+        "Oscar": "Saint",
+        "Sarah": "Investigator",
+        "You": "Drunk"
+      }
+    }
+  ]
+}

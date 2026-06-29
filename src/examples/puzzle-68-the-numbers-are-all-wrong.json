@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "title": "Puzzle 68 - The Numbers Are All Wrong",
+  "players": ["Sarah", "Matthew", "Anna", "Olivia", "You", "Tom", "Jasmine", "Fraser"],
+  "script": [
+    "Vortox",
+    "Witch",
+    "Mutant",
+    "Oracle",
+    "Artist",
+    "Snake Charmer",
+    "Clockmaker",
+    "Mathematician",
+    "Juggler",
+    "Dreamer",
+    "Seamstress"
+  ],
+  "forbiddenRoles": [{ "name": "You", "roles": ["Vortox", "Witch", "Mutant"] }],
+  "timeline": [
+    { "timing": "day_1", "type": "witchCurse", "players": ["Fraser"], "caller": "Fraser" },
+    { "timing": "day_1", "type": "execution", "players": ["Olivia"] },
+    { "timing": "night_2", "type": "nightDeath", "players": ["Jasmine"] },
+    { "timing": "day_2", "type": "execution", "players": ["Tom"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["You"] }
+  ],
+  "claims": [
+    {
+      "type": "Oracle",
+      "name": "Sarah",
+      "timing": "night_2",
+      "count": 0,
+      "deadPlayers": ["Fraser", "Olivia", "Jasmine"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Oracle",
+      "name": "Sarah",
+      "timing": "night_3",
+      "count": 0,
+      "deadPlayers": ["Fraser", "Olivia", "Jasmine", "Tom", "You"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Artist",
+      "name": "Matthew",
+      "timing": "day_3",
+      "extraPossibleActualRoles": ["Mutant"],
+      "info": [
+        {
+          "timing": "day_3",
+          "expression": "Tom.type == Townsfolk"
+        }
+      ]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Anna",
+      "extraPossibleActualRoles": ["Mutant"],
+      "checks": [
+        { "timing": "night_1", "player": "Tom", "demon": false },
+        { "timing": "night_2", "player": "Matthew", "demon": false },
+        { "timing": "night_3", "player": "Sarah", "demon": false }
+      ]
+    },
+    {
+      "type": "Clockmaker",
+      "name": "Olivia",
+      "distance": 1
+    },
+    {
+      "type": "Mathematician",
+      "name": "You",
+      "malfunctions": [
+        { "timing": "night_1", "count": 1 },
+        { "timing": "night_2", "count": 2 }
+      ]
+    },
+    {
+      "type": "Juggler",
+      "name": "Tom",
+      "timing": "night_2",
+      "correctCount": 3,
+      "guesses": {
+        "Sarah": "Witch",
+        "Matthew": "Mutant",
+        "Anna": "Snake Charmer",
+        "Olivia": "Mutant"
+      }
+    },
+    {
+      "type": "Dreamer",
+      "name": "Jasmine",
+      "timing": "night_1",
+      "player": "Sarah",
+      "roles": ["Oracle", "Witch"]
+    },
+    {
+      "type": "Seamstress",
+      "name": "Fraser",
+      "timing": "night_1",
+      "among": ["You", "Tom"],
+      "aligned": false
+    }
+  ]
+}

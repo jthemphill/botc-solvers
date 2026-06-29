@@ -1,0 +1,17 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Dan": "Investigator",
+        "Fraser": "Spy",
+        "Hannah": "Imp",
+        "Jasmine": "Undertaker",
+        "Matthew": "Ravenkeeper",
+        "Oscar": "Empath",
+        "Sula": "Drunk",
+        "Tim": "Slayer",
+        "You": "Recluse"
+      }
+    }
+  ]
+}

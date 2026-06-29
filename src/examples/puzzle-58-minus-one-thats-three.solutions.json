@@ -1,0 +1,19 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Riot",
+        "Fraser": "Politician",
+        "Jasmine": "Puzzlemaster",
+        "Matthew": "Juggler",
+        "Oscar": "Xaan",
+        "Steph": "Nightwatchman",
+        "Sula": "Shugenja",
+        "Tom": "Seamstress",
+        "You": "Dreamer"
+      },
+      "poisoned": { "night_2": ["Matthew", "Steph", "Sula", "Tom", "You"] },
+      "drunk": ["Steph"]
+    }
+  ]
+}

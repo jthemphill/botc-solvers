@@ -1,0 +1,110 @@
+{
+  "title": "Puzzle 54 - Silence in the Library",
+  "players": ["Steph", "Anna", "Olivia", "Matthew", "You", "Fraser", "Oscar"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Spy",
+    "Baron",
+    "Scarlet Woman",
+    "Drunk",
+    "Saint",
+    "Recluse",
+    "Fortune Teller",
+    "Empath",
+    "Chef",
+    "Investigator",
+    "Ravenkeeper",
+    "Librarian"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Librarian", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Anna"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["You"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Olivia"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Matthew"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "FortuneTeller",
+      "name": "Steph",
+      "checks": [
+        {
+          "timing": "night_1",
+          "left": "Oscar",
+          "right": "Anna",
+          "yes": false
+        },
+        {
+          "timing": "night_2",
+          "left": "Steph",
+          "right": "Olivia",
+          "yes": false
+        },
+        {
+          "timing": "night_3",
+          "left": "Fraser",
+          "right": "Steph",
+          "yes": false
+        }
+      ]
+    },
+    {
+      "type": "Empath",
+      "name": "Anna",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Chef",
+      "name": "Olivia",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Matthew",
+      "timing": "night_3",
+      "player": "Oscar",
+      "role": "Investigator"
+    },
+    {
+      "type": "Librarian",
+      "name": "You",
+      "timing": "night_1",
+      "outsiderCount": 0
+    },
+    {
+      "type": "Recluse",
+      "name": "Fraser"
+    },
+    {
+      "type": "Investigator",
+      "name": "Oscar",
+      "timing": "night_1",
+      "minionRole": "Scarlet Woman",
+      "among": ["Fraser", "Olivia"]
+    }
+  ]
+}

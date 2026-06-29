@@ -1,0 +1,132 @@
+{
+  "title": "Puzzle 49 - Bastille Day",
+  "players": ["Tom", "Oscar", "Fraser", "Anna", "You", "Sula", "Matthew", "Adam"],
+  "script": [
+    "Riot",
+    "Poisoner",
+    "Baron",
+    "Drunk",
+    "Recluse",
+    "Saint",
+    "Chef",
+    "Empath",
+    "Fortune Teller",
+    "Librarian",
+    "Undertaker",
+    "Washerwoman"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Washerwoman", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Adam"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "day_3",
+      "type": "nominationDeath",
+      "players": ["Matthew"],
+      "caller": "Oscar"
+    },
+    {
+      "timing": "day_3",
+      "type": "nominationDeath",
+      "players": ["Tom"],
+      "caller": "Matthew"
+    },
+    {
+      "timing": "day_3",
+      "type": "nominationDeath",
+      "players": ["You"],
+      "caller": "Tom"
+    }
+  ],
+  "claims": [
+    {
+      "type": "Empath",
+      "name": "Tom",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Tom",
+      "timing": "night_2",
+      "count": 1
+    },
+    {
+      "type": "Empath",
+      "name": "Tom",
+      "timing": "night_3",
+      "count": 1
+    },
+    {
+      "type": "Saint",
+      "name": "Oscar"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Fraser",
+      "timing": "night_2",
+      "player": "Adam",
+      "role": "Drunk"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Anna",
+      "checks": [
+        {
+          "left": "Adam",
+          "right": "Tom",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Tom",
+          "right": "Fraser",
+          "yes": false,
+          "timing": "night_2"
+        },
+        {
+          "left": "Sula",
+          "right": "Anna",
+          "yes": false,
+          "timing": "night_3"
+        }
+      ]
+    },
+    {
+      "type": "Washerwoman",
+      "name": "You",
+      "timing": "night_1",
+      "role": "Empath",
+      "among": ["Matthew", "Tom"]
+    },
+    {
+      "type": "Librarian",
+      "name": "Sula",
+      "timing": "night_1",
+      "role": "Drunk",
+      "among": ["You", "Matthew"]
+    },
+    {
+      "type": "Chef",
+      "name": "Matthew",
+      "count": 1
+    },
+    {
+      "type": "Recluse",
+      "name": "Adam"
+    }
+  ]
+}

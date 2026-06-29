@@ -1,0 +1,26 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Poisoner",
+        "Anna": "Fortune Teller",
+        "Aoife": "Saint",
+        "Dan": "Librarian",
+        "Fraser": "Monk",
+        "Jasmine": "Investigator",
+        "Matthew": "Chef",
+        "Olivia": "Washerwoman",
+        "Oscar": "Scarlet Woman",
+        "Sarah": "Butler",
+        "Steph": "Recluse",
+        "Sula": "Godfather",
+        "Tim": "Undertaker",
+        "Tom": "Empath",
+        "You": "Imp"
+      },
+      "poisoned": {
+        "night_1": ["Sarah"]
+      }
+    }
+  ]
+}

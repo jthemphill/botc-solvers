@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "title": "Puzzle 59 - Fifty-Fifty",
+  "players": ["Josh", "Fraser", "Jasmine", "Matthew", "Adam", "You", "Steph", "Olivia", "Oscar"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Spy",
+    "Baron",
+    "Scarlet Woman",
+    "Drunk",
+    "Recluse",
+    "Butler",
+    "Saint",
+    "Ravenkeeper",
+    "Virgin",
+    "Empath",
+    "Chef",
+    "Undertaker",
+    "Investigator"
+  ],
+  "fixedRoles": [{ "name": "You", "roles": ["Ravenkeeper", "Drunk"] }],
+  "timeline": [
+    { "timing": "day_1", "type": "nominationDeath", "players": ["Jasmine"], "caller": "Jasmine" },
+    { "timing": "night_2", "type": "nightDeath", "players": ["You"] },
+    { "timing": "day_2", "type": "execution", "players": ["Olivia"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["Steph"] },
+    { "timing": "day_3", "type": "execution", "players": ["Matthew"] },
+    { "timing": "night_4", "type": "nightDeath", "players": ["Josh"] }
+  ],
+  "claims": [
+    { "type": "Recluse", "name": "Josh" },
+    { "type": "Virgin", "name": "Fraser", "timing": "day_1", "nominator": "Jasmine", "executed": true },
+    { "type": "Empath", "name": "Jasmine", "timing": "night_1", "count": 1 },
+    { "type": "Chef", "name": "Matthew", "count": 0 },
+    { "type": "Undertaker", "name": "Adam", "timing": "night_2", "player": "Jasmine", "role": "Empath" },
+    { "type": "Undertaker", "name": "Adam", "timing": "night_3", "player": "Olivia", "role": "Investigator" },
+    { "type": "Undertaker", "name": "Adam", "timing": "night_4", "player": "Matthew", "role": "Chef" },
+    { "type": "Ravenkeeper", "name": "You", "timing": "night_2", "player": "Matthew", "role": "Chef" },
+    { "type": "Saint", "name": "Steph" },
+    { "type": "Investigator", "name": "Olivia", "timing": "night_1", "role": "Spy", "among": ["Jasmine", "Adam"] },
+    { "type": "Butler", "name": "Oscar" }
+  ]
+}

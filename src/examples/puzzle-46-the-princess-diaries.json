@@ -1,0 +1,130 @@
+{
+  "title": "Puzzle 46 - The Princess Diaries",
+  "players": ["Adam", "Aoife", "Jasmine", "Josh", "You", "Matthew", "Fraser"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Clockmaker",
+    "Exorcist",
+    "Investigator",
+    "Chambermaid",
+    "Gossip",
+    "Princess",
+    "Gambler"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Clockmaker"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Adam"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Jasmine"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Chambermaid",
+      "name": "Adam",
+      "checks": [
+        {
+          "left": "Fraser",
+          "right": "Josh",
+          "timing": "night_1",
+          "count": 2
+        },
+        {
+          "left": "Matthew",
+          "right": "Aoife",
+          "timing": "night_2",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "type": "Gossip",
+      "name": "Aoife",
+      "statements": [
+        {
+          "timing": "day_1",
+          "expression": "Adam.type == Townsfolk"
+        },
+        {
+          "timing": "day_2",
+          "expression": "Matthew.type == Demon"
+        }
+      ]
+    },
+    {
+      "type": "Princess",
+      "name": "Jasmine",
+      "nominations": [
+        {
+          "timing": "day_1",
+          "player": "You"
+        }
+      ]
+    },
+    {
+      "type": "Gambler",
+      "name": "Josh",
+      "guesses": [
+        {
+          "timing": "night_2",
+          "player": "Aoife",
+          "role": "Gossip",
+          "survived": true
+        },
+        {
+          "timing": "night_3",
+          "player": "Matthew",
+          "role": "Imp",
+          "survived": true
+        }
+      ]
+    },
+    {
+      "type": "Clockmaker",
+      "name": "You",
+      "distance": 3
+    },
+    {
+      "type": "Exorcist",
+      "name": "Matthew",
+      "choices": [
+        {
+          "timing": "night_2",
+          "player": "Jasmine"
+        },
+        {
+          "timing": "night_3",
+          "player": "Aoife"
+        }
+      ]
+    },
+    {
+      "type": "Investigator",
+      "name": "Fraser",
+      "role": "Poisoner",
+      "among": ["Aoife", "Jasmine"]
+    }
+  ]
+}

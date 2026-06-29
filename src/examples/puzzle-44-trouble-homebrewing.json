@@ -1,0 +1,122 @@
+{
+  "title": "Puzzle 44 - Trouble Homebrewing",
+  "players": ["Fraser", "Steph", "Matt", "Dan", "You", "Olivia", "Sarah", "Tim"],
+  "script": [
+    "Leviathan",
+    "Scarlet Woman",
+    "Drunk",
+    "Chef",
+    "Fortune Teller",
+    "Investigator",
+    "Juggler",
+    "Noble",
+    "Shugenja",
+    "Solar Prodigy",
+    "Lunar Prodigy"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Juggler", "Drunk"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Shugenja",
+      "name": "Fraser",
+      "evilDirection": "anticlockwise"
+    },
+    {
+      "type": "Investigator",
+      "name": "Steph",
+      "role": "Scarlet Woman",
+      "among": ["Fraser", "Matt"]
+    },
+    {
+      "type": "Prodigy",
+      "name": "Matt",
+      "checks": [
+        {
+          "chosen": "Dan",
+          "learned": "Tim",
+          "timing": "night_1"
+        },
+        {
+          "chosen": "Sarah",
+          "learned": "Dan",
+          "timing": "night_2"
+        },
+        {
+          "chosen": "Sarah",
+          "learned": "Steph",
+          "timing": "night_3"
+        }
+      ]
+    },
+    {
+      "type": "Prodigy",
+      "name": "Dan",
+      "checks": [
+        {
+          "chosen": "Steph",
+          "learned": "Olivia",
+          "timing": "night_1"
+        },
+        {
+          "chosen": "Fraser",
+          "learned": "Matt",
+          "timing": "night_2"
+        },
+        {
+          "chosen": "Steph",
+          "learned": "Fraser",
+          "timing": "night_3"
+        }
+      ]
+    },
+    {
+      "type": "Juggler",
+      "name": "You",
+      "timing": "night_2",
+      "guesses": {
+        "Matt": "Leviathan",
+        "Olivia": "Scarlet Woman"
+      },
+      "correctCount": 0
+    },
+    {
+      "type": "Chef",
+      "name": "Olivia",
+      "count": 0
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Sarah",
+      "checks": [
+        {
+          "left": "Tim",
+          "right": "Dan",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Tim",
+          "right": "Fraser",
+          "yes": false,
+          "timing": "night_2"
+        },
+        {
+          "left": "You",
+          "right": "Steph",
+          "yes": true,
+          "timing": "night_3"
+        }
+      ]
+    },
+    {
+      "type": "Noble",
+      "name": "Tim",
+      "oneEvilAmong": ["You", "Olivia", "Fraser"]
+    }
+  ]
+}

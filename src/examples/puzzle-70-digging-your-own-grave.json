@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "title": "Puzzle 70 - Digging Your Own Grave",
+  "players": ["Sarah", "Matthew", "Fraser", "Adam", "Jasmine", "You", "Dan", "Hannah", "Tom"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Spy",
+    "Baron",
+    "Scarlet Woman",
+    "Drunk",
+    "Butler",
+    "Saint",
+    "Investigator",
+    "Recluse",
+    "Ravenkeeper",
+    "Empath",
+    "Fortune Teller",
+    "Librarian",
+    "Undertaker"
+  ],
+  "forbiddenRoles": [
+    {
+      "name": "You",
+      "roles": ["Imp", "Poisoner", "Spy", "Baron", "Scarlet Woman"]
+    }
+  ],
+  "timeline": [
+    { "timing": "day_1", "type": "execution", "players": ["Sarah"] },
+    { "timing": "night_2", "type": "nightDeath", "players": ["Adam"] },
+    { "timing": "day_2", "type": "execution", "players": ["You"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["Fraser"] },
+    { "timing": "day_3", "type": "execution", "players": ["Dan"] },
+    { "timing": "night_4", "type": "nightDeath", "players": ["Jasmine"] }
+  ],
+  "claims": [
+    { "type": "Butler", "name": "Sarah" },
+    { "type": "Saint", "name": "Matthew" },
+    {
+      "type": "Investigator",
+      "name": "Fraser",
+      "timing": "night_1",
+      "role": "Spy",
+      "among": ["Hannah", "Sarah"]
+    },
+    { "type": "Recluse", "name": "Adam" },
+    {
+      "type": "Ravenkeeper",
+      "name": "Jasmine",
+      "timing": "night_4",
+      "player": "Tom",
+      "role": "Undertaker"
+    },
+    { "type": "Empath", "name": "You", "timing": "night_1", "count": 0 },
+    { "type": "Empath", "name": "You", "timing": "night_2", "count": 0 },
+    {
+      "type": "FortuneTeller",
+      "name": "Dan",
+      "checks": [
+        { "timing": "night_1", "left": "Sarah", "right": "Fraser", "yes": false },
+        { "timing": "night_2", "left": "You", "right": "Hannah", "yes": false },
+        { "timing": "night_3", "left": "Dan", "right": "Hannah", "yes": false }
+      ]
+    },
+    {
+      "type": "Librarian",
+      "name": "Hannah",
+      "timing": "night_1",
+      "role": "Drunk",
+      "among": ["Tom", "Fraser"]
+    },
+    {
+      "type": "Undertaker",
+      "name": "Tom",
+      "timing": "night_2",
+      "player": "Sarah",
+      "role": "Butler"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Tom",
+      "timing": "night_3",
+      "player": "You",
+      "role": "Baron"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Tom",
+      "timing": "night_4",
+      "player": "Dan",
+      "role": "Spy"
+    }
+  ]
+}

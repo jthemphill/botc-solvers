@@ -1,0 +1,15 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Empath",
+        "Fraser": "Recluse",
+        "Matthew": "Imp",
+        "Olivia": "Chef",
+        "Oscar": "Baron",
+        "Steph": "Fortune Teller",
+        "You": "Drunk"
+      }
+    }
+  ]
+}

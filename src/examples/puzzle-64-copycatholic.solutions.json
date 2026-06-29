@@ -1,0 +1,17 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Mutant",
+        "Dan": "Empath",
+        "Fraser": "Slayer",
+        "Hannah": "Recluse",
+        "Josh": "Saint",
+        "Olivia": "Imp",
+        "Sarah": "Mutant",
+        "Tim": "Baron",
+        "You": "Ravenkeeper"
+      }
+    }
+  ]
+}

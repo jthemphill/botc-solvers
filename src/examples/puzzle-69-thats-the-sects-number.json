@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "title": "Puzzle 69 - That's the Sects Number",
+  "players": ["Fraser", "Sarah", "Tom", "Oscar", "Dan", "You", "Hannah", "Matt", "Adam"],
+  "script": [
+    "Fang Gu",
+    "Vigormortis",
+    "No Dashii",
+    "Vortox",
+    "Witch",
+    "Mutant",
+    "Klutz",
+    "Sweetheart",
+    "Artist",
+    "Juggler",
+    "Mathematician",
+    "Seamstress",
+    "Sage",
+    "Snake Charmer",
+    "Oracle"
+  ],
+  "setup": "none",
+  "constraints": [
+    {
+      "expression": "#{p : players | some (p.role & {`Fang Gu`, Vigormortis, `No Dashii`, Vortox})} == 1"
+    },
+    {
+      "expression": "#{p : players | p.role == Witch} == 1"
+    },
+    {
+      "expression": "(some p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Klutz, Sweetheart})} == 3"
+    },
+    {
+      "expression": "(no p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Klutz, Sweetheart})} == 2"
+    }
+  ],
+  "forbiddenRoles": [
+    {
+      "name": "You",
+      "roles": ["Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    }
+  ],
+  "timeline": [
+    { "timing": "day_1", "type": "witchCurse", "players": ["Oscar"], "caller": "Oscar" },
+    { "timing": "day_1", "type": "execution", "players": ["Matt"] },
+    { "timing": "night_2", "type": "nightDeath", "players": ["Dan"] },
+    { "timing": "day_2", "type": "witchCurse", "players": ["Sarah"], "caller": "Sarah" },
+    { "timing": "day_2", "type": "execution", "players": ["Hannah"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["You"] }
+  ],
+  "claims": [
+    {
+      "type": "Artist",
+      "name": "Fraser",
+      "timing": "day_3",
+      "extraPossibleActualRoles": ["Mutant"],
+      "info": [
+        {
+          "timing": "day_3",
+          "expression": "Fraser.role != Artist"
+        }
+      ]
+    },
+    {
+      "type": "Juggler",
+      "name": "Sarah",
+      "timing": "night_2",
+      "correctCount": 1,
+      "guesses": {
+        "You": "Witch",
+        "Hannah": "No Dashii",
+        "Matt": "Mutant",
+        "Fraser": "No Dashii"
+      }
+    },
+    {
+      "type": "Mathematician",
+      "name": "Tom",
+      "extraPossibleActualRoles": ["Mutant"],
+      "malfunctions": [
+        { "timing": "night_1", "count": 2 },
+        { "timing": "night_2", "count": 1 },
+        { "timing": "night_3", "count": 2 }
+      ]
+    },
+    {
+      "type": "Seamstress",
+      "name": "Oscar",
+      "timing": "night_1",
+      "among": ["Hannah", "Adam"],
+      "aligned": true
+    },
+    {
+      "type": "Klutz",
+      "name": "Dan",
+      "timing": "night_2",
+      "chosen": "Tom",
+      "lost": false
+    },
+    {
+      "type": "Sage",
+      "name": "You",
+      "timing": "night_3",
+      "demonAmong": ["Adam", "Tom"]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Hannah",
+      "checks": [
+        { "timing": "night_1", "player": "Sarah", "demon": false },
+        { "timing": "night_2", "player": "Dan", "demon": false }
+      ]
+    },
+    {
+      "type": "Sweetheart",
+      "name": "Matt"
+    },
+    {
+      "type": "Oracle",
+      "name": "Adam",
+      "timing": "night_2",
+      "count": 1,
+      "deadPlayers": ["Oscar", "Matt", "Dan"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Oracle",
+      "name": "Adam",
+      "timing": "night_3",
+      "count": 1,
+      "deadPlayers": ["Oscar", "Matt", "Dan", "Sarah", "Hannah", "You"],
+      "extraPossibleActualRoles": ["Mutant"]
+    }
+  ]
+}

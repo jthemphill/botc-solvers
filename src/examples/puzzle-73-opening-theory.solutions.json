@@ -1,0 +1,20 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Fraser": "Knight",
+        "Hannah": "Empath",
+        "Jasmine": "Artist",
+        "Matthew": "Snake Charmer",
+        "Olivia": "Poisoner",
+        "Sarah": "Vortox",
+        "Tom": "Dreamer",
+        "You": "Butler"
+      },
+      "poisoned": {
+        "night_1": ["Sarah"],
+        "night_2": ["Matthew"]
+      }
+    }
+  ]
+}

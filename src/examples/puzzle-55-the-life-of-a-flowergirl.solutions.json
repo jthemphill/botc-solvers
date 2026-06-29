@@ -1,0 +1,28 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Mutant",
+        "Aoife": "Witch",
+        "Fraser": "Clockmaker",
+        "Jasmine": "Oracle",
+        "Matt": "Seamstress",
+        "Sarah": "Mathematician",
+        "Steph": "No Dashii",
+        "You": "Flowergirl"
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Vortox",
+        "Aoife": "Artist",
+        "Fraser": "Clockmaker",
+        "Jasmine": "Witch",
+        "Matt": "Seamstress",
+        "Sarah": "Mathematician",
+        "Steph": "Klutz",
+        "You": "Flowergirl"
+      }
+    }
+  ]
+}

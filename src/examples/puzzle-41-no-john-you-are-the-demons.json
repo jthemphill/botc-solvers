@@ -1,0 +1,127 @@
+{
+  "title": "Puzzle 41 - No, John, You Are the Demons",
+  "players": ["Josef", "Gina", "Katharine", "Chris", "You", "Zak", "Edd", "Riley"],
+  "script": [
+    "Imp",
+    "Witch",
+    "Drunk",
+    "Lunatic",
+    "Artist",
+    "Chef",
+    "Fortune Teller",
+    "Noble",
+    "Poppy Grower",
+    "Seamstress",
+    "Slayer"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Imp", "Lunatic"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "witchCurse",
+      "players": ["Gina"]
+    },
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Riley"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Chris"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Edd"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Josef"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Chef",
+      "name": "Josef",
+      "extraPossibleActualRoles": ["Lunatic"],
+      "count": 1
+    },
+    {
+      "type": "Noble",
+      "name": "Gina",
+      "extraPossibleActualRoles": ["Lunatic"],
+      "oneEvilAmong": ["Edd", "Riley", "Chris"]
+    },
+    {
+      "type": "Poppy Grower",
+      "name": "Katharine",
+      "extraPossibleActualRoles": ["Lunatic"]
+    },
+    {
+      "type": "Artist",
+      "name": "Chris",
+      "timing": "day_1",
+      "extraPossibleActualRoles": ["Lunatic"],
+      "info": [
+        {
+          "timing": "day_1",
+          "expression": "Riley.type != Townsfolk"
+        }
+      ]
+    },
+    {
+      "type": "Imp",
+      "name": "You",
+      "extraPossibleActualRoles": ["Imp", "Lunatic"]
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Zak",
+      "extraPossibleActualRoles": ["Lunatic"],
+      "checks": [
+        {
+          "left": "Edd",
+          "right": "Josef",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Josef",
+          "right": "Zak",
+          "yes": false,
+          "timing": "night_2"
+        },
+        {
+          "left": "You",
+          "right": "Zak",
+          "yes": false,
+          "timing": "night_3"
+        }
+      ]
+    },
+    {
+      "type": "Seamstress",
+      "name": "Edd",
+      "timing": "night_1",
+      "extraPossibleActualRoles": ["Lunatic"],
+      "among": ["Katharine", "Chris"],
+      "aligned": true
+    },
+    {
+      "type": "Slayer",
+      "name": "Riley",
+      "timing": "day_1",
+      "extraPossibleActualRoles": ["Lunatic"],
+      "target": "Katharine",
+      "killed": false
+    }
+  ]
+}

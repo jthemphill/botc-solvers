@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "title": "Puzzle 60 - What's a Mind Goblin?",
+  "players": ["Jasmine", "Matthew", "Aoife", "Sarah", "You", "Olivia", "Tim", "Fraser"],
+  "script": [
+    "No Dashii",
+    "Vortox",
+    "Goblin",
+    "Drunk",
+    "Poppy Grower",
+    "Librarian",
+    "Artist",
+    "Washerwoman",
+    "Empath",
+    "Sage",
+    "Knight"
+  ],
+  "fixedRoles": [
+    { "name": "You", "roles": ["Goblin"] },
+    { "name": "Olivia", "roles": ["Poppy Grower"] }
+  ],
+  "timeline": [
+    { "timing": "day_1", "type": "execution", "players": ["Sarah"] },
+    { "timing": "night_2", "type": "nightDeath", "players": ["Aoife"] },
+    { "timing": "day_2", "type": "execution", "players": ["Tim"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["You"] }
+  ],
+  "claims": [
+    { "type": "Washerwoman", "name": "Jasmine", "timing": "night_1", "role": "Artist", "among": ["Tim", "Fraser"] },
+    { "type": "Empath", "name": "Matthew", "timing": "night_1", "count": 2 },
+    { "type": "Empath", "name": "Matthew", "timing": "night_2", "count": 2 },
+    { "type": "Empath", "name": "Matthew", "timing": "night_3", "count": 2 },
+    { "type": "Sage", "name": "Aoife", "timing": "night_2", "demonAmong": ["Olivia", "Fraser"] },
+    { "type": "Knight", "name": "Sarah", "noDemonAmong": ["Fraser", "Olivia"] },
+    {
+      "type": "Artist",
+      "name": "Fraser",
+      "timing": "day_3",
+      "info": [{ "timing": "day_3", "expression": "Olivia.type != Townsfolk" }]
+    },
+    { "type": "Librarian", "name": "Tim", "timing": "night_1", "role": "Drunk", "among": ["You", "Aoife"] },
+    { "type": "Poppy Grower", "name": "Olivia" }
+  ]
+}

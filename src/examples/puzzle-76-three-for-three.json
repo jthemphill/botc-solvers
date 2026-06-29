@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "title": "Puzzle 76 - Three for Three",
+  "players": [
+    "Sarah",
+    "Tom",
+    "Steph",
+    "Sula",
+    "Dan",
+    "Aoife",
+    "Jasmine",
+    "You",
+    "Anna",
+    "Matthew",
+    "Oscar",
+    "Fraser",
+    "Tim",
+    "Olivia",
+    "Adam"
+  ],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Scarlet Woman",
+    "Godfather",
+    "Washerwoman",
+    "Undertaker",
+    "Butler",
+    "Investigator",
+    "Empath",
+    "Slayer",
+    "Chef",
+    "Recluse",
+    "Saint",
+    "Librarian",
+    "Mayor",
+    "Fortune Teller",
+    "Monk",
+    "Ravenkeeper"
+  ],
+  "setup": "none",
+  "constraints": [
+    { "expression": "#{p : players | p.type == Townsfolk} == 8" },
+    { "expression": "#{p : players | p.type == Outsider} == 3" },
+    { "expression": "#{p : players | p.type == Minion} == 3" },
+    { "expression": "#{p : players | p.type == Demon} == 1" },
+    { "expression": "no p : players | p.role == Slayer" },
+    { "expression": "no p : players | p.role == Ravenkeeper" },
+    { "expression": "no p : players | p.role == Mayor" },
+    { "expression": "poisoned(Sarah, night_1)" }
+  ],
+  "fixedRoles": [
+    { "name": "Adam", "roles": ["Poisoner"] },
+    { "name": "Sarah", "roles": ["Washerwoman", "Undertaker", "Butler"] },
+    { "name": "Tom", "roles": ["Investigator", "Empath", "Slayer"] },
+    { "name": "Steph", "roles": ["Chef", "Recluse", "Saint"] },
+    { "name": "Sula", "roles": ["Godfather"] },
+    { "name": "Dan", "roles": ["Librarian", "Investigator", "Empath"] },
+    { "name": "Aoife", "roles": ["Librarian", "Saint", "Mayor"] },
+    { "name": "Jasmine", "roles": ["Investigator", "Fortune Teller", "Butler"] },
+    { "name": "You", "roles": ["Imp"] },
+    { "name": "Anna", "roles": ["Fortune Teller", "Monk", "Recluse"] },
+    { "name": "Matthew", "roles": ["Librarian", "Chef", "Saint"] },
+    { "name": "Oscar", "roles": ["Scarlet Woman"] },
+    { "name": "Fraser", "roles": ["Empath", "Monk", "Recluse"] },
+    { "name": "Tim", "roles": ["Empath", "Undertaker", "Recluse"] },
+    { "name": "Olivia", "roles": ["Washerwoman", "Monk", "Recluse"] }
+  ],
+  "claims": [
+    {
+      "type": "Empath",
+      "name": "Tom",
+      "timing": "night_1",
+      "count": 1,
+      "extraPossibleActualRoles": ["Investigator", "Slayer"]
+    },
+    {
+      "type": "Chef",
+      "name": "Steph",
+      "timing": "night_1",
+      "count": 1,
+      "extraPossibleActualRoles": ["Recluse", "Saint"]
+    },
+    {
+      "type": "Empath",
+      "name": "Dan",
+      "timing": "night_1",
+      "count": 0,
+      "extraPossibleActualRoles": ["Librarian", "Investigator"]
+    },
+    {
+      "type": "Chef",
+      "name": "Matthew",
+      "timing": "night_1",
+      "count": 1,
+      "extraPossibleActualRoles": ["Librarian", "Saint"]
+    },
+    {
+      "type": "Empath",
+      "name": "Fraser",
+      "timing": "night_1",
+      "count": 0,
+      "extraPossibleActualRoles": ["Monk", "Recluse"]
+    },
+    {
+      "type": "Empath",
+      "name": "Tim",
+      "timing": "night_1",
+      "count": 1,
+      "extraPossibleActualRoles": ["Undertaker", "Recluse"]
+    }
+  ]
+}

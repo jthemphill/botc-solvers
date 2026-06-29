@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Puzzle 73 - Opening Theory",
+  "players": ["Sarah", "Tom", "Hannah", "Olivia", "You", "Jasmine", "Fraser", "Matthew"],
+  "script": [
+    "Imp",
+    "Vortox",
+    "Poisoner",
+    "Scarlet Woman",
+    "Butler",
+    "Clockmaker",
+    "Dreamer",
+    "Empath",
+    "Chambermaid",
+    "Artist",
+    "Knight",
+    "Snake Charmer"
+  ],
+  "setup": "none",
+  "constraints": [
+    {
+      "expression": "#{p : players | some (p.role & {Imp, Vortox})} == 1"
+    },
+    {
+      "expression": "#{p : players | some (p.role & {Poisoner, `Scarlet Woman`})} == 1"
+    }
+  ],
+  "fixedRoles": [{ "name": "You", "roles": ["Butler"] }],
+  "timeline": [
+    { "timing": "day_1", "type": "execution", "players": ["Tom"] },
+    { "timing": "night_2", "type": "nightDeath", "players": ["You"] },
+    { "timing": "day_2", "type": "execution", "players": ["Olivia"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["Hannah"] }
+  ],
+  "claims": [
+    { "type": "Clockmaker", "name": "Sarah", "distance": 4 },
+    { "type": "Dreamer", "name": "Tom", "timing": "night_1", "player": "Fraser", "roles": ["Knight", "Poisoner"] },
+    { "type": "Empath", "name": "Hannah", "timing": "night_1", "count": 1 },
+    { "type": "Empath", "name": "Hannah", "timing": "night_2", "count": 1 },
+    {
+      "type": "Chambermaid",
+      "name": "Olivia",
+      "checks": [
+        { "timing": "night_1", "left": "You", "right": "Fraser", "count": 1 },
+        { "timing": "night_2", "left": "Fraser", "right": "Matthew", "count": 1 }
+      ]
+    },
+    { "type": "Butler", "name": "You" },
+    {
+      "type": "Artist",
+      "name": "Jasmine",
+      "timing": "day_3",
+      "info": [{ "timing": "day_3", "expression": "some p : players | role_at(p, `Scarlet Woman`, day_3)" }]
+    },
+    { "type": "Knight", "name": "Fraser", "noDemonAmong": ["You", "Matthew"] },
+    {
+      "type": "Snake Charmer",
+      "name": "Matthew",
+      "checks": [
+        { "timing": "night_1", "player": "Olivia", "demon": false },
+        { "timing": "night_2", "player": "Sarah", "demon": false },
+        { "timing": "night_3", "player": "Jasmine", "demon": false }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,148 @@
+{
+  "title": "Puzzle 55 - The Life of a Flowergirl",
+  "players": ["Aoife", "Anna", "Sarah", "Jasmine", "You", "Matt", "Fraser", "Steph"],
+  "script": [
+    "Fang Gu",
+    "Vigormortis",
+    "No Dashii",
+    "Vortox",
+    "Witch",
+    "Mutant",
+    "Klutz",
+    "Artist",
+    "Juggler",
+    "Mathematician",
+    "Oracle",
+    "Flowergirl",
+    "Seamstress",
+    "Clockmaker"
+  ],
+  "setup": "none",
+  "constraints": [
+    {
+      "expression": "#{p : players | some (p.role & {`Fang Gu`, Vigormortis, `No Dashii`, Vortox})} == 1"
+    },
+    {
+      "expression": "#{p : players | p.role == Witch} == 1"
+    },
+    {
+      "expression": "(some p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Klutz})} == 2"
+    },
+    {
+      "expression": "(no p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Klutz})} == 1"
+    }
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Flowergirl"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Sarah"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Aoife"]
+    },
+    {
+      "timing": "day_2",
+      "type": "witchCurse",
+      "players": ["You"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Matt"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Fraser"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Artist",
+      "name": "Aoife",
+      "timing": "day_1",
+      "info": [
+        {
+          "timing": "day_1",
+          "expression": "Aoife.role != Artist"
+        }
+      ]
+    },
+    {
+      "type": "Juggler",
+      "name": "Anna",
+      "timing": "night_2",
+      "correctCount": 5,
+      "extraPossibleActualRoles": ["Mutant"],
+      "guesses": {
+        "You": "Flowergirl",
+        "Fraser": "Fang Gu",
+        "Aoife": "Fang Gu",
+        "Sarah": "Mathematician",
+        "Jasmine": "Oracle"
+      }
+    },
+    {
+      "type": "Mathematician",
+      "name": "Sarah",
+      "malfunctions": [
+        {
+          "timing": "night_1",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "type": "Oracle",
+      "name": "Jasmine",
+      "timing": "night_2",
+      "count": 1,
+      "deadPlayers": ["Sarah", "Aoife"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Oracle",
+      "name": "Jasmine",
+      "timing": "night_3",
+      "count": 1,
+      "deadPlayers": ["Sarah", "Aoife", "You", "Matt", "Fraser"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Flowergirl",
+      "name": "You",
+      "votes": [
+        {
+          "timing": "night_2",
+          "voters": ["You", "Fraser", "Steph", "Aoife", "Jasmine"],
+          "demonVoted": true
+        }
+      ]
+    },
+    {
+      "type": "Seamstress",
+      "name": "Matt",
+      "timing": "night_2",
+      "among": ["Sarah", "Jasmine"],
+      "aligned": true
+    },
+    {
+      "type": "Clockmaker",
+      "name": "Fraser",
+      "distance": 4
+    },
+    {
+      "type": "Klutz",
+      "name": "Steph"
+    }
+  ]
+}

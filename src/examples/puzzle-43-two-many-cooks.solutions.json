@@ -1,0 +1,140 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Recluse",
+        "Aoife": "Chef",
+        "Dan": "Imp",
+        "Fraser": "Poisoner",
+        "Jasmine": "Fortune Teller",
+        "Oscar": "Investigator",
+        "Steph": "Empath",
+        "You": "Ravenkeeper"
+      },
+      "poisoned": {
+        "night_1": ["Steph"],
+        "night_2": ["Anna"],
+        "night_3": ["You"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Recluse",
+        "Aoife": "Chef",
+        "Dan": "Imp",
+        "Fraser": "Poisoner",
+        "Jasmine": "Fortune Teller",
+        "Oscar": "Investigator",
+        "Steph": "Empath",
+        "You": "Ravenkeeper"
+      },
+      "poisoned": {
+        "night_1": ["Steph"],
+        "night_2": ["Aoife"],
+        "night_3": ["You"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Recluse",
+        "Aoife": "Chef",
+        "Dan": "Imp",
+        "Fraser": "Poisoner",
+        "Jasmine": "Fortune Teller",
+        "Oscar": "Investigator",
+        "Steph": "Empath",
+        "You": "Ravenkeeper"
+      },
+      "poisoned": {
+        "night_1": ["Steph"],
+        "night_2": ["Dan"],
+        "night_3": ["You"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Recluse",
+        "Aoife": "Chef",
+        "Dan": "Imp",
+        "Fraser": "Poisoner",
+        "Jasmine": "Fortune Teller",
+        "Oscar": "Investigator",
+        "Steph": "Empath",
+        "You": "Ravenkeeper"
+      },
+      "poisoned": {
+        "night_1": ["Steph"],
+        "night_2": ["Fraser"],
+        "night_3": ["You"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Recluse",
+        "Aoife": "Chef",
+        "Dan": "Imp",
+        "Fraser": "Poisoner",
+        "Jasmine": "Fortune Teller",
+        "Oscar": "Investigator",
+        "Steph": "Empath",
+        "You": "Ravenkeeper"
+      },
+      "poisoned": {
+        "night_1": ["Steph"],
+        "night_2": ["Jasmine"],
+        "night_3": ["You"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Recluse",
+        "Aoife": "Chef",
+        "Dan": "Imp",
+        "Fraser": "Poisoner",
+        "Jasmine": "Fortune Teller",
+        "Oscar": "Investigator",
+        "Steph": "Empath",
+        "You": "Ravenkeeper"
+      },
+      "poisoned": {
+        "night_1": ["Steph"],
+        "night_2": ["Oscar"],
+        "night_3": ["You"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Recluse",
+        "Aoife": "Chef",
+        "Dan": "Imp",
+        "Fraser": "Poisoner",
+        "Jasmine": "Fortune Teller",
+        "Oscar": "Investigator",
+        "Steph": "Empath",
+        "You": "Ravenkeeper"
+      },
+      "poisoned": {
+        "night_1": ["Steph"],
+        "night_2": ["Steph"],
+        "night_3": ["You"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Recluse",
+        "Aoife": "Chef",
+        "Dan": "Imp",
+        "Fraser": "Poisoner",
+        "Jasmine": "Fortune Teller",
+        "Oscar": "Investigator",
+        "Steph": "Empath",
+        "You": "Ravenkeeper"
+      },
+      "poisoned": {
+        "night_1": ["Steph"],
+        "night_2": ["You"],
+        "night_3": ["You"]
+      }
+    }
+  ]
+}

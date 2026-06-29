@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Dan": "Lunar Prodigy",
+        "Fraser": "Scarlet Woman",
+        "Matt": "Solar Prodigy",
+        "Olivia": "Leviathan",
+        "Sarah": "Fortune Teller",
+        "Steph": "Investigator",
+        "Tim": "Drunk",
+        "You": "Juggler"
+      }
+    }
+  ]
+}

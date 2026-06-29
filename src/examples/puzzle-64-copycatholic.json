@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "title": "Puzzle 64 - Copycatholic",
+  "players": ["Tim", "Sarah", "Josh", "Olivia", "Hannah", "You", "Dan", "Adam", "Fraser"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Spy",
+    "Baron",
+    "Scarlet Woman",
+    "Mutant",
+    "Washerwoman",
+    "Slayer",
+    "Saint",
+    "Recluse",
+    "Ravenkeeper",
+    "Empath",
+    "Librarian"
+  ],
+  "uniqueCharacters": false,
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Ravenkeeper"]
+    }
+  ],
+  "constraints": [
+    {
+      "expression": "#{r : {Washerwoman, Slayer, Saint, Recluse, Ravenkeeper, Empath, Librarian, Mutant} | #{p : players | p.role == r} != 0 && #{p : players | p.role == r} != 1} != 0"
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Hannah"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Dan"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["You"]
+    },
+    {
+      "timing": "day_3",
+      "type": "execution",
+      "players": ["Tim"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": ["Josh"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Washerwoman",
+      "name": "Tim",
+      "timing": "night_1",
+      "role": "Librarian",
+      "among": ["Adam", "Hannah"]
+    },
+    {
+      "type": "Slayer",
+      "name": "Sarah",
+      "timing": "day_4",
+      "target": "Olivia",
+      "killed": false,
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Saint",
+      "name": "Josh"
+    },
+    {
+      "type": "Saint",
+      "name": "Olivia"
+    },
+    {
+      "type": "Recluse",
+      "name": "Hannah"
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "You",
+      "timing": "night_3",
+      "player": "Josh",
+      "role": "Saint"
+    },
+    {
+      "type": "Empath",
+      "name": "Dan",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Dan",
+      "timing": "night_2",
+      "count": 0
+    },
+    {
+      "type": "Librarian",
+      "name": "Adam",
+      "timing": "night_1",
+      "role": "Mutant",
+      "among": ["Dan", "Tim"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Slayer",
+      "name": "Fraser",
+      "timing": "day_1",
+      "target": "Sarah",
+      "killed": false
+    }
+  ]
+}

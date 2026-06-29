@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "title": "Puzzle 75 - Cut From the Same Cloth",
+  "players": ["Sarah", "Matt", "Adam", "Tom", "You", "Fraser", "Hannah", "Jasmine"],
+  "script": [
+    "Fang Gu",
+    "Vigormortis",
+    "No Dashii",
+    "Vortox",
+    "Witch",
+    "Mutant",
+    "Dreamer",
+    "Clockmaker",
+    "Artist",
+    "Juggler",
+    "Seamstress",
+    "Mathematician",
+    "Snake Charmer",
+    "Klutz"
+  ],
+  "forbiddenRoles": [{ "name": "You", "roles": ["Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"] }],
+  "timeline": [
+    { "timing": "day_1", "type": "execution", "players": ["Jasmine"] },
+    { "timing": "night_2", "type": "nightDeath", "players": ["Adam"] },
+    { "timing": "day_2", "type": "witchCurse", "players": ["Tom"], "caller": "Tom" },
+    { "timing": "day_2", "type": "execution", "players": ["You"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["Fraser"] }
+  ],
+  "claims": [
+    {
+      "type": "Dreamer",
+      "name": "Sarah",
+      "timing": "night_1",
+      "player": "Adam",
+      "roles": ["Artist", "Vigormortis"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Dreamer",
+      "name": "Sarah",
+      "timing": "night_2",
+      "player": "You",
+      "roles": ["Seamstress", "Vigormortis"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Dreamer",
+      "name": "Sarah",
+      "timing": "night_3",
+      "player": "Tom",
+      "roles": ["Juggler", "No Dashii"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Clockmaker",
+      "name": "Matt",
+      "timing": "night_1",
+      "distance": 2,
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Artist",
+      "name": "Adam",
+      "timing": "day_1",
+      "extraPossibleActualRoles": ["Mutant"],
+      "info": [{ "timing": "day_1", "expression": "Fraser.type == Demon" }]
+    },
+    {
+      "type": "Juggler",
+      "name": "Tom",
+      "timing": "day_1",
+      "guesses": { "You": "No Dashii", "Matt": "Vigormortis" },
+      "correctCount": 0,
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    { "type": "Seamstress", "name": "You", "timing": "night_1", "among": ["Sarah", "Adam"], "aligned": true },
+    {
+      "type": "Mathematician",
+      "name": "Fraser",
+      "extraPossibleActualRoles": ["Mutant"],
+      "malfunctions": [
+        { "timing": "night_1", "count": 2 },
+        { "timing": "night_2", "count": 0 }
+      ]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Hannah",
+      "extraPossibleActualRoles": ["Mutant"],
+      "checks": [
+        { "timing": "night_1", "player": "Matt", "demon": false },
+        { "timing": "night_2", "player": "Tom", "demon": false },
+        { "timing": "night_3", "player": "Fraser", "demon": false }
+      ]
+    },
+    { "type": "Klutz", "name": "Jasmine", "timing": "day_1", "chosen": "Matt", "lost": false }
+  ]
+}

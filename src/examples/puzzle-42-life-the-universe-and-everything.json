@@ -1,0 +1,140 @@
+{
+  "title": "Puzzle 42 - Life, the Universe, and Everything",
+  "players": ["Matthew", "Jasmine", "Fraser", "Sula", "You", "Adam", "Oscar", "Hannah"],
+  "script": [
+    "Imp",
+    "Baron",
+    "Widow",
+    "Drunk",
+    "Artist",
+    "Empath",
+    "Fortune Teller",
+    "Juggler",
+    "Philosopher",
+    "Recluse",
+    "Saint",
+    "Undertaker"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Philosopher", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Adam"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Oscar"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Jasmine"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "FortuneTeller",
+      "name": "Matthew",
+      "checks": [
+        {
+          "left": "Fraser",
+          "right": "Matthew",
+          "yes": true,
+          "timing": "night_1"
+        },
+        {
+          "left": "Oscar",
+          "right": "Sula",
+          "yes": true,
+          "timing": "night_2"
+        },
+        {
+          "left": "Hannah",
+          "right": "Sula",
+          "yes": true,
+          "timing": "night_3"
+        }
+      ]
+    },
+    {
+      "type": "Recluse",
+      "name": "Jasmine"
+    },
+    {
+      "type": "Juggler",
+      "name": "Fraser",
+      "heardWidowCall": true,
+      "guesses": {
+        "You": "Philosopher",
+        "Matthew": "Imp"
+      },
+      "correctCount": 1
+    },
+    {
+      "type": "Saint",
+      "name": "Sula"
+    },
+    {
+      "type": "Empath",
+      "name": "You",
+      "timing": "night_1",
+      "extraPossibleActualRoles": ["Philosopher"],
+      "count": 0
+    },
+    {
+      "type": "Philosopher",
+      "name": "You",
+      "timing": "night_1",
+      "role": "Empath"
+    },
+    {
+      "type": "Artist",
+      "name": "Adam",
+      "timing": "day_1",
+      "info": [
+        {
+          "timing": "day_1",
+          "expression": "poisoned(Oscar, day_1) or poisoned(Hannah, day_1) or poisoned(Jasmine, day_1)"
+        }
+      ]
+    },
+    {
+      "type": "Empath",
+      "name": "Oscar",
+      "timing": "night_1",
+      "count": 1
+    },
+    {
+      "type": "Empath",
+      "name": "Oscar",
+      "timing": "night_2",
+      "count": 0
+    },
+    {
+      "type": "Undertaker",
+      "name": "Hannah",
+      "timing": "night_2",
+      "player": "You",
+      "role": "Baron"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Hannah",
+      "timing": "night_3",
+      "player": "Oscar",
+      "role": "Empath"
+    }
+  ]
+}

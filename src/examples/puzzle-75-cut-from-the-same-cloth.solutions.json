@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Artist",
+        "Fraser": "Fang Gu",
+        "Hannah": "Witch",
+        "Jasmine": "Klutz",
+        "Matt": "Mutant",
+        "Sarah": "Dreamer",
+        "Tom": "Juggler",
+        "You": "Seamstress"
+      }
+    }
+  ]
+}

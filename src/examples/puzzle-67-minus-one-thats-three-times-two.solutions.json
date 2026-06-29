@@ -1,0 +1,18 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Seamstress",
+        "Fraser": "Riot",
+        "Hannah": "Politician",
+        "Jasmine": "Dreamer",
+        "Matthew": "Nightwatchman",
+        "Oscar": "Shugenja",
+        "Sarah": "Spy",
+        "Tim": "Puzzlemaster",
+        "You": "Juggler"
+      },
+      "drunk": ["Matthew"]
+    }
+  ]
+}

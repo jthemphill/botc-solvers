@@ -1,0 +1,119 @@
+{
+  "title": "Puzzle 50 - Art Imitates Life, Life Imitates Art",
+  "players": ["Tom", "Sula", "Josh", "Olivia", "Dan", "Fraser", "Matthew", "Oscar", "Adam", "Steph", "Sarah", "Anna"],
+  "script": ["Leviathan", "Goblin", "Drunk", "Artist", "Clockmaker", "Investigator", "Juggler", "Knight", "Librarian"],
+  "setup": "none",
+  "uniqueCharacters": false,
+  "constraints": [
+    {
+      "expression": "#{p : {Tom, Sula, Josh, Olivia, Dan, Fraser} | p.role == Leviathan} == 1"
+    },
+    {
+      "expression": "#{p : {Tom, Sula, Josh, Olivia, Dan, Fraser} | p.role == Goblin} == 1"
+    },
+    {
+      "expression": "#{p : {Tom, Sula, Josh, Olivia, Dan, Fraser} | p.role == Drunk} == 1"
+    },
+    {
+      "expression": "#{p : {Matthew, Oscar, Adam, Steph, Sarah, Anna} | p.role == Leviathan} == 1"
+    },
+    {
+      "expression": "#{p : {Matthew, Oscar, Adam, Steph, Sarah, Anna} | p.role == Goblin} == 1"
+    },
+    {
+      "expression": "#{p : {Matthew, Oscar, Adam, Steph, Sarah, Anna} | p.role == Drunk} == 1"
+    }
+  ],
+  "claims": [
+    {
+      "type": "Clockmaker",
+      "name": "Tom",
+      "distance": 3,
+      "seating": ["Tom", "Sula", "Josh", "Olivia", "Dan", "Fraser"]
+    },
+    {
+      "type": "Investigator",
+      "name": "Sula",
+      "role": "Goblin",
+      "among": ["Dan", "Fraser"]
+    },
+    {
+      "type": "Juggler",
+      "name": "Josh",
+      "guesses": {
+        "Dan": "Drunk",
+        "Sula": "Investigator",
+        "Olivia": "Goblin"
+      },
+      "correctCount": 3
+    },
+    {
+      "type": "Artist",
+      "name": "Olivia",
+      "timing": "day_1",
+      "info": [
+        {
+          "timing": "day_1",
+          "expression": "Sarah.role == Goblin or Anna.role == Goblin or Steph.role == Goblin"
+        }
+      ]
+    },
+    {
+      "type": "Knight",
+      "name": "Dan",
+      "noDemonAmong": ["Sula", "Josh"]
+    },
+    {
+      "type": "Librarian",
+      "name": "Fraser",
+      "role": "Drunk",
+      "among": ["Dan", "Olivia"]
+    },
+    {
+      "type": "Clockmaker",
+      "name": "Matthew",
+      "distance": 2,
+      "seating": ["Matthew", "Oscar", "Adam", "Steph", "Sarah", "Anna"]
+    },
+    {
+      "type": "Librarian",
+      "name": "Oscar",
+      "role": "Drunk",
+      "among": ["Anna", "Steph"]
+    },
+    {
+      "type": "Knight",
+      "name": "Adam",
+      "noDemonAmong": ["Matthew", "Oscar"]
+    },
+    {
+      "type": "Investigator",
+      "name": "Steph",
+      "role": "Goblin",
+      "among": ["Anna", "Oscar"]
+    },
+    {
+      "type": "Juggler",
+      "name": "Sarah",
+      "guesses": {
+        "Anna": "Leviathan",
+        "Steph": "Leviathan",
+        "Oscar": "Goblin",
+        "Adam": "Goblin",
+        "Matthew": "Clockmaker"
+      },
+      "correctCount": 3
+    },
+    {
+      "type": "Artist",
+      "name": "Anna",
+      "timing": "day_1",
+      "info": [
+        {
+          "timing": "day_1",
+          "expression": "Tom.type != Townsfolk"
+        }
+      ]
+    }
+  ]
+}
