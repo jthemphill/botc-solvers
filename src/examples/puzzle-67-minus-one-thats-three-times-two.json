@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "title": "Puzzle 67 - Minus One, That's Three (Times Two)",
+  "players": ["Fraser", "Hannah", "Matthew", "Tim", "Jasmine", "You", "Adam", "Sarah", "Oscar"],
+  "script": [
+    "Riot",
+    "Spy",
+    "Xaan",
+    "Politician",
+    "Puzzlemaster",
+    "Noble",
+    "Nightwatchman",
+    "Shugenja",
+    "Juggler",
+    "Seamstress",
+    "Dreamer"
+  ],
+  "forbiddenRoles": [{ "name": "You", "roles": ["Riot", "Spy", "Xaan", "Politician"] }],
+  "timeline": [
+    { "timing": "day_1", "type": "execution", "players": ["Adam"] },
+    { "timing": "day_2", "type": "execution", "players": ["Tim"] },
+    { "timing": "day_3", "type": "nominationDeath", "players": ["Fraser"], "caller": "Oscar" },
+    { "timing": "day_3", "type": "nominationDeath", "players": ["Oscar"], "caller": "Fraser" },
+    { "timing": "day_3", "type": "nominationDeath", "players": ["Jasmine"], "caller": "Oscar" },
+    { "timing": "day_3", "type": "nominationDeath", "players": ["You"], "caller": "Jasmine" }
+  ],
+  "claims": [
+    {
+      "type": "Seamstress",
+      "name": "Fraser",
+      "timing": "night_1",
+      "among": ["You", "Hannah"],
+      "aligned": true,
+      "extraPossibleActualRoles": ["Politician"]
+    },
+    { "type": "Politician", "name": "Hannah" },
+    {
+      "type": "Nightwatchman",
+      "name": "Matthew",
+      "timing": "night_3",
+      "chosen": "Oscar",
+      "learned": false,
+      "extraPossibleActualRoles": ["Politician"]
+    },
+    {
+      "type": "Puzzlemaster",
+      "name": "Tim",
+      "timing": "day_2",
+      "guesses": [{ "timing": "day_2", "player": "Sarah", "learnedDemon": "Matthew" }],
+      "extraPossibleActualRoles": ["Politician"]
+    },
+    {
+      "type": "Dreamer",
+      "name": "Jasmine",
+      "timing": "night_1",
+      "player": "You",
+      "roles": ["Juggler", "Xaan"],
+      "extraPossibleActualRoles": ["Politician"]
+    },
+    {
+      "type": "Dreamer",
+      "name": "Jasmine",
+      "timing": "night_2",
+      "player": "Oscar",
+      "roles": ["Shugenja", "Spy"],
+      "extraPossibleActualRoles": ["Politician"]
+    },
+    {
+      "type": "Dreamer",
+      "name": "Jasmine",
+      "timing": "night_3",
+      "player": "Hannah",
+      "roles": ["Politician", "Xaan"],
+      "extraPossibleActualRoles": ["Politician"]
+    },
+    {
+      "type": "Juggler",
+      "name": "You",
+      "guesses": {
+        "Sarah": "Politician",
+        "Oscar": "Politician",
+        "Fraser": "Xaan",
+        "Tim": "Puzzlemaster"
+      },
+      "correctCount": 2
+    },
+    {
+      "type": "Seamstress",
+      "name": "Adam",
+      "timing": "night_1",
+      "among": ["Sarah", "Tim"],
+      "aligned": true,
+      "extraPossibleActualRoles": ["Politician"]
+    },
+    {
+      "type": "Noble",
+      "name": "Sarah",
+      "oneEvilAmong": ["You", "Adam", "Jasmine"],
+      "extraPossibleActualRoles": ["Politician"]
+    },
+    {
+      "type": "Shugenja",
+      "name": "Oscar",
+      "evilDirection": "anticlockwise",
+      "extraPossibleActualRoles": ["Politician"]
+    }
+  ]
+}

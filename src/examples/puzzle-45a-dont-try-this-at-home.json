@@ -1,0 +1,121 @@
+{
+  "title": "Puzzle 45a - Don't Try This at Home",
+  "players": ["Julia", "Eliz", "Shan", "Laura", "You", "Ben", "Louisa", "Marc"],
+  "script": [
+    "Imp",
+    "Spy",
+    "Scarlet Woman",
+    "Drunk",
+    "Hermit",
+    "Chef",
+    "Investigator",
+    "Fortune Teller",
+    "Empath",
+    "Ravenkeeper",
+    "Washerwoman",
+    "Slayer"
+  ],
+  "forbiddenRoles": [
+    {
+      "name": "You",
+      "roles": ["Imp", "Spy", "Scarlet Woman"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Eliz"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["You"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Louisa"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Julia"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Chef",
+      "name": "Julia",
+      "count": 1
+    },
+    {
+      "type": "Investigator",
+      "name": "Eliz",
+      "role": "Scarlet Woman",
+      "among": ["Marc", "Julia"]
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Shan",
+      "role": "Chef",
+      "among": ["Julia", "Laura"]
+    },
+    {
+      "type": "Slayer",
+      "name": "Laura",
+      "timing": "day_3",
+      "target": "Ben",
+      "killed": false
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "You",
+      "timing": "night_2",
+      "player": "Ben",
+      "role": "Empath"
+    },
+    {
+      "type": "Empath",
+      "name": "Ben",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Ben",
+      "timing": "night_2",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Ben",
+      "timing": "night_3",
+      "count": 0
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Louisa",
+      "checks": [
+        {
+          "left": "You",
+          "right": "Julia",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Ben",
+          "right": "Shan",
+          "yes": false,
+          "timing": "night_2"
+        }
+      ]
+    },
+    {
+      "type": "Investigator",
+      "name": "Marc",
+      "role": "Scarlet Woman",
+      "among": ["Julia", "Eliz"]
+    }
+  ]
+}

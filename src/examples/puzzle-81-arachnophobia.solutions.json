@@ -1,0 +1,22 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Charlotte": "Ravenkeeper",
+        "Fraser": "Imp",
+        "Hannah": "Recluse",
+        "Jasmine": "Saint",
+        "Matthew": "Widow",
+        "Olivia": "Investigator",
+        "Steph": "Slayer",
+        "Tim": "Fortune Teller",
+        "You": "Chef"
+      },
+      "poisoned": {
+        "night_1": ["Charlotte"],
+        "night_2": ["Charlotte"],
+        "night_3": ["Charlotte"]
+      }
+    }
+  ]
+}

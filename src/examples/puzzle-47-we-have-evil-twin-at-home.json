@@ -1,0 +1,123 @@
+{
+  "title": "Puzzle 47 - We Have Evil Twin at Home",
+  "players": ["Sula", "Oscar", "Jasmine", "Tom", "Fraser", "You", "Olivia", "Steph", "Josh"],
+  "script": [
+    "Imp",
+    "Baron",
+    "Poisoner",
+    "Spy",
+    "Scarlet Woman",
+    "Drunk",
+    "Butler",
+    "Recluse",
+    "Saint",
+    "Chef",
+    "Investigator",
+    "Ravenkeeper",
+    "Undertaker",
+    "Washerwoman"
+  ],
+  "forbiddenRoles": [
+    {
+      "name": "You",
+      "roles": ["Imp", "Baron", "Poisoner", "Spy", "Scarlet Woman"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Jasmine"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Oscar"]
+    },
+    {
+      "timing": "day_3",
+      "type": "execution",
+      "players": ["Tom"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": ["Olivia"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Saint",
+      "name": "Sula"
+    },
+    {
+      "type": "Butler",
+      "name": "Oscar"
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Jasmine",
+      "timing": "night_1",
+      "role": "Chef",
+      "among": ["Josh", "Tom"]
+    },
+    {
+      "type": "Chef",
+      "name": "Tom",
+      "count": 0
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Fraser",
+      "timing": "night_2",
+      "player": "Olivia",
+      "role": "Investigator"
+    },
+    {
+      "type": "Recluse",
+      "name": "You"
+    },
+    {
+      "type": "Investigator",
+      "name": "Olivia",
+      "timing": "night_1",
+      "role": "Baron",
+      "among": ["Josh", "Tom"]
+    },
+    {
+      "type": "Undertaker",
+      "name": "Steph",
+      "timing": "night_2",
+      "player": "You",
+      "role": "Recluse"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Steph",
+      "timing": "night_3",
+      "player": "Jasmine",
+      "role": "Washerwoman"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Steph",
+      "timing": "night_4",
+      "player": "Tom",
+      "role": "Drunk"
+    },
+    {
+      "type": "Saint",
+      "name": "Josh"
+    }
+  ]
+}

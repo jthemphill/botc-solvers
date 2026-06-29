@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "title": "Puzzle 81 - Arachnophobia",
+  "players": ["Hannah", "Jasmine", "Fraser", "Steph", "Charlotte", "You", "Tim", "Matthew", "Olivia"],
+  "script": [
+    "Imp",
+    "Spy",
+    "Scarlet Woman",
+    "Baron",
+    "Widow",
+    "Drunk",
+    "Recluse",
+    "Saint",
+    "Washerwoman",
+    "Slayer",
+    "Ravenkeeper",
+    "Chef",
+    "Fortune Teller",
+    "Butler",
+    "Investigator"
+  ],
+  "fixedRoles": [{ "name": "You", "roles": ["Chef", "Drunk"] }],
+  "timeline": [
+    { "timing": "day_1", "type": "execution", "players": ["Tim"] },
+    { "timing": "night_2", "type": "nightDeath", "players": ["Charlotte"] },
+    { "timing": "day_2", "type": "execution", "players": ["You"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["Jasmine"] },
+    { "timing": "day_3", "type": "execution", "players": ["Steph"] },
+    { "timing": "night_4", "type": "nightDeath", "players": ["Olivia"] }
+  ],
+  "claims": [
+    { "type": "Recluse", "name": "Hannah" },
+    { "type": "Saint", "name": "Jasmine", "heardWidowCall": true },
+    {
+      "type": "Washerwoman",
+      "name": "Fraser",
+      "timing": "night_1",
+      "role": "Ravenkeeper",
+      "among": ["Hannah", "Charlotte"]
+    },
+    { "type": "Slayer", "name": "Steph", "timing": "day_3", "target": "Hannah", "killed": false },
+    { "type": "Ravenkeeper", "name": "Charlotte", "timing": "night_2", "player": "Olivia", "role": "Spy" },
+    { "type": "Chef", "name": "You", "timing": "night_1", "count": 0 },
+    {
+      "type": "FortuneTeller",
+      "name": "Tim",
+      "checks": [{ "timing": "night_1", "left": "Matthew", "right": "Charlotte", "yes": false }]
+    },
+    { "type": "Butler", "name": "Matthew" },
+    {
+      "type": "Investigator",
+      "name": "Olivia",
+      "timing": "night_1",
+      "minionRole": "Spy",
+      "among": ["Matthew", "Hannah"]
+    }
+  ]
+}

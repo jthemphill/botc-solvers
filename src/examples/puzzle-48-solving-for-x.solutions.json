@@ -1,0 +1,20 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Dan": "Puzzlemaster",
+        "Fraser": "Juggler",
+        "Jasmine": "Leviathan",
+        "Matthew": "Chambermaid",
+        "Olivia": "Village Idiot",
+        "Sula": "Golem",
+        "Tom": "Xaan",
+        "You": "Mathematician"
+      },
+      "poisoned": {
+        "night_2": ["Fraser", "Matthew", "Olivia", "You"]
+      },
+      "drunk": ["Matthew"]
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Poisoner",
+        "Fraser": "Imp",
+        "Hannah": "Slayer",
+        "Matthew": "Empath",
+        "Sarah": "Chambermaid",
+        "Sula": "Washerwoman",
+        "Tom": "Knight",
+        "You": "Saint"
+      },
+      "poisoned": {
+        "night_1": ["Matthew"],
+        "night_2": ["Aoife"],
+        "night_3": ["Hannah"]
+      }
+    },
+    {
+      "roles": {
+        "Aoife": "Poisoner",
+        "Fraser": "Imp",
+        "Hannah": "Slayer",
+        "Matthew": "Empath",
+        "Sarah": "Chambermaid",
+        "Sula": "Washerwoman",
+        "Tom": "Knight",
+        "You": "Saint"
+      },
+      "poisoned": {
+        "night_1": ["Matthew"],
+        "night_2": ["Fraser"],
+        "night_3": ["Hannah"]
+      }
+    },
+    {
+      "roles": {
+        "Aoife": "Poisoner",
+        "Fraser": "Imp",
+        "Hannah": "Slayer",
+        "Matthew": "Empath",
+        "Sarah": "Chambermaid",
+        "Sula": "Washerwoman",
+        "Tom": "Knight",
+        "You": "Saint"
+      },
+      "poisoned": {
+        "night_1": ["Matthew"],
+        "night_2": ["Hannah"],
+        "night_3": ["Hannah"]
+      }
+    },
+    {
+      "roles": {
+        "Aoife": "Poisoner",
+        "Fraser": "Imp",
+        "Hannah": "Slayer",
+        "Matthew": "Empath",
+        "Sarah": "Chambermaid",
+        "Sula": "Washerwoman",
+        "Tom": "Knight",
+        "You": "Saint"
+      },
+      "poisoned": {
+        "night_1": ["Matthew"],
+        "night_2": ["Matthew"],
+        "night_3": ["Hannah"]
+      }
+    },
+    {
+      "roles": {
+        "Aoife": "Poisoner",
+        "Fraser": "Imp",
+        "Hannah": "Slayer",
+        "Matthew": "Empath",
+        "Sarah": "Chambermaid",
+        "Sula": "Washerwoman",
+        "Tom": "Knight",
+        "You": "Saint"
+      },
+      "poisoned": {
+        "night_1": ["Matthew"],
+        "night_2": ["Sarah"],
+        "night_3": ["Hannah"]
+      }
+    },
+    {
+      "roles": {
+        "Aoife": "Poisoner",
+        "Fraser": "Imp",
+        "Hannah": "Slayer",
+        "Matthew": "Empath",
+        "Sarah": "Chambermaid",
+        "Sula": "Washerwoman",
+        "Tom": "Knight",
+        "You": "Saint"
+      },
+      "poisoned": {
+        "night_1": ["Matthew"],
+        "night_2": ["Sula"],
+        "night_3": ["Hannah"]
+      }
+    },
+    {
+      "roles": {
+        "Aoife": "Poisoner",
+        "Fraser": "Imp",
+        "Hannah": "Slayer",
+        "Matthew": "Empath",
+        "Sarah": "Chambermaid",
+        "Sula": "Washerwoman",
+        "Tom": "Knight",
+        "You": "Saint"
+      },
+      "poisoned": {
+        "night_1": ["Matthew"],
+        "night_2": ["Tom"],
+        "night_3": ["Hannah"]
+      }
+    },
+    {
+      "roles": {
+        "Aoife": "Poisoner",
+        "Fraser": "Imp",
+        "Hannah": "Slayer",
+        "Matthew": "Empath",
+        "Sarah": "Chambermaid",
+        "Sula": "Washerwoman",
+        "Tom": "Knight",
+        "You": "Saint"
+      },
+      "poisoned": {
+        "night_1": ["Matthew"],
+        "night_2": ["You"],
+        "night_3": ["Hannah"]
+      }
+    }
+  ]
+}

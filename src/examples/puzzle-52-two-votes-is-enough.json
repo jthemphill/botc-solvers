@@ -1,0 +1,132 @@
+{
+  "title": "Puzzle 52 - Two Votes Is Enough",
+  "players": ["Sula", "Josh", "Anna", "Fraser", "Steph", "You", "Dan", "Olivia", "Sarah"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Spy",
+    "Baron",
+    "Scarlet Woman",
+    "Drunk",
+    "Undertaker",
+    "Investigator",
+    "Butler",
+    "Empath",
+    "Librarian",
+    "Virgin",
+    "Recluse",
+    "Saint",
+    "Ravenkeeper"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Undertaker", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Josh"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Steph"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Dan"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["You"]
+    },
+    {
+      "timing": "day_3",
+      "type": "execution",
+      "players": ["Sula"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": ["Anna"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Librarian",
+      "name": "Sula",
+      "timing": "night_1",
+      "role": "Drunk",
+      "among": ["You", "Steph"]
+    },
+    {
+      "type": "Virgin",
+      "name": "Josh",
+      "timing": "day_1",
+      "nominator": "Dan",
+      "executed": false
+    },
+    {
+      "type": "Recluse",
+      "name": "Anna"
+    },
+    {
+      "type": "Saint",
+      "name": "Fraser"
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Steph",
+      "timing": "night_2",
+      "player": "Dan",
+      "role": "Investigator"
+    },
+    {
+      "type": "Undertaker",
+      "name": "You",
+      "timing": "night_2",
+      "player": "Josh",
+      "role": "Imp"
+    },
+    {
+      "type": "Investigator",
+      "name": "Dan",
+      "timing": "night_1",
+      "minionRole": "Spy",
+      "among": ["Anna", "Steph"]
+    },
+    {
+      "type": "Butler",
+      "name": "Olivia"
+    },
+    {
+      "type": "Empath",
+      "name": "Sarah",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Sarah",
+      "timing": "night_2",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Sarah",
+      "timing": "night_3",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Sarah",
+      "timing": "night_4",
+      "count": 1
+    }
+  ]
+}

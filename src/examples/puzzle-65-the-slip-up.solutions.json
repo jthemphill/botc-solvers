@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Mathematician",
+        "Dan": "Mutant",
+        "Fraser": "Witch",
+        "Matt": "Oracle",
+        "Oscar": "Juggler",
+        "Sarah": "Artist",
+        "Tom": "Fang Gu",
+        "You": "Klutz"
+      }
+    }
+  ]
+}

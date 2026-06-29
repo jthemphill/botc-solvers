@@ -1,0 +1,17 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Recluse",
+        "Dan": "Investigator",
+        "Fraser": "Saint",
+        "Josh": "Baron",
+        "Olivia": "Butler",
+        "Sarah": "Imp",
+        "Steph": "Ravenkeeper",
+        "Sula": "Librarian",
+        "You": "Drunk"
+      }
+    }
+  ]
+}

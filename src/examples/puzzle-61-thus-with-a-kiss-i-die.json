@@ -1,0 +1,186 @@
+{
+  "version": 1,
+  "title": "Puzzle 61 - Thus With a Kiss I Die",
+  "players": ["Josh", "Anna", "Tim", "Oscar", "You", "Matthew", "Fraser", "Steph"],
+  "script": [
+    "Fang Gu",
+    "Vigormortis",
+    "No Dashii",
+    "Vortox",
+    "Witch",
+    "Mutant",
+    "Sweetheart",
+    "Savant",
+    "Seamstress",
+    "Mathematician",
+    "Juggler",
+    "Oracle",
+    "Dreamer",
+    "Snake Charmer"
+  ],
+  "setup": "none",
+  "constraints": [
+    {
+      "expression": "#{p : players | some (p.role & {`Fang Gu`, Vigormortis, `No Dashii`, Vortox})} == 1"
+    },
+    {
+      "expression": "#{p : players | p.role == Witch} == 1"
+    },
+    {
+      "expression": "(some p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Sweetheart})} == 2"
+    },
+    {
+      "expression": "(no p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Sweetheart})} == 1"
+    },
+    {
+      "expression": "Anna.role == Vortox => Fraser.role != Mathematician"
+    }
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Savant"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "witchCurse",
+      "players": ["Oscar"]
+    },
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Matthew"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Steph"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Tim"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Juggler",
+      "name": "Josh",
+      "timing": "night_2",
+      "correctCount": 0,
+      "extraPossibleActualRoles": ["Mutant"],
+      "guesses": {
+        "You": "Savant",
+        "Matthew": "Vigormortis",
+        "Fraser": "Mathematician",
+        "Steph": "Witch",
+        "Tim": "Fang Gu"
+      }
+    },
+    {
+      "type": "Oracle",
+      "name": "Anna",
+      "timing": "night_2",
+      "count": 0,
+      "deadPlayers": ["Oscar", "Matthew", "Steph"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Oracle",
+      "name": "Anna",
+      "timing": "night_3",
+      "count": 0,
+      "deadPlayers": ["Oscar", "Matthew", "Steph", "You", "Tim"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Dreamer",
+      "name": "Tim",
+      "timing": "night_1",
+      "player": "Fraser",
+      "roles": ["Mathematician", "Witch"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Dreamer",
+      "name": "Tim",
+      "timing": "night_2",
+      "player": "Josh",
+      "roles": ["Mutant", "Fang Gu"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Oscar",
+      "extraPossibleActualRoles": ["Mutant"],
+      "checks": [
+        {
+          "timing": "night_1",
+          "player": "Fraser",
+          "demon": false
+        }
+      ]
+    },
+    {
+      "type": "Savant",
+      "name": "You",
+      "timing": "day_1",
+      "statements": [
+        {
+          "options": ["townsfolk_chain_length(3)", "role_distance(3, `No Dashii`, Witch)"]
+        }
+      ]
+    },
+    {
+      "type": "Savant",
+      "name": "You",
+      "timing": "day_2",
+      "statements": [
+        {
+          "options": [
+            "#{p : {Steph, Josh, Oscar} | p.type == Townsfolk} == 2",
+            "((Matthew.type != Steph.type and Steph.type == Josh.type and Josh.type == Tim.type) or (Steph.type != Matthew.type and Matthew.type == Josh.type and Josh.type == Tim.type) or (Josh.type != Matthew.type and Matthew.type == Steph.type and Steph.type == Tim.type) or (Tim.type != Matthew.type and Matthew.type == Steph.type and Steph.type == Josh.type) or (Matthew.type == Steph.type and Josh.type == Tim.type and Matthew.type != Josh.type) or (Matthew.type == Josh.type and Steph.type == Tim.type and Matthew.type != Steph.type) or (Matthew.type == Tim.type and Steph.type == Josh.type and Matthew.type != Steph.type))"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Seamstress",
+      "name": "Matthew",
+      "timing": "night_1",
+      "among": ["Fraser", "Anna"],
+      "aligned": true,
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Mathematician",
+      "name": "Fraser",
+      "extraPossibleActualRoles": ["Mutant"],
+      "malfunctions": [
+        {
+          "timing": "night_1",
+          "count": 2
+        },
+        {
+          "timing": "night_2",
+          "count": 2
+        },
+        {
+          "timing": "night_3",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "type": "Sweetheart",
+      "name": "Steph"
+    }
+  ]
+}

@@ -42,6 +42,48 @@ import doc_37_new_super_marionette_bros_u from "./puzzle-37-new-super-marionette
 import doc_38_snakes_on_a_plane from "./puzzle-38-snakes-on-a-plane.json";
 import doc_39_squid_game from "./puzzle-39-squid-game.json";
 import doc_40_nine_lives from "./puzzle-40-nine-lives.json";
+import doc_41_no_john_you_are_the_demons from "./puzzle-41-no-john-you-are-the-demons.json";
+import doc_42_life_the_universe_and_everything from "./puzzle-42-life-the-universe-and-everything.json";
+import doc_43_two_many_cooks from "./puzzle-43-two-many-cooks.json";
+import doc_44_trouble_homebrewing from "./puzzle-44-trouble-homebrewing.json";
+import doc_45a_dont_try_this_at_home from "./puzzle-45a-dont-try-this-at-home.json";
+import doc_45b_dont_try_this_at_home from "./puzzle-45b-dont-try-this-at-home.json";
+import doc_46_the_princess_diaries from "./puzzle-46-the-princess-diaries.json";
+import doc_47_we_have_evil_twin_at_home from "./puzzle-47-we-have-evil-twin-at-home.json";
+import doc_48_solving_for_x from "./puzzle-48-solving-for-x.json";
+import doc_49_bastille_day from "./puzzle-49-bastille-day.json";
+import doc_50_art_imitates_life_life_imitates_art from "./puzzle-50-art-imitates-life-life-imitates-art.json";
+import doc_51_weird_science from "./puzzle-51-weird-science.json";
+import doc_52_two_votes_is_enough from "./puzzle-52-two-votes-is-enough.json";
+import doc_53_lets_do_the_time_warp_again from "./puzzle-53-lets-do-the-time-warp-again.json";
+import doc_54_silence_in_the_library from "./puzzle-54-silence-in-the-library.json";
+import doc_55_the_life_of_a_flowergirl from "./puzzle-55-the-life-of-a-flowergirl.json";
+import doc_56_meanwhile_at_the_legion_of_doom from "./puzzle-56-meanwhile-at-the-legion-of-doom.json";
+import doc_57_neither_victims_nor_executioners from "./puzzle-57-neither-victims-nor-executioners.json";
+import doc_58_minus_one_thats_three from "./puzzle-58-minus-one-thats-three.json";
+import doc_59_fifty_fifty from "./puzzle-59-fifty-fifty.json";
+import doc_60_whats_a_mind_goblin from "./puzzle-60-whats-a-mind-goblin.json";
+import doc_61_thus_with_a_kiss_i_die from "./puzzle-61-thus-with-a-kiss-i-die.json";
+import doc_62_have_you_ever_seen_the_rain from "./puzzle-62-have-you-ever-seen-the-rain.json";
+import doc_63_the_limiting_factor from "./puzzle-63-the-limiting-factor.json";
+import doc_64_copycatholic from "./puzzle-64-copycatholic.json";
+import doc_65_the_slip_up from "./puzzle-65-the-slip-up.json";
+import doc_66_the_useful_idiot from "./puzzle-66-the-useful-idiot.json";
+import doc_67_minus_one_thats_three_times_two from "./puzzle-67-minus-one-thats-three-times-two.json";
+import doc_68_the_numbers_are_all_wrong from "./puzzle-68-the-numbers-are-all-wrong.json";
+import doc_69_thats_the_sects_number from "./puzzle-69-thats-the-sects-number.json";
+import doc_70_digging_your_own_grave from "./puzzle-70-digging-your-own-grave.json";
+import doc_71_the_disappearing_act from "./puzzle-71-the-disappearing-act.json";
+import doc_72_one_digit_too_many from "./puzzle-72-one-digit-too-many.json";
+import doc_73_opening_theory from "./puzzle-73-opening-theory.json";
+import doc_74_youre_obviously_evil from "./puzzle-74-youre-obviously-evil.json";
+import doc_75_cut_from_the_same_cloth from "./puzzle-75-cut-from-the-same-cloth.json";
+import doc_76_three_for_three from "./puzzle-76-three-for-three.json";
+import doc_77_yes_but_dont from "./puzzle-77-yes-but-dont.json";
+import doc_78_its_pronounced_eefa from "./puzzle-78-its-pronounced-eefa.json";
+import doc_79_erudition_lesson from "./puzzle-79-erudition-lesson.json";
+import doc_80_the_x_factor from "./puzzle-80-the-x-factor.json";
+import doc_81_arachnophobia from "./puzzle-81-arachnophobia.json";
 
 export interface PuzzleExample {
   readonly id: string;
@@ -102,6 +144,51 @@ const PUZZLE_DOCS = [
   { id: "puzzle-38-snakes-on-a-plane", data: doc_38_snakes_on_a_plane },
   { id: "puzzle-39-squid-game", data: doc_39_squid_game },
   { id: "puzzle-40-nine-lives", data: doc_40_nine_lives },
+  { id: "puzzle-41-no-john-you-are-the-demons", data: doc_41_no_john_you_are_the_demons },
+  { id: "puzzle-42-life-the-universe-and-everything", data: doc_42_life_the_universe_and_everything },
+  { id: "puzzle-43-two-many-cooks", data: doc_43_two_many_cooks },
+  { id: "puzzle-44-trouble-homebrewing", data: doc_44_trouble_homebrewing },
+  { id: "puzzle-45a-dont-try-this-at-home", data: doc_45a_dont_try_this_at_home },
+  { id: "puzzle-45b-dont-try-this-at-home", data: doc_45b_dont_try_this_at_home },
+  { id: "puzzle-46-the-princess-diaries", data: doc_46_the_princess_diaries },
+  { id: "puzzle-47-we-have-evil-twin-at-home", data: doc_47_we_have_evil_twin_at_home },
+  { id: "puzzle-48-solving-for-x", data: doc_48_solving_for_x },
+  { id: "puzzle-49-bastille-day", data: doc_49_bastille_day },
+  {
+    id: "puzzle-50-art-imitates-life-life-imitates-art",
+    data: doc_50_art_imitates_life_life_imitates_art,
+  },
+  { id: "puzzle-51-weird-science", data: doc_51_weird_science },
+  { id: "puzzle-52-two-votes-is-enough", data: doc_52_two_votes_is_enough },
+  { id: "puzzle-53-lets-do-the-time-warp-again", data: doc_53_lets_do_the_time_warp_again },
+  { id: "puzzle-54-silence-in-the-library", data: doc_54_silence_in_the_library },
+  { id: "puzzle-55-the-life-of-a-flowergirl", data: doc_55_the_life_of_a_flowergirl },
+  { id: "puzzle-56-meanwhile-at-the-legion-of-doom", data: doc_56_meanwhile_at_the_legion_of_doom },
+  { id: "puzzle-57-neither-victims-nor-executioners", data: doc_57_neither_victims_nor_executioners },
+  { id: "puzzle-58-minus-one-thats-three", data: doc_58_minus_one_thats_three },
+  { id: "puzzle-59-fifty-fifty", data: doc_59_fifty_fifty },
+  { id: "puzzle-60-whats-a-mind-goblin", data: doc_60_whats_a_mind_goblin },
+  { id: "puzzle-61-thus-with-a-kiss-i-die", data: doc_61_thus_with_a_kiss_i_die },
+  { id: "puzzle-62-have-you-ever-seen-the-rain", data: doc_62_have_you_ever_seen_the_rain },
+  { id: "puzzle-63-the-limiting-factor", data: doc_63_the_limiting_factor },
+  { id: "puzzle-64-copycatholic", data: doc_64_copycatholic },
+  { id: "puzzle-65-the-slip-up", data: doc_65_the_slip_up },
+  { id: "puzzle-66-the-useful-idiot", data: doc_66_the_useful_idiot },
+  { id: "puzzle-67-minus-one-thats-three-times-two", data: doc_67_minus_one_thats_three_times_two },
+  { id: "puzzle-68-the-numbers-are-all-wrong", data: doc_68_the_numbers_are_all_wrong },
+  { id: "puzzle-69-thats-the-sects-number", data: doc_69_thats_the_sects_number },
+  { id: "puzzle-70-digging-your-own-grave", data: doc_70_digging_your_own_grave },
+  { id: "puzzle-71-the-disappearing-act", data: doc_71_the_disappearing_act },
+  { id: "puzzle-72-one-digit-too-many", data: doc_72_one_digit_too_many },
+  { id: "puzzle-73-opening-theory", data: doc_73_opening_theory },
+  { id: "puzzle-74-youre-obviously-evil", data: doc_74_youre_obviously_evil },
+  { id: "puzzle-75-cut-from-the-same-cloth", data: doc_75_cut_from_the_same_cloth },
+  { id: "puzzle-76-three-for-three", data: doc_76_three_for_three },
+  { id: "puzzle-77-yes-but-dont", data: doc_77_yes_but_dont },
+  { id: "puzzle-78-its-pronounced-eefa", data: doc_78_its_pronounced_eefa },
+  { id: "puzzle-79-erudition-lesson", data: doc_79_erudition_lesson },
+  { id: "puzzle-80-the-x-factor", data: doc_80_the_x_factor },
+  { id: "puzzle-81-arachnophobia", data: doc_81_arachnophobia },
 ] as const;
 
 export const PUZZLE_EXAMPLES: readonly PuzzleExample[] = [

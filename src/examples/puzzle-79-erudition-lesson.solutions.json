@@ -1,0 +1,112 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Chris": "Juggler",
+        "Edd": "Sweetheart",
+        "Goose": "Vortox",
+        "Louisa": "Witch",
+        "Marc": "Clockmaker",
+        "Marsh": "Mathematician",
+        "Seb": "Seamstress",
+        "You": "Savant"
+      },
+      "drunkByTiming": {
+        "night_2": ["Chris"],
+        "day_2": ["Chris"],
+        "night_3": ["Chris"],
+        "day_3": ["Chris"]
+      }
+    },
+    {
+      "roles": {
+        "Chris": "Juggler",
+        "Edd": "Sweetheart",
+        "Goose": "Vortox",
+        "Louisa": "Witch",
+        "Marc": "Clockmaker",
+        "Marsh": "Mathematician",
+        "Seb": "Seamstress",
+        "You": "Savant"
+      },
+      "drunkByTiming": {
+        "night_2": ["Edd"],
+        "day_2": ["Edd"],
+        "night_3": ["Edd"],
+        "day_3": ["Edd"]
+      }
+    },
+    {
+      "roles": {
+        "Chris": "Juggler",
+        "Edd": "Sweetheart",
+        "Goose": "Vortox",
+        "Louisa": "Witch",
+        "Marc": "Clockmaker",
+        "Marsh": "Mathematician",
+        "Seb": "Seamstress",
+        "You": "Savant"
+      },
+      "drunkByTiming": {
+        "night_2": ["Marc"],
+        "day_2": ["Marc"],
+        "night_3": ["Marc"],
+        "day_3": ["Marc"]
+      }
+    },
+    {
+      "roles": {
+        "Chris": "Juggler",
+        "Edd": "Sweetheart",
+        "Goose": "Vortox",
+        "Louisa": "Witch",
+        "Marc": "Clockmaker",
+        "Marsh": "Mathematician",
+        "Seb": "Seamstress",
+        "You": "Savant"
+      },
+      "drunkByTiming": {
+        "night_2": ["Marsh"],
+        "day_2": ["Marsh"],
+        "night_3": ["Marsh"],
+        "day_3": ["Marsh"]
+      }
+    },
+    {
+      "roles": {
+        "Chris": "Juggler",
+        "Edd": "Sweetheart",
+        "Goose": "Vortox",
+        "Louisa": "Witch",
+        "Marc": "Clockmaker",
+        "Marsh": "Mathematician",
+        "Seb": "Seamstress",
+        "You": "Savant"
+      },
+      "drunkByTiming": {
+        "night_2": ["Seb"],
+        "day_2": ["Seb"],
+        "night_3": ["Seb"],
+        "day_3": ["Seb"]
+      }
+    },
+    {
+      "roles": {
+        "Chris": "Juggler",
+        "Edd": "Sweetheart",
+        "Goose": "Vortox",
+        "Louisa": "Witch",
+        "Marc": "Clockmaker",
+        "Marsh": "Mathematician",
+        "Seb": "Seamstress",
+        "You": "Savant"
+      },
+      "drunkByTiming": {
+        "night_2": ["You"],
+        "day_2": ["You"],
+        "night_3": ["You"],
+        "day_3": ["You"]
+      }
+    }
+  ]
+}

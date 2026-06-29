@@ -1,0 +1,152 @@
+{
+  "version": 1,
+  "title": "Puzzle 63 - The Limiting Factor",
+  "players": ["Tom", "Anna", "Olivia", "Josh", "Dan", "You", "Matt", "Fraser", "Steph"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Spy",
+    "Baron",
+    "Scarlet Woman",
+    "Drunk",
+    "Recluse",
+    "Saint",
+    "Butler",
+    "Investigator",
+    "Empath",
+    "Ravenkeeper",
+    "Washerwoman",
+    "Fortune Teller",
+    "Undertaker"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Washerwoman", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Matt"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Anna"]
+    },
+    {
+      "timing": "day_3",
+      "type": "execution",
+      "players": ["Olivia"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": ["Dan"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Recluse",
+      "name": "Tom"
+    },
+    {
+      "type": "Saint",
+      "name": "Anna"
+    },
+    {
+      "type": "Investigator",
+      "name": "Olivia",
+      "timing": "night_1",
+      "role": "Baron",
+      "among": ["Steph", "Josh"]
+    },
+    {
+      "type": "Empath",
+      "name": "Josh",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Josh",
+      "timing": "night_2",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Josh",
+      "timing": "night_3",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Josh",
+      "timing": "night_4",
+      "count": 2
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Dan",
+      "timing": "night_4",
+      "player": "Steph",
+      "role": "Undertaker"
+    },
+    {
+      "type": "Washerwoman",
+      "name": "You",
+      "timing": "night_1",
+      "role": "Empath",
+      "among": ["Matt", "Josh"]
+    },
+    {
+      "type": "Butler",
+      "name": "Matt"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Fraser",
+      "checks": [
+        {
+          "timing": "night_1",
+          "left": "Matt",
+          "right": "Steph",
+          "yes": false
+        }
+      ]
+    },
+    {
+      "type": "Undertaker",
+      "name": "Steph",
+      "timing": "night_2",
+      "player": "Fraser",
+      "role": "Poisoner"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Steph",
+      "timing": "night_3",
+      "player": "You",
+      "role": "Washerwoman"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Steph",
+      "timing": "night_4",
+      "player": "Olivia",
+      "role": "Investigator"
+    }
+  ]
+}

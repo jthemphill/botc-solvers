@@ -1,0 +1,19 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Village Idiot",
+        "Fraser": "Investigator",
+        "Matt": "Poisoner",
+        "Olivia": "Juggler",
+        "Sarah": "Fortune Teller",
+        "Tim": "Imp",
+        "You": "Village Idiot"
+      },
+      "poisoned": {
+        "night_1": ["Sarah"]
+      },
+      "drunk": ["Aoife"]
+    }
+  ]
+}

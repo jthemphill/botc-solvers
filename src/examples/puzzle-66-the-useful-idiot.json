@@ -1,0 +1,143 @@
+{
+  "version": 1,
+  "title": "Puzzle 66 - The Useful Idiot",
+  "players": ["Fraser", "Olivia", "Tim", "Sarah", "You", "Aoife", "Matt"],
+  "script": ["Imp", "Poisoner", "Investigator", "Juggler", "Ravenkeeper", "Fortune Teller", "Village Idiot"],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Village Idiot"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Tim"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Olivia"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Investigator",
+      "name": "Fraser",
+      "timing": "night_1",
+      "role": "Poisoner",
+      "among": ["Matt", "Tim"]
+    },
+    {
+      "type": "Juggler",
+      "name": "Olivia",
+      "timing": "night_2",
+      "correctCount": 0,
+      "guesses": {
+        "Aoife": "Imp",
+        "Matt": "Imp",
+        "Sarah": "Imp"
+      }
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Tim",
+      "timing": "night_2",
+      "player": "Matt",
+      "role": "Village Idiot"
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Sarah",
+      "checks": [
+        {
+          "timing": "night_1",
+          "left": "Matt",
+          "right": "Tim",
+          "yes": false
+        },
+        {
+          "timing": "night_2",
+          "left": "Olivia",
+          "right": "Sarah",
+          "yes": false
+        },
+        {
+          "timing": "night_3",
+          "left": "Aoife",
+          "right": "Sarah",
+          "yes": true
+        }
+      ]
+    },
+    {
+      "type": "VillageIdiot",
+      "name": "You",
+      "checks": [
+        {
+          "timing": "night_1",
+          "player": "Tim",
+          "good": false
+        },
+        {
+          "timing": "night_2",
+          "player": "Olivia",
+          "good": true
+        }
+      ]
+    },
+    {
+      "type": "VillageIdiot",
+      "name": "Aoife",
+      "checks": [
+        {
+          "timing": "night_1",
+          "player": "Matt",
+          "good": false
+        },
+        {
+          "timing": "night_2",
+          "player": "Olivia",
+          "good": false
+        },
+        {
+          "timing": "night_3",
+          "player": "You",
+          "good": true
+        }
+      ]
+    },
+    {
+      "type": "VillageIdiot",
+      "name": "Matt",
+      "checks": [
+        {
+          "timing": "night_1",
+          "player": "Aoife",
+          "good": true
+        },
+        {
+          "timing": "night_2",
+          "player": "Olivia",
+          "good": false
+        },
+        {
+          "timing": "night_3",
+          "player": "Fraser",
+          "good": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Fraser": "Imp",
+        "Jasmine": "Washerwoman",
+        "Josh": "Baron",
+        "Olivia": "Investigator",
+        "Oscar": "Butler",
+        "Steph": "Drunk",
+        "Sula": "Saint",
+        "Tom": "Chef",
+        "You": "Recluse"
+      }
+    }
+  ]
+}

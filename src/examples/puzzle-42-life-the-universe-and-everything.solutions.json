@@ -1,0 +1,26 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Artist",
+        "Fraser": "Juggler",
+        "Hannah": "Undertaker",
+        "Jasmine": "Imp",
+        "Matthew": "Widow",
+        "Oscar": "Empath",
+        "Sula": "Saint",
+        "You": "Philosopher"
+      },
+      "poisoned": {
+        "night_1": ["Hannah"],
+        "day_1": ["Hannah"],
+        "night_2": ["Hannah"],
+        "night_3": ["Hannah"]
+      },
+      "drunkByTiming": {
+        "night_1": ["Oscar"],
+        "day_1": ["Oscar"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "title": "Puzzle 43 - Two Many Cooks",
+  "players": ["Oscar", "Anna", "Dan", "Steph", "You", "Fraser", "Aoife", "Jasmine"],
+  "script": [
+    "Imp",
+    "Baron",
+    "Poisoner",
+    "Scarlet Woman",
+    "Spy",
+    "Drunk",
+    "Chef",
+    "Empath",
+    "Fortune Teller",
+    "Investigator",
+    "Ravenkeeper",
+    "Recluse",
+    "Saint"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Ravenkeeper", "Drunk"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Aoife"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Steph"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Jasmine"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["You"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Investigator",
+      "name": "Oscar",
+      "timing": "night_1",
+      "role": "Poisoner",
+      "among": ["Anna", "Steph"]
+    },
+    {
+      "type": "Recluse",
+      "name": "Anna"
+    },
+    {
+      "type": "Saint",
+      "name": "Dan"
+    },
+    {
+      "type": "Empath",
+      "name": "Steph",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "You",
+      "timing": "night_3",
+      "player": "Fraser",
+      "role": "Chef"
+    },
+    {
+      "type": "Chef",
+      "name": "Fraser",
+      "count": 2
+    },
+    {
+      "type": "Chef",
+      "name": "Aoife",
+      "count": 1
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Jasmine",
+      "checks": [
+        {
+          "left": "You",
+          "right": "Fraser",
+          "yes": false,
+          "timing": "night_1"
+        },
+        {
+          "left": "Oscar",
+          "right": "Fraser",
+          "yes": false,
+          "timing": "night_2"
+        }
+      ]
+    }
+  ]
+}

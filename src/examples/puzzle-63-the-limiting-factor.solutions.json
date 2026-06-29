@@ -1,0 +1,1543 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Anna"],
+        "night_3": ["Anna"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Anna"],
+        "night_3": ["Dan"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Anna"],
+        "night_3": ["Fraser"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Anna"],
+        "night_3": ["Josh"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Anna"],
+        "night_3": ["Matt"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Anna"],
+        "night_3": ["Olivia"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Anna"],
+        "night_3": ["Steph"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Anna"],
+        "night_3": ["Tom"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Anna"],
+        "night_3": ["You"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Dan"],
+        "night_3": ["Anna"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Dan"],
+        "night_3": ["Dan"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Dan"],
+        "night_3": ["Fraser"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Dan"],
+        "night_3": ["Josh"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Dan"],
+        "night_3": ["Matt"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Dan"],
+        "night_3": ["Olivia"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Dan"],
+        "night_3": ["Steph"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Dan"],
+        "night_3": ["Tom"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Dan"],
+        "night_3": ["You"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Fraser"],
+        "night_3": ["Anna"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Fraser"],
+        "night_3": ["Dan"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Fraser"],
+        "night_3": ["Fraser"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Fraser"],
+        "night_3": ["Josh"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Fraser"],
+        "night_3": ["Matt"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Fraser"],
+        "night_3": ["Olivia"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Fraser"],
+        "night_3": ["Steph"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Fraser"],
+        "night_3": ["Tom"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Fraser"],
+        "night_3": ["You"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Josh"],
+        "night_3": ["Anna"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Josh"],
+        "night_3": ["Dan"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Josh"],
+        "night_3": ["Fraser"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Josh"],
+        "night_3": ["Josh"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Josh"],
+        "night_3": ["Matt"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Josh"],
+        "night_3": ["Olivia"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Josh"],
+        "night_3": ["Steph"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Josh"],
+        "night_3": ["Tom"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Josh"],
+        "night_3": ["You"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Matt"],
+        "night_3": ["Anna"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Matt"],
+        "night_3": ["Dan"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Matt"],
+        "night_3": ["Fraser"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Matt"],
+        "night_3": ["Josh"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Matt"],
+        "night_3": ["Matt"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Matt"],
+        "night_3": ["Olivia"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Matt"],
+        "night_3": ["Steph"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Matt"],
+        "night_3": ["Tom"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Matt"],
+        "night_3": ["You"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Olivia"],
+        "night_3": ["Anna"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Olivia"],
+        "night_3": ["Dan"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Olivia"],
+        "night_3": ["Fraser"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Olivia"],
+        "night_3": ["Josh"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Olivia"],
+        "night_3": ["Matt"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Olivia"],
+        "night_3": ["Olivia"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Olivia"],
+        "night_3": ["Steph"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Olivia"],
+        "night_3": ["Tom"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Olivia"],
+        "night_3": ["You"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Steph"],
+        "night_3": ["Anna"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Steph"],
+        "night_3": ["Dan"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Steph"],
+        "night_3": ["Fraser"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Steph"],
+        "night_3": ["Josh"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Steph"],
+        "night_3": ["Matt"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Steph"],
+        "night_3": ["Olivia"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Steph"],
+        "night_3": ["Steph"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Steph"],
+        "night_3": ["Tom"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Steph"],
+        "night_3": ["You"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Tom"],
+        "night_3": ["Anna"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Tom"],
+        "night_3": ["Dan"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Tom"],
+        "night_3": ["Fraser"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Tom"],
+        "night_3": ["Josh"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Tom"],
+        "night_3": ["Matt"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Tom"],
+        "night_3": ["Olivia"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Tom"],
+        "night_3": ["Steph"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Tom"],
+        "night_3": ["Tom"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["Tom"],
+        "night_3": ["You"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["You"],
+        "night_3": ["Anna"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["You"],
+        "night_3": ["Dan"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["You"],
+        "night_3": ["Fraser"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["You"],
+        "night_3": ["Josh"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["You"],
+        "night_3": ["Matt"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["You"],
+        "night_3": ["Olivia"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["You"],
+        "night_3": ["Steph"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["You"],
+        "night_3": ["Tom"],
+        "night_4": ["Dan"]
+      }
+    },
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Dan": "Ravenkeeper",
+        "Fraser": "Fortune Teller",
+        "Josh": "Empath",
+        "Matt": "Butler",
+        "Olivia": "Investigator",
+        "Steph": "Poisoner",
+        "Tom": "Imp",
+        "You": "Washerwoman"
+      },
+      "poisoned": {
+        "night_1": ["Olivia"],
+        "night_2": ["You"],
+        "night_3": ["You"],
+        "night_4": ["Dan"]
+      }
+    }
+  ]
+}

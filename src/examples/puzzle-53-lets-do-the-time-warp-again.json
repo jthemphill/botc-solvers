@@ -1,0 +1,151 @@
+{
+  "title": "Puzzle 53 - Let's Do the Time Warp Again",
+  "players": ["Tim", "Aoife", "Fraser", "Jasmine", "You", "Sarah", "Josh", "Olivia"],
+  "script": [
+    "Fang Gu",
+    "Vigormortis",
+    "No Dashii",
+    "Vortox",
+    "Witch",
+    "Mutant",
+    "Artist",
+    "Klutz",
+    "Snake Charmer",
+    "Juggler",
+    "Clockmaker",
+    "Dreamer",
+    "Oracle",
+    "Mathematician"
+  ],
+  "setup": "none",
+  "constraints": [
+    {
+      "expression": "#{p : players | some (p.role & {`Fang Gu`, Vigormortis, `No Dashii`, Vortox})} == 1"
+    },
+    {
+      "expression": "#{p : players | p.role == Witch} == 1"
+    },
+    {
+      "expression": "(some p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Klutz})} == 2"
+    },
+    {
+      "expression": "(no p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Klutz})} == 1"
+    }
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Artist"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Aoife"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Jasmine"]
+    },
+    {
+      "timing": "day_2",
+      "type": "witchCurse",
+      "players": ["Josh"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Olivia"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["You"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Clockmaker",
+      "name": "Tim",
+      "distance": 4,
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Dreamer",
+      "name": "Aoife",
+      "timing": "night_1",
+      "player": "Olivia",
+      "roles": ["Mutant", "Witch"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Oracle",
+      "name": "Fraser",
+      "timing": "night_2",
+      "count": 0,
+      "deadPlayers": ["Aoife", "Jasmine"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Oracle",
+      "name": "Fraser",
+      "timing": "night_3",
+      "count": 1,
+      "deadPlayers": ["Aoife", "Jasmine", "Josh", "Olivia", "You"],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Mathematician",
+      "name": "Jasmine",
+      "malfunctions": [{ "timing": "night_1", "count": 2 }],
+      "extraPossibleActualRoles": ["Mutant"]
+    },
+    {
+      "type": "Artist",
+      "name": "You",
+      "timing": "day_2",
+      "info": [
+        {
+          "timing": "day_2",
+          "expression": "Sarah.type != Demon"
+        }
+      ]
+    },
+    {
+      "type": "Klutz",
+      "name": "Sarah"
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Josh",
+      "extraPossibleActualRoles": ["Mutant"],
+      "checks": [
+        {
+          "timing": "night_1",
+          "player": "Fraser",
+          "demon": false
+        },
+        {
+          "timing": "night_2",
+          "player": "Sarah",
+          "demon": false
+        }
+      ]
+    },
+    {
+      "type": "Juggler",
+      "name": "Olivia",
+      "timing": "night_2",
+      "correctCount": 2,
+      "extraPossibleActualRoles": ["Mutant"],
+      "guesses": {
+        "Aoife": "Dreamer",
+        "Tim": "Mutant",
+        "Fraser": "Mutant",
+        "Sarah": "Vortox"
+      }
+    }
+  ]
+}

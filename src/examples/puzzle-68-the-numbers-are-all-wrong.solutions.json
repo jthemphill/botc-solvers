@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Witch",
+        "Fraser": "Seamstress",
+        "Jasmine": "Dreamer",
+        "Matthew": "Mutant",
+        "Olivia": "Clockmaker",
+        "Sarah": "Vortox",
+        "Tom": "Juggler",
+        "You": "Mathematician"
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Adam": "Oracle",
+        "Dan": "Klutz",
+        "Fraser": "No Dashii",
+        "Hannah": "Snake Charmer",
+        "Matt": "Sweetheart",
+        "Oscar": "Seamstress",
+        "Sarah": "Witch",
+        "Tom": "Mathematician",
+        "You": "Sage"
+      },
+      "drunkByTiming": {
+        "night_2": ["You"],
+        "day_2": ["You"],
+        "night_3": ["You"],
+        "day_3": ["You"]
+      }
+    }
+  ]
+}

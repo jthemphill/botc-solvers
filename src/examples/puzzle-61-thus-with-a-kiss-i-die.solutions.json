@@ -1,0 +1,20 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "No Dashii",
+        "Fraser": "Witch",
+        "Josh": "Juggler",
+        "Matthew": "Seamstress",
+        "Oscar": "Snake Charmer",
+        "Steph": "Sweetheart",
+        "Tim": "Dreamer",
+        "You": "Savant"
+      },
+      "drunkByTiming": {
+        "day_2": ["You"],
+        "night_3": ["You"]
+      }
+    }
+  ]
+}

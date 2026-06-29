@@ -1,0 +1,152 @@
+{
+  "title": "Puzzle 48 - Solving for X",
+  "players": ["Fraser", "Sula", "Dan", "Tom", "You", "Matthew", "Olivia", "Jasmine"],
+  "script": [
+    "Leviathan",
+    "Poisoner",
+    "Xaan",
+    "Puzzlemaster",
+    "Golem",
+    "Artist",
+    "Chambermaid",
+    "Juggler",
+    "Mathematician",
+    "Village Idiot"
+  ],
+  "forbiddenRoles": [
+    {
+      "name": "You",
+      "roles": ["Leviathan", "Poisoner", "Xaan"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_3",
+      "type": "nominationDeath",
+      "players": ["Tom"],
+      "caller": "Sula"
+    }
+  ],
+  "claims": [
+    {
+      "type": "Juggler",
+      "name": "Fraser",
+      "timing": "night_2",
+      "guesses": {
+        "Olivia": "Village Idiot",
+        "Sula": "Golem"
+      },
+      "correctCount": 0
+    },
+    {
+      "type": "Golem",
+      "name": "Sula"
+    },
+    {
+      "type": "Puzzlemaster",
+      "name": "Dan",
+      "guesses": [
+        {
+          "timing": "day_3",
+          "player": "Tom",
+          "learnedDemon": "Matthew"
+        }
+      ]
+    },
+    {
+      "type": "Artist",
+      "name": "Tom",
+      "timing": "day_3",
+      "info": [
+        {
+          "timing": "day_3",
+          "expression": "Jasmine.role == Poisoner or Fraser.role == Poisoner or Dan.role == Poisoner"
+        }
+      ]
+    },
+    {
+      "type": "Mathematician",
+      "name": "You",
+      "malfunctions": [
+        {
+          "timing": "night_1",
+          "count": 1
+        },
+        {
+          "timing": "night_2",
+          "count": 0
+        },
+        {
+          "timing": "night_3",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "type": "Chambermaid",
+      "name": "Matthew",
+      "checks": [
+        {
+          "timing": "night_1",
+          "left": "Olivia",
+          "right": "Jasmine",
+          "count": 2
+        },
+        {
+          "timing": "night_2",
+          "left": "Olivia",
+          "right": "Dan",
+          "count": 2
+        },
+        {
+          "timing": "night_3",
+          "left": "Olivia",
+          "right": "Fraser",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "type": "VillageIdiot",
+      "name": "Olivia",
+      "checks": [
+        {
+          "timing": "night_1",
+          "player": "Tom",
+          "good": false
+        },
+        {
+          "timing": "night_2",
+          "player": "Matthew",
+          "good": false
+        },
+        {
+          "timing": "night_3",
+          "player": "Dan",
+          "good": true
+        }
+      ]
+    },
+    {
+      "type": "VillageIdiot",
+      "name": "Jasmine",
+      "checks": [
+        {
+          "timing": "night_1",
+          "player": "Tom",
+          "good": true
+        },
+        {
+          "timing": "night_2",
+          "player": "Fraser",
+          "good": true
+        },
+        {
+          "timing": "night_3",
+          "player": "Matthew",
+          "good": false
+        }
+      ]
+    }
+  ]
+}

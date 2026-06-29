@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "title": "Puzzle 78 - It's Pronounced Ee-fa",
+  "players": ["Matt", "Sarah", "Dan", "Aoife", "Oscar", "You", "Charlotte", "Fraser", "Jasmine"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Spy",
+    "Baron",
+    "Scarlet Woman",
+    "Drunk",
+    "Butler",
+    "Investigator",
+    "Ravenkeeper",
+    "Recluse",
+    "Saint",
+    "Undertaker",
+    "Fortune Teller",
+    "Slayer",
+    "Chef"
+  ],
+  "fixedRoles": [{ "name": "You", "roles": ["Undertaker", "Drunk"] }],
+  "timeline": [
+    { "timing": "day_1", "type": "execution", "players": ["Matt"] },
+    { "timing": "night_2", "type": "nightDeath", "players": ["Dan"] },
+    { "timing": "day_2", "type": "execution", "players": ["Jasmine"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["Oscar"] },
+    { "timing": "day_3", "type": "execution", "players": ["You"] },
+    { "timing": "night_4", "type": "nightDeath", "players": ["Sarah"] }
+  ],
+  "claims": [
+    { "type": "Butler", "name": "Matt" },
+    {
+      "type": "Investigator",
+      "name": "Sarah",
+      "timing": "night_1",
+      "minionRole": "Baron",
+      "among": ["Aoife", "Fraser"]
+    },
+    { "type": "Ravenkeeper", "name": "Dan", "timing": "night_2", "player": "Sarah", "role": "Poisoner" },
+    { "type": "Recluse", "name": "Aoife" },
+    { "type": "Saint", "name": "Oscar" },
+    { "type": "Undertaker", "name": "You", "timing": "night_2", "player": "Matt", "role": "Butler" },
+    { "type": "Undertaker", "name": "You", "timing": "night_3", "player": "Jasmine", "role": "Scarlet Woman" },
+    {
+      "type": "FortuneTeller",
+      "name": "Charlotte",
+      "checks": [
+        { "timing": "night_1", "left": "Aoife", "right": "Fraser", "yes": false },
+        { "timing": "night_2", "left": "Charlotte", "right": "Oscar", "yes": false },
+        { "timing": "night_3", "left": "Charlotte", "right": "Sarah", "yes": false },
+        { "timing": "night_4", "left": "Aoife", "right": "Fraser", "yes": true }
+      ]
+    },
+    { "type": "Slayer", "name": "Fraser", "timing": "day_4", "target": "Charlotte", "killed": false },
+    { "type": "Chef", "name": "Jasmine", "timing": "night_1", "count": 1 }
+  ]
+}

@@ -1,0 +1,167 @@
+{
+  "version": 1,
+  "title": "Puzzle 62 - Have You Ever Seen The Rain?",
+  "players": ["Dan", "Oscar", "Fraser", "Jasmine", "Tim", "You", "Hannah", "Matthew", "Sula"],
+  "script": [
+    "Imp",
+    "Spy",
+    "Scarlet Woman",
+    "Drunk",
+    "Recluse",
+    "Investigator",
+    "Empath",
+    "Fortune Teller",
+    "Undertaker",
+    "Slayer",
+    "Washerwoman",
+    "Librarian",
+    "Ravenkeeper"
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Recluse"]
+    }
+  ],
+  "constraints": [
+    {
+      "expression": "Matthew.role != Drunk"
+    },
+    {
+      "expression": "Oscar.role != Drunk"
+    },
+    {
+      "expression": "Dan.role != Drunk"
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Matthew"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Tim"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Oscar"]
+    },
+    {
+      "timing": "day_3",
+      "type": "execution",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": ["Dan"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Investigator",
+      "name": "Dan",
+      "timing": "night_1",
+      "role": "Spy",
+      "among": ["Fraser", "Jasmine"]
+    },
+    {
+      "type": "Empath",
+      "name": "Oscar",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Oscar",
+      "timing": "night_2",
+      "count": 0
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "Fraser",
+      "checks": [
+        {
+          "timing": "night_1",
+          "left": "You",
+          "right": "Matthew",
+          "yes": false
+        },
+        {
+          "timing": "night_2",
+          "left": "Hannah",
+          "right": "Oscar",
+          "yes": false
+        },
+        {
+          "timing": "night_3",
+          "left": "Sula",
+          "right": "Fraser",
+          "yes": true
+        }
+      ]
+    },
+    {
+      "type": "Undertaker",
+      "name": "Jasmine",
+      "timing": "night_2",
+      "player": "You",
+      "role": "Scarlet Woman"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Jasmine",
+      "timing": "night_3",
+      "player": "Tim",
+      "role": "Slayer"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Jasmine",
+      "timing": "night_4",
+      "player": "Fraser",
+      "role": "Fortune Teller"
+    },
+    {
+      "type": "Slayer",
+      "name": "Tim",
+      "timing": "day_2",
+      "target": "Sula",
+      "killed": false
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Matthew",
+      "timing": "night_2",
+      "player": "Jasmine",
+      "role": "Undertaker"
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Hannah",
+      "timing": "night_1",
+      "role": "Slayer",
+      "among": ["Oscar", "Tim"]
+    },
+    {
+      "type": "Librarian",
+      "name": "Sula",
+      "timing": "night_1",
+      "role": "Drunk",
+      "among": ["Oscar", "Tim"]
+    },
+    {
+      "type": "Recluse",
+      "name": "You"
+    }
+  ]
+}

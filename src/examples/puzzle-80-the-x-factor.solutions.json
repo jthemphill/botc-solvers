@@ -1,0 +1,20 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Saint",
+        "Charlotte": "Drunk",
+        "Fraser": "Xaan",
+        "Hannah": "Chef",
+        "Matt": "Recluse",
+        "Olivia": "Ravenkeeper",
+        "Sarah": "Imp",
+        "Tom": "Empath",
+        "You": "Investigator"
+      },
+      "poisoned": {
+        "night_3": ["Hannah", "Olivia", "Tom", "You"]
+      }
+    }
+  ]
+}

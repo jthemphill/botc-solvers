@@ -1,0 +1,116 @@
+{
+  "title": "Puzzle 51 - Weird Science",
+  "players": ["Dan", "Hannah", "Tim", "Josh", "You", "Oscar", "Sarah", "Fraser"],
+  "script": [
+    "Kazali",
+    "Poisoner",
+    "Scarlet Woman",
+    "Spy",
+    "Boffin",
+    "Golem",
+    "Recluse",
+    "Virgin",
+    "Noble",
+    "Artist",
+    "Nightwatchman",
+    "Washerwoman",
+    "Slayer"
+  ],
+  "setup": "none",
+  "constraints": [
+    {
+      "expression": "#{p : players | p.role == Kazali} == 1"
+    },
+    {
+      "expression": "some p : {Dan, Josh, Oscar, Fraser} | p.role == Kazali"
+    },
+    {
+      "expression": "#{p : players | some (p.role & {Poisoner, `Scarlet Woman`, Spy, Boffin})} == 1"
+    }
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Washerwoman"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "slayerShot",
+      "players": ["Sarah"],
+      "caller": "Oscar"
+    },
+    {
+      "timing": "day_1",
+      "type": "nominationDeath",
+      "players": ["Tim"],
+      "caller": "Fraser"
+    },
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Hannah"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Virgin",
+      "name": "Dan",
+      "timing": "day_1",
+      "nominator": "You",
+      "executed": true
+    },
+    {
+      "type": "Noble",
+      "name": "Hannah",
+      "oneEvilAmong": ["Sarah", "Tim", "Josh"]
+    },
+    {
+      "type": "Artist",
+      "name": "Tim",
+      "timing": "day_1",
+      "info": [
+        {
+          "timing": "day_1",
+          "expression": "Hannah.role != Boffin"
+        }
+      ]
+    },
+    {
+      "type": "Nightwatchman",
+      "name": "Josh",
+      "timing": "night_1",
+      "chosen": "Tim",
+      "learned": true,
+      "confirmedByChosen": true
+    },
+    {
+      "type": "Washerwoman",
+      "name": "You",
+      "timing": "night_1",
+      "role": "Artist",
+      "among": ["Hannah", "Tim"]
+    },
+    {
+      "type": "Slayer",
+      "name": "Oscar",
+      "timing": "day_1",
+      "target": "Sarah",
+      "killed": true
+    },
+    {
+      "type": "Recluse",
+      "name": "Sarah"
+    },
+    {
+      "type": "Golem",
+      "name": "Fraser"
+    }
+  ]
+}

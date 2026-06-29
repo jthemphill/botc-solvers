@@ -1,0 +1,142 @@
+{
+  "title": "Puzzle 56 - Meanwhile, at the Legion of Doom",
+  "players": ["Tom", "Fraser", "Sula", "Sarah", "You", "Aoife", "Hannah", "Matthew"],
+  "script": [
+    "Imp",
+    "Legion",
+    "Poisoner",
+    "Saint",
+    "Knight",
+    "Investigator",
+    "Washerwoman",
+    "Chambermaid",
+    "Oracle",
+    "Slayer",
+    "Empath"
+  ],
+  "setup": "none",
+  "constraints": [
+    {
+      "expression": "#{p : players | p.role == Legion} == 0 or #{p : players | p.role == Legion} == 5 or #{p : players | p.role == Legion} == 6"
+    },
+    {
+      "expression": "(no p : players | p.role == Legion) => #{p : players | p.role == Imp} == 1"
+    },
+    {
+      "expression": "(no p : players | p.role == Legion) => #{p : players | p.role == Poisoner} == 1"
+    },
+    {
+      "expression": "(some p : players | p.role == Legion) => #{p : players | p.role == Imp} == 0"
+    },
+    {
+      "expression": "(some p : players | p.role == Legion) => #{p : players | p.role == Poisoner} == 0"
+    },
+    {
+      "expression": "(some p : players | p.role == Legion) => (some p : {Aoife, Hannah, Tom, Sula, Sarah} | p.alignment == Good)"
+    },
+    {
+      "expression": "(some p : players | p.role == Legion) => (some p : {Aoife, Hannah, Tom, Fraser} | p.alignment == Good)"
+    },
+    {
+      "expression": "(some p : players | p.role == Legion) => #{p : {You, Aoife, Hannah, Fraser} | p.alignment == Good} != 1"
+    }
+  ],
+  "fixedRoles": [
+    {
+      "name": "You",
+      "roles": ["Saint"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Matthew"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Sula"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Sarah"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Tom"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Knight",
+      "name": "Tom",
+      "noDemonAmong": ["Aoife", "Matthew"]
+    },
+    {
+      "type": "Investigator",
+      "name": "Fraser",
+      "timing": "night_1",
+      "role": "Poisoner",
+      "among": ["You", "Hannah"]
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Sula",
+      "timing": "night_1",
+      "role": "Chambermaid",
+      "among": ["You", "Sarah"]
+    },
+    {
+      "type": "Chambermaid",
+      "name": "Sarah",
+      "checks": [
+        {
+          "timing": "night_1",
+          "left": "Aoife",
+          "right": "Tom",
+          "count": 2
+        },
+        {
+          "timing": "night_1",
+          "left": "Tom",
+          "right": "Fraser",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "type": "Saint",
+      "name": "You"
+    },
+    {
+      "type": "Oracle",
+      "name": "Aoife",
+      "timing": "night_2",
+      "count": 1,
+      "deadPlayers": ["Matthew", "Sula"]
+    },
+    {
+      "type": "Oracle",
+      "name": "Aoife",
+      "timing": "night_3",
+      "count": 2,
+      "deadPlayers": ["Matthew", "Sula", "Sarah", "Tom"]
+    },
+    {
+      "type": "Slayer",
+      "name": "Hannah",
+      "timing": "day_3",
+      "target": "Fraser",
+      "killed": false
+    },
+    {
+      "type": "Empath",
+      "name": "Matthew",
+      "timing": "night_1",
+      "count": 2
+    }
+  ]
+}

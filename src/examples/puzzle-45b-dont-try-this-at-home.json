@@ -1,0 +1,105 @@
+{
+  "title": "Puzzle 45b - Don't Try This at Home",
+  "players": ["Oscar", "Sula", "Sarah", "Fraser", "You", "Tim", "Adam", "Dan"],
+  "script": [
+    "Imp",
+    "Spy",
+    "Scarlet Woman",
+    "Drunk",
+    "Hermit",
+    "Investigator",
+    "Slayer",
+    "Undertaker",
+    "Empath",
+    "Ravenkeeper",
+    "Washerwoman",
+    "Chef"
+  ],
+  "forbiddenRoles": [
+    {
+      "name": "You",
+      "roles": ["Imp", "Spy", "Scarlet Woman"]
+    }
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Dan"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Oscar"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["You"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Ravenkeeper",
+      "name": "Oscar",
+      "timing": "night_2",
+      "player": "Adam",
+      "role": "Investigator"
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Sula",
+      "role": "Undertaker",
+      "among": ["Tim", "Oscar"]
+    },
+    {
+      "type": "Investigator",
+      "name": "Sarah",
+      "role": "Spy",
+      "among": ["Tim", "Fraser"]
+    },
+    {
+      "type": "Chef",
+      "name": "Fraser",
+      "count": 1
+    },
+    {
+      "type": "Slayer",
+      "name": "You",
+      "timing": "day_2",
+      "target": "Adam",
+      "killed": false
+    },
+    {
+      "type": "Undertaker",
+      "name": "Tim",
+      "timing": "night_2",
+      "player": "Dan",
+      "role": "Drunk"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Tim",
+      "timing": "night_3",
+      "player": "Fraser",
+      "role": "Chef"
+    },
+    {
+      "type": "Investigator",
+      "name": "Adam",
+      "role": "Scarlet Woman",
+      "among": ["Tim", "Dan"]
+    },
+    {
+      "type": "Empath",
+      "name": "Dan",
+      "timing": "night_1",
+      "count": 1
+    }
+  ]
+}
