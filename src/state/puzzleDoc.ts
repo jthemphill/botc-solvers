@@ -1,4 +1,4 @@
-import { KNIGHT_NO_DEMON_AMONG_MAX, type Claim, type PuzzleDoc } from "../schema/puzzleDoc";
+import { KNIGHT_NO_DEMON_AMONG_MAX, type Claim, type PuzzleDoc, type TimelineEventDoc } from "../schema/puzzleDoc";
 import type { SerializableWorld } from "../worker/protocol";
 import { scriptWithProtectedRoles, withProtectedScript } from "./scriptRoles";
 
@@ -20,6 +20,7 @@ export type PuzzleDocAction =
   | { type: "setScript"; script: readonly string[] }
   | { type: "setFixedRoles"; fixedRoles: PuzzleDoc["fixedRoles"] }
   | { type: "setForbiddenRoles"; forbiddenRoles: PuzzleDoc["forbiddenRoles"] }
+  | { type: "setTimeline"; timeline: PuzzleDoc["timeline"] }
   | { type: "addClaim"; claim: Claim }
   | { type: "updateClaim"; index: number; claim: Claim }
   | { type: "removeClaim"; index: number };
@@ -224,6 +225,80 @@ function removeTimelineNames(timeline: PuzzleDoc["timeline"], removed: ReadonlyS
     .filter((event) => event.players.length > 0);
 }
 
+function normalizeTimeline(timeline: PuzzleDoc["timeline"], players: readonly string[]): PuzzleDoc["timeline"] {
+  const knownPlayers = new Set(players);
+  const normalized = (timeline ?? [])
+    .map<TimelineEventDoc>((event) => {
+      const eventPlayers = event.players.filter(
+        (player, index) => knownPlayers.has(player) && event.players.indexOf(player) === index,
+      );
+      return {
+        ...event,
+        players: event.type === "execution" ? eventPlayers.slice(0, 1) : eventPlayers,
+        caller: event.caller === undefined || knownPlayers.has(event.caller) ? event.caller : undefined,
+      };
+    })
+    .filter((event) => event.players.length > 0);
+  return normalized.length === 0 ? undefined : normalized;
+}
+
+function slayerShotEventForClaim(claim: Claim): TimelineEventDoc | undefined {
+  if (claim.type !== "Slayer" || claim.killed !== true || claim.target === undefined || claim.target === "") {
+    return undefined;
+  }
+  return { timing: claim.timing ?? "day_1", type: "slayerShot", players: [claim.target] };
+}
+
+function removeSlayerShotEvent(
+  timeline: PuzzleDoc["timeline"],
+  claim: Claim | undefined,
+  players: readonly string[],
+): PuzzleDoc["timeline"] {
+  const slayerShot = claim === undefined ? undefined : slayerShotEventForClaim(claim);
+  if (slayerShot === undefined) return timeline;
+
+  const next = (timeline ?? []).flatMap((event) => {
+    if (
+      event.type !== "slayerShot" ||
+      event.timing !== slayerShot.timing ||
+      !event.players.includes(slayerShot.players[0] as string)
+    ) {
+      return [event];
+    }
+    const players = event.players.filter((player) => player !== slayerShot.players[0]);
+    return players.length === 0 ? [] : [{ ...event, players }];
+  });
+
+  return normalizeTimeline(next, players);
+}
+
+function ensureSlayerShotEvent(
+  timeline: PuzzleDoc["timeline"],
+  claim: Claim | undefined,
+  players: readonly string[],
+): PuzzleDoc["timeline"] {
+  const slayerShot = claim === undefined ? undefined : slayerShotEventForClaim(claim);
+  if (slayerShot === undefined) return timeline;
+
+  const existing = timeline?.some(
+    (event) =>
+      event.type === slayerShot.type &&
+      event.timing === slayerShot.timing &&
+      event.players.includes(slayerShot.players[0] as string),
+  );
+  if (existing) return timeline;
+  return normalizeTimeline([...(timeline ?? []), slayerShot], players);
+}
+
+function syncSlayerShotEvent(
+  timeline: PuzzleDoc["timeline"],
+  oldClaim: Claim | undefined,
+  newClaim: Claim | undefined,
+  players: readonly string[],
+): PuzzleDoc["timeline"] {
+  return ensureSlayerShotEvent(removeSlayerShotEvent(timeline, oldClaim, players), newClaim, players);
+}
+
 function normalizeClaim(claim: Claim): Claim {
   const { registers: _registers, ...claimWithoutLegacyRegisters } = claim as Claim & { readonly registers?: boolean };
   if (claimWithoutLegacyRegisters.type === "FortuneTeller") {
@@ -246,6 +321,10 @@ function normalizeClaim(claim: Claim): Claim {
   }
   if (claim.type === "Knight" && claim.noDemonAmong.length > KNIGHT_NO_DEMON_AMONG_MAX) {
     return { ...claim, noDemonAmong: claim.noDemonAmong.slice(0, KNIGHT_NO_DEMON_AMONG_MAX) };
+  }
+  if (claim.type === "Slayer") {
+    const { gameContinued: _gameContinued, ...slayerClaim } = claim;
+    return slayerClaim;
   }
   return claim;
 }
@@ -370,14 +449,29 @@ export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc
       return withProtectedScript({ ...state, fixedRoles: action.fixedRoles });
     case "setForbiddenRoles":
       return withProtectedScript({ ...state, forbiddenRoles: action.forbiddenRoles });
+    case "setTimeline":
+      return { ...state, timeline: normalizeTimeline(action.timeline, state.players) };
     case "addClaim":
-      return withProtectedScript({ ...state, claims: [...state.claims, ...normalizeClaims(action.claim)] });
+      return withProtectedScript({
+        ...state,
+        claims: [...state.claims, ...normalizeClaims(action.claim)],
+        timeline: ensureSlayerShotEvent(state.timeline, action.claim, state.players),
+      });
     case "updateClaim": {
       const claims = state.claims.flatMap((c, i) => (i === action.index ? normalizeClaims(action.claim) : [c]));
-      return withProtectedScript({ ...state, claims });
+      return withProtectedScript({
+        ...state,
+        claims,
+        timeline: syncSlayerShotEvent(state.timeline, state.claims[action.index], action.claim, state.players),
+      });
     }
-    case "removeClaim":
-      return { ...state, claims: state.claims.filter((_, i) => i !== action.index) };
+    case "removeClaim": {
+      return {
+        ...state,
+        claims: state.claims.filter((_, i) => i !== action.index),
+        timeline: removeSlayerShotEvent(state.timeline, state.claims[action.index], state.players),
+      };
+    }
   }
 }
 

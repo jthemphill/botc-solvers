@@ -956,7 +956,7 @@ describe("buildFromDoc", () => {
     expect(worlds).toEqual([]);
   });
 
-  test("continued Slayer kill claims require Scarlet Woman for actual demon targets", async () => {
+  test("Slayer kill claims require Scarlet Woman for actual demon targets in ongoing games", async () => {
     const noCatchWorlds = await buildFromDoc(
       {
         version: 1,
@@ -968,7 +968,7 @@ describe("buildFromDoc", () => {
           { name: "A", roles: ["Slayer"] },
           { name: "B", roles: ["Imp"] },
         ],
-        claims: [{ type: "Slayer", name: "A", timing: "day_1", target: "B", killed: true, gameContinued: true }],
+        claims: [{ type: "Slayer", name: "A", timing: "day_1", target: "B", killed: true }],
       },
       backend,
     ).solveAll();
@@ -984,7 +984,7 @@ describe("buildFromDoc", () => {
           { name: "B", roles: ["Imp"] },
           { name: "C", roles: ["Scarlet Woman"] },
         ],
-        claims: [{ type: "Slayer", name: "A", timing: "day_1", target: "B", killed: true, gameContinued: true }],
+        claims: [{ type: "Slayer", name: "A", timing: "day_1", target: "B", killed: true }],
       },
       backend,
     ).solveAll();

@@ -234,6 +234,87 @@ describe("puzzle document reducer", () => {
     expect(next.timeline).toEqual([]);
   });
 
+  test("setTimeline records manual deaths and executions", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B", "C"],
+      script: [],
+      claims: [],
+    };
+
+    const next = reducer(doc, {
+      type: "setTimeline",
+      timeline: [
+        { timing: "day_1", type: "execution", players: ["A"] },
+        { timing: "night_2", type: "nightDeath", players: ["B", "C"] },
+      ],
+    });
+
+    expect(next.timeline).toEqual([
+      { timing: "day_1", type: "execution", players: ["A"] },
+      { timing: "night_2", type: "nightDeath", players: ["B", "C"] },
+    ]);
+  });
+
+  test("setTimeline normalizes invalid and empty events", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B", "C"],
+      script: [],
+      claims: [],
+    };
+
+    const next = reducer(doc, {
+      type: "setTimeline",
+      timeline: [
+        { timing: "day_1", type: "execution", players: ["A", "B"] },
+        { timing: "night_2", type: "nightDeath", players: ["B", "Z", "B"] },
+        { timing: "day_2", type: "execution", players: ["Z"] },
+      ],
+    });
+
+    expect(next.timeline).toEqual([
+      { timing: "day_1", type: "execution", players: ["A"] },
+      { timing: "night_2", type: "nightDeath", players: ["B"] },
+    ]);
+
+    const cleared = reducer(next, { type: "setTimeline", timeline: [] });
+    expect(cleared.timeline).toBeUndefined();
+  });
+
+  test("killed Slayer claims maintain a matching timeline event", () => {
+    const doc: PuzzleDoc = {
+      version: 1,
+      players: ["A", "B", "C"],
+      script: ["Slayer"],
+      claims: [],
+    };
+
+    const withKill = reducer(doc, {
+      type: "addClaim",
+      claim: { type: "Slayer", name: "A", timing: "day_1", target: "B", killed: true, gameContinued: true },
+    });
+
+    expect(withKill.claims).toEqual([{ type: "Slayer", name: "A", timing: "day_1", target: "B", killed: true }]);
+    expect(withKill.timeline).toEqual([{ timing: "day_1", type: "slayerShot", players: ["B"] }]);
+
+    const withChangedKill = reducer(withKill, {
+      type: "updateClaim",
+      index: 0,
+      claim: { type: "Slayer", name: "A", timing: "day_2", target: "C", killed: true },
+    });
+
+    expect(withChangedKill.timeline).toEqual([{ timing: "day_2", type: "slayerShot", players: ["C"] }]);
+
+    const withNoKill = reducer(withChangedKill, {
+      type: "updateClaim",
+      index: 0,
+      claim: { type: "Slayer", name: "A", timing: "day_2", target: "C", killed: false },
+    });
+
+    expect(withNoKill.timeline).toBeUndefined();
+  });
+
   test("movePlayerTo reorders players without changing claims", () => {
     const doc: PuzzleDoc = {
       version: 1,
