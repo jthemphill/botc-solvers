@@ -91,7 +91,7 @@
       "statements": [
         {
           "options": [
-            "((some p : {Seb, Louisa, Marc, Chris} | p.type == Townsfolk) && (some p : {Seb, Louisa, Marc, Chris} | p.type == Outsider) && (some p : {Seb, Louisa, Marc, Chris} | p.type == Minion) && (no p : {Seb, Louisa, Marc, Chris} | p.type == Demon)) || ((some p : {Seb, Louisa, Marc, Chris} | p.type == Townsfolk) && (some p : {Seb, Louisa, Marc, Chris} | p.type == Outsider) && (no p : {Seb, Louisa, Marc, Chris} | p.type == Minion) && (some p : {Seb, Louisa, Marc, Chris} | p.type == Demon)) || ((some p : {Seb, Louisa, Marc, Chris} | p.type == Townsfolk) && (no p : {Seb, Louisa, Marc, Chris} | p.type == Outsider) && (some p : {Seb, Louisa, Marc, Chris} | p.type == Minion) && (some p : {Seb, Louisa, Marc, Chris} | p.type == Demon)) || ((no p : {Seb, Louisa, Marc, Chris} | p.type == Townsfolk) && (some p : {Seb, Louisa, Marc, Chris} | p.type == Outsider) && (some p : {Seb, Louisa, Marc, Chris} | p.type == Minion) && (some p : {Seb, Louisa, Marc, Chris} | p.type == Demon))",
+            "#((Seb + Louisa + Marc + Chris).type) = 3",
             "some p : players | p.role == Vigormortis && (p.left.role == Mutant || p.right.role == Mutant)"
           ]
         }
