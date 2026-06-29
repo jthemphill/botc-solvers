@@ -225,6 +225,23 @@ function removeTimelineNames(timeline: PuzzleDoc["timeline"], removed: ReadonlyS
     .filter((event) => event.players.length > 0);
 }
 
+export function sortTimelineEvents(timeline: readonly TimelineEventDoc[]): TimelineEventDoc[] {
+  return timeline
+    .map((event, index) => ({ event, index }))
+    .sort(
+      (left, right) =>
+        timelineTimingOrder(left.event.timing) - timelineTimingOrder(right.event.timing) || left.index - right.index,
+    )
+    .map(({ event }) => event);
+}
+
+function timelineTimingOrder(timing: string): number {
+  const match = /^(night|day)_(\d+)$/.exec(timing);
+  if (match === null) return Number.MAX_SAFE_INTEGER;
+  const phase = match[1] as "night" | "day";
+  return Number(match[2]) * 2 + (phase === "day" ? 1 : 0);
+}
+
 function normalizeTimeline(timeline: PuzzleDoc["timeline"], players: readonly string[]): PuzzleDoc["timeline"] {
   const knownPlayers = new Set(players);
   const normalized = (timeline ?? [])
@@ -239,7 +256,7 @@ function normalizeTimeline(timeline: PuzzleDoc["timeline"], players: readonly st
       };
     })
     .filter((event) => event.players.length > 0);
-  return normalized.length === 0 ? undefined : normalized;
+  return normalized.length === 0 ? undefined : sortTimelineEvents(normalized);
 }
 
 function slayerShotEventForClaim(claim: Claim): TimelineEventDoc | undefined {
@@ -349,7 +366,11 @@ function normalizeClaims(claim: Claim): Claim[] {
 export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc {
   switch (action.type) {
     case "load":
-      return withProtectedScript({ ...action.doc, claims: action.doc.claims.flatMap(normalizeClaims) });
+      return withProtectedScript({
+        ...action.doc,
+        timeline: normalizeTimeline(action.doc.timeline, action.doc.players),
+        claims: action.doc.claims.flatMap(normalizeClaims),
+      });
     case "setTitle":
       return { ...state, title: action.title };
     case "setPlayerCount": {
