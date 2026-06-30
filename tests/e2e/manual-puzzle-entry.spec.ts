@@ -12,7 +12,6 @@ const puzzleSpecs = readdirSync(examplesDir)
   }));
 
 type PuzzleDoc = {
-  readonly version?: 1;
   readonly title?: string;
   readonly players: readonly string[];
   readonly script: readonly string[];
@@ -584,7 +583,6 @@ function manualClaimsFor(claims: readonly Claim[]): Claim[] {
 function normalizeDoc(doc: PuzzleDoc): unknown {
   const normalized = stripEmpty({
     ...doc,
-    version: undefined,
     setup: doc.setup === "standard" ? undefined : doc.setup,
     uniqueCharacters: doc.uniqueCharacters === true ? undefined : doc.uniqueCharacters,
     script: sorted(doc.script),
