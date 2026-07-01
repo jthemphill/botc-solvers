@@ -119,7 +119,6 @@
       "name": "Adam",
       "timing": "night_2",
       "count": 1,
-      "deadPlayers": ["Oscar", "Matt", "Dan"],
       "extraPossibleActualRoles": ["Mutant"]
     },
     {
@@ -127,7 +126,6 @@
       "name": "Adam",
       "timing": "night_3",
       "count": 1,
-      "deadPlayers": ["Oscar", "Matt", "Dan", "Sarah", "Hannah", "You"],
       "extraPossibleActualRoles": ["Mutant"]
     }
   ]

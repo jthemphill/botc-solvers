@@ -1,4 +1,4 @@
-import { applyClaims, type EmpathNeighborOption } from "../model/characters";
+import { applyClaims, type EmpathNeighborOption, type OracleDeadPlayerOption } from "../model/characters";
 import { Alignment, CharacterType, roleAlignment, roleCharacterType, roleName, type RoleRef } from "../model/core";
 import type { BoolLike, BOTCModel, Timing } from "../model/model";
 import type { SatBackend } from "../model/sat";
@@ -1102,13 +1102,69 @@ function applyTimelineClaimContext(
     };
   }
   if (claim.type !== "Empath" || claim.count === undefined || claim.timing === undefined) {
-    return claim;
+    if (claim.type !== "Oracle" || claim.count === undefined || claim.timing === undefined) {
+      return claim;
+    }
+    const timing = claim.timing as Timing;
+    const deadPlayerOptions = oracleDeadPlayerOptionsAt(game, doc, timing, nightDeathTiming);
+    if (deadPlayerOptions.length === 1) return { ...claim, deadPlayers: deadPlayerOptions[0]?.deadPlayers };
+    return { ...claim, deadPlayerOptions };
   }
   const player = claim.name;
   const timing = claim.timing as Timing;
   const neighborOptions = livingNeighborOptionsAt(game, doc, player, timing, nightDeathTiming);
   if (neighborOptions.length === 1) return { ...claim, neighbors: neighborOptions[0]?.neighbors };
   return { ...claim, neighborOptions };
+}
+
+function oracleDeadPlayerOptionsAt(
+  game: BOTCModel,
+  doc: PuzzleDoc,
+  timing: Timing,
+  nightDeathTiming: NightDeathTimingContext,
+): readonly OracleDeadPlayerOption[] {
+  const deadPlayers = deadPlayersBefore(doc, timing);
+  const sameNightDeaths = [...(nightDeathTiming.beforeInfoDeathsByTiming.get(timing)?.entries() ?? [])].filter(
+    ([deadPlayer]) => !deadPlayers.has(deadPlayer),
+  );
+  if (sameNightDeaths.length === 0) {
+    return [
+      {
+        deadPlayers: playersInDocOrder(doc, deadPlayers),
+        activeIf: game.constantBool(true, `${timing}_oracle_dead_players_static`),
+      },
+    ];
+  }
+
+  const optionsByDeadPlayers = new Map<string, { deadPlayers: readonly string[]; activeIf: BoolLike[] }>();
+  const subsetCount = 1 << sameNightDeaths.length;
+  for (let mask = 0; mask < subsetCount; mask += 1) {
+    const optionDeadPlayers = new Set(deadPlayers);
+    const conditions: BoolLike[] = [];
+    for (let index = 0; index < sameNightDeaths.length; index += 1) {
+      const [deadPlayer, beforeInfo] = sameNightDeaths[index] as [string, BoolLike];
+      if ((mask & (1 << index)) === 0) {
+        conditions.push(game.not(beforeInfo, `${timing}_${slug(deadPlayer)}_alive_for_oracle_${mask}`));
+        continue;
+      }
+      optionDeadPlayers.add(deadPlayer);
+      conditions.push(beforeInfo);
+    }
+    const activeIf = game.allOf(conditions, `${timing}_oracle_dead_player_option_${mask + 1}`);
+    const deadPlayerList = playersInDocOrder(doc, optionDeadPlayers);
+    const key = deadPlayerList.join("\u0000");
+    const existing = optionsByDeadPlayers.get(key);
+    if (existing === undefined) optionsByDeadPlayers.set(key, { deadPlayers: deadPlayerList, activeIf: [activeIf] });
+    else existing.activeIf.push(activeIf);
+  }
+
+  return [...optionsByDeadPlayers.values()].map(({ deadPlayers, activeIf }, index) => ({
+    deadPlayers,
+    activeIf:
+      activeIf.length === 1
+        ? (activeIf[0] as BoolLike)
+        : game.anyOf(activeIf, `${timing}_oracle_dead_players_${index + 1}`),
+  }));
 }
 
 function livingNeighborOptionsAt(
@@ -1471,6 +1527,10 @@ function livingNeighborsWithDeadPlayers(
 function livingPlayersAt(doc: PuzzleDoc, timing: Timing): readonly string[] {
   const deadPlayers = deadPlayersBefore(doc, timing);
   return doc.players.filter((player) => !deadPlayers.has(player));
+}
+
+function playersInDocOrder(doc: PuzzleDoc, players: ReadonlySet<string>): readonly string[] {
+  return doc.players.filter((player) => players.has(player));
 }
 
 function collectTimings(value: unknown): readonly Timing[] {

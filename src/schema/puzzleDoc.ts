@@ -28,13 +28,7 @@ export interface PuzzleConstraintDoc {
 }
 
 export type TimelineEventType =
-  | "nominationDeath"
-  | "witchCurse"
-  | "slayerShot"
-  | "execution"
-  | "survivedExecution"
-  | "nightDeath"
-  | "doomsayerDeath";
+  "nominationDeath" | "witchCurse" | "slayerShot" | "execution" | "survivedExecution" | "nightDeath" | "doomsayerDeath";
 
 export interface TimelineEventDoc {
   readonly timing: string;
@@ -168,7 +162,6 @@ export interface ChambermaidClaim extends BaseClaim {
 export interface EmpathClaim extends BaseClaim {
   readonly type: "Empath";
   readonly count?: number;
-  readonly neighbors?: readonly string[];
 }
 
 export interface ExorcistChoiceDoc {
@@ -231,7 +224,6 @@ export interface NobleClaim extends BaseClaim {
 export interface OracleClaim extends BaseClaim {
   readonly type: "Oracle";
   readonly count?: number;
-  readonly deadPlayers?: readonly string[];
 }
 
 export interface StewardClaim extends BaseClaim {
@@ -336,7 +328,6 @@ export interface ShugenjaClaim extends BaseClaim {
 export interface ClockmakerClaim extends BaseClaim {
   readonly type: "Clockmaker";
   readonly distance?: number;
-  readonly seating?: readonly string[];
 }
 
 export interface CourtierClaim extends BaseClaim {

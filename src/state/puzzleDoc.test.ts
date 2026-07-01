@@ -219,10 +219,7 @@ describe("puzzle document reducer", () => {
         { timing: "day_1", type: "doomsayerDeath", players: ["B"], caller: "C" },
         { timing: "day_1", type: "doomsayerDeath", players: ["C"], caller: "B" },
       ],
-      claims: [
-        { type: "Chambermaid", name: "A", checks: [{ left: "B", right: "C", count: 1 }] },
-        { type: "Oracle", name: "A", count: 1, deadPlayers: ["B"] },
-      ],
+      claims: [{ type: "Chambermaid", name: "A", checks: [{ left: "B", right: "C", count: 1 }] }],
     };
 
     const next = reducer(doc, { type: "renamePlayer", index: 1, name: "Bea" });
@@ -232,10 +229,7 @@ describe("puzzle document reducer", () => {
       { timing: "day_1", type: "doomsayerDeath", players: ["Bea"], caller: "C" },
       { timing: "day_1", type: "doomsayerDeath", players: ["C"], caller: "Bea" },
     ]);
-    expect(next.claims).toEqual([
-      { type: "Chambermaid", name: "A", checks: [{ left: "Bea", right: "C", count: 1 }] },
-      { type: "Oracle", name: "A", count: 1, deadPlayers: ["Bea"] },
-    ]);
+    expect(next.claims).toEqual([{ type: "Chambermaid", name: "A", checks: [{ left: "Bea", right: "C", count: 1 }] }]);
   });
 
   test("renamePlayer updates Slayer targets", () => {

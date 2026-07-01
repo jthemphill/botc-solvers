@@ -88,7 +88,6 @@
       "name": "Anna",
       "timing": "night_2",
       "count": 0,
-      "deadPlayers": ["Oscar", "Matthew", "Steph"],
       "extraPossibleActualRoles": ["Mutant"]
     },
     {
@@ -96,7 +95,6 @@
       "name": "Anna",
       "timing": "night_3",
       "count": 0,
-      "deadPlayers": ["Oscar", "Matthew", "Steph", "You", "Tim"],
       "extraPossibleActualRoles": ["Mutant"]
     },
     {

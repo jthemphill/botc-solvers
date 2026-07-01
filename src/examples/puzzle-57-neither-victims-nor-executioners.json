@@ -40,20 +40,18 @@
     { "type": "Ravenkeeper", "name": "Aoife", "timing": "night_2", "player": "Fraser", "role": "Artist" },
     { "type": "Noble", "name": "You", "oneEvilAmong": ["Steph", "Sarah", "Aoife"] },
     { "type": "Tea Lady", "name": "Matt" },
-    { "type": "Oracle", "name": "Steph", "timing": "night_2", "count": 1, "deadPlayers": ["Aoife"] },
+    { "type": "Oracle", "name": "Steph", "timing": "night_2", "count": 1 },
     {
       "type": "Oracle",
       "name": "Steph",
       "timing": "night_3",
-      "count": 1,
-      "deadPlayers": ["Aoife", "Dan", "Sarah"]
+      "count": 1
     },
     {
       "type": "Oracle",
       "name": "Steph",
       "timing": "night_4",
-      "count": 1,
-      "deadPlayers": ["Aoife", "Dan", "Sarah", "You"]
+      "count": 1
     },
     { "type": "Slayer", "name": "Dan", "timing": "day_2", "target": "Adam", "killed": false }
   ]

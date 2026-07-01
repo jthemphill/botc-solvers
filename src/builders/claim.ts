@@ -23,6 +23,7 @@ import {
   Noble,
   Nightwatchman,
   Oracle,
+  type OracleDeadPlayerOption,
   Philosopher,
   Princess,
   Prodigy,
@@ -51,6 +52,8 @@ import { roleByName } from "../model/roleRegistry";
 export type ClaimWithTimelineContext = Claim & {
   readonly neighbors?: readonly string[];
   readonly neighborOptions?: readonly EmpathNeighborOption[];
+  readonly deadPlayers?: readonly string[];
+  readonly deadPlayerOptions?: readonly OracleDeadPlayerOption[];
 };
 
 function timingOf(t: string | undefined): Timing | undefined {
@@ -168,7 +171,12 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
         evilCount: claim.evilCount,
       });
     case "Oracle":
-      return new Oracle({ ...base, count: claim.count, deadPlayers: claim.deadPlayers });
+      return new Oracle({
+        ...base,
+        count: claim.count,
+        deadPlayers: claim.deadPlayers,
+        deadPlayerOptions: claim.deadPlayerOptions,
+      });
     case "Steward":
       return new Steward({ ...base, goodPlayer: claim.goodPlayer });
     case "Knight":
@@ -241,7 +249,7 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
     case "Shugenja":
       return new Shugenja({ ...base, evilDirection: claim.evilDirection });
     case "Clockmaker":
-      return new Clockmaker({ ...base, distance: claim.distance, seating: claim.seating });
+      return new Clockmaker({ ...base, distance: claim.distance });
     case "Courtier":
       return new Courtier({
         ...base,

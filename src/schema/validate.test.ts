@@ -184,11 +184,11 @@ describe("validatePuzzleDoc", () => {
       script: ["Chambermaid", "Clockmaker", "Courtier", "Klutz", "Mathematician", "Oracle", "Sage", "Snake Charmer"],
       claims: [
         { type: "Chambermaid", name: "You", checks: [{ left: "A", right: "B", timing: "night_1", count: 1 }] },
-        { type: "Clockmaker", name: "You", distance: 3, seating: ["You", "A", "B"] },
+        { type: "Clockmaker", name: "You", distance: 3 },
         { type: "Courtier", name: "You", timing: "night_1", role: "Vortox", drunkTimings: ["night_1"] },
         { type: "Klutz", name: "You", timing: "night_2", chosen: "A", lost: false },
         { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
-        { type: "Oracle", name: "You", timing: "night_2", count: 1, deadPlayers: ["A", "B"] },
+        { type: "Oracle", name: "You", timing: "night_2", count: 1 },
         { type: "Sage", name: "You", demonAmong: ["A", "B"] },
         { type: "Snake Charmer", name: "You", checks: [{ player: "A", demon: false, timing: "night_1" }] },
       ],
@@ -196,11 +196,11 @@ describe("validatePuzzleDoc", () => {
 
     expect(doc.claims).toEqual([
       { type: "Chambermaid", name: "You", checks: [{ left: "A", right: "B", timing: "night_1", count: 1 }] },
-      { type: "Clockmaker", name: "You", distance: 3, seating: ["You", "A", "B"] },
+      { type: "Clockmaker", name: "You", distance: 3 },
       { type: "Courtier", name: "You", timing: "night_1", role: "Vortox", drunkTimings: ["night_1"] },
       { type: "Klutz", name: "You", timing: "night_2", chosen: "A", lost: false },
       { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
-      { type: "Oracle", name: "You", timing: "night_2", count: 1, deadPlayers: ["A", "B"] },
+      { type: "Oracle", name: "You", timing: "night_2", count: 1 },
       { type: "Sage", name: "You", demonAmong: ["A", "B"] },
       { type: "Snake Charmer", name: "You", checks: [{ player: "A", demon: false, timing: "night_1" }] },
     ]);

@@ -1232,35 +1232,27 @@ export class Clockmaker extends Role {
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Townsfolk;
   readonly distance?: number;
-  readonly seating?: readonly string[];
   constructor(
     options: RoleBaseOptions & {
       readonly distance?: number;
-      readonly seating?: readonly string[];
     },
   ) {
     super(options);
     this.distance = options.distance;
-    this.seating = options.seating;
   }
   static learnsDemonNextToMinion(game: BOTCModel, name: string): BoolVar {
     return Clockmaker.learnsDemonMinionDistance(game, 1, name);
   }
-  static learnsDemonMinionDistance(
-    game: BOTCModel,
-    distance: number,
-    name: string,
-    seating: readonly string[] = game.players,
-  ): BoolVar {
+  static learnsDemonMinionDistance(game: BOTCModel, distance: number, name: string): BoolVar {
     return game.anyOf(
-      seating.map((demon, demonIndex) => {
-        const minionsAtDistance = seating.flatMap((minion, minionIndex) =>
-          Clockmaker.seatingDistance(seating.length, demonIndex, minionIndex) === distance
+      game.players.map((demon, demonIndex) => {
+        const minionsAtDistance = game.players.flatMap((minion, minionIndex) =>
+          Clockmaker.seatingDistance(game.players.length, demonIndex, minionIndex) === distance
             ? [game.isMinion(minion)]
             : [],
         );
-        const closerSeatsAreNotMinions = seating.flatMap((minion, minionIndex) =>
-          Clockmaker.seatingDistance(seating.length, demonIndex, minionIndex) < distance
+        const closerSeatsAreNotMinions = game.players.flatMap((minion, minionIndex) =>
+          Clockmaker.seatingDistance(game.players.length, demonIndex, minionIndex) < distance
             ? [game.isMinion(minion).not()]
             : [],
         );
@@ -1286,7 +1278,6 @@ export class Clockmaker extends Role {
         game,
         this.distance,
         claimName(this.name, Clockmaker, `demon_${this.distance}_from_minion`),
-        this.seating,
       );
     return undefined;
   }
@@ -1986,27 +1977,58 @@ export class Oracle extends Role {
   static readonly characterType = CharacterType.Townsfolk;
   readonly count?: number;
   readonly deadPlayers: readonly string[];
+  readonly deadPlayerOptions?: readonly OracleDeadPlayerOption[];
 
   constructor(
     options: RoleBaseOptions & {
       readonly count?: number;
       readonly deadPlayers?: readonly string[];
+      readonly deadPlayerOptions?: readonly OracleDeadPlayerOption[];
     },
   ) {
     super(options);
     this.count = options.count;
     this.deadPlayers = options.deadPlayers ?? [];
+    this.deadPlayerOptions = options.deadPlayerOptions;
   }
 
   static learnsDeadEvilCount(game: BOTCModel, deadPlayers: readonly string[], count: number): BoolVar {
     return game.registeredEvilCount(deadPlayers, count, `oracle_dead_evil_count_is_${count}`);
   }
 
-  override learnedInfo(game: BOTCModel): BoolLike | undefined {
-    return this.count === undefined || this.deadPlayers.length === 0
-      ? undefined
-      : Oracle.learnsDeadEvilCount(game, this.deadPlayers, this.count);
+  static learnsConditionalDeadEvilCount(
+    game: BOTCModel,
+    count: number,
+    name: string,
+    deadPlayerOptions: readonly OracleDeadPlayerOption[],
+  ): BoolVar {
+    return game.anyOf(
+      deadPlayerOptions.map((option, index) =>
+        game.allOf(
+          [
+            option.activeIf,
+            game.registeredEvilCount(option.deadPlayers, count, `${name}_option_${index + 1}_dead_evil_count`),
+          ],
+          `${name}_option_${index + 1}_active`,
+        ),
+      ),
+      `${name}_conditional`,
+    );
   }
+
+  override learnedInfo(game: BOTCModel): BoolLike | undefined {
+    if (this.count === undefined) return undefined;
+    const name = claimName(this.name, Oracle, "count");
+    if (this.deadPlayerOptions !== undefined) {
+      return Oracle.learnsConditionalDeadEvilCount(game, this.count, name, this.deadPlayerOptions);
+    }
+    return Oracle.learnsDeadEvilCount(game, this.deadPlayers, this.count);
+  }
+}
+
+export interface OracleDeadPlayerOption {
+  readonly deadPlayers: readonly string[];
+  readonly activeIf: BoolLike;
 }
 
 export class Nightwatchman extends Role {

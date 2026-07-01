@@ -393,7 +393,7 @@ describe("buildFromDoc", () => {
     ).toBe(true);
   });
 
-  test("Clockmaker can use a local seating order", async () => {
+  test("Clockmaker uses the puzzle seating order", async () => {
     const worlds = await buildFromDoc(
       {
         players: ["Demon", "Minion", "Clockmaker", "A", "B", "C"],
@@ -412,8 +412,7 @@ describe("buildFromDoc", () => {
           {
             type: "Clockmaker",
             name: "Clockmaker",
-            distance: 3,
-            seating: ["Demon", "A", "B", "Minion", "C", "Clockmaker"],
+            distance: 1,
           },
         ],
       },
@@ -650,32 +649,42 @@ describe("buildFromDoc", () => {
   test("Oracle counts evil dead players", async () => {
     const validWorlds = await buildFromDoc(
       {
-        players: ["A", "B", "C"],
-        script: ["Oracle", "Imp", "Clockmaker"],
+        players: ["A", "B", "C", "D"],
+        script: ["Oracle", "Baron", "Imp", "Clockmaker"],
         setup: "none",
         uniqueCharacters: true,
         fixedRoles: [
           { name: "A", roles: ["Oracle"] },
-          { name: "B", roles: ["Imp"] },
+          { name: "B", roles: ["Baron"] },
           { name: "C", roles: ["Clockmaker"] },
+          { name: "D", roles: ["Imp"] },
         ],
-        claims: [{ type: "Oracle", name: "A", timing: "night_2", count: 1, deadPlayers: ["B", "C"] }],
+        timeline: [
+          { timing: "day_1", type: "execution", players: ["B"] },
+          { timing: "day_1", type: "doomsayerDeath", players: ["C"] },
+        ],
+        claims: [{ type: "Oracle", name: "A", timing: "night_2", count: 1 }],
       },
       backend,
     ).solveAll();
 
     const invalidWorlds = await buildFromDoc(
       {
-        players: ["A", "B", "C"],
-        script: ["Oracle", "Imp", "Clockmaker"],
+        players: ["A", "B", "C", "D"],
+        script: ["Oracle", "Baron", "Imp", "Clockmaker"],
         setup: "none",
         uniqueCharacters: true,
         fixedRoles: [
           { name: "A", roles: ["Oracle"] },
-          { name: "B", roles: ["Imp"] },
+          { name: "B", roles: ["Baron"] },
           { name: "C", roles: ["Clockmaker"] },
+          { name: "D", roles: ["Imp"] },
         ],
-        claims: [{ type: "Oracle", name: "A", timing: "night_2", count: 0, deadPlayers: ["B", "C"] }],
+        timeline: [
+          { timing: "day_1", type: "execution", players: ["B"] },
+          { timing: "day_1", type: "doomsayerDeath", players: ["C"] },
+        ],
+        claims: [{ type: "Oracle", name: "A", timing: "night_2", count: 0 }],
       },
       backend,
     ).solveAll();

@@ -215,16 +215,10 @@ function validateClaim(input: unknown, path: string): Claim {
       };
     }
     case "Empath": {
-      const neighbors =
-        input["neighbors"] === undefined ? undefined : expectStringArray(input["neighbors"], `${path}.neighbors`);
-      if (neighbors !== undefined && neighbors.length !== 2) {
-        throw new ValidationError(`Empath 'neighbors' must have exactly 2 players`, `${path}.neighbors`);
-      }
       return {
         ...base,
         type: "Empath",
         count: input["count"] === undefined ? undefined : expectNumber(input["count"], `${path}.count`),
-        neighbors,
       };
     }
     case "Exorcist": {
@@ -325,10 +319,6 @@ function validateClaim(input: unknown, path: string): Claim {
         ...base,
         type: "Oracle",
         count: input["count"] === undefined ? undefined : expectNumber(input["count"], `${path}.count`),
-        deadPlayers:
-          input["deadPlayers"] === undefined
-            ? undefined
-            : expectStringArray(input["deadPlayers"], `${path}.deadPlayers`),
       };
     case "Steward":
       return {
@@ -340,10 +330,7 @@ function validateClaim(input: unknown, path: string): Claim {
     case "Knight": {
       const noDemonAmong = expectStringArray(input["noDemonAmong"], `${path}.noDemonAmong`);
       if (noDemonAmong.length > 2) {
-        throw new ValidationError(
-          `Knight 'noDemonAmong' must have at most ${2} players`,
-          `${path}.noDemonAmong`,
-        );
+        throw new ValidationError(`Knight 'noDemonAmong' must have at most ${2} players`, `${path}.noDemonAmong`);
       }
       return {
         ...base,
@@ -510,7 +497,6 @@ function validateClaim(input: unknown, path: string): Claim {
         type: "Clockmaker",
         distance:
           input["distance"] === undefined ? undefined : expectPositiveInteger(input["distance"], `${path}.distance`),
-        seating: input["seating"] === undefined ? undefined : expectStringArray(input["seating"], `${path}.seating`),
       };
     case "Courtier":
       return {

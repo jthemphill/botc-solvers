@@ -166,7 +166,7 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
     case "Noble":
       return { type: "Noble", name, oneEvilAmong: [] };
     case "Oracle":
-      return { type: "Oracle", name, deadPlayers: [] };
+      return { type: "Oracle", name };
     case "Philosopher":
       return { type: "Philosopher", name, timing: "night_1", role: "" };
     case "Princess":
@@ -804,14 +804,7 @@ function ChefBody({ claim, onChange }: { claim: ChefClaim; onChange: (c: Claim) 
   );
 }
 
-function EmpathBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: EmpathClaim; onChange: (c: Claim) => void }) {
-  const setNeighbors = (neighbors: readonly string[]) => {
-    onChange({
-      ...claim,
-      neighbors: neighbors.length === 0 ? undefined : neighbors.slice(0, 2),
-    });
-  };
-
+function EmpathBody({ claim, onChange }: { doc: PuzzleDoc; claim: EmpathClaim; onChange: (c: Claim) => void }) {
   return (
     <div className="field-grid">
       <span>Count</span>
@@ -822,13 +815,6 @@ function EmpathBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: EmpathCla
       />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
-      <span>Neighbors</span>
-      <MultiPlayerSelect
-        players={doc.players}
-        value={claim.neighbors ?? []}
-        onChange={setNeighbors}
-        maxSelections={2}
-      />
     </div>
   );
 }
@@ -1043,12 +1029,6 @@ function OracleBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: OracleCla
         onChange={(event) =>
           onChange({ ...claim, count: event.target.value === "" ? undefined : Number(event.target.value) })
         }
-      />
-      <span>Dead players</span>
-      <MultiPlayerSelect
-        players={doc.players}
-        value={claim.deadPlayers ?? []}
-        onChange={(deadPlayers) => onChange({ ...claim, deadPlayers })}
       />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
@@ -1410,15 +1390,7 @@ function ShugenjaBody({ claim, onChange }: { claim: ShugenjaClaim; onChange: (c:
   );
 }
 
-function ClockmakerBody({
-  doc,
-  claim,
-  onChange,
-}: {
-  doc: PuzzleDoc;
-  claim: ClockmakerClaim;
-  onChange: (c: Claim) => void;
-}) {
+function ClockmakerBody({ claim, onChange }: { doc: PuzzleDoc; claim: ClockmakerClaim; onChange: (c: Claim) => void }) {
   return (
     <div className="field-grid">
       <span>Demon-minion distance</span>
@@ -1430,12 +1402,6 @@ function ClockmakerBody({
       />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
-      <span>Seating override</span>
-      <MultiPlayerSelect
-        players={doc.players}
-        value={claim.seating ?? []}
-        onChange={(seating) => onChange({ ...claim, seating: seating.length === 0 ? undefined : seating })}
-      />
     </div>
   );
 }

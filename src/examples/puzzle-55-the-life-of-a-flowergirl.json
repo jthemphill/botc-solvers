@@ -106,7 +106,6 @@
       "name": "Jasmine",
       "timing": "night_2",
       "count": 1,
-      "deadPlayers": ["Sarah", "Aoife"],
       "extraPossibleActualRoles": ["Mutant"]
     },
     {
@@ -114,7 +113,6 @@
       "name": "Jasmine",
       "timing": "night_3",
       "count": 1,
-      "deadPlayers": ["Sarah", "Aoife", "You", "Matt", "Fraser"],
       "extraPossibleActualRoles": ["Mutant"]
     },
     {

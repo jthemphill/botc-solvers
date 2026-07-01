@@ -295,9 +295,7 @@ function legionarySummary(claim: Extract<Claim, { readonly type: "Legionary" }>)
 
 function oracleSummary(claim: Extract<Claim, { readonly type: "Oracle" }>): string {
   const count = claim.count === undefined ? "Unknown" : String(claim.count);
-  const deadPlayers = claim.deadPlayers?.filter(Boolean) ?? [];
-  const scope = deadPlayers.length === 0 ? "" : ` among ${formatList(deadPlayers)}`;
-  return `${count} dead evil${scope}`;
+  return `${count} dead evil`;
 }
 
 function nightwatchmanSummary(claim: Extract<Claim, { readonly type: "Nightwatchman" }>): string {

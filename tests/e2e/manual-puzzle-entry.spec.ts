@@ -195,7 +195,6 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
     case "Empath":
       if (claim.count !== undefined) await fillField(block, "Count", String(claim.count));
       if (claim.timing !== undefined) await selectField(block, "Timing", claim.timing);
-      await checkPlayers(block, "Neighbors", claim.neighbors ?? []);
       break;
     case "Exorcist":
       for (const [index, choice] of (claim.choices ?? []).entries()) {
@@ -261,7 +260,6 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
     case "Clockmaker":
       if (claim.distance !== undefined) await fillField(block, "Demon-minion distance", String(claim.distance));
       if (claim.timing !== undefined) await selectField(block, "Timing", claim.timing);
-      await checkPlayers(block, "Seating override", claim.seating ?? []);
       break;
     case "Courtier":
       if (claim.role !== undefined) await fillRoleField(block, "Chosen role", claim.role);
@@ -380,7 +378,6 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
       break;
     case "Oracle":
       if (claim.count !== undefined) await fillField(block, "Dead evil count", String(claim.count));
-      await checkPlayers(block, "Dead players", claim.deadPlayers ?? []);
       if (claim.timing !== undefined) await selectField(block, "Timing", claim.timing);
       break;
     case "Philosopher":
@@ -609,6 +606,9 @@ function normalizeClaim(claim: Claim): unknown {
   const normalized = { ...claim } as Record<string, unknown>;
   delete normalized.gameContinued;
   delete normalized.minionRole;
+  delete normalized.deadPlayers;
+  delete normalized.neighbors;
+  delete normalized.seating;
   if (claim.type === "Investigator") {
     normalized.role = claim.role ?? claim.minionRole;
     normalized.among = claim.among.slice(0, 2);

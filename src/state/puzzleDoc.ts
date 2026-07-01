@@ -81,12 +81,6 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
         oneEvilAmong: claim.oneEvilAmong ? remapArr(claim.oneEvilAmong) : claim.oneEvilAmong,
         among: claim.among ? remapArr(claim.among) : claim.among,
       };
-    case "Oracle":
-      return {
-        ...claim,
-        name,
-        deadPlayers: claim.deadPlayers ? remapArr(claim.deadPlayers) : claim.deadPlayers,
-      };
     case "Philosopher":
       return {
         ...claim,
@@ -94,11 +88,6 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
         seamstress:
           claim.seamstress === undefined ? undefined : { ...claim.seamstress, among: remapArr(claim.seamstress.among) },
       };
-    case "Empath": {
-      return { ...claim, name, neighbors: claim.neighbors?.map(remap) };
-    }
-    case "Clockmaker":
-      return { ...claim, name, seating: claim.seating?.map(remap) };
     case "Undertaker":
       return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
     case "Dreamer":
@@ -180,12 +169,6 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
         oneEvilAmong: stripArr(claim.oneEvilAmong),
         among: stripArr(claim.among),
       };
-    case "Oracle":
-      return { ...claim, deadPlayers: stripArr(claim.deadPlayers) };
-    case "Empath":
-      return claim.neighbors?.includes(name) ? { ...claim, neighbors: undefined } : claim;
-    case "Clockmaker":
-      return { ...claim, seating: stripArr(claim.seating) };
     case "Philosopher":
       return claim.seamstress?.among.includes(name) ? { ...claim, seamstress: undefined } : claim;
     case "Steward":

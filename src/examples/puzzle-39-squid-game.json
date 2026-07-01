@@ -87,8 +87,7 @@
       "type": "Oracle",
       "name": "You",
       "timing": "night_2",
-      "count": 1,
-      "deadPlayers": ["Tom", "Aoife", "Fraser"]
+      "count": 1
     },
     {
       "type": "Juggler",

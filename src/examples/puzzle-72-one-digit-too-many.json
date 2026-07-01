@@ -52,7 +52,7 @@
   ],
   "claims": [
     { "type": "Ravenkeeper", "name": "Sarah", "timing": "night_2", "player": "Matt", "role": "Drunk" },
-    { "type": "Oracle", "name": "Tim", "timing": "night_2", "count": 1, "deadPlayers": ["Hannah", "Sarah"] },
+    { "type": "Oracle", "name": "Tim", "timing": "night_2", "count": 1 },
     {
       "type": "Artist",
       "name": "Josh",

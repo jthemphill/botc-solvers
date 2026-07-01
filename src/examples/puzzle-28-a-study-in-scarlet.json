@@ -95,8 +95,7 @@
       "type": "Oracle",
       "name": "Sarah",
       "timing": "night_2",
-      "count": 1,
-      "deadPlayers": ["Adam", "You"]
+      "count": 1
     },
     {
       "type": "Chambermaid",

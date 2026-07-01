@@ -52,7 +52,6 @@ import doc_46_the_princess_diaries from "./puzzle-46-the-princess-diaries.json";
 import doc_47_we_have_evil_twin_at_home from "./puzzle-47-we-have-evil-twin-at-home.json";
 import doc_48_solving_for_x from "./puzzle-48-solving-for-x.json";
 import doc_49_bastille_day from "./puzzle-49-bastille-day.json";
-import doc_50_art_imitates_life_life_imitates_art from "./puzzle-50-art-imitates-life-life-imitates-art.json";
 import doc_51_weird_science from "./puzzle-51-weird-science.json";
 import doc_52_two_votes_is_enough from "./puzzle-52-two-votes-is-enough.json";
 import doc_53_lets_do_the_time_warp_again from "./puzzle-53-lets-do-the-time-warp-again.json";
@@ -154,10 +153,6 @@ const PUZZLE_DOCS = [
   { id: "puzzle-47-we-have-evil-twin-at-home", data: doc_47_we_have_evil_twin_at_home },
   { id: "puzzle-48-solving-for-x", data: doc_48_solving_for_x },
   { id: "puzzle-49-bastille-day", data: doc_49_bastille_day },
-  {
-    id: "puzzle-50-art-imitates-life-life-imitates-art",
-    data: doc_50_art_imitates_life_life_imitates_art,
-  },
   { id: "puzzle-51-weird-science", data: doc_51_weird_science },
   { id: "puzzle-52-two-votes-is-enough", data: doc_52_two_votes_is_enough },
   { id: "puzzle-53-lets-do-the-time-warp-again", data: doc_53_lets_do_the_time_warp_again },
