@@ -67,7 +67,6 @@ describe("buildFromDoc", () => {
   test("fixed roles allow multiple possible actual roles", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["You", "A", "B"],
         script: ["Imp", "Marionette", "Drunk", "Investigator"],
         setup: "none",
@@ -83,7 +82,6 @@ describe("buildFromDoc", () => {
   test("claims can opt into extra possible actual roles", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Lunatic", "Empath", "Imp"],
         setup: "none",
@@ -105,7 +103,6 @@ describe("buildFromDoc", () => {
   test("Widow in play poisons one player across info timings", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Widow", "Imp", "Chef"],
         setup: "none",
@@ -127,7 +124,6 @@ describe("buildFromDoc", () => {
   test("heard Widow call claims require Widow in play when the claimant is good", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Widow", "Poisoner", "Imp", "Chef"],
         setup: "none",
@@ -148,7 +144,6 @@ describe("buildFromDoc", () => {
   test("Widow in play requires a good player to hear the Widow call", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Widow", "Imp", "Chef"],
         setup: "none",
@@ -169,7 +164,6 @@ describe("buildFromDoc", () => {
   test("evil heard Widow call claims do not force Widow in play", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Widow", "Imp", "Chef"],
         setup: "none",
@@ -190,7 +184,6 @@ describe("buildFromDoc", () => {
   test("Widow and Poisoner on script allow only one active poison source", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Widow", "Poisoner", "Imp", "Chef"],
         setup: "none",
@@ -214,7 +207,6 @@ describe("buildFromDoc", () => {
   test("ordinary poison sources cap the number of poisoned players", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Poisoner", "Imp", "Chef", "Empath"],
         setup: "none",
@@ -239,7 +231,6 @@ describe("buildFromDoc", () => {
   test("heard Widow call claims cannot be true for good players when Widow is off script", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B"],
         script: ["Imp", "Chef"],
         setup: "none",
@@ -255,7 +246,6 @@ describe("buildFromDoc", () => {
   test("Evil Twin in play requires a good player to declare the Evil Twin", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Evil Twin", "Imp", "Snake Charmer"],
         setup: "none",
@@ -276,7 +266,6 @@ describe("buildFromDoc", () => {
   test("good Evil Twin declarations identify the actual Evil Twin", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Evil Twin", "Imp", "Snake Charmer"],
         setup: "none",
@@ -294,7 +283,6 @@ describe("buildFromDoc", () => {
   test("wrong good Evil Twin declarations exclude the world", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Evil Twin", "Imp", "Snake Charmer"],
         setup: "none",
@@ -315,7 +303,6 @@ describe("buildFromDoc", () => {
   test("evil Evil Twin declarations do not force Evil Twin in play", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Evil Twin", "Imp", "Snake Charmer", "Chef"],
         setup: "none",
@@ -333,7 +320,6 @@ describe("buildFromDoc", () => {
   test("custom info statements and forbidden roles constrain the model", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B"],
         script: ["Sage", "Imp"],
         setup: "none",
@@ -358,7 +344,6 @@ describe("buildFromDoc", () => {
   test("Sweetheart death makes one persistent target drunk after the death timing", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Sweetheart", "Chef", "Imp"],
         setup: "none",
@@ -392,7 +377,6 @@ describe("buildFromDoc", () => {
   test("top-level constraints apply as hard truths", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Imp", "Chef"],
         setup: "none",
@@ -412,7 +396,6 @@ describe("buildFromDoc", () => {
   test("Clockmaker can use a local seating order", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["Demon", "Minion", "Clockmaker", "A", "B", "C"],
         script: ["Imp", "Baron", "Clockmaker", "Chef", "Empath", "Investigator"],
         setup: "none",
@@ -443,7 +426,6 @@ describe("buildFromDoc", () => {
   test("Chambermaid counts players who woke due to their ability", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D", "E", "F", "G"],
         script: ["Chambermaid", "Clockmaker", "Oracle", "Exorcist", "Scarlet Woman", "Imp", "Butler"],
         setup: "none",
@@ -479,7 +461,6 @@ describe("buildFromDoc", () => {
   test("Princess nominations block Demon night kills unless poisoned", async () => {
     const blockedWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Princess", "Imp", "Chef", "Empath"],
         setup: "none",
@@ -500,7 +481,6 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const poisonedWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D", "E"],
         script: ["Princess", "Poisoner", "Imp", "Chef", "Empath"],
         setup: "none",
@@ -529,7 +509,6 @@ describe("buildFromDoc", () => {
   test("Exorcist choices block Demon night kills", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Exorcist", "Imp", "Chef"],
         setup: "none",
@@ -551,7 +530,6 @@ describe("buildFromDoc", () => {
   test("Gossip death sources use following-night poisoning", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Gossip", "Poisoner", "Chef", "Empath"],
         setup: "none",
@@ -581,7 +559,6 @@ describe("buildFromDoc", () => {
   test("same-night Poisoner death removes poison before night information", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D", "E"],
         script: ["Chambermaid", "Poisoner", "Imp", "Exorcist", "Chef"],
         setup: "none",
@@ -611,7 +588,6 @@ describe("buildFromDoc", () => {
   test("Gossip-killed Imp does not create an Imp starpass", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Gossip", "Imp", "Poisoner", "Chef"],
         setup: "none",
@@ -640,7 +616,6 @@ describe("buildFromDoc", () => {
   test("Gossip-killed Poisoner does not poison later night information", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D", "E"],
         script: ["Chambermaid", "Gossip", "Poisoner", "Exorcist", "Chef"],
         setup: "none",
@@ -675,7 +650,6 @@ describe("buildFromDoc", () => {
   test("Oracle counts evil dead players", async () => {
     const validWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Oracle", "Imp", "Clockmaker"],
         setup: "none",
@@ -692,7 +666,6 @@ describe("buildFromDoc", () => {
 
     const invalidWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Oracle", "Imp", "Clockmaker"],
         setup: "none",
@@ -714,7 +687,6 @@ describe("buildFromDoc", () => {
   test("night deaths without a catch exclude actual Imp deaths", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B"],
         script: ["Imp", "Sage"],
         setup: "none",
@@ -732,7 +704,6 @@ describe("buildFromDoc", () => {
   test("Demon-sourced night deaths cannot kill sober healthy Soldiers", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Soldier", "Imp", "Chef"],
         setup: "none",
@@ -754,7 +725,6 @@ describe("buildFromDoc", () => {
   test("Demon-sourced night deaths can kill poisoned Soldiers", async () => {
     const game = buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Soldier", "Imp", "Poisoner"],
         setup: "none",
@@ -779,7 +749,6 @@ describe("buildFromDoc", () => {
   test("Tea Lady protection can explain a survived execution", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Tea Lady", "Imp", "Chef", "Empath"],
         setup: "none",
@@ -802,7 +771,6 @@ describe("buildFromDoc", () => {
   test("Tea Lady protected players cannot die unless the Tea Lady is poisoned", async () => {
     const blockedWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Tea Lady", "Imp", "Chef", "Empath"],
         setup: "none",
@@ -820,7 +788,6 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const poisonedWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D", "E"],
         script: ["Tea Lady", "Poisoner", "Imp", "Chef", "Empath"],
         setup: "none",
@@ -846,7 +813,6 @@ describe("buildFromDoc", () => {
   test("Devil's Advocate can explain a survived execution", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Devil's Advocate", "Imp", "Chef"],
         setup: "none",
@@ -868,7 +834,6 @@ describe("buildFromDoc", () => {
   test("Vigormortis-killed Poisoners keep poisoning after death", async () => {
     const withoutVigormortisWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D", "E"],
         script: ["Tea Lady", "Poisoner", "Imp", "Chef", "Empath"],
         setup: "none",
@@ -890,7 +855,6 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const withVigormortisWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D", "E"],
         script: ["Tea Lady", "Poisoner", "Vigormortis", "Chef", "Empath"],
         setup: "none",
@@ -919,7 +883,6 @@ describe("buildFromDoc", () => {
   test("Doomsayer deaths do not exclude players from script demon roles", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B"],
         script: ["Imp", "Sage"],
         setup: "none",
@@ -941,7 +904,6 @@ describe("buildFromDoc", () => {
   test("executions in continuing puzzle docs exclude Hermit", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Hermit", "Imp", "Chef"],
         setup: "none",
@@ -959,7 +921,6 @@ describe("buildFromDoc", () => {
   test("Doomsayer deaths with callers require the same registered alignment", async () => {
     const validWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Imp", "Sage", "Mayor"],
         setup: "none",
@@ -976,7 +937,6 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const invalidWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Imp", "Sage", "Mayor"],
         setup: "none",
@@ -993,7 +953,6 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const spyWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Imp", "Spy", "Sage"],
         setup: "none",
@@ -1017,7 +976,6 @@ describe("buildFromDoc", () => {
   test("night deaths require a living catch when they kill an actual demon", async () => {
     const impWithoutMinionWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B"],
         script: ["Imp", "Chef"],
         setup: "none",
@@ -1033,7 +991,6 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const impWithMinionWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B"],
         script: ["Imp", "Goblin"],
         setup: "none",
@@ -1049,7 +1006,6 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const dyingMinionWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Imp", "Goblin", "Chef"],
         setup: "none",
@@ -1066,7 +1022,6 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const poWithScarletWomanWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B"],
         script: ["Po", "Scarlet Woman"],
         setup: "none",
@@ -1090,7 +1045,6 @@ describe("buildFromDoc", () => {
   test("Slayer shots and Witch curses require a living catch when they kill an actual demon", async () => {
     const slayerShotWithoutCatchWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B"],
         script: ["Imp", "Chef"],
         setup: "none",
@@ -1106,7 +1060,6 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const slayerShotWithCatchWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B"],
         script: ["Imp", "Scarlet Woman"],
         setup: "none",
@@ -1122,7 +1075,6 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const witchCurseWithCatchWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B"],
         script: ["Imp", "Scarlet Woman", "Witch"],
         setup: "none",
@@ -1145,7 +1097,6 @@ describe("buildFromDoc", () => {
   test("Witch curse deaths with callers require a living healthy Witch source", async () => {
     const selfCurseWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Imp", "Witch", "Chef"],
         setup: "none",
@@ -1162,7 +1113,6 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const deadWitchSourceWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Imp", "Witch", "Chef"],
         setup: "none",
@@ -1188,7 +1138,6 @@ describe("buildFromDoc", () => {
   test("Snake Charmer checks use timed Demon roles after Scarlet Woman catches", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "D", "B", "E", "C"],
         script: ["Snake Charmer", "Chef", "Scarlet Woman", "Mathematician", "No Dashii"],
         setup: "none",
@@ -1212,7 +1161,6 @@ describe("buildFromDoc", () => {
   test("Snake Charmer checks same-night Fang Gu before the jump", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["SC", "Demon", "Outsider", "Witch"],
         script: ["Snake Charmer", "Fang Gu", "Mutant", "Witch"],
         setup: "none",
@@ -1234,7 +1182,6 @@ describe("buildFromDoc", () => {
 
   test("standard puzzle docs require the final observed state to have a living demon path", async () => {
     const baseDoc = {
-      version: 1,
       players: ["A", "B", "C", "D", "E"],
       script: ["Imp", "Goblin", "Chef", "Empath", "Ravenkeeper"],
       fixedRoles: [
@@ -1271,7 +1218,6 @@ describe("buildFromDoc", () => {
   test("standard puzzle docs allow a final observed Fang Gu jump", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["Demon", "Outsider", "Witch", "A", "B", "C", "D", "E"],
         script: ["Fang Gu", "Witch", "Mutant", "Klutz", "Chef", "Empath", "Artist", "Juggler", "Dreamer"],
         uniqueCharacters: true,
@@ -1297,7 +1243,6 @@ describe("buildFromDoc", () => {
   test("executed Legion players can leave an ongoing Legion game", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Legion", "Chef"],
         setup: "none",
@@ -1319,7 +1264,6 @@ describe("buildFromDoc", () => {
   test("night-killed Legion players can leave an ongoing Legion game", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Legion", "Chef"],
         setup: "none",
@@ -1341,7 +1285,6 @@ describe("buildFromDoc", () => {
   test("Riot nominations can kill the starting Riot while a Minion becomes Riot", async () => {
     const game = buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D", "E", "F", "G"],
         script: ["Riot", "Baron", "Drunk", "Recluse", "Chef", "Empath", "Ravenkeeper"],
         fixedRoles: [
@@ -1370,7 +1313,6 @@ describe("buildFromDoc", () => {
   test("Fang Gu night deaths can jump to a living Outsider", async () => {
     const game = buildFromDoc(
       {
-        version: 1,
         players: ["Fang Gu", "Mutant", "Artist"],
         script: ["Fang Gu", "Witch", "Mutant", "Artist"],
         setup: "none",
@@ -1399,7 +1341,6 @@ describe("buildFromDoc", () => {
   test("Fang Gu demon kills cannot show an unjumped Outsider death", async () => {
     const fangGuWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["Fang Gu", "Mutant", "Artist"],
         script: ["Fang Gu", "Mutant", "Artist"],
         setup: "none",
@@ -1417,7 +1358,6 @@ describe("buildFromDoc", () => {
 
     const ordinaryDemonWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["Demon", "Mutant", "Artist"],
         script: ["Fang Gu", "Vortox", "Mutant", "Artist"],
         setup: "none",
@@ -1440,7 +1380,6 @@ describe("buildFromDoc", () => {
   test("non-Demon Fang Gu night deaths do not jump", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D", "E"],
         script: ["Gossip", "Fang Gu", "Mutant", "Exorcist", "Artist"],
         setup: "none",
@@ -1478,7 +1417,6 @@ describe("buildFromDoc", () => {
   test("Xaan poisons Townsfolk on the night matching the Outsider count", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Imp", "Xaan", "Drunk", "Chef"],
         setup: "none",
@@ -1504,7 +1442,6 @@ describe("buildFromDoc", () => {
   test("dead Xaan does not poison on the night matching the Outsider count", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D", "E"],
         script: ["Imp", "Xaan", "Drunk", "Puzzlemaster", "Chef"],
         setup: "none",
@@ -1529,7 +1466,6 @@ describe("buildFromDoc", () => {
   test("Atheist setup has no evil team and arbitrary information", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Imp", "Spy", "Atheist", "Artist", "Clockmaker"],
         setup: "atheist",
@@ -1560,7 +1496,6 @@ describe("buildFromDoc", () => {
   test("timeline deaths stop later Poisoner effects", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Imp", "Poisoner", "Investigator"],
         setup: "none",
@@ -1593,7 +1528,6 @@ describe("buildFromDoc", () => {
   test("nightDeath does not encode whether the killed player acted first", async () => {
     const game = buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Imp", "Poisoner", "Investigator"],
         setup: "none",
@@ -1620,7 +1554,6 @@ describe("buildFromDoc", () => {
   test("Demon-sourced night deaths affect same-night Empath neighbors", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Empath", "Chef", "Imp", "Scarlet Woman"],
         setup: "none",
@@ -1643,7 +1576,6 @@ describe("buildFromDoc", () => {
   test("timed Empath claims use living neighbors from the timeline", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Empath", "Imp", "Chef"],
         setup: "none",
@@ -1667,7 +1599,6 @@ describe("buildFromDoc", () => {
   test("Nightwatchman learned result constrains sober healthy claims", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B"],
         script: ["Nightwatchman", "Drunk", "Chef"],
         setup: "none",
@@ -1686,7 +1617,6 @@ describe("buildFromDoc", () => {
   test("Nightwatchman confirmation from a good chosen player requires an active source", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B"],
         script: ["Nightwatchman", "Drunk", "Chef"],
         setup: "none",
@@ -1716,7 +1646,6 @@ describe("buildFromDoc", () => {
   test("Ravenkeeper learned role constrains sober healthy claims", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Ravenkeeper", "Scarlet Woman", "Imp", "Chef"],
         setup: "none",
@@ -1737,7 +1666,6 @@ describe("buildFromDoc", () => {
   test("Ravenkeeper learned role allows Spy registration", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Ravenkeeper", "Spy", "Imp", "Saint"],
         setup: "none",
@@ -1758,7 +1686,6 @@ describe("buildFromDoc", () => {
   test("Undertaker learned role allows Spy registration", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Imp", "Spy", "Undertaker", "Empath"],
         setup: "none",
@@ -1780,7 +1707,6 @@ describe("buildFromDoc", () => {
   test("Courtier drunking disables Vortox false information", async () => {
     const validWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Courtier", "Vortox", "Chef"],
         setup: "none",
@@ -1799,7 +1725,6 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const invalidWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Courtier", "Vortox", "Chef"],
         setup: "none",
@@ -1825,7 +1750,6 @@ describe("buildFromDoc", () => {
   test("Philosopher choice can satisfy chosen role information", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Philosopher", "Snake Charmer", "Imp"],
         setup: "none",
@@ -1855,7 +1779,6 @@ describe("buildFromDoc", () => {
   test("Philosopher choice drunkens the chosen role while the Philosopher is alive", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Philosopher", "Empath", "Imp", "Saint"],
         setup: "none",
@@ -1884,7 +1807,6 @@ describe("buildFromDoc", () => {
   test("custom info statements can use an explicit active role", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Philosopher", "Snake Charmer", "Seamstress", "Imp"],
         setup: "none",
@@ -1913,7 +1835,6 @@ describe("buildFromDoc", () => {
   test("death-causing Acrobat and Gambler claims require the active healthy role", async () => {
     const acrobatWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Acrobat", "Drunk", "Imp"],
         setup: "none",
@@ -1929,7 +1850,6 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const gamblerWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Gambler", "Drunk", "Imp"],
         setup: "none",
@@ -1952,7 +1872,6 @@ describe("buildFromDoc", () => {
   test("Slayer no-kill claims exclude actual demon targets", async () => {
     const killedDemonWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Slayer", "Imp", "Chef"],
         setup: "none",
@@ -1969,7 +1888,6 @@ describe("buildFromDoc", () => {
 
     const livingTownsfolkWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Slayer", "Imp", "Chef"],
         setup: "none",
@@ -1991,7 +1909,6 @@ describe("buildFromDoc", () => {
   test("Slayer kill claims allow Recluse demon registration", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Slayer", "Recluse", "Imp"],
         setup: "none",
@@ -2012,7 +1929,6 @@ describe("buildFromDoc", () => {
   test("Slayer kill claims require an active healthy Slayer", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Slayer", "Drunk", "Recluse", "Imp"],
         setup: "none",
@@ -2033,7 +1949,6 @@ describe("buildFromDoc", () => {
   test("Slayer kill claims require Scarlet Woman for actual demon targets in ongoing games", async () => {
     const noCatchWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B"],
         script: ["Slayer", "Imp"],
         setup: "none",
@@ -2048,7 +1963,6 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const catchWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Slayer", "Imp", "Scarlet Woman"],
         setup: "none",
@@ -2070,7 +1984,6 @@ describe("buildFromDoc", () => {
   test("Klutz no-loss claims require a healthy Klutz to choose good", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Klutz", "Imp", "Chef"],
         setup: "none",
@@ -2091,7 +2004,6 @@ describe("buildFromDoc", () => {
   test("Klutz no-loss claims can be disabled by poisoning", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Klutz", "Imp", "Poisoner"],
         setup: "none",
@@ -2113,7 +2025,6 @@ describe("buildFromDoc", () => {
   test("day Slayer shots use the corresponding night poison state", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Slayer", "Imp", "Poisoner", "Chef"],
         setup: "none",
@@ -2138,7 +2049,6 @@ describe("buildFromDoc", () => {
   test("Virgin no-proc claims exclude Townsfolk nominators", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Virgin", "Imp", "Chef"],
         setup: "none",
@@ -2159,7 +2069,6 @@ describe("buildFromDoc", () => {
   test("Virgin execution can be triggered by Spy registration", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Virgin", "Spy", "Imp"],
         setup: "none",
@@ -2180,7 +2089,6 @@ describe("buildFromDoc", () => {
   test("multiple Village Idiots make one real Village Idiot drunk", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C"],
         script: ["Village Idiot", "Imp"],
         setup: "none",
@@ -2202,7 +2110,6 @@ describe("buildFromDoc", () => {
   test("Puzzlemaster drunking can coexist with a single Village Idiot", async () => {
     const worlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Puzzlemaster", "Village Idiot", "Chef", "Imp"],
         setup: "none",
@@ -2227,7 +2134,6 @@ describe("buildFromDoc", () => {
 
   test("Puzzlemaster guesses constrain learned Demon information", async () => {
     const baseDoc = {
-      version: 1 as const,
       players: ["A", "B", "C", "D"],
       script: ["Puzzlemaster", "Chef", "Empath", "Imp"],
       setup: "none" as const,
@@ -2268,7 +2174,6 @@ describe("buildFromDoc", () => {
   test("Legionary counts living evil players before the next living Legionary", async () => {
     const validWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Legionary", "Imp", "Chef"],
         setup: "none",
@@ -2286,7 +2191,6 @@ describe("buildFromDoc", () => {
 
     const invalidWorlds = await buildFromDoc(
       {
-        version: 1,
         players: ["A", "B", "C", "D"],
         script: ["Legionary", "Imp", "Chef"],
         setup: "none",

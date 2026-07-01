@@ -17,7 +17,6 @@ describe("script role helpers", () => {
 
   test("orders juggler guesses by claimed role, hidden roles, then remaining script roles", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["Alice", "Bob"],
       script: ["Chef", "Imp", "Empath", "Poisoner", "Drunk", "Juggler", "Knight"],
       claims: [
@@ -39,7 +38,6 @@ describe("script role helpers", () => {
 
   test("limits juggler guess roles to the script", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["Alice"],
       script: ["Imp", "Drunk", "Chef"],
       claims: [{ type: "Empath", name: "Alice", count: 1 }],

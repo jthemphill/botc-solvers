@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import { validatePuzzleDoc } from "./validate";
 
 const baseDoc = {
-  version: 1,
   players: ["You"],
   script: ["Savant"],
 };

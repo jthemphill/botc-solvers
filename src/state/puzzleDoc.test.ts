@@ -6,7 +6,6 @@ import { docReducer as reducer, reducer as puzzleReducer } from "./puzzleDoc";
 describe("puzzle document reducer", () => {
   test("claim roles are added to the protected script", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B", "C"],
       script: [],
       claims: [],
@@ -29,7 +28,6 @@ describe("puzzle document reducer", () => {
 
   test("setScript cannot remove roles referenced by claims or role constraints", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B", "C"],
       script: ["Imp", "Juggler", "Savant"],
       fixedRoles: [{ name: "A", roles: ["Savant"] }],
@@ -44,7 +42,6 @@ describe("puzzle document reducer", () => {
 
   test("savant DSL role identifiers protect matching script roles", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B"],
       script: [],
       claims: [
@@ -65,7 +62,6 @@ describe("puzzle document reducer", () => {
 
   test("savant DSL function names do not protect matching role names", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B"],
       script: [],
       claims: [
@@ -85,7 +81,6 @@ describe("puzzle document reducer", () => {
 
   test("custom info DSL role identifiers protect matching script roles", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B"],
       script: [],
       claims: [
@@ -105,7 +100,6 @@ describe("puzzle document reducer", () => {
 
   test("load sorts timeline events", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B", "C"],
       script: [],
       timeline: [
@@ -127,7 +121,6 @@ describe("puzzle document reducer", () => {
 
   test("Fortune Teller checks normalize into one claim per night", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B", "C"],
       script: [],
       claims: [
@@ -160,7 +153,6 @@ describe("puzzle document reducer", () => {
 
   test("Snake Charmer checks normalize into one claim per night", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B", "C"],
       script: [],
       claims: [
@@ -195,7 +187,6 @@ describe("puzzle document reducer", () => {
 
   test("setPlayerCount removes affected player references", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B", "C"],
       script: ["Investigator"],
       fixedRoles: [{ name: "C", roles: ["Investigator"] }],
@@ -222,7 +213,6 @@ describe("puzzle document reducer", () => {
 
   test("renamePlayer updates timeline references", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B", "C"],
       script: [],
       timeline: [
@@ -250,7 +240,6 @@ describe("puzzle document reducer", () => {
 
   test("renamePlayer updates Slayer targets", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B"],
       script: ["Slayer"],
       claims: [{ type: "Slayer", name: "A", timing: "day_1", target: "B", killed: false }],
@@ -263,7 +252,6 @@ describe("puzzle document reducer", () => {
 
   test("removePlayer removes empty timeline events", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B"],
       script: [],
       timeline: [{ timing: "night_2", type: "nightDeath", players: ["B"] }],
@@ -278,7 +266,6 @@ describe("puzzle document reducer", () => {
 
   test("setTimeline records manual deaths and executions", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B", "C"],
       script: [],
       claims: [],
@@ -300,7 +287,6 @@ describe("puzzle document reducer", () => {
 
   test("setTimeline sorts modified events by timing", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B", "C", "D"],
       script: [],
       claims: [],
@@ -326,7 +312,6 @@ describe("puzzle document reducer", () => {
 
   test("setTimeline normalizes invalid and empty events", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B", "C"],
       script: [],
       claims: [],
@@ -352,7 +337,6 @@ describe("puzzle document reducer", () => {
 
   test("killed Slayer claims maintain a matching timeline event", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B", "C"],
       script: ["Slayer"],
       claims: [],
@@ -385,7 +369,6 @@ describe("puzzle document reducer", () => {
 
   test("movePlayerTo reorders players without changing claims", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B", "C", "D"],
       script: ["Investigator"],
       claims: [{ type: "Investigator", name: "A", among: ["B", "C"] }],
@@ -399,7 +382,6 @@ describe("puzzle document reducer", () => {
 
   test("Knight claims are capped at two no-demon players", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       players: ["A", "B", "C"],
       script: ["Knight"],
       claims: [],
@@ -415,7 +397,6 @@ describe("puzzle document reducer", () => {
 
   test("solve action stores current results and ignores stale completions", () => {
     const doc: PuzzleDoc = {
-      version: 1,
       title: "First",
       players: ["A"],
       script: ["Imp"],

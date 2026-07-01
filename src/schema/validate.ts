@@ -47,8 +47,6 @@ function expectNumber(v: unknown, path: string): number {
 
 export function validatePuzzleDoc(input: unknown): PuzzleDoc {
   if (!isObject(input)) throw new ValidationError(`Expected object`, "$");
-  if (input["version"] !== undefined && input["version"] !== 1)
-    throw new ValidationError(`Unsupported version (expected 1)`, "$.version");
   const players = expectStringArray(input["players"], "$.players");
   const script = expectStringArray(input["script"], "$.script");
   const claims = input["claims"];
