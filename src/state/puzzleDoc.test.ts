@@ -380,21 +380,6 @@ describe("puzzle document reducer", () => {
     expect(next.claims).toEqual(doc.claims);
   });
 
-  test("Knight claims are capped at two no-demon players", () => {
-    const doc: PuzzleDoc = {
-      players: ["A", "B", "C"],
-      script: ["Knight"],
-      claims: [],
-    };
-
-    const next = reducer(doc, {
-      type: "addClaim",
-      claim: { type: "Knight", name: "A", noDemonAmong: ["A", "B", "C"] },
-    });
-
-    expect(next.claims).toEqual([{ type: "Knight", name: "A", noDemonAmong: ["A", "B"] }]);
-  });
-
   test("solve action stores current results and ignores stale completions", () => {
     const doc: PuzzleDoc = {
       title: "First",

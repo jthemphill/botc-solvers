@@ -1,5 +1,4 @@
 import {
-  KNIGHT_NO_DEMON_AMONG_MAX,
   type Claim,
   type PuzzleDoc,
   SUPPORTED_CLAIM_TYPES,
@@ -340,9 +339,9 @@ function validateClaim(input: unknown, path: string): Claim {
       };
     case "Knight": {
       const noDemonAmong = expectStringArray(input["noDemonAmong"], `${path}.noDemonAmong`);
-      if (noDemonAmong.length > KNIGHT_NO_DEMON_AMONG_MAX) {
+      if (noDemonAmong.length > 2) {
         throw new ValidationError(
-          `Knight 'noDemonAmong' must have at most ${KNIGHT_NO_DEMON_AMONG_MAX} players`,
+          `Knight 'noDemonAmong' must have at most ${2} players`,
           `${path}.noDemonAmong`,
         );
       }

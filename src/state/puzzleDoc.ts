@@ -1,4 +1,4 @@
-import { KNIGHT_NO_DEMON_AMONG_MAX, type Claim, type PuzzleDoc, type TimelineEventDoc } from "../schema/puzzleDoc";
+import { type Claim, type PuzzleDoc, type TimelineEventDoc } from "../schema/puzzleDoc";
 import type { SerializableWorld } from "../worker/protocol";
 import { scriptWithProtectedRoles, withProtectedScript } from "./scriptRoles";
 
@@ -367,23 +367,6 @@ function normalizeClaim(claim: Claim): Claim {
     };
   } else {
     claim = claimWithoutLegacyRegisters;
-  }
-  if (claim.type === "Knight" && claim.noDemonAmong.length > KNIGHT_NO_DEMON_AMONG_MAX) {
-    return { ...claim, noDemonAmong: claim.noDemonAmong.slice(0, KNIGHT_NO_DEMON_AMONG_MAX) };
-  }
-  if (claim.type === "Investigator") {
-    const { minionRole, ...investigatorClaim } = claim;
-    return {
-      ...investigatorClaim,
-      role: investigatorClaim.role ?? minionRole,
-      among: investigatorClaim.among.slice(0, 2),
-    };
-  }
-  if (claim.type === "Librarian" && claim.among !== undefined && claim.among.length > 2) {
-    return { ...claim, among: claim.among.slice(0, 2) };
-  }
-  if (claim.type === "Washerwoman" && claim.among.length > 2) {
-    return { ...claim, among: claim.among.slice(0, 2) };
   }
   if (claim.type === "Slayer") {
     const { gameContinued: _gameContinued, ...slayerClaim } = claim;

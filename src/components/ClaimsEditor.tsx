@@ -56,7 +56,7 @@ import type {
   VillageIdiotClaim,
   WasherwomanClaim,
 } from "../schema/puzzleDoc";
-import { KNIGHT_NO_DEMON_AMONG_MAX, SUPPORTED_CLAIM_TYPES } from "../schema/puzzleDoc";
+import { SUPPORTED_CLAIM_TYPES } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
 import { RoleListEditor, RoleTypeahead, sortedRoleNames } from "./RolePicker";
 
@@ -1026,6 +1026,7 @@ function NobleBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: NobleClaim
         players={doc.players}
         value={claim.oneEvilAmong ?? []}
         onChange={(v) => onChange({ ...claim, oneEvilAmong: v })}
+        maxSelections={3}
       />
     </div>
   );
@@ -1286,7 +1287,7 @@ function KnightBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: KnightCla
         players={doc.players}
         value={claim.noDemonAmong}
         onChange={(v) => onChange({ ...claim, noDemonAmong: v })}
-        maxSelections={KNIGHT_NO_DEMON_AMONG_MAX}
+        maxSelections={2}
       />
     </div>
   );
