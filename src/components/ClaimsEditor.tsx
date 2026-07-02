@@ -103,14 +103,26 @@ export function ClaimsEditor({ doc, dispatch }: Props) {
     <section className="panel">
       <h3>Claims</h3>
       <div className="row">
-        <select value={newType} onChange={(e) => setNewType(e.target.value as Claim["type"])}>
+        <select
+          id="claim-type"
+          name="claim-type"
+          aria-label="Claim type"
+          value={newType}
+          onChange={(e) => setNewType(e.target.value as Claim["type"])}
+        >
           {CLAIM_TYPES.map((t) => (
             <option key={t} value={t}>
               {t}
             </option>
           ))}
         </select>
-        <select value={newName} onChange={(e) => setNewName(e.target.value)}>
+        <select
+          id="claim-player"
+          name="claim-player"
+          aria-label="Claiming player"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+        >
           <option value="">— player —</option>
           {doc.players.map((p) => (
             <option key={p} value={p}>

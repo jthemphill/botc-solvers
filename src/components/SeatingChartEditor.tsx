@@ -405,6 +405,8 @@ function PlayerCountInput({ value, onChange }: { value: number; onChange: (value
 
   return (
     <input
+      id="player-count"
+      name="player-count"
       type="number"
       min={0}
       max={20}
@@ -480,7 +482,13 @@ export function DrawWorkbench({ doc, dispatch, selectedIndex }: DrawWorkbenchPro
           </button>
         </header>
         <div className="claim-add-row">
-          <select value={newType} onChange={(event) => setNewType(event.target.value as Claim["type"])}>
+          <select
+            id="draw-claim-type"
+            name="draw-claim-type"
+            aria-label="Claim type"
+            value={newType}
+            onChange={(event) => setNewType(event.target.value as Claim["type"])}
+          >
             {CLAIM_TYPES.map((type) => (
               <option key={type} value={type}>
                 {type}

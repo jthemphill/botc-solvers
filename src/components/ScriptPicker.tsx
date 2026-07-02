@@ -68,9 +68,11 @@ export function ScriptPicker({ doc, dispatch }: Props) {
       </header>
 
       <div className="script-rules-grid">
-        <label>
+        <label htmlFor="script-setup">
           <span>Setup</span>
           <select
+            id="script-setup"
+            name="script-setup"
             value={doc.setup ?? "standard"}
             onChange={(event) =>
               dispatch({
@@ -86,6 +88,8 @@ export function ScriptPicker({ doc, dispatch }: Props) {
         </label>
         <label className="checkbox-row">
           <input
+            id="unique-characters"
+            name="unique-characters"
             type="checkbox"
             checked={doc.uniqueCharacters !== false}
             onChange={(event) =>
@@ -101,6 +105,8 @@ export function ScriptPicker({ doc, dispatch }: Props) {
 
       <div className="hidden-role-search">
         <input
+          id="role-search"
+          name="role-search"
           type="text"
           list="role-options"
           value={search}
