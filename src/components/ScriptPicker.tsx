@@ -1,7 +1,7 @@
 import { useMemo, useState, type Dispatch, type KeyboardEvent } from "react";
 import { CharacterType } from "../model/core";
 import { ROLE_CLASSES } from "../model/roleRegistry";
-import { roleEmoji } from "../model/roleEmoji";
+import { roleEmoji, roleEmojiLabel } from "../model/roleEmoji";
 import type { PuzzleDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
 import { ALL_ROLE_NAMES, canonicalRoleName, protectedScriptRoles } from "../state/scriptRoles";
@@ -113,7 +113,7 @@ export function ScriptPicker({ doc, dispatch }: Props) {
           {roleOptions
             .filter((name) => !selected.has(name))
             .map((name) => (
-              <option key={name} value={name} />
+              <option key={name} value={roleEmojiLabel(name)} />
             ))}
         </datalist>
         <button
