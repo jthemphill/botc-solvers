@@ -16,12 +16,6 @@
     "Recluse",
     "Saint"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Ravenkeeper", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -71,7 +65,8 @@
       "name": "You",
       "timing": "night_3",
       "player": "Fraser",
-      "role": "Chef"
+      "role": "Chef",
+      "possibleActualRoles": ["Ravenkeeper", "Drunk"]
     },
     {
       "type": "Chef",

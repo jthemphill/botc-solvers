@@ -20,8 +20,6 @@ export type PuzzleDocAction =
   | { type: "setSetup"; setup: PuzzleDoc["setup"] }
   | { type: "setUniqueCharacters"; uniqueCharacters: PuzzleDoc["uniqueCharacters"] }
   | { type: "setScript"; script: readonly string[] }
-  | { type: "setFixedRoles"; fixedRoles: PuzzleDoc["fixedRoles"] }
-  | { type: "setForbiddenRoles"; forbiddenRoles: PuzzleDoc["forbiddenRoles"] }
   | { type: "setConstraints"; constraints: PuzzleDoc["constraints"] }
   | { type: "setTimeline"; timeline: PuzzleDoc["timeline"] }
   | { type: "addClaim"; claim: Claim }
@@ -377,12 +375,14 @@ function normalizeClaims(claim: Claim): Claim[] {
 
 export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc {
   switch (action.type) {
-    case "load":
+    case "load": {
+      const claims = action.doc.claims.flatMap(normalizeClaims);
       return withProtectedScript({
         ...action.doc,
         timeline: normalizeTimeline(action.doc.timeline, action.doc.players),
-        claims: action.doc.claims.flatMap(normalizeClaims),
+        claims,
       });
+    }
     case "setTitle":
       return { ...state, title: action.title };
     case "setPlayerCount": {
@@ -408,10 +408,8 @@ export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc
         }
         return next === undefined ? [] : [next];
       });
-      const fixedRoles = state.fixedRoles?.filter((fixedRole) => !removed.has(fixedRole.name));
-      const forbiddenRoles = state.forbiddenRoles?.filter((forbiddenRole) => !removed.has(forbiddenRole.name));
       const timeline = removeTimelineNames(state.timeline, removed);
-      return { ...state, players, claims, fixedRoles, forbiddenRoles, timeline };
+      return { ...state, players, claims, timeline };
     }
     case "addPlayer":
       if (!action.name || state.players.includes(action.name)) return state;
@@ -427,24 +425,16 @@ export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc
         const next = removeNameFromClaim(c, name);
         return next === undefined ? [] : [next];
       });
-      const fixedRoles = state.fixedRoles?.filter((fixedRole) => fixedRole.name !== name);
-      const forbiddenRoles = state.forbiddenRoles?.filter((forbiddenRole) => forbiddenRole.name !== name);
       const timeline = removeTimelineNames(state.timeline, new Set([name]));
-      return { ...state, players, claims, fixedRoles, forbiddenRoles, timeline };
+      return { ...state, players, claims, timeline };
     }
     case "renamePlayer": {
       const oldName = state.players[action.index];
       if (oldName === undefined || !action.name || state.players.includes(action.name)) return state;
       const players = state.players.map((n, i) => (i === action.index ? action.name : n));
       const claims = state.claims.map((c) => rewriteName(c, oldName, action.name));
-      const fixedRoles = state.fixedRoles?.map((fixedRole) =>
-        fixedRole.name === oldName ? { ...fixedRole, name: action.name } : fixedRole,
-      );
-      const forbiddenRoles = state.forbiddenRoles?.map((forbiddenRole) =>
-        forbiddenRole.name === oldName ? { ...forbiddenRole, name: action.name } : forbiddenRole,
-      );
       const timeline = rewriteTimelineName(state.timeline, oldName, action.name);
-      return { ...state, players, claims, fixedRoles, forbiddenRoles, timeline };
+      return { ...state, players, claims, timeline };
     }
     case "movePlayer": {
       const dir = action.direction === "up" ? -1 : 1;
@@ -482,10 +472,6 @@ export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc
       const script = scriptWithProtectedRoles(action.script, state);
       return { ...state, script };
     }
-    case "setFixedRoles":
-      return withProtectedScript({ ...state, fixedRoles: action.fixedRoles });
-    case "setForbiddenRoles":
-      return withProtectedScript({ ...state, forbiddenRoles: action.forbiddenRoles });
     case "setConstraints":
       return withProtectedScript({ ...state, constraints: action.constraints });
     case "setTimeline":

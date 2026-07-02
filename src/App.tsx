@@ -1,6 +1,6 @@
 import { useReducer, useState } from "react";
 import { ClaimsEditor } from "./components/ClaimsEditor";
-import { FixedRolesEditor } from "./components/FixedRolesEditor";
+import { ConstraintsEditor } from "./components/ConstraintsEditor";
 import { ImportExportBar } from "./components/ImportExportBar";
 import { PuzzleHeader } from "./components/PuzzleHeader";
 import { ResultsView } from "./components/ResultsView";
@@ -101,7 +101,7 @@ export function App() {
             {activeTab === "script" && (
               <>
                 <ScriptPicker doc={doc} dispatch={dispatch} />
-                <FixedRolesEditor doc={doc} dispatch={dispatch} />
+                <ConstraintsEditor doc={doc} dispatch={dispatch} />
               </>
             )}
             {activeTab === "claims" && <ClaimsEditor doc={doc} dispatch={dispatch} />}

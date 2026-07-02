@@ -13,12 +13,6 @@
     "Mayor",
     "Slayer"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Dreamer"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -56,7 +50,8 @@
       "type": "Dreamer",
       "name": "You",
       "player": "Sarah",
-      "roles": ["Lunatic", "Scarlet Woman"]
+      "roles": ["Lunatic", "Scarlet Woman"],
+      "possibleActualRoles": ["Dreamer"]
     },
     {
       "type": "Clockmaker",
@@ -66,8 +61,8 @@
     {
       "type": "Empath",
       "name": "Fraser",
-      "extraPossibleActualRoles": ["Lunatic"],
-      "count": 0
+      "count": 0,
+      "possibleActualRoles": ["Empath", "Vortox", "Spy", "Scarlet Woman", "Lunatic"]
     }
   ]
 }

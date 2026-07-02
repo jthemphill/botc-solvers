@@ -41,12 +41,6 @@
       "players": ["You"]
     }
   ],
-  "forbiddenRoles": [
-    {
-      "name": "You",
-      "roles": ["No Dashii", "Witch", "Mutant"]
-    }
-  ],
   "claims": [
     {
       "type": "Sage",
@@ -87,7 +81,8 @@
       "type": "Oracle",
       "name": "You",
       "timing": "night_2",
-      "count": 1
+      "count": 1,
+      "possibleActualRoles": ["Oracle"]
     },
     {
       "type": "Juggler",
@@ -107,12 +102,12 @@
       "name": "Matt",
       "timing": "night_1",
       "role": "Seamstress",
-      "extraPossibleActualRoles": ["Mutant"],
       "seamstress": {
         "timing": "night_1",
         "among": ["Aoife", "Tom"],
         "aligned": false
-      }
+      },
+      "possibleActualRoles": ["Philosopher", "No Dashii", "Witch", "Mutant"]
     },
     {
       "type": "Seamstress",

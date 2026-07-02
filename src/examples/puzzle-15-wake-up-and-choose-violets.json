@@ -14,18 +14,12 @@
     "Seamstress",
     "Snake Charmer"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Savant"]
-    }
-  ],
   "claims": [
     {
       "type": "Clockmaker",
       "name": "Fraser",
       "distance": 3,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Clockmaker", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
       "type": "Seamstress",
@@ -33,19 +27,19 @@
       "timing": "night_1",
       "among": ["Oscar", "Hannah"],
       "aligned": false,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Seamstress", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
       "type": "Artist",
       "name": "Adam",
       "timing": "day_1",
-      "extraPossibleActualRoles": ["Mutant"],
       "info": [
         {
           "timing": "day_1",
           "expression": "no p: {You, Oscar, Sarah} | p.role == Vortox"
         }
-      ]
+      ],
+      "possibleActualRoles": ["Artist", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
       "type": "Snake Charmer",
@@ -61,7 +55,7 @@
         "player": "Hannah",
         "timing": "night_1"
       },
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
       "type": "Snake Charmer",
@@ -73,7 +67,7 @@
           "timing": "night_2"
         }
       ],
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
       "type": "Snake Charmer",
@@ -85,7 +79,7 @@
           "timing": "night_3"
         }
       ],
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
       "type": "Savant",
@@ -98,7 +92,8 @@
             "townsfolk_chain_length(5)"
           ]
         }
-      ]
+      ],
+      "possibleActualRoles": ["Savant"]
     },
     {
       "type": "Klutz",
@@ -119,7 +114,7 @@
         "Jasmine": "Snake Charmer"
       },
       "correctCount": 3,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Juggler", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
       "type": "Snake Charmer",
@@ -135,7 +130,7 @@
         "player": "Jasmine",
         "timing": "night_1"
       },
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
       "type": "Snake Charmer",
@@ -147,7 +142,7 @@
           "timing": "night_2"
         }
       ],
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
       "type": "Snake Charmer",
@@ -159,7 +154,7 @@
           "timing": "night_3"
         }
       ],
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     }
   ]
 }

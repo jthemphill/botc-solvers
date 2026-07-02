@@ -16,12 +16,6 @@
     "Undertaker",
     "Washerwoman"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Slayer", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -75,7 +69,8 @@
       "name": "You",
       "timing": "day_2",
       "target": "Fraser",
-      "killed": false
+      "killed": false,
+      "possibleActualRoles": ["Slayer", "Drunk"]
     },
     {
       "type": "Ravenkeeper",

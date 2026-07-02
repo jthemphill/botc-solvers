@@ -14,12 +14,6 @@
     "Knight",
     "Steward"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Acrobat", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "night_2",
@@ -85,7 +79,8 @@
           "player": "Josh",
           "died": true
         }
-      ]
+      ],
+      "possibleActualRoles": ["Acrobat", "Drunk"]
     },
     {
       "type": "Balloonist",

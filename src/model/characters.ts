@@ -30,7 +30,7 @@ export interface InfoClaim {
 export interface RoleBaseOptions {
   readonly name: string;
   readonly timing?: Timing;
-  readonly extraPossibleActualRoles?: readonly RoleRef[];
+  readonly possibleActualRoles?: readonly RoleRef[];
   readonly infoClaims?: readonly InfoClaimBuilder[];
 }
 
@@ -48,7 +48,7 @@ export type ApplyInfoClaim = (game: BOTCModel, claim: AppliedInfoClaim) => void;
 export interface ApplyClaimsOptions extends TimedOptions {
   readonly drunkRole?: RoleRef;
   readonly evilRoles?: readonly RoleRef[];
-  readonly extraPossibleActualRoles?: readonly RoleRef[];
+  readonly possibleActualRoles?: readonly RoleRef[];
   readonly info?: ApplyInfoClaim;
   readonly context?: unknown;
 }
@@ -166,7 +166,7 @@ export abstract class Role {
   readonly maxCopies?: number;
   readonly name: string;
   readonly timing?: Timing;
-  readonly extraPossibleActualRoles: readonly RoleRef[];
+  readonly possibleActualRoles?: readonly RoleRef[];
   readonly infoClaims: readonly InfoClaim[];
 
   constructor(nameOrOptions: string | RoleBaseOptions, options: TimedOptions = {}) {
@@ -179,8 +179,7 @@ export abstract class Role {
     this.characterType = cls.characterType;
     this.maxCopies = cls.maxCopies;
     this.timing = resolvedTiming;
-    this.extraPossibleActualRoles =
-      typeof nameOrOptions === "string" ? [] : (nameOrOptions.extraPossibleActualRoles ?? []);
+    this.possibleActualRoles = typeof nameOrOptions === "string" ? undefined : nameOrOptions.possibleActualRoles;
     this.infoClaims = typeof nameOrOptions === "string" ? [] : (nameOrOptions.infoClaims ?? []).map(normalizeInfoClaim);
   }
 
@@ -210,7 +209,7 @@ export abstract class Role {
       {
         drunkRole,
         evilRoles: options.evilRoles,
-        extraPossibleActualRoles: [...this.extraPossibleActualRoles, ...(options.extraPossibleActualRoles ?? [])],
+        possibleActualRoles: this.possibleActualRoles ?? options.possibleActualRoles,
       },
     );
   }
@@ -752,14 +751,13 @@ export class Prodigy extends Role {
     const evilRoles =
       options.evilRoles ??
       [...game.characters.values()].filter((role) => roleAlignment(role) === Alignment.Evil).map(roleName);
-    const possibleRoles: RoleRef[] = [
-      SolarProdigy,
-      LunarProdigy,
-      ...evilRoles,
-      ...(game.characters.has(Drunk.roleName) ? [Drunk] : []),
-      ...this.extraPossibleActualRoles,
-      ...(options.extraPossibleActualRoles ?? []),
-    ];
+    const possibleRoles: readonly RoleRef[] = this.possibleActualRoles ??
+      options.possibleActualRoles ?? [
+        SolarProdigy,
+        LunarProdigy,
+        ...evilRoles,
+        ...(game.characters.has(Drunk.roleName) ? [Drunk] : []),
+      ];
     game.setPossibleActualRoles(this.name, possibleRoles);
     this.checks.forEach((check, index) => {
       const timing = this.claimTiming(check.timing ?? explicitTiming(options), index);

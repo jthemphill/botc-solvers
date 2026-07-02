@@ -17,12 +17,6 @@
     "Ravenkeeper",
     "Librarian"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Librarian", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -93,7 +87,8 @@
       "type": "Librarian",
       "name": "You",
       "timing": "night_1",
-      "outsiderCount": 0
+      "outsiderCount": 0,
+      "possibleActualRoles": ["Librarian", "Drunk"]
     },
     {
       "type": "Recluse",

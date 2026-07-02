@@ -17,12 +17,6 @@
     "Librarian"
   ],
   "uniqueCharacters": false,
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Ravenkeeper"]
-    }
-  ],
   "constraints": [
     {
       "expression": "#{r : {Washerwoman, Slayer, Saint, Recluse, Ravenkeeper, Empath, Librarian, Mutant} | #{p : players | p.role == r} != 0 && #{p : players | p.role == r} != 1} != 0"
@@ -74,7 +68,7 @@
       "timing": "day_4",
       "target": "Olivia",
       "killed": false,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Slayer", "Imp", "Poisoner", "Spy", "Baron", "Scarlet Woman", "Mutant"]
     },
     {
       "type": "Saint",
@@ -93,7 +87,8 @@
       "name": "You",
       "timing": "night_3",
       "player": "Josh",
-      "role": "Saint"
+      "role": "Saint",
+      "possibleActualRoles": ["Ravenkeeper"]
     },
     {
       "type": "Empath",
@@ -113,7 +108,7 @@
       "timing": "night_1",
       "role": "Mutant",
       "among": ["Dan", "Tim"],
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Librarian", "Imp", "Poisoner", "Spy", "Baron", "Scarlet Woman", "Mutant"]
     },
     {
       "type": "Slayer",

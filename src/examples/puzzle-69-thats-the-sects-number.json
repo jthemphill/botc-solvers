@@ -33,32 +33,52 @@
       "expression": "(no p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Klutz, Sweetheart})} == 2"
     }
   ],
-  "forbiddenRoles": [
-    {
-      "name": "You",
-      "roles": ["Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
-    }
-  ],
   "timeline": [
-    { "timing": "day_1", "type": "witchCurse", "players": ["Oscar"], "caller": "Oscar" },
-    { "timing": "day_1", "type": "execution", "players": ["Matt"] },
-    { "timing": "night_2", "type": "nightDeath", "players": ["Dan"] },
-    { "timing": "day_2", "type": "witchCurse", "players": ["Sarah"], "caller": "Sarah" },
-    { "timing": "day_2", "type": "execution", "players": ["Hannah"] },
-    { "timing": "night_3", "type": "nightDeath", "players": ["You"] }
+    {
+      "timing": "day_1",
+      "type": "witchCurse",
+      "players": ["Oscar"],
+      "caller": "Oscar"
+    },
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Matt"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Dan"]
+    },
+    {
+      "timing": "day_2",
+      "type": "witchCurse",
+      "players": ["Sarah"],
+      "caller": "Sarah"
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Hannah"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["You"]
+    }
   ],
   "claims": [
     {
       "type": "Artist",
       "name": "Fraser",
       "timing": "day_3",
-      "extraPossibleActualRoles": ["Mutant"],
       "info": [
         {
           "timing": "day_3",
           "expression": "Fraser.role != Artist"
         }
-      ]
+      ],
+      "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Juggler",
@@ -75,12 +95,21 @@
     {
       "type": "Mathematician",
       "name": "Tom",
-      "extraPossibleActualRoles": ["Mutant"],
       "malfunctions": [
-        { "timing": "night_1", "count": 2 },
-        { "timing": "night_2", "count": 1 },
-        { "timing": "night_3", "count": 2 }
-      ]
+        {
+          "timing": "night_1",
+          "count": 2
+        },
+        {
+          "timing": "night_2",
+          "count": 1
+        },
+        {
+          "timing": "night_3",
+          "count": 2
+        }
+      ],
+      "possibleActualRoles": ["Mathematician", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Seamstress",
@@ -100,14 +129,23 @@
       "type": "Sage",
       "name": "You",
       "timing": "night_3",
-      "demonAmong": ["Adam", "Tom"]
+      "demonAmong": ["Adam", "Tom"],
+      "possibleActualRoles": ["Sage"]
     },
     {
       "type": "Snake Charmer",
       "name": "Hannah",
       "checks": [
-        { "timing": "night_1", "player": "Sarah", "demon": false },
-        { "timing": "night_2", "player": "Dan", "demon": false }
+        {
+          "timing": "night_1",
+          "player": "Sarah",
+          "demon": false
+        },
+        {
+          "timing": "night_2",
+          "player": "Dan",
+          "demon": false
+        }
       ]
     },
     {
@@ -119,14 +157,14 @@
       "name": "Adam",
       "timing": "night_2",
       "count": 1,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Oracle",
       "name": "Adam",
       "timing": "night_3",
       "count": 1,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     }
   ]
 }

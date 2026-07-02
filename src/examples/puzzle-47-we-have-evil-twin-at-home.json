@@ -17,12 +17,6 @@
     "Undertaker",
     "Washerwoman"
   ],
-  "forbiddenRoles": [
-    {
-      "name": "You",
-      "roles": ["Imp", "Baron", "Poisoner", "Spy", "Scarlet Woman"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -85,7 +79,8 @@
     },
     {
       "type": "Recluse",
-      "name": "You"
+      "name": "You",
+      "possibleActualRoles": ["Recluse"]
     },
     {
       "type": "Investigator",

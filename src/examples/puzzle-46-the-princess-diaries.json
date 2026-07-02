@@ -12,12 +12,6 @@
     "Princess",
     "Gambler"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Clockmaker"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -104,7 +98,8 @@
     {
       "type": "Clockmaker",
       "name": "You",
-      "distance": 3
+      "distance": 3,
+      "possibleActualRoles": ["Clockmaker"]
     },
     {
       "type": "Exorcist",

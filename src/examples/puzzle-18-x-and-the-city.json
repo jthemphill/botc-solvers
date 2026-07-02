@@ -14,12 +14,6 @@
     "Librarian",
     "Snake Charmer"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Librarian", "Drunk"]
-    }
-  ],
   "claims": [
     {
       "type": "Balloonist",
@@ -51,7 +45,8 @@
       "type": "Librarian",
       "name": "You",
       "role": "Drunk",
-      "among": ["Aoife", "Tim"]
+      "among": ["Aoife", "Tim"],
+      "possibleActualRoles": ["Librarian", "Drunk"]
     },
     {
       "type": "Juggler",

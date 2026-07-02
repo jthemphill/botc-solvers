@@ -39,12 +39,6 @@
       "players": ["Anna"]
     }
   ],
-  "forbiddenRoles": [
-    {
-      "name": "You",
-      "roles": ["Imp", "Baron", "Poisoner", "Scarlet Woman", "Spy"]
-    }
-  ],
   "claims": [
     {
       "type": "Saint",
@@ -90,7 +84,8 @@
           "count": 1,
           "timing": "night_3"
         }
-      ]
+      ],
+      "possibleActualRoles": ["Chambermaid", "Drunk"]
     },
     {
       "type": "Investigator",

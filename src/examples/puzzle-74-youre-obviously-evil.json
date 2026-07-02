@@ -18,32 +18,109 @@
     "Empath",
     "Ravenkeeper"
   ],
-  "fixedRoles": [{ "name": "You", "roles": ["Investigator", "Drunk"] }],
   "timeline": [
-    { "timing": "day_1", "type": "execution", "players": ["Fraser"] },
-    { "timing": "night_2", "type": "nightDeath", "players": ["Aoife"] },
-    { "timing": "day_2", "type": "execution", "players": ["Tom"] },
-    { "timing": "night_3", "type": "nightDeath", "players": ["Hannah"] },
-    { "timing": "day_3", "type": "execution", "players": ["Sarah"] },
-    { "timing": "night_4", "type": "nightDeath", "players": ["Dan"] }
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Aoife"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Tom"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Hannah"]
+    },
+    {
+      "timing": "day_3",
+      "type": "execution",
+      "players": ["Sarah"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": ["Dan"]
+    }
   ],
   "claims": [
-    { "type": "Undertaker", "name": "Sarah", "timing": "night_2", "player": "Fraser", "role": "Drunk" },
-    { "type": "Undertaker", "name": "Sarah", "timing": "night_3", "player": "Tom", "role": "Fortune Teller" },
-    { "type": "Chef", "name": "Oscar", "timing": "night_1", "count": 0 },
+    {
+      "type": "Undertaker",
+      "name": "Sarah",
+      "timing": "night_2",
+      "player": "Fraser",
+      "role": "Drunk"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Sarah",
+      "timing": "night_3",
+      "player": "Tom",
+      "role": "Fortune Teller"
+    },
+    {
+      "type": "Chef",
+      "name": "Oscar",
+      "timing": "night_1",
+      "count": 0
+    },
     {
       "type": "FortuneTeller",
       "name": "Tom",
       "checks": [
-        { "timing": "night_1", "left": "Fraser", "right": "Aoife", "yes": true },
-        { "timing": "night_2", "left": "Tom", "right": "Matt", "yes": false }
+        {
+          "timing": "night_1",
+          "left": "Fraser",
+          "right": "Aoife",
+          "yes": true
+        },
+        {
+          "timing": "night_2",
+          "left": "Tom",
+          "right": "Matt",
+          "yes": false
+        }
       ]
     },
-    { "type": "Recluse", "name": "Matt" },
-    { "type": "Saint", "name": "Hannah" },
-    { "type": "Investigator", "name": "You", "timing": "night_1", "minionRole": "Spy", "among": ["Aoife", "Dan"] },
-    { "type": "Butler", "name": "Fraser" },
-    { "type": "Empath", "name": "Aoife", "timing": "night_1", "count": 0 },
-    { "type": "Ravenkeeper", "name": "Dan", "timing": "night_4", "player": "Oscar", "role": "Spy" }
+    {
+      "type": "Recluse",
+      "name": "Matt"
+    },
+    {
+      "type": "Saint",
+      "name": "Hannah"
+    },
+    {
+      "type": "Investigator",
+      "name": "You",
+      "timing": "night_1",
+      "minionRole": "Spy",
+      "among": ["Aoife", "Dan"],
+      "possibleActualRoles": ["Investigator", "Drunk"]
+    },
+    {
+      "type": "Butler",
+      "name": "Fraser"
+    },
+    {
+      "type": "Empath",
+      "name": "Aoife",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Dan",
+      "timing": "night_4",
+      "player": "Oscar",
+      "role": "Spy"
+    }
   ]
 }

@@ -15,12 +15,6 @@
     "Mayor",
     "Slayer"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Librarian"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -71,7 +65,8 @@
       "type": "Librarian",
       "name": "You",
       "role": "Lunatic",
-      "among": ["Fraser", "Steph"]
+      "among": ["Fraser", "Steph"],
+      "possibleActualRoles": ["Librarian"]
     },
     {
       "type": "Investigator",
@@ -82,8 +77,8 @@
     {
       "type": "Empath",
       "name": "Anna",
-      "extraPossibleActualRoles": ["Lunatic"],
-      "count": 1
+      "count": 1,
+      "possibleActualRoles": ["Empath", "Vortox", "Spy", "Scarlet Woman", "Lunatic"]
     },
     {
       "type": "Mayor",

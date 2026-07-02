@@ -15,12 +15,6 @@
     "Oracle",
     "Undertaker"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Chambermaid", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -107,7 +101,8 @@
           "count": 1,
           "timing": "night_1"
         }
-      ]
+      ],
+      "possibleActualRoles": ["Chambermaid", "Drunk"]
     },
     {
       "type": "Juggler",

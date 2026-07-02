@@ -35,12 +35,6 @@
       "expression": "Anna.role == Vortox => Fraser.role != Mathematician"
     }
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Savant"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -74,28 +68,28 @@
       "name": "Josh",
       "timing": "night_2",
       "correctCount": 0,
-      "extraPossibleActualRoles": ["Mutant"],
       "guesses": {
         "You": "Savant",
         "Matthew": "Vigormortis",
         "Fraser": "Mathematician",
         "Steph": "Witch",
         "Tim": "Fang Gu"
-      }
+      },
+      "possibleActualRoles": ["Juggler", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Oracle",
       "name": "Anna",
       "timing": "night_2",
       "count": 0,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Oracle",
       "name": "Anna",
       "timing": "night_3",
       "count": 0,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Dreamer",
@@ -103,7 +97,7 @@
       "timing": "night_1",
       "player": "Fraser",
       "roles": ["Mathematician", "Witch"],
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Dreamer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Dreamer",
@@ -111,19 +105,19 @@
       "timing": "night_2",
       "player": "Josh",
       "roles": ["Mutant", "Fang Gu"],
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Dreamer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Snake Charmer",
       "name": "Oscar",
-      "extraPossibleActualRoles": ["Mutant"],
       "checks": [
         {
           "timing": "night_1",
           "player": "Fraser",
           "demon": false
         }
-      ]
+      ],
+      "possibleActualRoles": ["Snake Charmer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Savant",
@@ -133,7 +127,8 @@
         {
           "options": ["townsfolk_chain_length(3)", "role_distance(3, `No Dashii`, Witch)"]
         }
-      ]
+      ],
+      "possibleActualRoles": ["Savant"]
     },
     {
       "type": "Savant",
@@ -146,7 +141,8 @@
             "((Matthew.type != Steph.type and Steph.type == Josh.type and Josh.type == Tim.type) or (Steph.type != Matthew.type and Matthew.type == Josh.type and Josh.type == Tim.type) or (Josh.type != Matthew.type and Matthew.type == Steph.type and Steph.type == Tim.type) or (Tim.type != Matthew.type and Matthew.type == Steph.type and Steph.type == Josh.type) or (Matthew.type == Steph.type and Josh.type == Tim.type and Matthew.type != Josh.type) or (Matthew.type == Josh.type and Steph.type == Tim.type and Matthew.type != Steph.type) or (Matthew.type == Tim.type and Steph.type == Josh.type and Matthew.type != Steph.type))"
           ]
         }
-      ]
+      ],
+      "possibleActualRoles": ["Savant"]
     },
     {
       "type": "Seamstress",
@@ -154,12 +150,11 @@
       "timing": "night_1",
       "among": ["Fraser", "Anna"],
       "aligned": true,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Seamstress", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Mathematician",
       "name": "Fraser",
-      "extraPossibleActualRoles": ["Mutant"],
       "malfunctions": [
         {
           "timing": "night_1",
@@ -173,7 +168,8 @@
           "timing": "night_3",
           "count": 2
         }
-      ]
+      ],
+      "possibleActualRoles": ["Mathematician", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Sweetheart",

@@ -45,29 +45,88 @@
       "expression": "(some p : players | p.role == Legion) => #{p : {Tim, Josh, Oscar, You, Matt, Fraser} | p.alignment == Good} != 1"
     }
   ],
-  "fixedRoles": [{ "name": "You", "roles": ["Investigator", "Drunk"] }],
   "timeline": [
-    { "timing": "day_1", "type": "execution", "players": ["Hannah"] },
-    { "timing": "night_2", "type": "nightDeath", "players": ["Sarah"] }
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Hannah"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Sarah"]
+    }
   ],
   "claims": [
-    { "type": "Ravenkeeper", "name": "Sarah", "timing": "night_2", "player": "Matt", "role": "Drunk" },
-    { "type": "Oracle", "name": "Tim", "timing": "night_2", "count": 1 },
+    {
+      "type": "Ravenkeeper",
+      "name": "Sarah",
+      "timing": "night_2",
+      "player": "Matt",
+      "role": "Drunk"
+    },
+    {
+      "type": "Oracle",
+      "name": "Tim",
+      "timing": "night_2",
+      "count": 1
+    },
     {
       "type": "Artist",
       "name": "Josh",
       "timing": "day_2",
-      "info": [{ "timing": "day_2", "expression": "some p : players | p.role == Imp" }]
+      "info": [
+        {
+          "timing": "day_2",
+          "expression": "some p : players | p.role == Imp"
+        }
+      ]
     },
-    { "type": "Undertaker", "name": "Oscar", "timing": "night_2", "player": "Hannah", "role": "Chambermaid" },
-    { "type": "Investigator", "name": "You", "timing": "night_1", "role": "Spy", "among": ["Sarah", "Josh"] },
-    { "type": "Empath", "name": "Matt", "timing": "night_1", "count": 1 },
-    { "type": "Empath", "name": "Matt", "timing": "night_2", "count": 1 },
+    {
+      "type": "Undertaker",
+      "name": "Oscar",
+      "timing": "night_2",
+      "player": "Hannah",
+      "role": "Chambermaid"
+    },
+    {
+      "type": "Investigator",
+      "name": "You",
+      "timing": "night_1",
+      "role": "Spy",
+      "among": ["Sarah", "Josh"],
+      "possibleActualRoles": ["Investigator", "Drunk"]
+    },
+    {
+      "type": "Empath",
+      "name": "Matt",
+      "timing": "night_1",
+      "count": 1
+    },
+    {
+      "type": "Empath",
+      "name": "Matt",
+      "timing": "night_2",
+      "count": 1
+    },
     {
       "type": "Chambermaid",
       "name": "Hannah",
-      "checks": [{ "timing": "night_1", "left": "Matt", "right": "Josh", "count": 2 }]
+      "checks": [
+        {
+          "timing": "night_1",
+          "left": "Matt",
+          "right": "Josh",
+          "count": 2
+        }
+      ]
     },
-    { "type": "Librarian", "name": "Fraser", "timing": "night_1", "role": "Drunk", "among": ["You", "Hannah"] }
+    {
+      "type": "Librarian",
+      "name": "Fraser",
+      "timing": "night_1",
+      "role": "Drunk",
+      "among": ["You", "Hannah"]
+    }
   ]
 }

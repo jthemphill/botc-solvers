@@ -16,12 +16,6 @@
     "Ravenkeeper",
     "Undertaker"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Librarian", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -68,7 +62,8 @@
       "type": "Librarian",
       "name": "You",
       "role": "Drunk",
-      "among": ["Sula", "Oscar"]
+      "among": ["Sula", "Oscar"],
+      "possibleActualRoles": ["Librarian", "Drunk"]
     },
     {
       "type": "Clockmaker",

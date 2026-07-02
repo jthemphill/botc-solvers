@@ -14,12 +14,6 @@
     "Solar Prodigy",
     "Lunar Prodigy"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Juggler", "Drunk"]
-    }
-  ],
   "claims": [
     {
       "type": "Shugenja",
@@ -82,7 +76,8 @@
         "Matt": "Leviathan",
         "Olivia": "Scarlet Woman"
       },
-      "correctCount": 0
+      "correctCount": 0,
+      "possibleActualRoles": ["Juggler", "Drunk"]
     },
     {
       "type": "Chef",

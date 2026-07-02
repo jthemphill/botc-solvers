@@ -17,48 +17,79 @@
     "Snake Charmer",
     "Seamstress"
   ],
-  "fixedRoles": [{ "name": "You", "roles": ["Savant"] }],
   "timeline": [
-    { "timing": "day_1", "type": "execution", "players": ["Edd"] },
-    { "timing": "night_2", "type": "nightDeath", "players": ["Seb"] },
-    { "timing": "day_2", "type": "witchCurse", "players": ["Chris"], "caller": "Chris" },
-    { "timing": "day_2", "type": "execution", "players": ["Louisa"] },
-    { "timing": "night_3", "type": "nightDeath", "players": ["Marc"] }
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Edd"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Seb"]
+    },
+    {
+      "timing": "day_2",
+      "type": "witchCurse",
+      "players": ["Chris"],
+      "caller": "Chris"
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Louisa"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Marc"]
+    }
   ],
   "claims": [
     {
       "type": "Artist",
       "name": "Louisa",
       "timing": "day_2",
-      "extraPossibleActualRoles": ["Mutant"],
-      "info": [{ "timing": "day_2", "expression": "Goose.type != Townsfolk" }]
+      "info": [
+        {
+          "timing": "day_2",
+          "expression": "Goose.type != Townsfolk"
+        }
+      ],
+      "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "Vortox", "No Dashii", "Witch", "Mutant"]
     },
     {
       "type": "Clockmaker",
       "name": "Marc",
       "distance": 1,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Clockmaker", "Fang Gu", "Vigormortis", "Vortox", "No Dashii", "Witch", "Mutant"]
     },
     {
       "type": "Mathematician",
       "name": "Marsh",
-      "extraPossibleActualRoles": ["Mutant"],
       "malfunctions": [
-        { "timing": "night_1", "count": 0 },
-        { "timing": "night_3", "count": 2 }
-      ]
+        {
+          "timing": "night_1",
+          "count": 0
+        },
+        {
+          "timing": "night_3",
+          "count": 2
+        }
+      ],
+      "possibleActualRoles": ["Mathematician", "Fang Gu", "Vigormortis", "Vortox", "No Dashii", "Witch", "Mutant"]
     },
     {
       "type": "Juggler",
       "name": "Chris",
       "timing": "night_2",
-      "extraPossibleActualRoles": ["Mutant"],
       "guesses": {
         "You": "Fang Gu",
         "Edd": "Vigormortis",
         "Marc": "Mutant"
       },
-      "correctCount": 1
+      "correctCount": 1,
+      "possibleActualRoles": ["Juggler", "Fang Gu", "Vigormortis", "Vortox", "No Dashii", "Witch", "Mutant"]
     },
     {
       "type": "Savant",
@@ -71,7 +102,8 @@
             "#{p : {Edd, Louisa, Chris} | p.type == Townsfolk} == 2"
           ]
         }
-      ]
+      ],
+      "possibleActualRoles": ["Savant"]
     },
     {
       "type": "Savant",
@@ -81,7 +113,8 @@
         {
           "options": ["#{p : {Edd, Marc, Chris} | p.alignment == Evil} == 1", "townsfolk_chain_length(2)"]
         }
-      ]
+      ],
+      "possibleActualRoles": ["Savant"]
     },
     {
       "type": "Savant",
@@ -94,7 +127,8 @@
             "some p : players | p.role == Vigormortis && (p.left.role == Mutant || p.right.role == Mutant)"
           ]
         }
-      ]
+      ],
+      "possibleActualRoles": ["Savant"]
     },
     {
       "type": "Sweetheart",
@@ -103,20 +137,32 @@
     {
       "type": "Snake Charmer",
       "name": "Goose",
-      "extraPossibleActualRoles": ["Mutant"],
       "checks": [
-        { "timing": "night_1", "player": "Marc", "demon": false },
-        { "timing": "night_2", "player": "Seb", "demon": false },
-        { "timing": "night_3", "player": "Marsh", "demon": false }
-      ]
+        {
+          "timing": "night_1",
+          "player": "Marc",
+          "demon": false
+        },
+        {
+          "timing": "night_2",
+          "player": "Seb",
+          "demon": false
+        },
+        {
+          "timing": "night_3",
+          "player": "Marsh",
+          "demon": false
+        }
+      ],
+      "possibleActualRoles": ["Snake Charmer", "Fang Gu", "Vigormortis", "Vortox", "No Dashii", "Witch", "Mutant"]
     },
     {
       "type": "Seamstress",
       "name": "Seb",
       "timing": "night_1",
-      "extraPossibleActualRoles": ["Mutant"],
       "among": ["You", "Chris"],
-      "aligned": false
+      "aligned": false,
+      "possibleActualRoles": ["Seamstress", "Fang Gu", "Vigormortis", "Vortox", "No Dashii", "Witch", "Mutant"]
     }
   ]
 }

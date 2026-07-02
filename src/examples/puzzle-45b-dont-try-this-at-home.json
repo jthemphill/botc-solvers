@@ -15,12 +15,6 @@
     "Washerwoman",
     "Chef"
   ],
-  "forbiddenRoles": [
-    {
-      "name": "You",
-      "roles": ["Imp", "Spy", "Scarlet Woman"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -73,7 +67,8 @@
       "name": "You",
       "timing": "day_2",
       "target": "Adam",
-      "killed": false
+      "killed": false,
+      "possibleActualRoles": ["Slayer", "Drunk", "Hermit"]
     },
     {
       "type": "Undertaker",

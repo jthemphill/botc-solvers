@@ -2,58 +2,37 @@
   "title": "Puzzle 30 - The Babel Fish Is A Dead Giveaway (right game)",
   "players": ["Ben", "Owen", "Lydia", "Finn", "Louisa", "Shan"],
   "script": ["Imp", "Spy", "Drunk", "Artist", "Atheist", "Clockmaker", "Knight", "Noble", "Seamstress"],
-  "forbiddenRoles": [
-    {
-      "name": "Ben",
-      "roles": ["Atheist"]
-    },
-    {
-      "name": "Owen",
-      "roles": ["Atheist"]
-    },
-    {
-      "name": "Lydia",
-      "roles": ["Atheist"]
-    },
-    {
-      "name": "Finn",
-      "roles": ["Atheist"]
-    },
-    {
-      "name": "Louisa",
-      "roles": ["Atheist"]
-    },
-    {
-      "name": "Shan",
-      "roles": ["Atheist"]
-    }
-  ],
   "claims": [
     {
       "type": "Clockmaker",
       "name": "Ben",
-      "distance": 3
+      "distance": 3,
+      "possibleActualRoles": ["Clockmaker", "Imp", "Spy", "Drunk"]
     },
     {
       "type": "Noble",
       "name": "Owen",
-      "oneEvilAmong": ["Lydia", "Louisa", "Shan"]
+      "oneEvilAmong": ["Lydia", "Louisa", "Shan"],
+      "possibleActualRoles": ["Noble", "Imp", "Spy", "Drunk"]
     },
     {
       "type": "Seamstress",
       "name": "Lydia",
       "timing": "night_1",
       "among": ["Finn", "Ben"],
-      "aligned": true
+      "aligned": true,
+      "possibleActualRoles": ["Seamstress", "Imp", "Spy", "Drunk"]
     },
     {
       "type": "Atheist",
-      "name": "Finn"
+      "name": "Finn",
+      "possibleActualRoles": ["Imp", "Spy", "Drunk"]
     },
     {
       "type": "Knight",
       "name": "Louisa",
-      "noDemonAmong": ["Lydia", "Shan"]
+      "noDemonAmong": ["Lydia", "Shan"],
+      "possibleActualRoles": ["Knight", "Imp", "Spy", "Drunk"]
     },
     {
       "type": "Artist",
@@ -64,7 +43,8 @@
           "timing": "day_1",
           "expression": "registers_as(Louisa, Drunk)"
         }
-      ]
+      ],
+      "possibleActualRoles": ["Artist", "Imp", "Spy", "Drunk"]
     }
   ]
 }

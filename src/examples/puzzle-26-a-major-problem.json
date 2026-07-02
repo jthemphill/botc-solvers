@@ -39,12 +39,6 @@
       "players": ["Olivia"]
     }
   ],
-  "forbiddenRoles": [
-    {
-      "name": "You",
-      "roles": ["Imp", "Baron", "Poisoner", "Scarlet Woman", "Spy"]
-    }
-  ],
   "claims": [
     {
       "type": "Librarian",
@@ -81,7 +75,8 @@
       "type": "Empath",
       "name": "You",
       "timing": "night_1",
-      "count": 0
+      "count": 0,
+      "possibleActualRoles": ["Empath", "Drunk"]
     },
     {
       "type": "Saint",

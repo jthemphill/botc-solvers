@@ -16,12 +16,6 @@
     "Undertaker",
     "Washerwoman"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Slayer", "Marionette"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -77,7 +71,8 @@
       "name": "You",
       "timing": "day_1",
       "target": "Lydia",
-      "killed": false
+      "killed": false,
+      "possibleActualRoles": ["Slayer", "Marionette"]
     },
     {
       "type": "Washerwoman",

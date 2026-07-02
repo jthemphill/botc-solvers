@@ -38,12 +38,6 @@
       "players": ["Sula"]
     }
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Undertaker", "Drunk", "Marionette"]
-    }
-  ],
   "claims": [
     {
       "type": "Librarian",
@@ -97,14 +91,16 @@
       "name": "You",
       "timing": "night_2",
       "player": "Matt",
-      "role": "Scarlet Woman"
+      "role": "Scarlet Woman",
+      "possibleActualRoles": ["Undertaker", "Marionette", "Drunk"]
     },
     {
       "type": "Undertaker",
       "name": "You",
       "timing": "night_3",
       "player": "Aoife",
-      "role": "Marionette"
+      "role": "Marionette",
+      "possibleActualRoles": ["Undertaker", "Marionette", "Drunk"]
     },
     {
       "type": "Washerwoman",

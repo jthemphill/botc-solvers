@@ -20,8 +20,6 @@ export function canonicalRoleName(role: string | undefined): string | undefined 
 export function protectedScriptRoles(doc: PuzzleDoc): string[] {
   return mergeRoleNames([
     ...doc.claims.flatMap(claimScriptRoles),
-    ...(doc.fixedRoles ?? []).flatMap((fixedRole) => fixedRole.roles),
-    ...(doc.forbiddenRoles ?? []).flatMap((forbiddenRole) => forbiddenRole.roles),
     ...(doc.constraints ?? []).flatMap((constraint) => extractDslRoleNames(constraint.expression)),
   ]);
 }
@@ -46,7 +44,7 @@ export function withProtectedScript(doc: PuzzleDoc): PuzzleDoc {
 export function claimScriptRoles(claim: Claim): string[] {
   const roles = [
     claimTypeRoleName(claim.type),
-    ...(claim.extraPossibleActualRoles ?? []),
+    ...(claim.possibleActualRoles ?? []),
     ...(claim.info ?? []).flatMap((info) => extractDslRoleNames(info.expression ?? "")),
   ];
 

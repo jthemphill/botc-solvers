@@ -13,12 +13,6 @@
     "Undertaker",
     "Washerwoman"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Puzzlemaster"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -71,7 +65,8 @@
     },
     {
       "type": "Puzzlemaster",
-      "name": "You"
+      "name": "You",
+      "possibleActualRoles": ["Puzzlemaster"]
     },
     {
       "type": "Chef",

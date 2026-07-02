@@ -65,7 +65,7 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
   const base = {
     name: claim.name,
     timing,
-    extraPossibleActualRoles: claim.extraPossibleActualRoles?.map(resolveRoleRef),
+    possibleActualRoles: claim.possibleActualRoles?.map(resolveRoleRef),
     infoClaims: customInfoClaims(claim, ctx),
   };
 

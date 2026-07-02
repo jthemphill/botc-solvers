@@ -17,12 +17,6 @@
     "Nightwatchman",
     "Washerwoman"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Saint"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -72,7 +66,8 @@
     },
     {
       "type": "Saint",
-      "name": "You"
+      "name": "You",
+      "possibleActualRoles": ["Saint"]
     },
     {
       "type": "Empath",

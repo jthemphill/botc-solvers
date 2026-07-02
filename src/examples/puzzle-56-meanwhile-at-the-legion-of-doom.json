@@ -41,12 +41,6 @@
       "expression": "(some p : players | p.role == Legion) => #{p : {You, Aoife, Hannah, Fraser} | p.alignment == Good} != 1"
     }
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Saint"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -109,7 +103,8 @@
     },
     {
       "type": "Saint",
-      "name": "You"
+      "name": "You",
+      "possibleActualRoles": ["Saint"]
     },
     {
       "type": "Oracle",

@@ -17,12 +17,6 @@
     "Seamstress",
     "Steward"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Librarian", "Drunk", "Marionette"]
-    }
-  ],
   "claims": [
     {
       "type": "Investigator",
@@ -62,7 +56,8 @@
       "type": "Librarian",
       "name": "You",
       "role": "Drunk",
-      "among": ["Sula", "Fraser"]
+      "among": ["Sula", "Fraser"],
+      "possibleActualRoles": ["Librarian", "Marionette", "Drunk"]
     },
     {
       "type": "Saint",
