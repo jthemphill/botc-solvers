@@ -13,12 +13,6 @@
     "Seamstress",
     "Snake Charmer"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Mathematician"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -82,7 +76,8 @@
           "timing": "night_2",
           "count": 0
         }
-      ]
+      ],
+      "possibleActualRoles": ["Mathematician"]
     },
     {
       "type": "Sage",

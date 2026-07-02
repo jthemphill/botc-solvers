@@ -14,12 +14,6 @@
     "Seamstress",
     "Slayer"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Imp", "Lunatic"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -51,41 +45,40 @@
     {
       "type": "Chef",
       "name": "Josef",
-      "extraPossibleActualRoles": ["Lunatic"],
-      "count": 1
+      "count": 1,
+      "possibleActualRoles": ["Chef", "Imp", "Witch", "Lunatic", "Drunk"]
     },
     {
       "type": "Noble",
       "name": "Gina",
-      "extraPossibleActualRoles": ["Lunatic"],
-      "oneEvilAmong": ["Edd", "Riley", "Chris"]
+      "oneEvilAmong": ["Edd", "Riley", "Chris"],
+      "possibleActualRoles": ["Noble", "Imp", "Witch", "Lunatic", "Drunk"]
     },
     {
       "type": "Poppy Grower",
       "name": "Katharine",
-      "extraPossibleActualRoles": ["Lunatic"]
+      "possibleActualRoles": ["Poppy Grower", "Imp", "Witch", "Lunatic", "Drunk"]
     },
     {
       "type": "Artist",
       "name": "Chris",
       "timing": "day_1",
-      "extraPossibleActualRoles": ["Lunatic"],
       "info": [
         {
           "timing": "day_1",
           "expression": "Riley.type != Townsfolk"
         }
-      ]
+      ],
+      "possibleActualRoles": ["Artist", "Imp", "Witch", "Lunatic", "Drunk"]
     },
     {
       "type": "Imp",
       "name": "You",
-      "extraPossibleActualRoles": ["Imp", "Lunatic"]
+      "possibleActualRoles": ["Imp", "Lunatic"]
     },
     {
       "type": "FortuneTeller",
       "name": "Zak",
-      "extraPossibleActualRoles": ["Lunatic"],
       "checks": [
         {
           "left": "Edd",
@@ -105,23 +98,24 @@
           "yes": false,
           "timing": "night_3"
         }
-      ]
+      ],
+      "possibleActualRoles": ["Fortune Teller", "Imp", "Witch", "Lunatic", "Drunk"]
     },
     {
       "type": "Seamstress",
       "name": "Edd",
       "timing": "night_1",
-      "extraPossibleActualRoles": ["Lunatic"],
       "among": ["Katharine", "Chris"],
-      "aligned": true
+      "aligned": true,
+      "possibleActualRoles": ["Seamstress", "Imp", "Witch", "Lunatic", "Drunk"]
     },
     {
       "type": "Slayer",
       "name": "Riley",
       "timing": "day_1",
-      "extraPossibleActualRoles": ["Lunatic"],
       "target": "Katharine",
-      "killed": false
+      "killed": false,
+      "possibleActualRoles": ["Slayer", "Imp", "Witch", "Lunatic", "Drunk"]
     }
   ]
 }

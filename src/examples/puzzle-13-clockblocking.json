@@ -16,12 +16,6 @@
     "Ravenkeeper",
     "Slayer"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Investigator", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -76,7 +70,8 @@
       "name": "You",
       "timing": "night_1",
       "role": "Scarlet Woman",
-      "among": ["Sarah", "Aoife"]
+      "among": ["Sarah", "Aoife"],
+      "possibleActualRoles": ["Investigator", "Drunk"]
     },
     {
       "type": "Clockmaker",

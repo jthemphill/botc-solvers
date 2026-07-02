@@ -14,12 +14,6 @@
     "Village Idiot",
     "Virgin"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Investigator", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -80,7 +74,8 @@
       "name": "You",
       "timing": "night_1",
       "role": "Baron",
-      "among": ["Mary", "Gabriel"]
+      "among": ["Mary", "Gabriel"],
+      "possibleActualRoles": ["Investigator", "Drunk"]
     },
     {
       "type": "VillageIdiot",

@@ -528,22 +528,22 @@ function CustomInfoEditor({ claim, onChange }: { claim: Claim; onChange: (c: Cla
 }
 
 function AdvancedClaimFields({ doc, claim, onChange }: BodyProps) {
-  const extraPossibleActualRoles = claim.extraPossibleActualRoles ?? [];
-  const setExtraPossibleActualRoles = (roles: readonly string[]) => {
+  const possibleActualRoles = claim.possibleActualRoles ?? [];
+  const setPossibleActualRoles = (roles: readonly string[]) => {
     onChange({
       ...claim,
-      extraPossibleActualRoles: roles.length === 0 ? undefined : roles,
-    } as Claim);
+      possibleActualRoles: roles.length === 0 ? undefined : roles,
+    });
   };
 
   return (
-    <details className="advanced-claim-fields" open={extraPossibleActualRoles.length > 0}>
+    <details className="advanced-claim-fields" open={possibleActualRoles.length > 0}>
       <summary>Advanced</summary>
       <div className="field-grid">
         <span>Possible actual roles</span>
         <RoleListEditor
-          value={extraPossibleActualRoles}
-          onChange={setExtraPossibleActualRoles}
+          value={possibleActualRoles}
+          onChange={setPossibleActualRoles}
           options={roleOptionsForScript(doc.script)}
           label="Possible actual roles"
         />

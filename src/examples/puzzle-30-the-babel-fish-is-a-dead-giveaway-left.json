@@ -3,39 +3,14 @@
   "players": ["Sarah", "Max", "Erika", "Lav", "Oli", "Callum"],
   "script": ["Imp", "Spy", "Drunk", "Artist", "Atheist", "Clockmaker", "Knight", "Noble", "Seamstress"],
   "setup": "atheist",
-  "fixedRoles": [
-    {
-      "name": "Sarah",
-      "roles": ["Seamstress"]
-    },
-    {
-      "name": "Max",
-      "roles": ["Artist"]
-    },
-    {
-      "name": "Erika",
-      "roles": ["Noble"]
-    },
-    {
-      "name": "Lav",
-      "roles": ["Clockmaker"]
-    },
-    {
-      "name": "Oli",
-      "roles": ["Atheist"]
-    },
-    {
-      "name": "Callum",
-      "roles": ["Knight"]
-    }
-  ],
   "claims": [
     {
       "type": "Seamstress",
       "name": "Sarah",
       "timing": "night_1",
       "among": ["Oli", "Callum"],
-      "aligned": true
+      "aligned": true,
+      "possibleActualRoles": ["Seamstress"]
     },
     {
       "type": "Artist",
@@ -46,26 +21,31 @@
           "timing": "day_1",
           "expression": "Erika.role == Drunk"
         }
-      ]
+      ],
+      "possibleActualRoles": ["Artist"]
     },
     {
       "type": "Noble",
       "name": "Erika",
-      "oneEvilAmong": ["Lav", "Callum", "Sarah"]
+      "oneEvilAmong": ["Lav", "Callum", "Sarah"],
+      "possibleActualRoles": ["Noble"]
     },
     {
       "type": "Clockmaker",
       "name": "Lav",
-      "distance": 3
+      "distance": 3,
+      "possibleActualRoles": ["Clockmaker"]
     },
     {
       "type": "Atheist",
-      "name": "Oli"
+      "name": "Oli",
+      "possibleActualRoles": ["Atheist"]
     },
     {
       "type": "Knight",
       "name": "Callum",
-      "noDemonAmong": ["Lav", "Max"]
+      "noDemonAmong": ["Lav", "Max"],
+      "possibleActualRoles": ["Knight"]
     }
   ]
 }

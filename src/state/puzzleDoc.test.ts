@@ -30,9 +30,8 @@ describe("puzzle document reducer", () => {
     const doc: PuzzleDoc = {
       players: ["A", "B", "C"],
       script: ["Imp", "Juggler", "Savant"],
-      fixedRoles: [{ name: "A", roles: ["Savant"] }],
-      forbiddenRoles: [{ name: "C", roles: ["Vortox"] }],
-      claims: [{ type: "Juggler", name: "B", guesses: { A: "Imp" } }],
+      constraints: [{ expression: "A.role == Savant" }, { expression: "C.role != Vortox" }],
+      claims: [{ type: "Juggler", name: "B", possibleActualRoles: ["Juggler", "Drunk"], guesses: { A: "Imp" } }],
     };
 
     const next = reducer(doc, { type: "setScript", script: ["Drunk"] });
@@ -189,8 +188,6 @@ describe("puzzle document reducer", () => {
     const doc: PuzzleDoc = {
       players: ["A", "B", "C"],
       script: ["Investigator"],
-      fixedRoles: [{ name: "C", roles: ["Investigator"] }],
-      forbiddenRoles: [{ name: "C", roles: ["Imp"] }],
       timeline: [
         { timing: "day_1", type: "execution", players: ["B"] },
         { timing: "day_1", type: "doomsayerDeath", players: ["B"], caller: "C" },
@@ -202,8 +199,6 @@ describe("puzzle document reducer", () => {
     const next = reducer(doc, { type: "setPlayerCount", count: 2 });
 
     expect(next.players).toEqual(["A", "B"]);
-    expect(next.fixedRoles).toEqual([]);
-    expect(next.forbiddenRoles).toEqual([]);
     expect(next.timeline).toEqual([
       { timing: "day_1", type: "execution", players: ["B"] },
       { timing: "day_1", type: "doomsayerDeath", players: ["B"], caller: undefined },

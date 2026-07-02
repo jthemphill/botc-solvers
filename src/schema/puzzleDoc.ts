@@ -4,24 +4,12 @@ export interface PuzzleDoc {
   readonly script: readonly string[];
   readonly setup?: "standard" | "none" | "atheist";
   readonly uniqueCharacters?: boolean;
-  readonly fixedRoles?: readonly FixedRoleConstraint[];
-  readonly forbiddenRoles?: readonly ForbiddenRoleConstraint[];
   readonly constraints?: readonly PuzzleConstraintDoc[];
   readonly timeline?: readonly TimelineEventDoc[];
   readonly claims: readonly Claim[];
 }
 
 export const KNIGHT_NO_DEMON_AMONG_MAX = 2;
-
-export interface FixedRoleConstraint {
-  readonly name: string;
-  readonly roles: readonly string[];
-}
-
-export interface ForbiddenRoleConstraint {
-  readonly name: string;
-  readonly roles: readonly string[];
-}
 
 export interface PuzzleConstraintDoc {
   readonly expression: string;
@@ -100,7 +88,7 @@ export type Claim =
 interface BaseClaim {
   readonly name: string;
   readonly timing?: string;
-  readonly extraPossibleActualRoles?: readonly string[];
+  readonly possibleActualRoles?: readonly string[];
   readonly heardWidowCall?: boolean;
   readonly info?: readonly CustomInfoStatementDoc[];
 }

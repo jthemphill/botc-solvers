@@ -1,6 +1,8 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { docReducer } from "../../src/state/puzzleDoc";
+import type { PuzzleDoc as AppPuzzleDoc } from "../../src/schema/puzzleDoc";
 
 const examplesDir = fileURLToPath(new URL("../../src/examples/", import.meta.url));
 const puzzleSpecs = readdirSync(examplesDir)
@@ -17,16 +19,9 @@ type PuzzleDoc = {
   readonly script: readonly string[];
   readonly setup?: "standard" | "none" | "atheist";
   readonly uniqueCharacters?: boolean;
-  readonly fixedRoles?: readonly RoleConstraint[];
-  readonly forbiddenRoles?: readonly RoleConstraint[];
   readonly constraints?: readonly PuzzleConstraintDoc[];
   readonly timeline?: readonly TimelineEventDoc[];
   readonly claims: readonly Claim[];
-};
-
-type RoleConstraint = {
-  readonly name: string;
-  readonly roles: readonly string[];
 };
 
 type PuzzleConstraintDoc = {
@@ -51,21 +46,26 @@ test.describe("manual puzzle entry", () => {
 
   for (const { id, doc } of puzzleSpecs) {
     test(`${id} can be created from scratch`, async ({ page }) => {
+      const editorDoc = editorDocFor(doc);
       await page.goto("/");
 
-      await setTitleAndPlayers(page, doc);
-      await setScriptRules(page, doc);
-      await setTimeline(page, doc.timeline ?? []);
-      const claims = manualClaimsFor(doc.claims);
+      await setTitleAndPlayers(page, editorDoc);
+      await setScriptRules(page, editorDoc);
+      await setTimeline(page, editorDoc.timeline ?? []);
+      const claims = manualClaimsFor(editorDoc.claims);
       await addClaimShells(page, claims);
-      await fillClaims(page, claims, doc);
-      await setRoleConstraints(page, doc);
+      await fillClaims(page, claims, editorDoc);
+      await setCustomConstraints(page, editorDoc);
 
       const exported = await exportPuzzleDoc(page);
-      expect(normalizeDoc(exported)).toEqual(normalizeDoc({ ...doc, claims: manualClaimsFor(doc.claims) }));
+      expect(normalizeDoc(exported)).toEqual(normalizeDoc({ ...editorDoc, claims: manualClaimsFor(editorDoc.claims) }));
     });
   }
 });
+
+function editorDocFor(doc: PuzzleDoc): PuzzleDoc {
+  return docReducer(doc as AppPuzzleDoc, { type: "load", doc: doc as AppPuzzleDoc }) as PuzzleDoc;
+}
 
 async function setTitleAndPlayers(page: Page, doc: PuzzleDoc) {
   if (doc.title !== undefined) await page.getByLabel("Title").fill(doc.title);
@@ -424,7 +424,7 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
       break;
   }
 
-  for (const role of claim.extraPossibleActualRoles ?? []) await addAdvancedRole(block, role);
+  for (const role of claim.possibleActualRoles ?? []) await addAdvancedRole(block, role);
   if (claim.heardWidowCall === true) await block.getByLabel("Heard the Widow's call").check();
   if (claim.type === "Artist") await fillArtistInfo(block, claim.info ?? []);
 }
@@ -438,29 +438,10 @@ async function fillArtistInfo(block: Locator, info: readonly Record<string, stri
   }
 }
 
-async function setRoleConstraints(page: Page, doc: PuzzleDoc) {
-  if (
-    (doc.fixedRoles ?? []).length === 0 &&
-    (doc.forbiddenRoles ?? []).length === 0 &&
-    (doc.constraints ?? []).length === 0
-  )
-    return;
+async function setCustomConstraints(page: Page, doc: PuzzleDoc) {
+  if ((doc.constraints ?? []).length === 0) return;
   await openWorkbenchTab(page, "Script");
-  const panel = page.locator("section.panel", { hasText: "Role constraints" });
-
-  for (const fixedRole of doc.fixedRoles ?? []) {
-    await panel.getByRole("button", { name: "+ Add fixed role" }).click();
-    const block = panel.locator(":scope > .claim-block").last();
-    await block.locator("select").selectOption(fixedRole.name);
-    for (const role of fixedRole.roles) await addRoleToList(block, "Possible roles", role);
-  }
-
-  for (const forbiddenRole of doc.forbiddenRoles ?? []) {
-    await panel.getByRole("button", { name: "+ Add excluded role" }).click();
-    const block = panel.locator(":scope > .claim-block").last();
-    await block.locator("select").selectOption(forbiddenRole.name);
-    for (const role of forbiddenRole.roles) await addRoleToList(block, "Excluded roles", role);
-  }
+  const panel = page.locator("section.panel", { hasText: "Custom constraints" });
 
   for (const constraint of doc.constraints ?? []) {
     await panel.getByRole("button", { name: "+ Add custom constraint" }).click();
@@ -583,23 +564,10 @@ function normalizeDoc(doc: PuzzleDoc): unknown {
     setup: doc.setup === "standard" ? undefined : doc.setup,
     uniqueCharacters: doc.uniqueCharacters === true ? undefined : doc.uniqueCharacters,
     script: sorted(doc.script),
-    fixedRoles: normalizeRoleConstraints(doc.fixedRoles),
-    forbiddenRoles: normalizeRoleConstraints(doc.forbiddenRoles),
     timeline: doc.timeline === undefined ? undefined : [...doc.timeline].sort(compareTimelineEvents),
     claims: manualClaimsFor(doc.claims).map(normalizeClaim),
   });
   return normalized;
-}
-
-function normalizeRoleConstraints(
-  constraints: PuzzleDoc["fixedRoles"] | PuzzleDoc["forbiddenRoles"],
-): PuzzleDoc["fixedRoles"] | PuzzleDoc["forbiddenRoles"] {
-  if (constraints === undefined) return undefined;
-  return constraints
-    .map((constraint) => ({ ...constraint, roles: sorted(constraint.roles) }))
-    .sort(
-      (left, right) => left.name.localeCompare(right.name) || left.roles.join("|").localeCompare(right.roles.join("|")),
-    );
 }
 
 function normalizeClaim(claim: Claim): unknown {
@@ -616,8 +584,8 @@ function normalizeClaim(claim: Claim): unknown {
   if (claim.type === "Librarian" && claim.among !== undefined) normalized.among = claim.among.slice(0, 2);
   if (claim.type === "Washerwoman") normalized.among = claim.among.slice(0, 2);
   if ("roles" in normalized && Array.isArray(normalized.roles)) normalized.roles = sorted(normalized.roles);
-  if ("extraPossibleActualRoles" in normalized && Array.isArray(normalized.extraPossibleActualRoles)) {
-    normalized.extraPossibleActualRoles = sorted(normalized.extraPossibleActualRoles);
+  if ("possibleActualRoles" in normalized && Array.isArray(normalized.possibleActualRoles)) {
+    normalized.possibleActualRoles = sorted(normalized.possibleActualRoles);
   }
   if (claim.type === "Noble" && Array.isArray(normalized.among) && normalized.among.length === 0)
     delete normalized.among;

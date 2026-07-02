@@ -3,12 +3,6 @@
   "players": ["Sula", "Steph", "Hannah", "Fraser", "You", "Jasmine", "Adam", "Sarah"],
   "script": ["Imp", "Poisoner", "Drunk", "Dreamer"],
   "uniqueCharacters": false,
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Dreamer", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -83,7 +77,8 @@
       "name": "You",
       "timing": "night_1",
       "player": "Jasmine",
-      "roles": ["Dreamer", "Poisoner"]
+      "roles": ["Dreamer", "Poisoner"],
+      "possibleActualRoles": ["Dreamer", "Drunk"]
     },
     {
       "type": "Dreamer",

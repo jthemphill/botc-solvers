@@ -16,12 +16,6 @@
     "Recluse",
     "Undertaker"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Chef", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -90,7 +84,8 @@
     {
       "type": "Chef",
       "name": "You",
-      "count": 1
+      "count": 1,
+      "possibleActualRoles": ["Chef", "Drunk"]
     },
     {
       "type": "Empath",

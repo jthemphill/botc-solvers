@@ -2,12 +2,6 @@
   "title": "Puzzle 27 - Is This A Legion Game",
   "players": ["Sarah", "Tom", "Aoife", "Hannah", "You", "Fraser", "Adam"],
   "script": ["Imp", "Poisoner", "Empath", "Fortune Teller", "Investigator", "Legionary", "Washerwoman"],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Washerwoman"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -73,7 +67,8 @@
       "type": "Washerwoman",
       "name": "You",
       "role": "Legionary",
-      "among": ["Fraser", "Sarah"]
+      "among": ["Fraser", "Sarah"],
+      "possibleActualRoles": ["Washerwoman"]
     },
     {
       "type": "Legionary",

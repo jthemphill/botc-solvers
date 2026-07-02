@@ -15,12 +15,6 @@
     "Washerwoman",
     "Slayer"
   ],
-  "forbiddenRoles": [
-    {
-      "name": "You",
-      "roles": ["Imp", "Spy", "Scarlet Woman"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -73,7 +67,8 @@
       "name": "You",
       "timing": "night_2",
       "player": "Ben",
-      "role": "Empath"
+      "role": "Empath",
+      "possibleActualRoles": ["Ravenkeeper", "Drunk", "Hermit"]
     },
     {
       "type": "Empath",

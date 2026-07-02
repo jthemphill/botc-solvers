@@ -36,12 +36,6 @@
       "players": ["Fraser"]
     }
   ],
-  "forbiddenRoles": [
-    {
-      "name": "You",
-      "roles": ["Imp", "Baron", "Poisoner"]
-    }
-  ],
   "claims": [
     {
       "type": "Juggler",
@@ -89,7 +83,8 @@
       "name": "You",
       "timing": "night_1",
       "player": "Sula",
-      "roles": ["Drunk", "Imp"]
+      "roles": ["Drunk", "Imp"],
+      "possibleActualRoles": ["Dreamer", "Drunk"]
     },
     {
       "type": "Juggler",

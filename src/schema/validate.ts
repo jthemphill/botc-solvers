@@ -44,8 +44,14 @@ function expectNumber(v: unknown, path: string): number {
   return v;
 }
 
+function rejectLegacyField(input: Record<string, unknown>, key: string, path: string): void {
+  if (input[key] !== undefined) throw new ValidationError(`Unsupported legacy field '${key}'`, path);
+}
+
 export function validatePuzzleDoc(input: unknown): PuzzleDoc {
   if (!isObject(input)) throw new ValidationError(`Expected object`, "$");
+  rejectLegacyField(input, "fixedRoles", "$.fixedRoles");
+  rejectLegacyField(input, "forbiddenRoles", "$.forbiddenRoles");
   const players = expectStringArray(input["players"], "$.players");
   const script = expectStringArray(input["script"], "$.script");
   const claims = input["claims"];
@@ -59,12 +65,6 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
   const title = input["title"] === undefined ? undefined : expectString(input["title"], "$.title");
   const uniqueCharacters =
     input["uniqueCharacters"] === undefined ? undefined : expectBool(input["uniqueCharacters"], "$.uniqueCharacters");
-  const fixedRoles =
-    input["fixedRoles"] === undefined ? undefined : validateRoleConstraints(input["fixedRoles"], "$.fixedRoles");
-  const forbiddenRoles =
-    input["forbiddenRoles"] === undefined
-      ? undefined
-      : validateRoleConstraints(input["forbiddenRoles"], "$.forbiddenRoles");
   const constraints =
     input["constraints"] === undefined ? undefined : validateConstraints(input["constraints"], "$.constraints");
   const timeline = input["timeline"] === undefined ? undefined : validateTimeline(input["timeline"], "$.timeline");
@@ -75,24 +75,10 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
     script,
     setup,
     uniqueCharacters,
-    fixedRoles,
-    forbiddenRoles,
     constraints,
     timeline,
     claims: validatedClaims,
   };
-}
-
-function validateRoleConstraints(v: unknown, pathRoot: string): PuzzleDoc["fixedRoles"] {
-  if (!Array.isArray(v)) throw new ValidationError(`Expected array`, pathRoot);
-  return v.map((entry, i) => {
-    const path = `${pathRoot}[${i}]`;
-    if (!isObject(entry)) throw new ValidationError(`Expected object`, path);
-    return {
-      name: expectString(entry["name"], `${path}.name`),
-      roles: expectStringArray(entry["roles"], `${path}.roles`),
-    };
-  });
 }
 
 function validateConstraints(v: unknown, pathRoot: string): NonNullable<PuzzleDoc["constraints"]> {
@@ -127,19 +113,20 @@ function validateTimeline(v: unknown, pathRoot: string): TimelineEventDoc[] {
 
 function validateClaim(input: unknown, path: string): Claim {
   if (!isObject(input)) throw new ValidationError(`Expected object`, path);
+  rejectLegacyField(input, "extraPossibleActualRoles", `${path}.extraPossibleActualRoles`);
   const type = expectString(input["type"], `${path}.type`);
   if (!SUPPORTED_CLAIM_TYPES.has(type as Claim["type"]))
     throw new ValidationError(`Unsupported claim type '${type}'`, `${path}.type`);
   const name = expectString(input["name"], `${path}.name`);
   const timing = input["timing"] === undefined ? undefined : expectString(input["timing"], `${path}.timing`);
-  const extraPossibleActualRoles =
-    input["extraPossibleActualRoles"] === undefined
+  const possibleActualRoles =
+    input["possibleActualRoles"] === undefined
       ? undefined
-      : expectStringArray(input["extraPossibleActualRoles"], `${path}.extraPossibleActualRoles`);
+      : expectStringArray(input["possibleActualRoles"], `${path}.possibleActualRoles`);
   const heardWidowCall =
     input["heardWidowCall"] === undefined ? undefined : expectBool(input["heardWidowCall"], `${path}.heardWidowCall`);
   const info = input["info"] === undefined ? undefined : validateCustomInfo(input["info"], `${path}.info`, type);
-  const base = { name, timing, extraPossibleActualRoles, heardWidowCall, info };
+  const base = { name, timing, possibleActualRoles, heardWidowCall, info };
 
   switch (type as Claim["type"]) {
     case "Acrobat": {

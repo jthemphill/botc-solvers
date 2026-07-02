@@ -15,32 +15,93 @@
     "Slayer"
   ],
   "setup": "none",
-  "fixedRoles": [{ "name": "You", "roles": ["Noble"] }],
   "constraints": [
-    { "expression": "#{p : players | p.role == Vigormortis} == 1" },
-    { "expression": "#{p : players | some (p.role & {Poisoner, `Devil's Advocate`})} == 1" }
+    {
+      "expression": "#{p : players | p.role == Vigormortis} == 1"
+    },
+    {
+      "expression": "#{p : players | some (p.role & {Poisoner, `Devil's Advocate`})} == 1"
+    }
   ],
   "timeline": [
-    { "timing": "day_1", "type": "survivedExecution", "players": ["You"] },
-    { "timing": "night_2", "type": "nightDeath", "players": ["Aoife"] },
-    { "timing": "day_2", "type": "execution", "players": ["Dan"] },
-    { "timing": "night_3", "type": "nightDeath", "players": ["Sarah"] },
-    { "timing": "day_3", "type": "survivedExecution", "players": ["You"] },
-    { "timing": "night_4", "type": "nightDeath", "players": ["You"] }
+    {
+      "timing": "day_1",
+      "type": "survivedExecution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Aoife"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Dan"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Sarah"]
+    },
+    {
+      "timing": "day_3",
+      "type": "survivedExecution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": ["You"]
+    }
   ],
   "claims": [
-    { "type": "Seamstress", "name": "Sarah", "timing": "night_2", "among": ["You", "Adam"], "aligned": true },
+    {
+      "type": "Seamstress",
+      "name": "Sarah",
+      "timing": "night_2",
+      "among": ["You", "Adam"],
+      "aligned": true
+    },
     {
       "type": "Artist",
       "name": "Fraser",
       "timing": "day_4",
-      "info": [{ "timing": "night_4", "expression": "Matt.type != Demon" }]
+      "info": [
+        {
+          "timing": "night_4",
+          "expression": "Matt.type != Demon"
+        }
+      ]
     },
-    { "type": "Chef", "name": "Adam", "count": 0 },
-    { "type": "Ravenkeeper", "name": "Aoife", "timing": "night_2", "player": "Fraser", "role": "Artist" },
-    { "type": "Noble", "name": "You", "oneEvilAmong": ["Steph", "Sarah", "Aoife"] },
-    { "type": "Tea Lady", "name": "Matt" },
-    { "type": "Oracle", "name": "Steph", "timing": "night_2", "count": 1 },
+    {
+      "type": "Chef",
+      "name": "Adam",
+      "count": 0
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Aoife",
+      "timing": "night_2",
+      "player": "Fraser",
+      "role": "Artist"
+    },
+    {
+      "type": "Noble",
+      "name": "You",
+      "oneEvilAmong": ["Steph", "Sarah", "Aoife"],
+      "possibleActualRoles": ["Noble"]
+    },
+    {
+      "type": "Tea Lady",
+      "name": "Matt"
+    },
+    {
+      "type": "Oracle",
+      "name": "Steph",
+      "timing": "night_2",
+      "count": 1
+    },
     {
       "type": "Oracle",
       "name": "Steph",
@@ -53,6 +114,12 @@
       "timing": "night_4",
       "count": 1
     },
-    { "type": "Slayer", "name": "Dan", "timing": "day_2", "target": "Adam", "killed": false }
+    {
+      "type": "Slayer",
+      "name": "Dan",
+      "timing": "day_2",
+      "target": "Adam",
+      "killed": false
+    }
   ]
 }

@@ -14,42 +14,100 @@
     "Juggler",
     "Ravenkeeper"
   ],
-  "forbiddenRoles": [{ "name": "You", "roles": ["No Dashii", "Vortox", "Scarlet Woman", "Mutant"] }],
   "timeline": [
-    { "timing": "day_1", "type": "execution", "players": ["Hannah"] },
-    { "timing": "night_2", "type": "nightDeath", "players": ["Fraser"] },
-    { "timing": "day_2", "type": "execution", "players": ["Oscar"] },
-    { "timing": "night_3", "type": "nightDeath", "players": ["Tom"] }
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Hannah"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Oscar"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Tom"]
+    }
   ],
   "claims": [
-    { "type": "Empath", "name": "Hannah", "timing": "night_1", "count": 0 },
+    {
+      "type": "Empath",
+      "name": "Hannah",
+      "timing": "night_1",
+      "count": 0
+    },
     {
       "type": "Mathematician",
       "name": "Sarah",
       "malfunctions": [
-        { "timing": "night_1", "count": 1 },
-        { "timing": "night_2", "count": 0 },
-        { "timing": "night_3", "count": 0 }
+        {
+          "timing": "night_1",
+          "count": 1
+        },
+        {
+          "timing": "night_2",
+          "count": 0
+        },
+        {
+          "timing": "night_3",
+          "count": 0
+        }
       ]
     },
-    { "type": "Clockmaker", "name": "Dan", "distance": 4 },
+    {
+      "type": "Clockmaker",
+      "name": "Dan",
+      "distance": 4
+    },
     {
       "type": "VillageIdiot",
       "name": "Matt",
       "checks": [
-        { "timing": "night_1", "player": "Fraser", "good": false },
-        { "timing": "night_2", "player": "Oscar", "good": false },
-        { "timing": "night_3", "player": "Tom", "good": false }
+        {
+          "timing": "night_1",
+          "player": "Fraser",
+          "good": false
+        },
+        {
+          "timing": "night_2",
+          "player": "Oscar",
+          "good": false
+        },
+        {
+          "timing": "night_3",
+          "player": "Tom",
+          "good": false
+        }
       ]
     },
     {
       "type": "Snake Charmer",
       "name": "You",
       "checks": [
-        { "timing": "night_1", "player": "Dan", "demon": false },
-        { "timing": "night_2", "player": "Sarah", "demon": false },
-        { "timing": "night_3", "player": "Matt", "demon": false }
-      ]
+        {
+          "timing": "night_1",
+          "player": "Dan",
+          "demon": false
+        },
+        {
+          "timing": "night_2",
+          "player": "Sarah",
+          "demon": false
+        },
+        {
+          "timing": "night_3",
+          "player": "Matt",
+          "demon": false
+        }
+      ],
+      "possibleActualRoles": ["Snake Charmer"]
     },
     {
       "type": "Juggler",
@@ -62,7 +120,10 @@
         "Dan": "No Dashii"
       }
     },
-    { "type": "Mutant", "name": "Oscar" },
+    {
+      "type": "Mutant",
+      "name": "Oscar"
+    },
     {
       "type": "Ravenkeeper",
       "name": "Fraser",

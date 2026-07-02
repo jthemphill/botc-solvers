@@ -18,23 +18,47 @@
     "Librarian",
     "Undertaker"
   ],
-  "forbiddenRoles": [
+  "timeline": [
     {
-      "name": "You",
-      "roles": ["Imp", "Poisoner", "Spy", "Baron", "Scarlet Woman"]
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Sarah"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Adam"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "day_3",
+      "type": "execution",
+      "players": ["Dan"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": ["Jasmine"]
     }
   ],
-  "timeline": [
-    { "timing": "day_1", "type": "execution", "players": ["Sarah"] },
-    { "timing": "night_2", "type": "nightDeath", "players": ["Adam"] },
-    { "timing": "day_2", "type": "execution", "players": ["You"] },
-    { "timing": "night_3", "type": "nightDeath", "players": ["Fraser"] },
-    { "timing": "day_3", "type": "execution", "players": ["Dan"] },
-    { "timing": "night_4", "type": "nightDeath", "players": ["Jasmine"] }
-  ],
   "claims": [
-    { "type": "Butler", "name": "Sarah" },
-    { "type": "Saint", "name": "Matthew" },
+    {
+      "type": "Butler",
+      "name": "Sarah"
+    },
+    {
+      "type": "Saint",
+      "name": "Matthew"
+    },
     {
       "type": "Investigator",
       "name": "Fraser",
@@ -42,7 +66,10 @@
       "role": "Spy",
       "among": ["Hannah", "Sarah"]
     },
-    { "type": "Recluse", "name": "Adam" },
+    {
+      "type": "Recluse",
+      "name": "Adam"
+    },
     {
       "type": "Ravenkeeper",
       "name": "Jasmine",
@@ -50,15 +77,42 @@
       "player": "Tom",
       "role": "Undertaker"
     },
-    { "type": "Empath", "name": "You", "timing": "night_1", "count": 0 },
-    { "type": "Empath", "name": "You", "timing": "night_2", "count": 0 },
+    {
+      "type": "Empath",
+      "name": "You",
+      "timing": "night_1",
+      "count": 0,
+      "possibleActualRoles": ["Empath", "Drunk"]
+    },
+    {
+      "type": "Empath",
+      "name": "You",
+      "timing": "night_2",
+      "count": 0,
+      "possibleActualRoles": ["Empath", "Drunk"]
+    },
     {
       "type": "FortuneTeller",
       "name": "Dan",
       "checks": [
-        { "timing": "night_1", "left": "Sarah", "right": "Fraser", "yes": false },
-        { "timing": "night_2", "left": "You", "right": "Hannah", "yes": false },
-        { "timing": "night_3", "left": "Dan", "right": "Hannah", "yes": false }
+        {
+          "timing": "night_1",
+          "left": "Sarah",
+          "right": "Fraser",
+          "yes": false
+        },
+        {
+          "timing": "night_2",
+          "left": "You",
+          "right": "Hannah",
+          "yes": false
+        },
+        {
+          "timing": "night_3",
+          "left": "Dan",
+          "right": "Hannah",
+          "yes": false
+        }
       ]
     },
     {

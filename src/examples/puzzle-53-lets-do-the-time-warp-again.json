@@ -32,12 +32,6 @@
       "expression": "(no p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Klutz})} == 1"
     }
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Artist"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -70,7 +64,7 @@
       "type": "Clockmaker",
       "name": "Tim",
       "distance": 4,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Clockmaker", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Dreamer",
@@ -78,27 +72,32 @@
       "timing": "night_1",
       "player": "Olivia",
       "roles": ["Mutant", "Witch"],
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Dreamer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Oracle",
       "name": "Fraser",
       "timing": "night_2",
       "count": 0,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Oracle",
       "name": "Fraser",
       "timing": "night_3",
       "count": 1,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Mathematician",
       "name": "Jasmine",
-      "malfunctions": [{ "timing": "night_1", "count": 2 }],
-      "extraPossibleActualRoles": ["Mutant"]
+      "malfunctions": [
+        {
+          "timing": "night_1",
+          "count": 2
+        }
+      ],
+      "possibleActualRoles": ["Mathematician", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Artist",
@@ -109,7 +108,8 @@
           "timing": "day_2",
           "expression": "Sarah.type != Demon"
         }
-      ]
+      ],
+      "possibleActualRoles": ["Artist"]
     },
     {
       "type": "Klutz",
@@ -118,7 +118,6 @@
     {
       "type": "Snake Charmer",
       "name": "Josh",
-      "extraPossibleActualRoles": ["Mutant"],
       "checks": [
         {
           "timing": "night_1",
@@ -130,20 +129,21 @@
           "player": "Sarah",
           "demon": false
         }
-      ]
+      ],
+      "possibleActualRoles": ["Snake Charmer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Juggler",
       "name": "Olivia",
       "timing": "night_2",
       "correctCount": 2,
-      "extraPossibleActualRoles": ["Mutant"],
       "guesses": {
         "Aoife": "Dreamer",
         "Tim": "Mutant",
         "Fraser": "Mutant",
         "Sarah": "Vortox"
-      }
+      },
+      "possibleActualRoles": ["Juggler", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     }
   ]
 }

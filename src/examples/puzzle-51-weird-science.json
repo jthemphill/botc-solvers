@@ -28,12 +28,6 @@
       "expression": "#{p : players | some (p.role & {Poisoner, `Scarlet Woman`, Spy, Boffin})} == 1"
     }
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Washerwoman"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -95,7 +89,8 @@
       "name": "You",
       "timing": "night_1",
       "role": "Artist",
-      "among": ["Hannah", "Tim"]
+      "among": ["Hannah", "Tim"],
+      "possibleActualRoles": ["Washerwoman"]
     },
     {
       "type": "Slayer",

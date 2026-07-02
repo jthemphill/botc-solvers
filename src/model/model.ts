@@ -255,7 +255,7 @@ export class BOTCModel {
     options: {
       readonly evilRoles?: readonly RoleRef[];
       readonly drunkRole?: RoleRef;
-      readonly extraPossibleActualRoles?: readonly RoleRef[];
+      readonly possibleActualRoles?: readonly RoleRef[];
     } = {},
   ): void {
     const apparentRole = roleName(claim.apparentRole);
@@ -267,10 +267,9 @@ export class BOTCModel {
         .map(([role]) => role);
     const claimedRole = this.characters.get(apparentRole) as RoleRef;
     const claimedEvil = roleAlignment(claimedRole) === Alignment.Evil;
-    const possibleRoles = [
+    const possibleRoles = options.possibleActualRoles?.map(roleName) ?? [
       ...(claimedEvil ? [] : [apparentRole]),
       ...evilRoles.map(roleName).filter((role) => !claimedEvil || role !== apparentRole),
-      ...(options.extraPossibleActualRoles ?? []).map(roleName),
     ];
     const drunkRole = roleName(options.drunkRole ?? "Drunk");
     const drunkLikeRoles = [
@@ -278,7 +277,7 @@ export class BOTCModel {
       ...(drunkRole !== "Hermit" && this.characters.has("Hermit") ? ["Hermit"] : []),
     ];
     const claimedTownsfolk = roleCharacterType(claimedRole) === CharacterType.Townsfolk;
-    if (claimedTownsfolk) possibleRoles.push(...drunkLikeRoles);
+    if (claimedTownsfolk && options.possibleActualRoles === undefined) possibleRoles.push(...drunkLikeRoles);
     this.setPossibleActualRoles(claim.player, possibleRoles);
     if (claimedTownsfolk)
       for (const drunkLikeRole of drunkLikeRoles)

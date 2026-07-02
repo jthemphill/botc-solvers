@@ -2,12 +2,6 @@
   "title": "Puzzle 1 — Sober Savant",
   "players": ["Oscar", "Matt", "Anna", "You", "Tim", "Sula"],
   "script": ["Imp", "Scarlet Woman", "Drunk", "Investigator", "Knight", "Noble", "Savant", "Seamstress", "Steward"],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Savant"]
-    }
-  ],
   "claims": [
     {
       "type": "Investigator",
@@ -35,7 +29,8 @@
         {
           "options": ["some p: players | p.role == Investigator", "some p: You.neighbors | p.alignment == Evil"]
         }
-      ]
+      ],
+      "possibleActualRoles": ["Savant"]
     },
     {
       "type": "Savant",
@@ -48,7 +43,8 @@
             "some p: players | p.role == Drunk && p.left.type == Townsfolk && p.right.type == Townsfolk"
           ]
         }
-      ]
+      ],
+      "possibleActualRoles": ["Savant"]
     },
     {
       "type": "Savant",
@@ -58,7 +54,8 @@
         {
           "options": ["some p: {Tim, Sula} | p.type == Minion", "no p: players | p.role == Noble"]
         }
-      ]
+      ],
+      "possibleActualRoles": ["Savant"]
     },
     {
       "type": "Knight",

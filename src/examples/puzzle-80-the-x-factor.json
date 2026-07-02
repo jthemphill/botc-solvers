@@ -17,35 +17,128 @@
     "Chef",
     "Empath"
   ],
-  "fixedRoles": [{ "name": "You", "roles": ["Investigator", "Drunk"] }],
   "timeline": [
-    { "timing": "day_1", "type": "execution", "players": ["You"] },
-    { "timing": "night_2", "type": "nightDeath", "players": ["Tom"] },
-    { "timing": "day_2", "type": "execution", "players": ["Matt"] },
-    { "timing": "night_3", "type": "nightDeath", "players": ["Olivia"] },
-    { "timing": "day_3", "type": "execution", "players": ["Hannah"] },
-    { "timing": "night_4", "type": "nightDeath", "players": ["Aoife"] }
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Tom"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Matt"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Olivia"]
+    },
+    {
+      "timing": "day_3",
+      "type": "execution",
+      "players": ["Hannah"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": ["Aoife"]
+    }
   ],
   "claims": [
-    { "type": "Ravenkeeper", "name": "Olivia", "timing": "night_3", "player": "Charlotte", "role": "Fortune Teller" },
-    { "type": "Recluse", "name": "Matt" },
-    { "type": "Chef", "name": "Hannah", "timing": "night_1", "count": 0 },
-    { "type": "Empath", "name": "Tom", "timing": "night_1", "count": 0 },
-    { "type": "Saint", "name": "Aoife" },
-    { "type": "Investigator", "name": "You", "timing": "night_1", "minionRole": "Xaan", "among": ["Fraser", "Hannah"] },
-    { "type": "Butler", "name": "Sarah" },
+    {
+      "type": "Ravenkeeper",
+      "name": "Olivia",
+      "timing": "night_3",
+      "player": "Charlotte",
+      "role": "Fortune Teller"
+    },
+    {
+      "type": "Recluse",
+      "name": "Matt"
+    },
+    {
+      "type": "Chef",
+      "name": "Hannah",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Tom",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Saint",
+      "name": "Aoife"
+    },
+    {
+      "type": "Investigator",
+      "name": "You",
+      "timing": "night_1",
+      "minionRole": "Xaan",
+      "among": ["Fraser", "Hannah"],
+      "possibleActualRoles": ["Investigator", "Drunk"]
+    },
+    {
+      "type": "Butler",
+      "name": "Sarah"
+    },
     {
       "type": "FortuneTeller",
       "name": "Charlotte",
       "checks": [
-        { "timing": "night_1", "left": "You", "right": "Fraser", "yes": false },
-        { "timing": "night_2", "left": "Charlotte", "right": "Olivia", "yes": false },
-        { "timing": "night_3", "left": "Charlotte", "right": "Aoife", "yes": true },
-        { "timing": "night_4", "left": "Sarah", "right": "Fraser", "yes": false }
+        {
+          "timing": "night_1",
+          "left": "You",
+          "right": "Fraser",
+          "yes": false
+        },
+        {
+          "timing": "night_2",
+          "left": "Charlotte",
+          "right": "Olivia",
+          "yes": false
+        },
+        {
+          "timing": "night_3",
+          "left": "Charlotte",
+          "right": "Aoife",
+          "yes": true
+        },
+        {
+          "timing": "night_4",
+          "left": "Sarah",
+          "right": "Fraser",
+          "yes": false
+        }
       ]
     },
-    { "type": "Undertaker", "name": "Fraser", "timing": "night_2", "player": "You", "role": "Investigator" },
-    { "type": "Undertaker", "name": "Fraser", "timing": "night_3", "player": "Matt", "role": "Recluse" },
-    { "type": "Undertaker", "name": "Fraser", "timing": "night_4", "player": "Hannah", "role": "Chef" }
+    {
+      "type": "Undertaker",
+      "name": "Fraser",
+      "timing": "night_2",
+      "player": "You",
+      "role": "Investigator"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Fraser",
+      "timing": "night_3",
+      "player": "Matt",
+      "role": "Recluse"
+    },
+    {
+      "type": "Undertaker",
+      "name": "Fraser",
+      "timing": "night_4",
+      "player": "Hannah",
+      "role": "Chef"
+    }
   ]
 }

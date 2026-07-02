@@ -14,46 +14,6 @@
     "Shugenja",
     "Village Idiot"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Savant"]
-    }
-  ],
-  "forbiddenRoles": [
-    {
-      "name": "Anna",
-      "roles": ["Drunk"]
-    },
-    {
-      "name": "Aoife",
-      "roles": ["Drunk"]
-    },
-    {
-      "name": "Steph",
-      "roles": ["Drunk"]
-    },
-    {
-      "name": "Tim",
-      "roles": ["Drunk"]
-    },
-    {
-      "name": "You",
-      "roles": ["Drunk"]
-    },
-    {
-      "name": "Fraser",
-      "roles": ["Drunk"]
-    },
-    {
-      "name": "Sarah",
-      "roles": ["Drunk"]
-    },
-    {
-      "name": "Oscar",
-      "roles": ["Drunk"]
-    }
-  ],
   "claims": [
     {
       "type": "Juggler",
@@ -63,36 +23,38 @@
         "You": "Savant",
         "Tim": "Village Idiot"
       },
-      "correctCount": 1
+      "correctCount": 1,
+      "possibleActualRoles": ["Juggler", "Leviathan", "Goblin"]
     },
     {
       "type": "Shugenja",
       "name": "Aoife",
-      "evilDirection": "anticlockwise"
+      "evilDirection": "anticlockwise",
+      "possibleActualRoles": ["Shugenja", "Leviathan", "Goblin"]
     },
     {
       "type": "Dreamer",
       "name": "Steph",
-      "extraPossibleActualRoles": ["Mutant"],
       "timing": "night_1",
       "player": "Sarah",
-      "roles": ["Fortune Teller", "Leviathan"]
+      "roles": ["Fortune Teller", "Leviathan"],
+      "possibleActualRoles": ["Dreamer", "Leviathan", "Goblin", "Mutant"]
     },
     {
       "type": "Dreamer",
       "name": "Steph",
-      "extraPossibleActualRoles": ["Mutant"],
       "timing": "night_2",
       "player": "You",
-      "roles": ["Savant", "Goblin"]
+      "roles": ["Savant", "Goblin"],
+      "possibleActualRoles": ["Dreamer", "Leviathan", "Goblin", "Mutant"]
     },
     {
       "type": "Dreamer",
       "name": "Steph",
-      "extraPossibleActualRoles": ["Mutant"],
       "timing": "night_3",
       "player": "Fraser",
-      "roles": ["Mutant", "Goblin"]
+      "roles": ["Mutant", "Goblin"],
+      "possibleActualRoles": ["Dreamer", "Leviathan", "Goblin", "Mutant"]
     },
     {
       "type": "VillageIdiot",
@@ -110,7 +72,8 @@
           "player": "You",
           "good": true
         }
-      ]
+      ],
+      "possibleActualRoles": ["Village Idiot", "Leviathan", "Goblin"]
     },
     {
       "type": "Savant",
@@ -120,7 +83,8 @@
         {
           "options": ["one p: {Fraser, Anna, Steph} | p.alignment == Evil", "role_distance(3, Leviathan, Goblin)"]
         }
-      ]
+      ],
+      "possibleActualRoles": ["Savant"]
     },
     {
       "type": "Savant",
@@ -133,7 +97,8 @@
             "Fraser.role == `Village Idiot` && globally_drunk(Fraser)"
           ]
         }
-      ]
+      ],
+      "possibleActualRoles": ["Savant"]
     },
     {
       "type": "Savant",
@@ -146,7 +111,8 @@
             "#{p : {Oscar, Anna, Tim} | p.type == Townsfolk} == 2"
           ]
         }
-      ]
+      ],
+      "possibleActualRoles": ["Savant"]
     },
     {
       "type": "VillageIdiot",
@@ -164,7 +130,8 @@
           "player": "You",
           "good": true
         }
-      ]
+      ],
+      "possibleActualRoles": ["Village Idiot", "Leviathan", "Goblin"]
     },
     {
       "type": "FortuneTeller",
@@ -188,13 +155,15 @@
           "yes": false,
           "timing": "night_3"
         }
-      ]
+      ],
+      "possibleActualRoles": ["Fortune Teller", "Leviathan", "Goblin"]
     },
     {
       "type": "Investigator",
       "name": "Oscar",
       "role": "Goblin",
-      "among": ["Fraser", "Steph"]
+      "among": ["Fraser", "Steph"],
+      "possibleActualRoles": ["Investigator", "Leviathan", "Goblin"]
     }
   ]
 }

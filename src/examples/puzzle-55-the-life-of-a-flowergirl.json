@@ -32,12 +32,6 @@
       "expression": "(no p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Klutz})} == 1"
     }
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Flowergirl"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -82,14 +76,14 @@
       "name": "Anna",
       "timing": "night_2",
       "correctCount": 5,
-      "extraPossibleActualRoles": ["Mutant"],
       "guesses": {
         "You": "Flowergirl",
         "Fraser": "Fang Gu",
         "Aoife": "Fang Gu",
         "Sarah": "Mathematician",
         "Jasmine": "Oracle"
-      }
+      },
+      "possibleActualRoles": ["Juggler", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Mathematician",
@@ -106,14 +100,14 @@
       "name": "Jasmine",
       "timing": "night_2",
       "count": 1,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Oracle",
       "name": "Jasmine",
       "timing": "night_3",
       "count": 1,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Flowergirl",
@@ -124,7 +118,8 @@
           "voters": ["You", "Fraser", "Steph", "Aoife", "Jasmine"],
           "demonVoted": true
         }
-      ]
+      ],
+      "possibleActualRoles": ["Flowergirl"]
     },
     {
       "type": "Seamstress",

@@ -18,12 +18,6 @@
     "Slayer",
     "Washerwoman"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Investigator", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -86,7 +80,8 @@
       "name": "You",
       "timing": "night_1",
       "role": "Scarlet Woman",
-      "among": ["Steph", "Fraser"]
+      "among": ["Steph", "Fraser"],
+      "possibleActualRoles": ["Investigator", "Drunk"]
     },
     {
       "type": "FortuneTeller",

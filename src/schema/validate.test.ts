@@ -55,12 +55,12 @@ describe("validatePuzzleDoc", () => {
     ).toThrow("Knight 'noDemonAmong' must have at most 2 players");
   });
 
-  test("accepts Artist custom info statements and forbidden roles", () => {
+  test("accepts Artist custom info statements and constraints", () => {
     const doc = validatePuzzleDoc({
       ...baseDoc,
       players: ["You", "A"],
       script: ["Artist", "Imp"],
-      forbiddenRoles: [{ name: "You", roles: ["Imp"] }],
+      constraints: [{ expression: "You.role != Imp" }],
       claims: [
         {
           type: "Artist",
@@ -76,7 +76,7 @@ describe("validatePuzzleDoc", () => {
       ],
     });
 
-    expect(doc.forbiddenRoles).toEqual([{ name: "You", roles: ["Imp"] }]);
+    expect(doc.constraints).toEqual([{ expression: "You.role != Imp" }]);
     expect(doc.claims[0]?.info).toEqual([
       {
         timing: "night_1",
@@ -90,10 +90,24 @@ describe("validatePuzzleDoc", () => {
     const doc = validatePuzzleDoc({
       ...baseDoc,
       script: ["Chef", "Widow"],
-      claims: [{ type: "Chef", name: "You", count: 0, heardWidowCall: true }],
+      claims: [
+        {
+          type: "Chef",
+          name: "You",
+          count: 0,
+          possibleActualRoles: ["Chef", "Drunk"],
+          heardWidowCall: true,
+        },
+      ],
     });
 
-    expect(doc.claims[0]).toEqual({ type: "Chef", name: "You", count: 0, heardWidowCall: true });
+    expect(doc.claims[0]).toEqual({
+      type: "Chef",
+      name: "You",
+      count: 0,
+      possibleActualRoles: ["Chef", "Drunk"],
+      heardWidowCall: true,
+    });
   });
 
   test("accepts Prodigy checks", () => {
@@ -163,6 +177,41 @@ describe("validatePuzzleDoc", () => {
     });
 
     expect(doc.constraints).toEqual([{ expression: "#{p : players | p.role == Imp} == 1" }]);
+  });
+
+  test("rejects legacy top-level role fields", () => {
+    expect(() =>
+      validatePuzzleDoc({
+        ...baseDoc,
+        fixedRoles: [{ name: "You", roles: ["Savant"] }],
+        claims: [],
+      }),
+    ).toThrow("Unsupported legacy field 'fixedRoles'");
+
+    expect(() =>
+      validatePuzzleDoc({
+        ...baseDoc,
+        forbiddenRoles: [{ name: "You", roles: ["Imp"] }],
+        claims: [],
+      }),
+    ).toThrow("Unsupported legacy field 'forbiddenRoles'");
+  });
+
+  test("rejects legacy claim role extras", () => {
+    expect(() =>
+      validatePuzzleDoc({
+        ...baseDoc,
+        script: ["Savant", "Drunk"],
+        claims: [
+          {
+            type: "Savant",
+            name: "You",
+            statements: [{ options: ["true", "false"] }],
+            extraPossibleActualRoles: ["Drunk"],
+          },
+        ],
+      }),
+    ).toThrow("Unsupported legacy field 'extraPossibleActualRoles'");
   });
 
   test("rejects unknown timeline event types", () => {

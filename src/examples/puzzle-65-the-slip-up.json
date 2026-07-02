@@ -31,12 +31,6 @@
       "expression": "(no p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Klutz})} == 1"
     }
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Klutz"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -69,7 +63,6 @@
     {
       "type": "Snake Charmer",
       "name": "Fraser",
-      "extraPossibleActualRoles": ["Mutant"],
       "checks": [
         {
           "timing": "night_1",
@@ -86,7 +79,8 @@
           "player": "Tom",
           "demon": false
         }
-      ]
+      ],
+      "possibleActualRoles": ["Snake Charmer", "Fang Gu", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Juggler",
@@ -103,28 +97,29 @@
       "type": "Clockmaker",
       "name": "Dan",
       "distance": 4,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Clockmaker", "Fang Gu", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Oracle",
       "name": "Matt",
       "timing": "night_2",
       "count": 0,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Oracle", "Fang Gu", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Oracle",
       "name": "Matt",
       "timing": "night_3",
       "count": 1,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Oracle", "Fang Gu", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Klutz",
       "name": "You",
       "timing": "day_1",
       "chosen": "Dan",
-      "lost": false
+      "lost": false,
+      "possibleActualRoles": ["Klutz"]
     },
     {
       "type": "Seamstress",
@@ -132,7 +127,7 @@
       "timing": "night_2",
       "among": ["Anna", "Dan"],
       "aligned": false,
-      "extraPossibleActualRoles": ["Mutant"]
+      "possibleActualRoles": ["Seamstress", "Fang Gu", "No Dashii", "Vortox", "Witch", "Mutant"]
     },
     {
       "type": "Mathematician",

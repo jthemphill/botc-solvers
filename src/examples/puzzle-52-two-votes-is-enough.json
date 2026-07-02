@@ -18,12 +18,6 @@
     "Saint",
     "Ravenkeeper"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Undertaker", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -91,7 +85,8 @@
       "name": "You",
       "timing": "night_2",
       "player": "Josh",
-      "role": "Imp"
+      "role": "Imp",
+      "possibleActualRoles": ["Undertaker", "Drunk"]
     },
     {
       "type": "Investigator",

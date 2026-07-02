@@ -16,12 +16,6 @@
     "Snake Charmer"
   ],
   "uniqueCharacters": false,
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Clockmaker"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -51,19 +45,19 @@
       "timing": "night_1",
       "among": ["Aoife", "Tom"],
       "aligned": true,
-      "extraPossibleActualRoles": ["Artist", "Mutant"]
+      "possibleActualRoles": ["Seamstress", "Vortox", "Cerenovus", "Pit-Hag", "Artist", "Mutant"]
     },
     {
       "type": "Artist",
       "name": "Matthew",
       "timing": "day_2",
-      "extraPossibleActualRoles": ["Seamstress", "Mutant"],
       "info": [
         {
           "timing": "day_2",
           "expression": "You.role == Clockmaker"
         }
-      ]
+      ],
+      "possibleActualRoles": ["Seamstress", "Vortox", "Cerenovus", "Pit-Hag", "Artist", "Mutant"]
     },
     {
       "type": "Sage",
@@ -118,13 +112,15 @@
     {
       "type": "Clockmaker",
       "name": "You",
-      "distance": 2
+      "distance": 2,
+      "possibleActualRoles": ["Clockmaker"]
     },
     {
       "type": "Philosopher",
       "name": "Sula",
       "timing": "night_2",
-      "role": "Snake Charmer"
+      "role": "Snake Charmer",
+      "possibleActualRoles": ["Philosopher", "Vortox", "Cerenovus", "Pit-Hag"]
     },
     {
       "type": "Snake Charmer",
@@ -136,7 +132,7 @@
           "timing": "night_2"
         }
       ],
-      "extraPossibleActualRoles": ["Philosopher"]
+      "possibleActualRoles": ["Philosopher", "Vortox", "Cerenovus", "Pit-Hag"]
     },
     {
       "type": "Dreamer",

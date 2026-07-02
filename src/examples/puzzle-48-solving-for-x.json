@@ -13,12 +13,6 @@
     "Mathematician",
     "Village Idiot"
   ],
-  "forbiddenRoles": [
-    {
-      "name": "You",
-      "roles": ["Leviathan", "Poisoner", "Xaan"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_3",
@@ -80,7 +74,8 @@
           "timing": "night_3",
           "count": 1
         }
-      ]
+      ],
+      "possibleActualRoles": ["Mathematician"]
     },
     {
       "type": "Chambermaid",

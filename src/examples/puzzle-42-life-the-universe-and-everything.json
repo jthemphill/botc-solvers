@@ -15,12 +15,6 @@
     "Saint",
     "Undertaker"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Philosopher", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -90,14 +84,15 @@
       "type": "Empath",
       "name": "You",
       "timing": "night_1",
-      "extraPossibleActualRoles": ["Philosopher"],
-      "count": 0
+      "count": 0,
+      "possibleActualRoles": ["Philosopher", "Drunk"]
     },
     {
       "type": "Philosopher",
       "name": "You",
       "timing": "night_1",
-      "role": "Empath"
+      "role": "Empath",
+      "possibleActualRoles": ["Philosopher", "Drunk"]
     },
     {
       "type": "Artist",

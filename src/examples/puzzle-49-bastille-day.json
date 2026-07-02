@@ -15,12 +15,6 @@
     "Undertaker",
     "Washerwoman"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Washerwoman", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -110,7 +104,8 @@
       "name": "You",
       "timing": "night_1",
       "role": "Empath",
-      "among": ["Matthew", "Tom"]
+      "among": ["Matthew", "Tom"],
+      "possibleActualRoles": ["Washerwoman", "Drunk"]
     },
     {
       "type": "Librarian",

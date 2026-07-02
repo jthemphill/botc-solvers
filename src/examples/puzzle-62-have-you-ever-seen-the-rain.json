@@ -16,12 +16,6 @@
     "Librarian",
     "Ravenkeeper"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Recluse"]
-    }
-  ],
   "constraints": [
     {
       "expression": "Matthew.role != Drunk"
@@ -160,7 +154,8 @@
     },
     {
       "type": "Recluse",
-      "name": "You"
+      "name": "You",
+      "possibleActualRoles": ["Recluse"]
     }
   ]
 }

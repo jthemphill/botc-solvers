@@ -14,12 +14,6 @@
     "Virgin",
     "Washerwoman"
   ],
-  "fixedRoles": [
-    {
-      "name": "You",
-      "roles": ["Investigator", "Drunk"]
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -70,7 +64,8 @@
       "name": "You",
       "timing": "night_1",
       "role": "Poisoner",
-      "among": ["Olivia", "Josh"]
+      "among": ["Olivia", "Josh"],
+      "possibleActualRoles": ["Investigator", "Drunk"]
     },
     {
       "type": "Klutz",

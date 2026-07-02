@@ -14,14 +14,41 @@
     "Seamstress",
     "Dreamer"
   ],
-  "forbiddenRoles": [{ "name": "You", "roles": ["Riot", "Spy", "Xaan", "Politician"] }],
   "timeline": [
-    { "timing": "day_1", "type": "execution", "players": ["Adam"] },
-    { "timing": "day_2", "type": "execution", "players": ["Tim"] },
-    { "timing": "day_3", "type": "nominationDeath", "players": ["Fraser"], "caller": "Oscar" },
-    { "timing": "day_3", "type": "nominationDeath", "players": ["Oscar"], "caller": "Fraser" },
-    { "timing": "day_3", "type": "nominationDeath", "players": ["Jasmine"], "caller": "Oscar" },
-    { "timing": "day_3", "type": "nominationDeath", "players": ["You"], "caller": "Jasmine" }
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Adam"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Tim"]
+    },
+    {
+      "timing": "day_3",
+      "type": "nominationDeath",
+      "players": ["Fraser"],
+      "caller": "Oscar"
+    },
+    {
+      "timing": "day_3",
+      "type": "nominationDeath",
+      "players": ["Oscar"],
+      "caller": "Fraser"
+    },
+    {
+      "timing": "day_3",
+      "type": "nominationDeath",
+      "players": ["Jasmine"],
+      "caller": "Oscar"
+    },
+    {
+      "timing": "day_3",
+      "type": "nominationDeath",
+      "players": ["You"],
+      "caller": "Jasmine"
+    }
   ],
   "claims": [
     {
@@ -30,23 +57,32 @@
       "timing": "night_1",
       "among": ["You", "Hannah"],
       "aligned": true,
-      "extraPossibleActualRoles": ["Politician"]
+      "possibleActualRoles": ["Seamstress", "Riot", "Spy", "Xaan", "Politician"]
     },
-    { "type": "Politician", "name": "Hannah" },
+    {
+      "type": "Politician",
+      "name": "Hannah"
+    },
     {
       "type": "Nightwatchman",
       "name": "Matthew",
       "timing": "night_3",
       "chosen": "Oscar",
       "learned": false,
-      "extraPossibleActualRoles": ["Politician"]
+      "possibleActualRoles": ["Nightwatchman", "Riot", "Spy", "Xaan", "Politician"]
     },
     {
       "type": "Puzzlemaster",
       "name": "Tim",
       "timing": "day_2",
-      "guesses": [{ "timing": "day_2", "player": "Sarah", "learnedDemon": "Matthew" }],
-      "extraPossibleActualRoles": ["Politician"]
+      "guesses": [
+        {
+          "timing": "day_2",
+          "player": "Sarah",
+          "learnedDemon": "Matthew"
+        }
+      ],
+      "possibleActualRoles": ["Puzzlemaster", "Riot", "Spy", "Xaan", "Politician"]
     },
     {
       "type": "Dreamer",
@@ -54,7 +90,7 @@
       "timing": "night_1",
       "player": "You",
       "roles": ["Juggler", "Xaan"],
-      "extraPossibleActualRoles": ["Politician"]
+      "possibleActualRoles": ["Dreamer", "Riot", "Spy", "Xaan", "Politician"]
     },
     {
       "type": "Dreamer",
@@ -62,7 +98,7 @@
       "timing": "night_2",
       "player": "Oscar",
       "roles": ["Shugenja", "Spy"],
-      "extraPossibleActualRoles": ["Politician"]
+      "possibleActualRoles": ["Dreamer", "Riot", "Spy", "Xaan", "Politician"]
     },
     {
       "type": "Dreamer",
@@ -70,7 +106,7 @@
       "timing": "night_3",
       "player": "Hannah",
       "roles": ["Politician", "Xaan"],
-      "extraPossibleActualRoles": ["Politician"]
+      "possibleActualRoles": ["Dreamer", "Riot", "Spy", "Xaan", "Politician"]
     },
     {
       "type": "Juggler",
@@ -81,7 +117,8 @@
         "Fraser": "Xaan",
         "Tim": "Puzzlemaster"
       },
-      "correctCount": 2
+      "correctCount": 2,
+      "possibleActualRoles": ["Juggler"]
     },
     {
       "type": "Seamstress",
@@ -89,19 +126,19 @@
       "timing": "night_1",
       "among": ["Sarah", "Tim"],
       "aligned": true,
-      "extraPossibleActualRoles": ["Politician"]
+      "possibleActualRoles": ["Seamstress", "Riot", "Spy", "Xaan", "Politician"]
     },
     {
       "type": "Noble",
       "name": "Sarah",
       "oneEvilAmong": ["You", "Adam", "Jasmine"],
-      "extraPossibleActualRoles": ["Politician"]
+      "possibleActualRoles": ["Noble", "Riot", "Spy", "Xaan", "Politician"]
     },
     {
       "type": "Shugenja",
       "name": "Oscar",
       "evilDirection": "anticlockwise",
-      "extraPossibleActualRoles": ["Politician"]
+      "possibleActualRoles": ["Shugenja", "Riot", "Spy", "Xaan", "Politician"]
     }
   ]
 }

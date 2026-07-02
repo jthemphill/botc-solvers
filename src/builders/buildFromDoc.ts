@@ -16,16 +16,6 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
     setup: doc.setup === "none" || doc.setup === "atheist" ? false : "standard",
   };
   const game = buildPuzzleModel(spec, backend);
-  for (const fixedRole of doc.fixedRoles ?? []) {
-    if (fixedRole.name && fixedRole.roles.length > 0) {
-      game.setPossibleActualRoles(fixedRole.name, fixedRole.roles.map(resolveRoleRef));
-    }
-  }
-  for (const forbiddenRole of doc.forbiddenRoles ?? []) {
-    if (forbiddenRole.name) {
-      for (const role of forbiddenRole.roles) game.fixNotActual(forbiddenRole.name, resolveRoleRef(role));
-    }
-  }
   const ctx = { players: doc.players, script: doc.script };
   applyGlobalConstraints(game, doc, ctx);
   if (doc.setup === "atheist") applyAtheistSetup(game, doc);
