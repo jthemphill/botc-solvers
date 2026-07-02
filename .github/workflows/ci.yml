@@ -47,6 +47,13 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7.0.0
 
+      - name: Install Bun setup dependency
+        run: |
+          if ! command -v unzip >/dev/null; then
+            apt-get update
+            apt-get install --yes unzip
+          fi
+
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2.2.0
         with:
