@@ -21,6 +21,9 @@ import {
 } from "../schema/puzzleDoc";
 import { sortTimelineEvents, type PuzzleAction } from "../state/puzzleDoc";
 import { hiddenScriptRoleOptions } from "../state/scriptRoles";
+import { LIVE_SOLVE_WORLD_LIMIT } from "../state/useLiveSolve";
+import { actualRole, apparentRole, demonWorldCounts, isEvilRole, worldVerdict } from "../state/worldAnalysis";
+import type { SerializableWorld } from "../worker/protocol";
 import { CLAIM_TYPES, ClaimBody, makeEmptyClaim } from "./ClaimsEditor";
 import { claimSummary, compactTimingLabel, formatList, timingLabel } from "./claimSummary";
 
@@ -32,6 +35,9 @@ interface Props {
 interface SharedProps extends Props {
   selectedIndex: number;
   onSelect: (index: number) => void;
+  worlds?: readonly SerializableWorld[];
+  paintedWorld?: SerializableWorld;
+  solving?: boolean;
 }
 
 interface DrawWorkbenchProps extends Props {
@@ -77,9 +83,13 @@ export function SeatingChartEditor({ doc, dispatch }: Props) {
   );
 }
 
-export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedProps) {
+export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect, worlds, paintedWorld, solving }: SharedProps) {
   const players = doc.players;
   const selectedName = players[selectedIndex];
+  const demonCounts =
+    worlds !== undefined && paintedWorld === undefined ? demonWorldCounts(worlds, players) : undefined;
+  const verdict =
+    worlds === undefined ? undefined : worldVerdict(worlds, players, worlds.length >= LIVE_SOLVE_WORLD_LIMIT);
   const setupCounts = countSetupRoles(doc);
   const timeline = doc.timeline ?? [];
   const [draggedIndex, setDraggedIndex] = useState<number | undefined>(undefined);
@@ -278,12 +288,22 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
           const deathClass = deathMarker === undefined ? undefined : deathMarkerClass(deathMarker);
           const deathLabel = deathMarker === undefined ? "" : `, ${deathMarkerLabel(deathMarker)}`;
           const isEditing = editingIndex === index;
+          const painted = paintedWorld === undefined ? undefined : seatPaintInfo(paintedWorld, player);
+          const demonCount = demonCounts?.get(player) ?? 0;
+          const paintLabel =
+            painted?.actual === undefined
+              ? ""
+              : `, ${painted.actual}${painted.lying ? ` (claimed ${painted.apparent})` : ""}`;
+          const demonLabel =
+            demonCount > 0 && worlds !== undefined ? `, Demon in ${demonCount} of ${worlds.length} worlds` : "";
           return (
             <div
               key={player}
               className={`seat-button${deathClass === undefined ? "" : ` death-${deathClass}`}${
                 index === selectedIndex ? " selected" : ""
-              }${index === draggedIndex ? " dragging" : ""}${isEditing ? " editing" : ""}`}
+              }${index === draggedIndex ? " dragging" : ""}${isEditing ? " editing" : ""}${
+                painted?.evil ? " seat-evil" : ""
+              }${painted?.unreliable ? " seat-unreliable" : ""}${demonCount > 0 ? " seat-demon-candidate" : ""}`}
               style={seatButtonStyle(index, players.length, player)}
               draggable={!isEditing}
               role="button"
@@ -300,17 +320,23 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
               onPointerUp={(event) => handleSeatPointerUp(event, index, player)}
               onKeyDown={(event) => handleSeatKeyDown(event, index, player)}
               aria-pressed={index === selectedIndex}
-              aria-label={`Seat ${index + 1}: ${player}${deathLabel}. Drag to reorder seats. Double-click to rename.`}
+              aria-label={`Seat ${index + 1}: ${player}${deathLabel}${paintLabel}${demonLabel}. Drag to reorder seats. Double-click to rename.`}
             >
               {deathClass !== undefined && <span className={`seat-shroud ${deathClass}`} aria-hidden="true" />}
               <span
                 className="seat-token-icon"
                 aria-label={
-                  roleLabels.length === 0 ? "No claims" : `Primary claim: ${roleEmojiLabel(primaryClaim?.type)}`
+                  painted?.actual !== undefined
+                    ? `Actual role: ${roleEmojiLabel(painted.actual)}`
+                    : roleLabels.length === 0
+                      ? "No claims"
+                      : `Primary claim: ${roleEmojiLabel(primaryClaim?.type)}`
                 }
-                title={roleLabels.join(", ")}
+                title={painted?.actual !== undefined ? seatPaintTitle(painted) : roleLabels.join(", ")}
               >
-                {roleEmoji(primaryClaim?.type) ?? index + 1}
+                {painted?.actual !== undefined
+                  ? (roleEmoji(painted.actual) ?? "?")
+                  : (roleEmoji(primaryClaim?.type) ?? index + 1)}
               </span>
               {isEditing ? (
                 <input
@@ -340,6 +366,12 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
               ) : (
                 <span className="seat-player-name">{player}</span>
               )}
+              {painted?.actual !== undefined && <span className="seat-role-label">{painted.actual}</span>}
+              {demonCount > 0 && worlds !== undefined && (
+                <span className="seat-demon-badge" aria-hidden="true">
+                  {demonCount}/{worlds.length}
+                </span>
+              )}
               {deathMarker !== undefined && deathClass !== undefined && (
                 <span className={`seat-death-badge ${deathClass}`} aria-hidden="true">
                   {timelineEventGlyph(deathMarker)}
@@ -357,13 +389,27 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
             style={calloutPosition(card.playerIndex, players.length)}
             onClick={() => onSelect(card.playerIndex)}
           >
-            "{card.summary}"
+            <span>"{card.summary}"</span>
           </button>
         ))}
 
         <div className="center-timeline" aria-live="polite">
-          <strong>{selectedName ?? "No player selected"}</strong>
-          <span>Click tokens to edit claims</span>
+          {verdict !== undefined ? (
+            <>
+              <strong>{verdict.headline}</strong>
+              <span>{verdict.detail}</span>
+            </>
+          ) : solving ? (
+            <>
+              <strong>Solving…</strong>
+              <span>Searching for satisfying worlds</span>
+            </>
+          ) : (
+            <>
+              <strong>{selectedName ?? "No player selected"}</strong>
+              <span>Click tokens to edit claims</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -943,6 +989,34 @@ function timelineEventGlyph(event: TimelineEventDoc): string {
   if (type === "survivedExecution") return "S";
   if (type === "execution") return "X";
   return "N";
+}
+
+interface SeatPaintInfo {
+  readonly actual?: string;
+  readonly apparent?: string;
+  readonly lying: boolean;
+  readonly evil: boolean;
+  readonly unreliable: boolean;
+}
+
+function seatPaintInfo(world: SerializableWorld, player: string): SeatPaintInfo {
+  const actual = actualRole(world, player);
+  const apparent = apparentRole(world, player);
+  const lying = actual !== undefined && apparent !== undefined && actual !== apparent;
+  return {
+    actual,
+    apparent,
+    lying,
+    evil: isEvilRole(actual),
+    unreliable: world.drunk.includes(player) || world.poisoned.includes(player),
+  };
+}
+
+function seatPaintTitle(painted: SeatPaintInfo): string {
+  const parts = [painted.actual ?? "Unknown"];
+  if (painted.lying) parts.push(`claimed ${painted.apparent}`);
+  if (painted.unreliable) parts.push("info unreliable");
+  return parts.join(" · ");
 }
 
 function seatPosition(index: number, count: number): CSSProperties {

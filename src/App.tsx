@@ -1,53 +1,33 @@
-import { useReducer, useState } from "react";
-import { ClaimsEditor } from "./components/ClaimsEditor";
+import { useEffect, useReducer, useState } from "react";
 import { ConstraintsEditor } from "./components/ConstraintsEditor";
 import { ImportExportBar } from "./components/ImportExportBar";
 import { PuzzleHeader } from "./components/PuzzleHeader";
-import { ResultsView } from "./components/ResultsView";
 import { DrawWorkbench, PuzzleSheet } from "./components/SeatingChartEditor";
 import { ScriptPicker } from "./components/ScriptPicker";
+import { WorldsStrip } from "./components/WorldsStrip";
 import { initialDoc, initialState, reducer } from "./state/puzzleDoc";
-import { useSolver } from "./state/useSolver";
-
-type WorkbenchTab = "draw" | "script" | "claims" | "solve";
-
-const WORKBENCH_TABS: Array<{ id: WorkbenchTab; label: string; icon: string }> = [
-  { id: "draw", label: "Draw", icon: "✎" },
-  { id: "script", label: "Script", icon: "▦" },
-  { id: "claims", label: "Claims", icon: "◈" },
-  { id: "solve", label: "Solve", icon: "▶" },
-];
+import { canSolve, useLiveSolve, LIVE_SOLVE_WORLD_LIMIT } from "./state/useLiveSolve";
+import type { SerializableWorld } from "./worker/protocol";
 
 export function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { doc, solveError, solveResult } = state;
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<WorkbenchTab>("draw");
-  const { busy, solve } = useSolver();
+  const [pinnedIndex, setPinnedIndex] = useState<number | undefined>(undefined);
+  const [previewIndex, setPreviewIndex] = useState<number | undefined>(undefined);
+  const { solving } = useLiveSolve(doc, dispatch);
 
-  const handleError = (message: string | undefined) => {
-    dispatch(
-      message === undefined
-        ? { type: "solve", status: "cleared", doc }
-        : { type: "solve", status: "failed", doc, message },
-    );
-  };
-
-  const handleSolve = async () => {
-    const solveDoc = doc;
-    dispatch({ type: "solve", status: "started", doc: solveDoc });
-    try {
-      const result = await solve(solveDoc);
-      dispatch({ type: "solve", status: "succeeded", doc: solveDoc, worlds: result });
-    } catch (e) {
-      dispatch({ type: "solve", status: "failed", doc: solveDoc, message: e instanceof Error ? e.message : String(e) });
-    }
-  };
+  useEffect(() => {
+    setPinnedIndex(undefined);
+    setPreviewIndex(undefined);
+  }, [doc]);
 
   const handleNewPuzzle = () => {
     dispatch({ type: "load", doc: initialDoc });
     setSelectedIndex(0);
   };
+
+  const paintedWorld = paintedWorldFor(solveResult, previewIndex, pinnedIndex);
 
   return (
     <main className="app-shell">
@@ -58,77 +38,124 @@ export function App() {
           </span>
           <span>BOTC Puzzle Solver</span>
         </div>
-        <ImportExportBar doc={doc} dispatch={dispatch} onError={handleError} />
+        <ImportExportBar
+          doc={doc}
+          dispatch={dispatch}
+          onError={(message) =>
+            dispatch(
+              message === undefined
+                ? { type: "solve", status: "cleared", doc }
+                : { type: "solve", status: "failed", doc, message },
+            )
+          }
+        />
         <div className="chrome-actions">
+          <SolveStatusPill doc={doc} solving={solving} worlds={solveResult} error={solveError} />
           <button type="button" onClick={handleNewPuzzle}>
             New Puzzle
-          </button>
-          <button
-            type="button"
-            className="primary-action"
-            onClick={handleSolve}
-            disabled={busy || doc.players.length === 0 || doc.script.length === 0}
-          >
-            {busy ? "Solving…" : "Solve"}
           </button>
         </div>
       </header>
 
       <div className="solver-workspace">
+        <aside className="script-rail" aria-label="Script and constraints">
+          <ScriptPicker doc={doc} dispatch={dispatch} />
+          <ConstraintsEditor doc={doc} dispatch={dispatch} />
+        </aside>
+
         <section className="puzzle-sheet" aria-label="Puzzle sheet editor">
           <div className="sheet-header">
             <PuzzleHeader doc={doc} dispatch={dispatch} />
           </div>
-          <PuzzleSheet doc={doc} dispatch={dispatch} selectedIndex={selectedIndex} onSelect={setSelectedIndex} />
+          <PuzzleSheet
+            doc={doc}
+            dispatch={dispatch}
+            selectedIndex={selectedIndex}
+            onSelect={setSelectedIndex}
+            worlds={solveResult}
+            paintedWorld={paintedWorld}
+            solving={solving}
+          />
         </section>
 
-        <aside className="workbench" aria-label="Puzzle workbench">
-          <nav className="workbench-tabs" aria-label="Workbench sections">
-            {WORKBENCH_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                className={activeTab === tab.id ? "active" : undefined}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                <span aria-hidden="true">{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-          <div className="workbench-body">
-            {activeTab === "draw" && <DrawWorkbench doc={doc} dispatch={dispatch} selectedIndex={selectedIndex} />}
-            {activeTab === "script" && (
-              <>
-                <ScriptPicker doc={doc} dispatch={dispatch} />
-                <ConstraintsEditor doc={doc} dispatch={dispatch} />
-              </>
-            )}
-            {activeTab === "claims" && <ClaimsEditor doc={doc} dispatch={dispatch} />}
-            {activeTab === "solve" && (
-              <section className="panel solve-panel">
-                <div className="solve-panel-header">
-                  <div>
-                    <h3>Solve Results</h3>
-                    <span>
-                      {doc.players.length} players · {doc.script.length} roles · {doc.claims.length} claims
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="primary-action"
-                    onClick={handleSolve}
-                    disabled={busy || doc.players.length === 0 || doc.script.length === 0}
-                  >
-                    {busy ? "Solving…" : "Solve"}
-                  </button>
-                </div>
-                <ResultsView worlds={solveResult} players={doc.players} error={solveError} />
-              </section>
-            )}
-          </div>
+        <aside className="inspector" aria-label="Selected player inspector">
+          <DrawWorkbench doc={doc} dispatch={dispatch} selectedIndex={selectedIndex} />
         </aside>
       </div>
+
+      <WorldsStrip
+        worlds={solveResult}
+        players={doc.players}
+        error={solveError}
+        pinnedIndex={pinnedIndex}
+        onPin={setPinnedIndex}
+        onPreview={setPreviewIndex}
+      />
     </main>
+  );
+}
+
+function paintedWorldFor(
+  worlds: readonly SerializableWorld[] | undefined,
+  previewIndex: number | undefined,
+  pinnedIndex: number | undefined,
+): SerializableWorld | undefined {
+  if (worlds === undefined) return undefined;
+  if (previewIndex !== undefined) return worlds[previewIndex];
+  if (pinnedIndex !== undefined) return worlds[pinnedIndex];
+  return worlds.length === 1 ? worlds[0] : undefined;
+}
+
+function SolveStatusPill({
+  doc,
+  solving,
+  worlds,
+  error,
+}: {
+  doc: Parameters<typeof canSolve>[0];
+  solving: boolean;
+  worlds: readonly SerializableWorld[] | undefined;
+  error: string | undefined;
+}) {
+  if (!canSolve(doc)) {
+    return (
+      <span className="solve-pill idle" role="status">
+        Add roles to solve
+      </span>
+    );
+  }
+  if (error !== undefined) {
+    return (
+      <span className="solve-pill failed" role="status">
+        Solve failed
+      </span>
+    );
+  }
+  if (solving || worlds === undefined) {
+    return (
+      <span className="solve-pill solving" role="status">
+        Solving…
+      </span>
+    );
+  }
+  if (worlds.length === 0) {
+    return (
+      <span className="solve-pill contradiction" role="status">
+        No worlds
+      </span>
+    );
+  }
+  if (worlds.length === 1) {
+    return (
+      <span className="solve-pill solved" role="status">
+        Solved · 1 world
+      </span>
+    );
+  }
+  const count = worlds.length >= LIVE_SOLVE_WORLD_LIMIT ? `${worlds.length}+` : worlds.length;
+  return (
+    <span className="solve-pill open" role="status">
+      {count} worlds match
+    </span>
   );
 }

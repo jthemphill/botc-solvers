@@ -89,7 +89,6 @@ async function setTitleAndPlayers(page: Page, doc: PuzzleDoc) {
 }
 
 async function setScriptRules(page: Page, doc: PuzzleDoc) {
-  await openWorkbenchTab(page, "Script");
   const rules = page.locator(".script-rules-grid");
   await rules.getByLabel("Setup").selectOption(doc.setup ?? "standard");
   if (doc.uniqueCharacters === false) await rules.getByLabel("Unique characters").uncheck();
@@ -104,7 +103,6 @@ async function setScriptRules(page: Page, doc: PuzzleDoc) {
 
 async function setTimeline(page: Page, timeline: readonly TimelineEventDoc[]) {
   if (timeline.length === 0) return;
-  await openWorkbenchTab(page, "Draw");
 
   for (const event of timeline) {
     const firstPlayer = event.players[0];
@@ -132,24 +130,35 @@ async function setTimeline(page: Page, timeline: readonly TimelineEventDoc[]) {
 }
 
 async function addClaimShells(page: Page, claims: readonly Claim[]) {
-  await openWorkbenchTab(page, "Claims");
   const panel = claimsPanel(page);
-  const addRow = panel.locator(":scope > .row").first();
+  const counts = new Map<string, number>();
 
   for (const claim of claims) {
-    await addRow.locator("select").nth(0).selectOption(claim.type);
-    await addRow.locator("select").nth(1).selectOption(claim.name);
-    await addRow.getByRole("button", { name: "+ Add claim" }).click();
+    await selectSeat(page, claim.name);
+    await panel.getByLabel("Claim type").selectOption(claim.type);
+    await panel.getByRole("button", { name: "Add Claim" }).click();
+    const count = (counts.get(claim.name) ?? 0) + 1;
+    counts.set(claim.name, count);
+    await expect(panel.locator(".selected-claims > .claim-block")).toHaveCount(count);
   }
-
-  await expect(panel.locator(":scope > .claim-block")).toHaveCount(claims.length);
 }
 
 async function fillClaims(page: Page, claims: readonly Claim[], doc: PuzzleDoc) {
-  const blocks = claimsPanel(page).locator(":scope > .claim-block");
-  for (const [index, claim] of claims.entries()) {
-    await fillClaim(blocks.nth(index), claim, doc);
+  const counts = new Map<string, number>();
+  for (const claim of claims) {
+    const index = counts.get(claim.name) ?? 0;
+    counts.set(claim.name, index + 1);
+    await selectSeat(page, claim.name);
+    const block = claimsPanel(page).locator(".selected-claims > .claim-block").nth(index);
+    await fillClaim(block, claim, doc);
   }
+}
+
+async function selectSeat(page: Page, player: string) {
+  const seat = seatFor(page, player);
+  await seat.focus();
+  await seat.press("Enter");
+  await expect(seat).toHaveAttribute("aria-pressed", "true");
 }
 
 async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
@@ -440,7 +449,6 @@ async function fillArtistInfo(block: Locator, info: readonly Record<string, stri
 
 async function setCustomConstraints(page: Page, doc: PuzzleDoc) {
   if ((doc.constraints ?? []).length === 0) return;
-  await openWorkbenchTab(page, "Script");
   const panel = page.locator("section.panel", { hasText: "Custom constraints" });
 
   for (const constraint of doc.constraints ?? []) {
@@ -457,10 +465,6 @@ async function exportPuzzleDoc(page: Page): Promise<PuzzleDoc> {
   const path = await download.path();
   if (path === null) throw new Error("Export download did not produce a local file");
   return JSON.parse(readFileSync(path, "utf8")) as PuzzleDoc;
-}
-
-async function openWorkbenchTab(page: Page, tab: "Draw" | "Script" | "Claims" | "Solve") {
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: tab }).click();
 }
 
 function claimsPanel(page: Page): Locator {
