@@ -15,6 +15,7 @@ import {
   Imp,
   Investigator,
   Juggler,
+  Klutz,
   Knight,
   Legion,
   Librarian,
@@ -24,20 +25,23 @@ import {
   Poisoner,
   Prodigy,
   Recluse,
+  Saint,
   Savant,
   ScarletWoman,
   Seamstress,
   SnakeCharmer,
   SolarProdigy,
   Spy,
+  Sweetheart,
   VillageIdiot,
   Vortox,
   Witch,
+  Xaan,
   applyClaims,
   script,
 } from "./characters";
 import { chefCountRegistersAs, drunkBetweenTwoTownsfolk, registersAsRoleAmong } from "./predicates";
-import { World, night } from "./model";
+import { World, night, type Timing } from "./model";
 import { KissatBackend, type SatBackend } from "./sat";
 
 const TEST_CHARACTERS = script(Imp, ScarletWoman, Drunk, Recluse, Investigator, Noble);
@@ -229,6 +233,28 @@ describe("predicates and helpers", () => {
     expect(new Set(worlds.flatMap((world) => [...(world.poisonedByTiming.get(day(1)) ?? [])]))).toEqual(
       new Set(["A", "B", "C"]),
     );
+  });
+
+  test.each([0, 1, 2, 3, 4])("Xaan poisons Townsfolk on X = %p", async (numOutsiders) => {
+    const outsiderRoles = [Klutz, Recluse, Sweetheart, Saint].slice(0, numOutsiders);
+    const outsiderPlayers = outsiderRoles.map((_, index) => `Outsider ${index + 1}`);
+    const game = new BOTCModel(["Chef", "Imp", "Xaan", ...outsiderPlayers], {
+      characters: script(Chef, Imp, Xaan, ...outsiderRoles),
+      backend,
+    });
+    game.fixActual("Chef", Chef);
+    game.fixActual("Imp", Imp);
+    game.fixActual("Xaan", Xaan);
+    for (const [index, role] of outsiderRoles.entries()) {
+      game.fixActual(outsiderPlayers[index] as string, role);
+    }
+
+    const worlds = await game.solveAll();
+
+    expect(worlds).toHaveLength(1);
+    for (let timingNumber = 0; timingNumber <= 4; timingNumber += 1) {
+      expect(worlds[0]?.isPoisoned("Chef", `night_${timingNumber}` as Timing)).toBe(timingNumber === numOutsiders);
+    }
   });
 
   test("registration remains separate from actual worlds", async () => {

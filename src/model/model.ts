@@ -70,6 +70,12 @@ function keyOf(items: readonly string[]): string {
   return items.join("\u0000");
 }
 
+function addMapValue<K, V>(map: Map<K, V[]>, key: K, value: V): void {
+  const values = map.get(key);
+  if (values === undefined) map.set(key, [value]);
+  else values.push(value);
+}
+
 export class World {
   constructor(
     readonly actual: ReadonlyMap<string, string>,
@@ -125,18 +131,15 @@ export class BOTCModel {
   private readonly poisonOverridesByTimingPlayer = new Map<string, BoolLike[]>();
   private readonly drunkVars = new Map<string, BoolVar>();
   private readonly globalDrunkVars = new Map<string, BoolVar>();
-  private readonly globalDrunkSourceVarByKey = new Map<string, BoolVar>();
-  private readonly globalDrunkSourceVars = new Map<string, BoolVar[]>();
-  private readonly puzzlemasterDrunkSourceVars = new Map<string, BoolVar[]>();
+  private readonly globalDrunkSourceTargetsByPlayer = new Map<string, BoolLike[]>();
+  private readonly puzzlemasterDrunkSourceTargetsByPlayer = new Map<string, BoolLike[]>();
   private readonly roleAtVars = new Map<string, BoolVar>();
   private readonly roleAtSources = new Map<string, BoolLike[]>();
   private readonly roleAtRemovals = new Map<string, BoolLike[]>();
+  private readonly roleActiveByTimingRole = new Map<string, BoolLike>();
   private readonly defaultRoleAtConstraints = new Set<string>();
-  private readonly poisonSourceTimingKeys = new Set<string>();
   private readonly drunkSourceTimingKeys = new Set<string>();
-  private readonly explicitPoisonedTrue = new Set<string>();
-  private readonly explicitDrunkTrue = new Set<string>();
-  private hasGlobalDrunkSource = false;
+  private readonly explicitDroisonTrue = new Set<number>();
   private globalDrunkSourceConstraintsApplied = false;
   private readonly defaultSoberConstraints = new Set<string>();
   private readonly predicateCache = new Map<string, BoolVar>();
@@ -347,15 +350,15 @@ export class BOTCModel {
   }
 
   fixPoisoned(player: string, value: boolean, timing?: Timing): void {
-    const poisonTiming = timing ?? DEFAULT_TIMING_KEY;
-    this.addClause([value ? this.poisoned(player, timing).lit : this.poisoned(player, timing).not()]);
-    if (value) this.explicitPoisonedTrue.add(this.timingPlayerKey(poisonTiming, player));
+    const poisoned = this.poisoned(player, timing);
+    this.addClause([value ? poisoned.lit : poisoned.not()]);
+    if (value) this.explicitDroisonTrue.add(poisoned.id);
   }
 
   fixDrunk(player: string, value: boolean, timing?: Timing): void {
-    const drunkTiming = timing ?? DEFAULT_TIMING_KEY;
-    this.addClause([value ? this.drunk(player, timing).lit : this.drunk(player, timing).not()]);
-    if (value) this.explicitDrunkTrue.add(this.timingPlayerKey(drunkTiming, player));
+    const drunk = this.drunk(player, timing);
+    this.addClause([value ? drunk.lit : drunk.not()]);
+    if (value) this.explicitDroisonTrue.add(drunk.id);
   }
 
   addPersistentDrunking(
@@ -423,38 +426,22 @@ export class BOTCModel {
       readonly sourceName?: string;
     } = {},
   ): void {
-    this.hasGlobalDrunkSource = true;
     const excluded = new Set(options.excludedPlayers ?? []);
-    const candidates = this.players.filter((player) => !excluded.has(player));
     const sourceName = options.sourceName ?? "puzzlemaster";
-    const sourceDrunks = candidates.map((player) => {
-      const sourceDrunk = this.globalDrunkFromSource(sourceName, player);
-      this.puzzlemasterDrunkSourceVars.set(player, [
-        ...(this.puzzlemasterDrunkSourceVars.get(player) ?? []),
-        sourceDrunk,
-      ]);
-      return sourceDrunk;
-    });
-    if (options.activeIf === undefined) {
-      this.addExactlyN(sourceDrunks, 1);
-      for (const player of this.players) {
-        if (excluded.has(player)) this.addFalse(this.globalDrunkFromSource(sourceName, player));
-      }
-      return;
-    }
-
-    this.addEnforcedExactlyN(sourceDrunks, 1, options.activeIf);
-    this.addEnforcedExactlyN(sourceDrunks, 0, negate(lit(options.activeIf)));
-    for (const player of this.players) {
-      if (excluded.has(player))
-        this.addImplication(options.activeIf, this.globalDrunkFromSource(sourceName, player).not());
-    }
+    this.addOnePlayerDroisonSource(
+      options.activeIf,
+      (player) => `${sourceName}_${slug(player)}_global_drunk`,
+      (player, target) => {
+        this.registerGlobalDrunkSourceTarget(player, target);
+        addMapValue(this.puzzlemasterDrunkSourceTargetsByPlayer, player, target);
+      },
+      excluded,
+    );
   }
 
   addVillageIdiotDrunking(options: { readonly villageIdiotRole?: RoleRef } = {}): void {
     const villageIdiotRole = roleName(options.villageIdiotRole ?? "Village Idiot");
     this.checkRole(villageIdiotRole);
-    this.hasGlobalDrunkSource = true;
 
     const villageIdiotPlayers = this.players.map((player) => this.actualIs(player, villageIdiotRole));
     const atLeastTwoVillageIdiots = this.anyOf(
@@ -463,29 +450,25 @@ export class BOTCModel {
       ),
       "at_least_two_village_idiots_in_play",
     );
-    const drunkPlayers = this.players.map((player) => this.globalDrunkFromSource("village_idiot", player));
-
-    for (const player of this.players)
-      this.addImplication(this.globalDrunkFromSource("village_idiot", player), this.actualIs(player, villageIdiotRole));
+    const drunkPlayers = this.players.map((player) => {
+      const drunk = this.newBool(`village_idiot_${slug(player)}_global_drunk`);
+      this.registerGlobalDrunkSourceTarget(player, drunk);
+      this.addImplication(drunk, this.actualIs(player, villageIdiotRole));
+      return drunk;
+    });
     this.addEnforcedExactlyN(drunkPlayers, 1, atLeastTwoVillageIdiots);
     this.addEnforcedExactlyN(drunkPlayers, 0, atLeastTwoVillageIdiots.not());
   }
 
-  private globalDrunkFromSource(sourceName: string, player: string): BoolVar {
+  private registerGlobalDrunkSourceTarget(player: string, target: BoolLike): void {
     this.checkPlayer(player);
-    const key = keyOf([sourceName, player]);
-    const existing = this.globalDrunkSourceVarByKey.get(key);
-    if (existing !== undefined) return existing;
-    const variable = this.newBool(`${sourceName}_${player}_global_drunk`);
-    this.addImplication(variable, this.globalDrunk(player));
-    this.globalDrunkSourceVarByKey.set(key, variable);
-    this.globalDrunkSourceVars.set(player, [...(this.globalDrunkSourceVars.get(player) ?? []), variable]);
-    return variable;
+    this.addImplication(target, this.globalDrunk(player));
+    addMapValue(this.globalDrunkSourceTargetsByPlayer, player, target);
   }
 
   puzzlemasterDrunk(player: string, name: string): BoolVar {
     this.checkPlayer(player);
-    const sources = this.puzzlemasterDrunkSourceVars.get(player) ?? [];
+    const sources = this.puzzlemasterDrunkSourceTargetsByPlayer.get(player) ?? [];
     return this.anyOf(sources, name);
   }
 
@@ -499,16 +482,7 @@ export class BOTCModel {
     const excludedPlayers = new Set(options.excludedPlayers ?? []);
     for (const timing of timings) {
       this.drunkSourceTimingKeys.add(timing);
-      const roleInPlay = this.roleInPlay(roleRef);
-      const active =
-        options.activeIf === undefined
-          ? roleInPlay
-          : typeof options.activeIf === "boolean"
-            ? this.allOf(
-                [roleInPlay, this.constantBool(options.activeIf, `${timing}_${roleRef}_drunking_active_if`)],
-                `${timing}_${roleRef}_drunking_active`,
-              )
-            : this.allOf([roleInPlay, options.activeIf], `${timing}_${roleRef}_drunking_active`);
+      const active = this.activeRole(roleRef, `${timing}_${roleRef}_drunking`, options.activeIf);
 
       for (const player of this.players) {
         const drunk = this.drunk(player, timing);
@@ -527,28 +501,20 @@ export class BOTCModel {
     }
   }
 
+  private activeRole(role: RoleRef, name: string, activeIf?: BoolLike | boolean): BoolVar {
+    const roleInPlay = this.roleInPlay(role);
+    if (activeIf === undefined) return roleInPlay;
+    const condition = typeof activeIf === "boolean" ? this.constantBool(activeIf, `${name}_active_if`) : activeIf;
+    return this.allOf([roleInPlay, condition], `${name}_active`);
+  }
+
   addPoisonerEffect(
     timing: Timing,
     options: { readonly poisonerRole?: RoleRef; readonly activeIf?: BoolLike | boolean } = {},
   ): void {
     const poisonTiming = timing;
-    this.poisonSourceTimingKeys.add(poisonTiming);
     const poisonerRole = options.poisonerRole ?? "Poisoner";
-    const poisonerInPlay = this.roleInPlay(poisonerRole);
-    let poisonerActive: BoolVar;
-    if (options.activeIf === undefined) {
-      poisonerActive = poisonerInPlay;
-    } else if (typeof options.activeIf === "boolean") {
-      poisonerActive = this.allOf(
-        [poisonerInPlay, this.constantBool(options.activeIf, `${poisonTiming}_${roleName(poisonerRole)}_active_if`)],
-        `${poisonTiming}_${roleName(poisonerRole)}_active`,
-      );
-    } else {
-      poisonerActive = this.allOf(
-        [poisonerInPlay, options.activeIf],
-        `${poisonTiming}_${roleName(poisonerRole)}_active`,
-      );
-    }
+    const poisonerActive = this.activeRole(poisonerRole, `${poisonTiming}_${roleName(poisonerRole)}`, options.activeIf);
     this.addOnePlayerPoisonSource(timing, poisonerActive, slug(roleName(poisonerRole)));
   }
 
@@ -560,102 +526,65 @@ export class BOTCModel {
     } = {},
   ): void {
     const widowRole = options.widowRole ?? "Widow";
-    const widowInPlay = this.roleInPlay(widowRole);
-    let widowActive: BoolVar;
-    if (options.activeIf === undefined) {
-      widowActive = widowInPlay;
-    } else if (typeof options.activeIf === "boolean") {
-      widowActive = this.allOf(
-        [widowInPlay, this.constantBool(options.activeIf, `${roleName(widowRole)}_active_if`)],
-        `${roleName(widowRole)}_active`,
-      );
-    } else {
-      widowActive = this.allOf([widowInPlay, options.activeIf], `${roleName(widowRole)}_active`);
-    }
+    const widowActive = this.activeRole(widowRole, roleName(widowRole), options.activeIf);
     if ((options.timings ?? []).length === 0) return;
-    const sourcePoisoned = this.players.map((player) =>
-      this.newBool(`${slug(roleName(widowRole))}_poisons_${slug(player)}`),
+    this.addOnePlayerDroisonSource(
+      widowActive,
+      (player) => `${slug(roleName(widowRole))}_poisons_${slug(player)}`,
+      (player, target) => {
+        for (const timing of options.timings ?? []) this.registerPoisonSourceTarget(player, timing, target);
+      },
     );
-    this.addEnforcedExactlyN(sourcePoisoned, 1, widowActive);
-    this.addEnforcedExactlyN(sourcePoisoned, 0, widowActive.not());
     for (const timing of options.timings ?? []) {
-      this.poisonSourceTimingKeys.add(timing);
       this.poisonTimingKeys.add(timing);
       this.registerActivePoisonSource(timing, widowActive);
-      for (const [index, player] of this.players.entries()) {
-        this.registerPoisonSourceTarget(player, timing, sourcePoisoned[index] as BoolLike);
-      }
-    }
-  }
-
-  addXaanEffect(
-    timing: Timing,
-    options: { readonly xaanRole?: RoleRef; readonly activeIf?: BoolLike | boolean } = {},
-  ): void {
-    const poisonTiming = timing;
-    this.poisonSourceTimingKeys.add(poisonTiming);
-    this.poisonTimingKeys.add(poisonTiming);
-    const xaanRole = options.xaanRole ?? "Xaan";
-    const xaanInPlay = this.roleInPlay(xaanRole);
-    let xaanActive: BoolVar;
-    if (options.activeIf === undefined) {
-      xaanActive = xaanInPlay;
-    } else if (typeof options.activeIf === "boolean") {
-      xaanActive = this.allOf(
-        [xaanInPlay, this.constantBool(options.activeIf, `${poisonTiming}_${roleName(xaanRole)}_active_if`)],
-        `${poisonTiming}_${roleName(xaanRole)}_active`,
-      );
-    } else {
-      xaanActive = this.allOf([xaanInPlay, options.activeIf], `${poisonTiming}_${roleName(xaanRole)}_active`);
-    }
-
-    for (const player of this.players) {
-      const override = this.allOf([xaanActive, this.isTownsfolk(player)], `${poisonTiming}_${player}_xaan_poisoned`);
-      this.registerPoisonOverride(player, poisonTiming, override);
     }
   }
 
   private registerActivePoisonSource(timing: string, sourceActive: BoolLike): void {
-    this.activePoisonSourcesByTiming.set(timing, [
-      ...(this.activePoisonSourcesByTiming.get(timing) ?? []),
-      sourceActive,
-    ]);
+    addMapValue(this.activePoisonSourcesByTiming, timing, sourceActive);
   }
 
   private addOnePlayerPoisonSource(timing: Timing, sourceActive: BoolLike, sourceName: string): void {
     const poisonTiming = timing;
     this.registerActivePoisonSource(poisonTiming, sourceActive);
-    const sourcePoisoned = this.players.map((player) =>
-      this.newBool(`${poisonTiming}_${sourceName}_poisons_${slug(player)}`),
+    this.addOnePlayerDroisonSource(
+      sourceActive,
+      (player) => `${poisonTiming}_${sourceName}_poisons_${slug(player)}`,
+      (player, target) => this.registerPoisonSourceTarget(player, timing, target),
     );
-    this.addEnforcedExactlyN(sourcePoisoned, 1, sourceActive);
-    this.addEnforcedExactlyN(sourcePoisoned, 0, negate(lit(sourceActive)));
-    for (const [index, player] of this.players.entries()) {
-      this.registerPoisonSourceTarget(player, timing, sourcePoisoned[index] as BoolLike);
+  }
+
+  private addOnePlayerDroisonSource(
+    activeIf: BoolLike | undefined,
+    targetName: (player: string) => string,
+    registerTarget: (player: string, target: BoolVar) => void,
+    excludedPlayers: ReadonlySet<string> = new Set(),
+  ): void {
+    const candidates = this.players.filter((player) => !excludedPlayers.has(player));
+    const targets = candidates.map((player) => {
+      const target = this.newBool(targetName(player));
+      registerTarget(player, target);
+      return target;
+    });
+    if (activeIf === undefined) {
+      this.addExactlyN(targets, 1);
+    } else {
+      this.addEnforcedExactlyN(targets, 1, activeIf);
+      this.addEnforcedExactlyN(targets, 0, negate(lit(activeIf)));
     }
   }
 
   private registerPoisonSourceTarget(player: string, timing: string, target: BoolLike): void {
     const timingArg = timing === DEFAULT_TIMING_KEY ? undefined : (timing as Timing);
     this.addImplication(target, this.poisoned(player, timingArg));
-    const key = this.timingPlayerKey(timing, player);
-    this.poisonSourceTargetsByTimingPlayer.set(key, [
-      ...(this.poisonSourceTargetsByTimingPlayer.get(key) ?? []),
-      target,
-    ]);
+    addMapValue(this.poisonSourceTargetsByTimingPlayer, this.timingPlayerKey(timing, player), target);
   }
 
   private registerPoisonOverride(player: string, timing: string, override: BoolLike): void {
     const timingArg = timing === DEFAULT_TIMING_KEY ? undefined : (timing as Timing);
     this.addImplication(override, this.poisoned(player, timingArg));
-    const key = this.timingPlayerKey(timing, player);
-    this.poisonOverridesByTimingPlayer.set(key, [...(this.poisonOverridesByTimingPlayer.get(key) ?? []), override]);
-  }
-
-  allowPoisonAt(timing?: Timing): void {
-    const poisonTiming = timing ?? DEFAULT_TIMING_KEY;
-    this.poisonSourceTimingKeys.add(poisonTiming);
-    this.poisonTimingKeys.add(poisonTiming);
+    addMapValue(this.poisonOverridesByTimingPlayer, this.timingPlayerKey(timing, player), override);
   }
 
   allowDrunkAt(timing?: Timing): void {
@@ -801,6 +730,18 @@ export class BOTCModel {
     return cached;
   }
 
+  setRoleActiveAt(role: RoleRef, timing: Timing, activeIf: BoolLike): void {
+    const roleRef = roleName(role);
+    this.checkRole(roleRef);
+    this.roleActiveByTimingRole.set(this.timingRoleKey(timing, roleRef), activeIf);
+  }
+
+  private roleActiveAt(role: RoleRef, timing: Timing): BoolLike {
+    const roleRef = roleName(role);
+    this.checkRole(roleRef);
+    return this.roleActiveByTimingRole.get(this.timingRoleKey(timing, roleRef)) ?? this.roleInPlay(roleRef);
+  }
+
   hasRoleAt(player: string, role: RoleRef, timing?: Timing): BoolVar {
     this.checkPlayer(player);
     const roleRef = roleName(role);
@@ -823,14 +764,10 @@ export class BOTCModel {
     if (typeof value === "boolean") {
       if (!value) return this.removeRoleAt(player, roleRef, timing);
       this.addTruth(roleAt);
-      const sources = this.roleAtSources.get(key) ?? [];
-      sources.push(this.constantBool(true, `${player}_${roleRef}_${timing}_role_at_source`));
-      this.roleAtSources.set(key, sources);
+      addMapValue(this.roleAtSources, key, this.constantBool(true, `${player}_${roleRef}_${timing}_role_at_source`));
     } else {
       this.addImplication(value, roleAt);
-      const sources = this.roleAtSources.get(key) ?? [];
-      sources.push(value);
-      this.roleAtSources.set(key, sources);
+      addMapValue(this.roleAtSources, key, value);
     }
     return roleAt;
   }
@@ -842,14 +779,10 @@ export class BOTCModel {
     if (typeof value === "boolean") {
       if (!value) return roleAt;
       this.addFalse(roleAt);
-      const removals = this.roleAtRemovals.get(key) ?? [];
-      removals.push(this.constantBool(true, `${player}_${roleRef}_${timing}_role_at_removal`));
-      this.roleAtRemovals.set(key, removals);
+      addMapValue(this.roleAtRemovals, key, this.constantBool(true, `${player}_${roleRef}_${timing}_role_at_removal`));
     } else {
       this.addImplication(value, roleAt.not());
-      const removals = this.roleAtRemovals.get(key) ?? [];
-      removals.push(value);
-      this.roleAtRemovals.set(key, removals);
+      addMapValue(this.roleAtRemovals, key, value);
     }
     return roleAt;
   }
@@ -981,7 +914,7 @@ export class BOTCModel {
     redHerrings: RedHerrings,
     players: readonly [string, string],
     name: string,
-    isDemon: DemonPredicate = (player, predicateName) => this.registersAsRole(player, "Imp", predicateName),
+    isDemon: DemonPredicate = (player, predicateName) => this.registersAsCharacterType(player, CharacterType.Demon, predicateName),
   ): BoolVar {
     const checkedRedHerrings = players.map((player) => {
       const redHerring = redHerrings.get(player);
@@ -1217,6 +1150,10 @@ export class BOTCModel {
     return keyOf([timing, player]);
   }
 
+  private timingRoleKey(timing: string, role: string): string {
+    return keyOf([timing, role]);
+  }
+
   private roleAtKey(timing: string, player: string, role: string): string {
     return keyOf(["role_at", timing, player, role]);
   }
@@ -1386,9 +1323,7 @@ export class BOTCModel {
       );
     }
     const malfunction = this.anyOf(causes, `${player}_${role}_${timingName}_info_malfunction`);
-    const malfunctions = this.infoMalfunctionsByTiming.get(timingName) ?? [];
-    malfunctions.push(malfunction);
-    this.infoMalfunctionsByTiming.set(timingName, malfunctions);
+    addMapValue(this.infoMalfunctionsByTiming, timingName, malfunction);
   }
 
   private roleSoberAndHealthyAt(role: RoleRef, timing: Timing, name: string): BoolVar {
@@ -1423,13 +1358,18 @@ export class BOTCModel {
   }
 
   private applyDefaultSoberConstraints(): void {
+    this.applyDefaultXaanPoisoningConstraints();
     this.applyDefaultPoisonCapacityConstraints();
+    const poisonCapableTimingKeys = new Set([
+      ...this.activePoisonSourcesByTiming.keys(),
+      ...[...this.poisonOverridesByTimingPlayer.keys()].map((key) => key.split("\u0000")[0] as string),
+    ]);
     for (const [key, poisoned] of this.poisonedVars.entries()) {
       const [timing] = key.split("\u0000") as [string | undefined, string | undefined];
       const defaultKey = `poison:${key}`;
       if (timing === undefined || this.defaultSoberConstraints.has(defaultKey)) continue;
-      if (this.poisonSourceTimingKeys.has(timing)) continue;
-      if (this.explicitPoisonedTrue.has(key)) continue;
+      if (poisonCapableTimingKeys.has(timing)) continue;
+      if (this.explicitDroisonTrue.has(poisoned.id)) continue;
       this.addFalse(poisoned);
       this.defaultSoberConstraints.add(defaultKey);
     }
@@ -1439,14 +1379,14 @@ export class BOTCModel {
       if (
         timing === undefined ||
         this.drunkSourceTimingKeys.has(timing) ||
-        this.explicitDrunkTrue.has(key) ||
+        this.explicitDroisonTrue.has(drunk.id) ||
         this.defaultSoberConstraints.has(defaultKey)
       )
         continue;
       this.addFalse(drunk);
       this.defaultSoberConstraints.add(defaultKey);
     }
-    if (this.hasGlobalDrunkSource) {
+    if (this.globalDrunkSourceTargetsByPlayer.size > 0) {
       this.applyGlobalDrunkSourceConstraints();
       return;
     }
@@ -1458,10 +1398,32 @@ export class BOTCModel {
     }
   }
 
+  private applyDefaultXaanPoisoningConstraints(): void {
+    const key = "xaan_poisoning";
+    if (this.defaultSoberConstraints.has(key)) return;
+    this.defaultSoberConstraints.add(key);
+    if (!this.characters.has("Xaan")) return;
+    const maxOutsiders = [...this.characters.values()]
+      .filter((role) => roleCharacterType(role) === CharacterType.Outsider)
+      .reduce((total, role) => total + roleMaxCopies(role), 0);
+    for (let count = 0; count <= maxOutsiders; count += 1) {
+      const timing = `night_${count}` as Timing;
+      this.poisonTimingKeys.add(timing);
+      const xaanPoisoning = this.allOf(
+        [this.roleActiveAt("Xaan", timing), this.outsiderCountIs(count, { name: `xaan_${count}_outsiders` })],
+        `xaan_${count}_outsiders_poisoning`,
+      );
+      for (const player of this.players) {
+        const poisoned = this.allOf([xaanPoisoning, this.isTownsfolk(player)], `${timing}_${player}_xaan_poisoned`);
+        this.registerPoisonOverride(player, timing, poisoned);
+      }
+    }
+  }
+
   private applyGlobalDrunkSourceConstraints(): void {
     if (this.globalDrunkSourceConstraintsApplied) return;
     for (const [player, drunk] of this.globalDrunkVars.entries()) {
-      const sources = this.globalDrunkSourceVars.get(player) ?? [];
+      const sources = this.globalDrunkSourceTargetsByPlayer.get(player) ?? [];
       if (sources.length === 0) {
         this.addFalse(drunk);
         continue;

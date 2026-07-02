@@ -42,8 +42,8 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
   applyClaims(game, malfunctionCountClaims, claimOptions);
   if (doc.setup !== "atheist") {
     applyPhilosopherDrunking(game, doc);
+    applyXaanActivity(game, doc);
     applyPoisonerSources(game, doc, nightDeathTiming);
-    applyXaanSources(game, doc);
     applyWidowSources(game, doc);
     applyWidowCallClaims(game, doc);
     applyEvilTwinDeclarationClaims(game, doc);
@@ -1305,26 +1305,18 @@ function roleDiesBeforeInfoAt(
   );
 }
 
-function applyXaanSources(game: BOTCModel, doc: PuzzleDoc): void {
-  if (!doc.script.includes("Xaan")) return;
-  const maxOutsiderCount = doc.script
-    .map(resolveRoleRef)
-    .filter((role) => roleCharacterType(role) === CharacterType.Outsider).length;
-  for (let count = 1; count <= maxOutsiderCount; count += 1) {
-    const timing = `night_${count}` as Timing;
-    game.addXaanEffect(`night_${count}` as Timing, {
-      activeIf: game.allOf(
-        [roleAliveAt(game, doc, "Xaan", timing), game.outsiderCountIs(count, { name: `xaan_${count}_outsiders` })],
-        `xaan_${count}_alive_with_${count}_outsiders`,
-      ),
-    });
-  }
-}
-
 function applyWidowSources(game: BOTCModel, doc: PuzzleDoc): void {
   if (!doc.script.includes("Widow")) return;
   const timings = [...game.poisonTimingKeys].filter((timing): timing is Timing => timing !== "default");
   game.addWidowEffect({ timings, activeIf: roleAliveAt(game, doc, "Widow", "night_1") });
+}
+
+function applyXaanActivity(game: BOTCModel, doc: PuzzleDoc): void {
+  if (!doc.script.includes("Xaan")) return;
+  for (let count = 0; count <= doc.players.length; count += 1) {
+    const timing = `night_${count}` as Timing;
+    game.setRoleActiveAt("Xaan", timing, roleAliveAt(game, doc, "Xaan", timing));
+  }
 }
 
 function applyWidowCallClaims(game: BOTCModel, doc: PuzzleDoc): void {
@@ -1423,10 +1415,6 @@ function roleAliveAt(game: BOTCModel, doc: PuzzleDoc, role: RoleRef, timing: Tim
   );
 }
 
-function isMinionAt(game: BOTCModel, doc: PuzzleDoc, player: string, timing: Timing): BoolLike {
-  return characterTypeAt(game, doc, player, CharacterType.Minion, timing);
-}
-
 function isMinionBeforeEvent(
   game: BOTCModel,
   doc: PuzzleDoc,
@@ -1434,20 +1422,6 @@ function isMinionBeforeEvent(
   event: NonNullable<PuzzleDoc["timeline"]>[number],
 ): BoolLike {
   return characterTypeBeforeEvent(game, doc, player, CharacterType.Minion, event);
-}
-
-function characterTypeAt(
-  game: BOTCModel,
-  doc: PuzzleDoc,
-  player: string,
-  characterType: CharacterType,
-  timing: Timing,
-): BoolLike {
-  const roles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === characterType);
-  return game.anyOf(
-    roles.map((role) => game.hasRoleAt(player, role, timing)),
-    `${timing}_${slug(player)}_${characterType}_at_timing`,
-  );
 }
 
 function characterTypeBeforeEvent(
