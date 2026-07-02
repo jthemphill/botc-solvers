@@ -383,6 +383,72 @@ describe("buildFromDoc", () => {
     expect(worlds[0]?.actualRole("A")).toBe("Sage");
     expect(worlds[0]?.actualRole("B")).toBe("Imp");
   });
+  test("later good changed-role claims require Pit-Hag transformation or Cerenovus madness", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Cerenovus", "Pit-Hag", "Seamstress", "Artist", "Clockmaker", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        claims: [
+          {
+            type: "Seamstress",
+            name: "A",
+            timing: "night_1",
+            among: ["B", "C"],
+            aligned: false,
+            possibleActualRoles: ["Seamstress"],
+          },
+          {
+            type: "Artist",
+            name: "A",
+            timing: "day_2",
+            info: [{ timing: "day_2", expression: "B.role == Clockmaker" }],
+            possibleActualRoles: ["Seamstress"],
+          },
+          { type: "Clockmaker", name: "B", possibleActualRoles: ["Clockmaker"] },
+          { type: "Cerenovus", name: "C", possibleActualRoles: ["Cerenovus", "Pit-Hag"] },
+          { type: "Artist", name: "D", possibleActualRoles: ["Artist"] },
+        ],
+      },
+      backend,
+    ).solveAll();
+    expect(worlds.length).toBeGreaterThan(0);
+    expect(worlds.every((world) => world.actualRole("C") === "Cerenovus")).toBe(true);
+  });
+  test("evil changed-role claims can be ordinary lies", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Cerenovus", "Pit-Hag", "Seamstress", "Artist", "Clockmaker", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        claims: [
+          {
+            type: "Seamstress",
+            name: "A",
+            timing: "night_1",
+            among: ["B", "C"],
+            aligned: false,
+            possibleActualRoles: ["Imp"],
+          },
+          {
+            type: "Artist",
+            name: "A",
+            timing: "day_2",
+            info: [{ timing: "day_2", expression: "B.role == Clockmaker" }],
+            possibleActualRoles: ["Imp"],
+          },
+          { type: "Clockmaker", name: "B", possibleActualRoles: ["Clockmaker"] },
+          { type: "Cerenovus", name: "C", possibleActualRoles: ["Cerenovus", "Pit-Hag"] },
+          { type: "Artist", name: "D", possibleActualRoles: ["Artist"] },
+        ],
+      },
+      backend,
+    ).solveAll();
+    expect(worlds.length).toBeGreaterThan(0);
+    expect(worlds.some((world) => world.actualRole("C") === "Pit-Hag")).toBe(true);
+  });
   test("Sweetheart death makes one persistent target drunk after the death timing", async () => {
     const worlds = await buildFromDoc(
       {

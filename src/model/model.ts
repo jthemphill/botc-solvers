@@ -914,7 +914,8 @@ export class BOTCModel {
     redHerrings: RedHerrings,
     players: readonly [string, string],
     name: string,
-    isDemon: DemonPredicate = (player, predicateName) => this.registersAsCharacterType(player, CharacterType.Demon, predicateName),
+    isDemon: DemonPredicate = (player, predicateName) =>
+      this.registersAsCharacterType(player, CharacterType.Demon, predicateName),
   ): BoolVar {
     const checkedRedHerrings = players.map((player) => {
       const redHerring = redHerrings.get(player);
@@ -1326,7 +1327,7 @@ export class BOTCModel {
     addMapValue(this.infoMalfunctionsByTiming, timingName, malfunction);
   }
 
-  private roleSoberAndHealthyAt(role: RoleRef, timing: Timing, name: string): BoolVar {
+  roleSoberAndHealthyAt(role: RoleRef, timing: Timing, name: string): BoolVar {
     const roleRef = roleName(role);
     return this.anyOf(
       this.players.map((player) =>

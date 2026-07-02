@@ -42,6 +42,7 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
   applyClaims(game, malfunctionCountClaims, claimOptions);
   if (doc.setup !== "atheist") {
     applyPhilosopherDrunking(game, doc);
+    applyChangedRoleClaimExplanations(game, doc);
     applyXaanActivity(game, doc);
     applyPoisonerSources(game, doc, nightDeathTiming);
     applyWidowSources(game, doc);
@@ -63,6 +64,105 @@ function applyGlobalConstraints(game: BOTCModel, doc: PuzzleDoc, ctx: Omit<Compi
       }) as BoolLike,
     );
   }
+}
+
+function applyChangedRoleClaimExplanations(game: BOTCModel, doc: PuzzleDoc): void {
+  const claimsByPlayer = new Map<
+    string,
+    Array<{ readonly index: number; readonly claim: PuzzleDoc["claims"][number] }>
+  >();
+  for (const [index, claim] of doc.claims.entries()) {
+    if (claim.timing === undefined) continue;
+    const role = claimRoleRef(claim);
+    if (role === undefined) continue;
+
+    const claims = claimsByPlayer.get(claim.name);
+    if (claims === undefined) claimsByPlayer.set(claim.name, [{ index, claim }]);
+    else claims.push({ index, claim });
+  }
+
+  for (const claims of claimsByPlayer.values()) {
+    const timedClaims = claims.sort(
+      (left, right) =>
+        phaseStartOrder(left.claim.timing as Timing) - phaseStartOrder(right.claim.timing as Timing) ||
+        left.index - right.index,
+    );
+    for (let index = 1; index < timedClaims.length; index += 1) {
+      const previous = timedClaims[index - 1] as (typeof timedClaims)[number];
+      const current = timedClaims[index] as (typeof timedClaims)[number];
+      const previousRole = claimRoleRef(previous.claim);
+      const currentRole = claimRoleRef(current.claim);
+      if (previousRole === undefined || currentRole === undefined) continue;
+      if (roleName(previousRole) === roleName(currentRole)) continue;
+      if (phaseStartOrder(current.claim.timing as Timing) <= phaseStartOrder(previous.claim.timing as Timing)) continue;
+
+      explainChangedRoleClaim(game, doc, current.claim, currentRole);
+    }
+  }
+}
+
+function explainChangedRoleClaim(
+  game: BOTCModel,
+  doc: PuzzleDoc,
+  claim: PuzzleDoc["claims"][number],
+  claimedRole: RoleRef,
+): void {
+  if (claim.timing === undefined) return;
+  const claimTiming = claim.timing as Timing;
+  const sourceTiming = roleChangeSourceTiming(claimTiming);
+  const claimedRoleName = roleName(claimedRole);
+  const claimedRoleAtTiming = game.hasRoleAt(claim.name, claimedRole, claimTiming);
+  const explanations: BoolLike[] = [claimedRoleAtTiming, game.isEvil(claim.name)];
+
+  if (doc.script.includes("Pit-Hag")) {
+    const activePitHag = game.roleSoberAndHealthyAt(
+      "Pit-Hag",
+      sourceTiming,
+      `${sourceTiming}_${slug(claim.name)}_${slug(claimedRoleName)}_pit_hag_active`,
+    );
+    const legalPitHagTransformation = game.allOf(
+      [activePitHag, game.roleInPlay(claimedRole).not()],
+      `${sourceTiming}_${slug(claim.name)}_${slug(claimedRoleName)}_pit_hag_transform`,
+    );
+    game.addRoleAt(claim.name, claimedRole, claimTiming, legalPitHagTransformation);
+  }
+
+  if (doc.script.includes("Cerenovus") && roleAlignment(claimedRole) === Alignment.Good) {
+    explanations.push(
+      game.roleSoberAndHealthyAt(
+        "Cerenovus",
+        sourceTiming,
+        `${sourceTiming}_${slug(claim.name)}_cerenovus_mad_as_${slug(claimedRoleName)}`,
+      ),
+    );
+  }
+
+  game.addTruth(
+    game.anyOf(explanations, `${claimTiming}_${slug(claim.name)}_${slug(claimedRoleName)}_role_change_explained`),
+  );
+}
+
+function claimRoleRef(claim: PuzzleDoc["claims"][number]): RoleRef | undefined {
+  return resolveClaimTypeRoleRef(claim.type);
+}
+
+function resolveClaimTypeRoleRef(type: string): RoleRef | undefined {
+  try {
+    return resolveRoleRef(type);
+  } catch {
+    const spaced = type.replace(/([a-z])([A-Z])/g, "$1 $2");
+    try {
+      return resolveRoleRef(spaced);
+    } catch {
+      return undefined;
+    }
+  }
+}
+
+function roleChangeSourceTiming(timing: Timing): Timing {
+  const match = /^(night|day)_(\d+)$/.exec(timing);
+  if (match === null || match[2] === undefined) throw new Error(`Invalid timing '${timing}'.`);
+  return `night_${match[2]}` as Timing;
 }
 
 function applyPreNightDeathSnakeCharmerChecks(game: BOTCModel, doc: PuzzleDoc): ReadonlySet<string> {
