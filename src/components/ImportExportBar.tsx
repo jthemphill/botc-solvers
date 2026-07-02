@@ -49,6 +49,8 @@ export function ImportExportBar({ doc, dispatch, onError }: Props) {
       <div className="toolbar-button-row">
         <button onClick={() => fileRef.current?.click()}>Import JSON…</button>
         <input
+          id="puzzle-json-import"
+          name="puzzle-json-import"
           ref={fileRef}
           type="file"
           accept="application/json"
@@ -65,6 +67,8 @@ export function ImportExportBar({ doc, dispatch, onError }: Props) {
         <label>
           <span>Examples</span>
           <select
+            id="example-puzzle"
+            name="example-puzzle"
             aria-label="Load example puzzle"
             value=""
             onChange={(e) => {
