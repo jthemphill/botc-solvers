@@ -119,17 +119,19 @@ export class BOTCModel {
   readonly characters: ReadonlyMap<string, RoleRef>;
   readonly uniqueCharacters: boolean;
   readonly apparentRoles = new Map<string, string>();
-  readonly poisonTimingKeys = new Set<string>();
+  readonly droisonTimingKeys = new Set<string>();
 
   private variableCount = 0;
   private counter = 0;
   private readonly clauses: Clause[] = [];
   private readonly actual = new Map<string, BoolVar>();
-  private readonly poisonedVars = new Map<string, BoolVar>();
+  private readonly droisonedVars = new Map<string, BoolVar>();
   private readonly activePoisonSourcesByTiming = new Map<string, BoolLike[]>();
   private readonly poisonSourceTargetsByTimingPlayer = new Map<string, BoolLike[]>();
   private readonly poisonOverridesByTimingPlayer = new Map<string, BoolLike[]>();
-  private readonly drunkVars = new Map<string, BoolVar>();
+  private readonly drunkSourceTargetsByTimingPlayer = new Map<string, BoolLike[]>();
+  private readonly poisonFlavorVars = new Map<string, BoolVar>();
+  private readonly drunkFlavorVars = new Map<string, BoolVar>();
   private readonly globalDrunkVars = new Map<string, BoolVar>();
   private readonly globalDrunkSourceTargetsByPlayer = new Map<string, BoolLike[]>();
   private readonly puzzlemasterDrunkSourceTargetsByPlayer = new Map<string, BoolLike[]>();
@@ -138,7 +140,6 @@ export class BOTCModel {
   private readonly roleAtRemovals = new Map<string, BoolLike[]>();
   private readonly roleActiveByTimingRole = new Map<string, BoolLike>();
   private readonly defaultRoleAtConstraints = new Set<string>();
-  private readonly drunkSourceTimingKeys = new Set<string>();
   private readonly explicitDroisonTrue = new Set<number>();
   private globalDrunkSourceConstraintsApplied = false;
   private readonly defaultSoberConstraints = new Set<string>();
@@ -200,39 +201,44 @@ export class BOTCModel {
     return this.actual.get(this.actualKey(player, roleRef)) as BoolVar;
   }
 
-  poisoned(player: string, timing?: Timing): BoolVar {
-    this.checkPlayer(player);
-    const poisonTiming = timing ?? DEFAULT_TIMING_KEY;
-    const key = this.timingPlayerKey(poisonTiming, player);
-    let result = this.poisonedVars.get(key);
-    if (result === undefined) {
-      result = this.newBool(`${slug(player)}__poisoned__${slug(poisonTiming)}`);
-      this.poisonedVars.set(key, result);
-    }
-    this.poisonTimingKeys.add(poisonTiming);
+  droisoned(player: string, timing?: Timing): BoolVar {
+    const droisonTiming = timing ?? DEFAULT_TIMING_KEY;
+    const result = this.droisonedVar(player, timing);
+    this.droisonTimingKeys.add(droisonTiming);
     return result;
   }
 
-  poisonedLiterals(timing: Timing): Array<[string, BoolVar]> {
-    return this.poisonedLiteralsForKey(timing);
+  private droisonedVar(player: string, timing?: Timing): BoolVar {
+    this.checkPlayer(player);
+    const droisonTiming = timing ?? DEFAULT_TIMING_KEY;
+    const key = this.timingPlayerKey(droisonTiming, player);
+    let result = this.droisonedVars.get(key);
+    if (result === undefined) {
+      result = this.newBool(`${slug(player)}__droisoned__${slug(droisonTiming)}`);
+      this.droisonedVars.set(key, result);
+    }
+    return result;
   }
 
-  private poisonedLiteralsForKey(timing: string): Array<[string, BoolVar]> {
-    return this.players.flatMap((player) => {
-      const variable = this.poisonedVars.get(this.timingPlayerKey(timing, player));
-      return variable === undefined ? [] : [[player, variable] as [string, BoolVar]];
-    });
+  poisoned(player: string, timing?: Timing): BoolVar {
+    return this.flavorVar(this.poisonFlavorVars, player, timing, "poisoned");
   }
 
   drunk(player: string, timing?: Timing): BoolVar {
+    return this.flavorVar(this.drunkFlavorVars, player, timing, "drunk");
+  }
+
+  private flavorVar(vars: Map<string, BoolVar>, player: string, timing: Timing | undefined, flavor: string): BoolVar {
     this.checkPlayer(player);
-    const drunkTiming = timing ?? DEFAULT_TIMING_KEY;
-    const key = this.timingPlayerKey(drunkTiming, player);
-    let result = this.drunkVars.get(key);
+    const flavorTiming = timing ?? DEFAULT_TIMING_KEY;
+    const key = this.timingPlayerKey(flavorTiming, player);
+    let result = vars.get(key);
     if (result === undefined) {
-      result = this.newBool(`${slug(player)}__drunk__${slug(drunkTiming)}`);
-      this.drunkVars.set(key, result);
+      result = this.newBool(`${slug(player)}__${flavor}__${slug(flavorTiming)}`);
+      vars.set(key, result);
     }
+    this.droisonedVar(player, timing);
+    if (flavor === "poisoned") this.droisonTimingKeys.add(flavorTiming);
     return result;
   }
 
@@ -277,7 +283,7 @@ export class BOTCModel {
     const drunkRole = roleName(options.drunkRole ?? "Drunk");
     const drunkLikeRoles = [
       ...(this.characters.has(drunkRole) ? [drunkRole] : []),
-      ...(drunkRole !== "Hermit" && this.characters.has("Hermit") ? ["Hermit"] : []),
+      ...(drunkRole !== "Hermit" && this.characters.has(drunkRole) && this.characters.has("Hermit") ? ["Hermit"] : []),
     ];
     const claimedTownsfolk = roleCharacterType(claimedRole) === CharacterType.Townsfolk;
     if (claimedTownsfolk && options.possibleActualRoles === undefined) possibleRoles.push(...drunkLikeRoles);
@@ -350,15 +356,21 @@ export class BOTCModel {
   }
 
   fixPoisoned(player: string, value: boolean, timing?: Timing): void {
-    const poisoned = this.poisoned(player, timing);
-    this.addClause([value ? poisoned.lit : poisoned.not()]);
-    if (value) this.explicitDroisonTrue.add(poisoned.id);
+    this.fixFlavor(this.poisoned(player, timing), player, value, timing);
   }
 
   fixDrunk(player: string, value: boolean, timing?: Timing): void {
-    const drunk = this.drunk(player, timing);
-    this.addClause([value ? drunk.lit : drunk.not()]);
-    if (value) this.explicitDroisonTrue.add(drunk.id);
+    this.fixFlavor(this.drunk(player, timing), player, value, timing);
+  }
+
+  private fixFlavor(flavor: BoolVar, player: string, value: boolean, timing?: Timing): void {
+    this.addClause([value ? flavor.lit : flavor.not()]);
+    if (value) {
+      const droisoned = this.droisoned(player, timing);
+      this.addTruth(droisoned);
+      this.explicitDroisonTrue.add(droisoned.id);
+      this.explicitDroisonTrue.add(flavor.id);
+    }
   }
 
   addPersistentDrunking(
@@ -400,21 +412,15 @@ export class BOTCModel {
     this.addEnforcedExactlyN(targetVars, 0, negate(lit(active)));
 
     for (const timing of timings) {
-      this.drunkSourceTimingKeys.add(timing);
       const activeAtTiming = activeByTiming.get(timing) ?? active;
       for (const player of this.players) {
-        const drunk = this.drunk(player, timing);
         const sourceTarget = sourceTargets.get(player);
-        if (sourceTarget === undefined) {
-          this.addFalse(drunk);
-          continue;
-        }
+        if (sourceTarget === undefined) continue;
         const activeTarget = this.allOf(
           [activeAtTiming, sourceTarget],
           `${sourceName}_${timing}_${player}_drunk_active_target`,
         );
-        this.addImplication(activeTarget, drunk);
-        this.addImplication(drunk, activeTarget);
+        this.registerDrunkSourceTarget(player, timing, activeTarget);
       }
     }
   }
@@ -481,22 +487,16 @@ export class BOTCModel {
     this.checkRole(roleRef);
     const excludedPlayers = new Set(options.excludedPlayers ?? []);
     for (const timing of timings) {
-      this.drunkSourceTimingKeys.add(timing);
       const active = this.activeRole(roleRef, `${timing}_${roleRef}_drunking`, options.activeIf);
 
       for (const player of this.players) {
-        const drunk = this.drunk(player, timing);
-        if (excludedPlayers.has(player)) {
-          this.addFalse(drunk);
-          continue;
-        }
+        if (excludedPlayers.has(player)) continue;
         const hasRole = this.hasRoleAt(player, roleRef, timing);
-        this.addImplication(this.allOf([active, hasRole], `${timing}_${player}_${roleRef}_is_drunked_role`), drunk);
-        this.addImplication(
-          this.allOf([active, hasRole.not()], `${timing}_${player}_${roleRef}_is_not_drunked_role`),
-          drunk.not(),
+        this.registerDrunkSourceTarget(
+          player,
+          timing,
+          this.allOf([active, hasRole], `${timing}_${player}_${roleRef}_is_drunked_role`),
         );
-        this.addImplication(active.not(), drunk.not());
       }
     }
   }
@@ -536,7 +536,7 @@ export class BOTCModel {
       },
     );
     for (const timing of options.timings ?? []) {
-      this.poisonTimingKeys.add(timing);
+      this.droisonTimingKeys.add(timing);
       this.registerActivePoisonSource(timing, widowActive);
     }
   }
@@ -576,20 +576,29 @@ export class BOTCModel {
   }
 
   private registerPoisonSourceTarget(player: string, timing: string, target: BoolLike): void {
-    const timingArg = timing === DEFAULT_TIMING_KEY ? undefined : (timing as Timing);
-    this.addImplication(target, this.poisoned(player, timingArg));
+    this.registerFlavorSource(player, timing, target, (timingArg) => this.poisoned(player, timingArg));
     addMapValue(this.poisonSourceTargetsByTimingPlayer, this.timingPlayerKey(timing, player), target);
   }
 
   private registerPoisonOverride(player: string, timing: string, override: BoolLike): void {
-    const timingArg = timing === DEFAULT_TIMING_KEY ? undefined : (timing as Timing);
-    this.addImplication(override, this.poisoned(player, timingArg));
+    this.registerFlavorSource(player, timing, override, (timingArg) => this.poisoned(player, timingArg));
     addMapValue(this.poisonOverridesByTimingPlayer, this.timingPlayerKey(timing, player), override);
   }
 
-  allowDrunkAt(timing?: Timing): void {
-    const drunkTiming = timing ?? DEFAULT_TIMING_KEY;
-    this.drunkSourceTimingKeys.add(drunkTiming);
+  private registerDrunkSourceTarget(player: string, timing: string, target: BoolLike): void {
+    this.registerFlavorSource(player, timing, target, (timingArg) => this.drunk(player, timingArg));
+    addMapValue(this.drunkSourceTargetsByTimingPlayer, this.timingPlayerKey(timing, player), target);
+  }
+
+  private registerFlavorSource(
+    player: string,
+    timing: string,
+    source: BoolLike,
+    flavor: (timing: Timing | undefined) => BoolVar,
+  ): void {
+    const timingArg = timing === DEFAULT_TIMING_KEY ? undefined : (timing as Timing);
+    this.addImplication(source, this.droisonedVar(player, timingArg));
+    this.addImplication(source, flavor(timingArg));
   }
 
   setCharacterCount(role: RoleRef, count: number): void {
@@ -797,21 +806,19 @@ export class BOTCModel {
     );
   }
 
-  isPoisonedAt(player: string, timing: Timing): BoolVar {
-    return this.poisoned(player, timing);
-  }
-
-  isDrunkAt(player: string, timing: Timing): BoolVar {
-    const sources: BoolLike[] = [this.drunk(player, timing), this.globalDrunk(player)];
-    if (this.characters.has("Drunk")) sources.push(this.actualIs(player, "Drunk"));
-    if (this.characters.has("Hermit")) sources.push(this.actualIs(player, "Hermit"));
-    return this.anyOf(sources, `${player}_drunk_at_${timing}`);
+  isDroisonedAt(player: string, timing: Timing): BoolVar {
+    const sources: BoolLike[] = [this.droisoned(player, timing), this.globalDrunk(player)];
+    if (this.characters.has("Drunk")) {
+      sources.push(this.actualIs(player, "Drunk"));
+      if (this.characters.has("Hermit")) sources.push(this.actualIs(player, "Hermit"));
+    }
+    return this.anyOf(sources, `${player}_droisoned_at_${timing}`);
   }
 
   soberAndHealthy(player: string, timing: Timing): BoolVar {
     const timingName = timing;
     const unhealthy = this.anyOf(
-      [this.isPoisonedAt(player, timing), this.isDrunkAt(player, timing), this.noDashiiPoisonedAt(player, timing)],
+      [this.isDroisonedAt(player, timing), this.noDashiiPoisonedAt(player, timing)],
       `${player}_unhealthy_at_${timingName}`,
     );
     return this.not(unhealthy, `${player}_sober_healthy_at_${timingName}`);
@@ -1081,31 +1088,9 @@ export class BOTCModel {
         if (matching.length !== 1) throw new Error(`Expected exactly one actual character for ${player}.`);
         actual.set(player, matching[0] as string);
       }
-      const poisonedByTiming = new Map<string, ReadonlySet<string>>();
-      for (const timing of [...this.poisonTimingKeys].sort()) {
-        poisonedByTiming.set(
-          timing,
-          new Set(
-            this.poisonedLiteralsForKey(timing)
-              .filter(([, variable]) => model.has(variable.id))
-              .map(([player]) => player),
-          ),
-        );
-      }
+      const poisonedByTiming = this.flavorByTiming(model, this.poisonFlavorVars);
       const poisoned = poisonedByTiming.get(DEFAULT_TIMING_KEY) ?? new Set<string>();
-      const drunkByTiming = new Map<string, ReadonlySet<string>>();
-      const drunkTimings = new Set([...this.drunkVars.keys()].map((key) => key.split("\u0000")[0] as string));
-      for (const timing of [...drunkTimings].sort()) {
-        drunkByTiming.set(
-          timing,
-          new Set(
-            this.players.filter((player) => {
-              const variable = this.drunkVars.get(this.timingPlayerKey(timing, player));
-              return variable !== undefined && model.has(variable.id);
-            }),
-          ),
-        );
-      }
+      const drunkByTiming = this.flavorByTiming(model, this.drunkFlavorVars);
       const globallyDrunk = new Set(
         [...this.globalDrunkVars.entries()].filter(([, variable]) => model.has(variable.id)).map(([player]) => player),
       );
@@ -1125,14 +1110,42 @@ export class BOTCModel {
       }
       const significant = [
         ...this.players.flatMap((player) => [...this.characters.keys()].map((role) => this.actualIs(player, role).id)),
-        ...[...this.poisonedVars.values()].map((variable) => variable.id),
-        ...[...this.drunkVars.values()].map((variable) => variable.id),
+        ...[...this.droisonedVars.values()].map((variable) => variable.id),
+        ...[...this.poisonFlavorVars.values()].map((variable) => variable.id),
+        ...[...this.drunkFlavorVars.values()].map((variable) => variable.id),
         ...[...this.globalDrunkVars.values()].map((variable) => variable.id),
         ...[...this.roleAtVars.values()].map((variable) => variable.id),
       ];
       workingClauses.push(significant.map((variable) => (model.has(variable) ? -variable : variable)));
     }
     return worlds;
+  }
+
+  private flavorByTiming(
+    model: ReadonlySet<number>,
+    vars: ReadonlyMap<string, BoolVar>,
+  ): Map<string, ReadonlySet<string>> {
+    const timings = new Set([...vars.keys()].map((key) => key.split("\u0000")[0] as string));
+    const result = new Map<string, ReadonlySet<string>>();
+    for (const timing of [...timings].sort()) {
+      const players = this.players.filter((player) => {
+        const variable = vars.get(this.timingPlayerKey(timing, player));
+        return variable !== undefined && model.has(variable.id);
+      });
+      result.set(timing, new Set(players));
+    }
+    return result;
+  }
+
+  private poisonSourceFlavor(key: string): readonly BoolLike[] {
+    return [
+      ...(this.poisonSourceTargetsByTimingPlayer.get(key) ?? []),
+      ...(this.poisonOverridesByTimingPlayer.get(key) ?? []),
+    ];
+  }
+
+  private drunkSourceFlavor(key: string): readonly BoolLike[] {
+    return this.drunkSourceTargetsByTimingPlayer.get(key) ?? [];
   }
 
   private checkPlayer(player: string): void {
@@ -1226,16 +1239,14 @@ export class BOTCModel {
   }
 
   private roleCanFlexiblyRegisterAsAlignment(actualRole: string): boolean {
-    return (
-      (actualRole === "Spy" || actualRole === "Recluse" || actualRole === "Hermit") && this.characters.has(actualRole)
-    );
+    return (actualRole === "Spy" && this.characters.has("Spy")) || this.roleHasOutsiderAbility(actualRole, "Recluse");
   }
 
   private roleCanFlexiblyRegisterAsType(actualRole: string, characterType: CharacterType): boolean {
     if (actualRole === "Legion" && this.characters.has(actualRole)) return characterType === CharacterType.Minion;
     if (actualRole === "Spy" && this.characters.has(actualRole))
       return [CharacterType.Minion, CharacterType.Outsider, CharacterType.Townsfolk].includes(characterType);
-    if ((actualRole === "Recluse" || actualRole === "Hermit") && this.characters.has(actualRole))
+    if (this.roleHasOutsiderAbility(actualRole, "Recluse"))
       return [CharacterType.Demon, CharacterType.Minion, CharacterType.Outsider].includes(characterType);
     return false;
   }
@@ -1252,7 +1263,7 @@ export class BOTCModel {
           [CharacterType.Outsider, CharacterType.Townsfolk].includes(roleCharacterType(observedCharacter)))
       );
     }
-    if ((actualRole === "Recluse" || actualRole === "Hermit") && this.characters.has(actualRole)) {
+    if (this.roleHasOutsiderAbility(actualRole, "Recluse")) {
       return (
         observedRole === actualRole ||
         (roleAlignment(observedCharacter) === Alignment.Evil &&
@@ -1260,6 +1271,10 @@ export class BOTCModel {
       );
     }
     return false;
+  }
+
+  private roleHasOutsiderAbility(actualRole: string, sourceRole: string): boolean {
+    return (actualRole === sourceRole || actualRole === "Hermit") && this.characters.has(sourceRole);
   }
 
   private closestTownfolkInDirectionIs(
@@ -1303,12 +1318,8 @@ export class BOTCModel {
     const falseInfo = this.not(reportedInfo, `${player}_${role}_${timingName}_reported_info_false`);
     const causes: BoolVar[] = [
       this.allOf(
-        [activeRole, this.isPoisonedAt(player, timing), falseInfo],
-        `${player}_${role}_${timingName}_poison_malfunction`,
-      ),
-      this.allOf(
-        [activeRole, this.isDrunkAt(player, timing), falseInfo],
-        `${player}_${role}_${timingName}_drunk_malfunction`,
+        [activeRole, this.isDroisonedAt(player, timing), falseInfo],
+        `${player}_${role}_${timingName}_droison_malfunction`,
       ),
       this.allOf(
         [activeRole, this.noDashiiPoisonedAt(player, timing), falseInfo],
@@ -1361,30 +1372,18 @@ export class BOTCModel {
   private applyDefaultSoberConstraints(): void {
     this.applyDefaultXaanPoisoningConstraints();
     this.applyDefaultPoisonCapacityConstraints();
-    const poisonCapableTimingKeys = new Set([
-      ...this.activePoisonSourcesByTiming.keys(),
-      ...[...this.poisonOverridesByTimingPlayer.keys()].map((key) => key.split("\u0000")[0] as string),
-    ]);
-    for (const [key, poisoned] of this.poisonedVars.entries()) {
+    this.applyFlavorPredicateConstraints();
+    for (const [key, droisoned] of this.droisonedVars.entries()) {
       const [timing] = key.split("\u0000") as [string | undefined, string | undefined];
-      const defaultKey = `poison:${key}`;
-      if (timing === undefined || this.defaultSoberConstraints.has(defaultKey)) continue;
-      if (poisonCapableTimingKeys.has(timing)) continue;
-      if (this.explicitDroisonTrue.has(poisoned.id)) continue;
-      this.addFalse(poisoned);
-      this.defaultSoberConstraints.add(defaultKey);
-    }
-    for (const [key, drunk] of this.drunkVars.entries()) {
-      const [timing] = key.split("\u0000") as [string | undefined, string | undefined];
-      const defaultKey = `drunk:${key}`;
-      if (
-        timing === undefined ||
-        this.drunkSourceTimingKeys.has(timing) ||
-        this.explicitDroisonTrue.has(drunk.id) ||
-        this.defaultSoberConstraints.has(defaultKey)
-      )
-        continue;
-      this.addFalse(drunk);
+      const defaultKey = `droison:${key}`;
+      if (timing === undefined) continue;
+      if (this.defaultSoberConstraints.has(defaultKey)) continue;
+      const sources = [...this.poisonSourceFlavor(key), ...this.drunkSourceFlavor(key)];
+      if (sources.length > 0) {
+        this.addImplication(droisoned, this.anyOf(sources, `${timing}_${key}_droison_source`));
+      } else if (!this.explicitDroisonTrue.has(droisoned.id)) {
+        this.addFalse(droisoned);
+      }
       this.defaultSoberConstraints.add(defaultKey);
     }
     if (this.globalDrunkSourceTargetsByPlayer.size > 0) {
@@ -1399,6 +1398,23 @@ export class BOTCModel {
     }
   }
 
+  private applyFlavorPredicateConstraints(): void {
+    const flavors: Array<[string, ReadonlyMap<string, BoolVar>, (key: string) => readonly BoolLike[]]> = [
+      ["poison", this.poisonFlavorVars, (key) => this.poisonSourceFlavor(key)],
+      ["drunk", this.drunkFlavorVars, (key) => this.drunkSourceFlavor(key)],
+    ];
+    for (const [flavor, vars, sourcesForKey] of flavors) {
+      for (const [key, flavorVar] of vars.entries()) {
+        const defaultKey = `${flavor}_flavor:${key}`;
+        if (this.defaultSoberConstraints.has(defaultKey)) continue;
+        const sources = sourcesForKey(key);
+        if (sources.length > 0) this.addImplication(flavorVar, this.anyOf(sources, `${flavor}_${key}_source`));
+        else if (!this.explicitDroisonTrue.has(flavorVar.id)) this.addFalse(flavorVar);
+        this.defaultSoberConstraints.add(defaultKey);
+      }
+    }
+  }
+
   private applyDefaultXaanPoisoningConstraints(): void {
     const key = "xaan_poisoning";
     if (this.defaultSoberConstraints.has(key)) return;
@@ -1409,7 +1425,6 @@ export class BOTCModel {
       .reduce((total, role) => total + roleMaxCopies(role), 0);
     for (let count = 0; count <= maxOutsiders; count += 1) {
       const timing = `night_${count}` as Timing;
-      this.poisonTimingKeys.add(timing);
       const xaanPoisoning = this.allOf(
         [this.roleActiveAt("Xaan", timing), this.outsiderCountIs(count, { name: `xaan_${count}_outsiders` })],
         `xaan_${count}_outsiders_poisoning`,
@@ -1448,24 +1463,10 @@ export class BOTCModel {
       const key = `poison_capacity:${timing}`;
       if (this.defaultSoberConstraints.has(key)) continue;
       const activeSources = this.activePoisonSourcesByTiming.get(timing) ?? [];
-      const timingArg = timing === DEFAULT_TIMING_KEY ? undefined : (timing as Timing);
       const cappedPoisonedPlayers = this.players.map((player) => {
-        const poisoned = this.poisoned(player, timingArg);
-        const overrides = this.poisonOverridesByTimingPlayer.get(this.timingPlayerKey(timing, player)) ?? [];
-        if (overrides.length === 0) return poisoned;
-        const overridden = this.anyOf(overrides, `${timing}_${player}_poison_capacity_override`);
-        return this.allOf([poisoned, overridden.not()], `${timing}_${player}_capacity_counted_poison`);
-      });
-      for (const player of this.players) {
-        const poisoned = this.poisoned(player, timingArg);
         const sourceTargets = this.poisonSourceTargetsByTimingPlayer.get(this.timingPlayerKey(timing, player)) ?? [];
-        const overrides = this.poisonOverridesByTimingPlayer.get(this.timingPlayerKey(timing, player)) ?? [];
-        if (sourceTargets.length === 0 && overrides.length === 0) continue;
-        this.addImplication(
-          poisoned,
-          this.anyOf([...sourceTargets, ...overrides], `${timing}_${player}_poison_source_or_override`),
-        );
-      }
+        return this.anyOf(sourceTargets, `${timing}_${player}_capacity_counted_poison`);
+      });
       this.addCountAtMostCount(cappedPoisonedPlayers, activeSources);
       this.defaultSoberConstraints.add(key);
     }

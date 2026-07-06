@@ -950,11 +950,7 @@ function acrobatDeathSources(game: BOTCModel, doc: PuzzleDoc, timing: Timing): r
     return (claim.choices ?? []).flatMap((choice, index): NightDeathSource[] => {
       if (!choice.died || choice.timing !== timing) return [];
       const targetDrunkOrPoisoned = game.anyOf(
-        [
-          game.isDrunkAt(choice.player, timing),
-          game.isPoisonedAt(choice.player, timing),
-          game.noDashiiPoisonedAt(choice.player, timing),
-        ],
+        [game.isDroisonedAt(choice.player, timing), game.noDashiiPoisonedAt(choice.player, timing)],
         `${timing}_${slug(claim.name)}_acrobat_${index + 1}_${slug(choice.player)}_drunk_or_poisoned_source`,
       );
       return [
@@ -1310,7 +1306,7 @@ function livingNeighborOptionsAt(
 
 function applyPoisonerSources(game: BOTCModel, doc: PuzzleDoc, nightDeathTiming: NightDeathTimingContext): void {
   if (!doc.script.includes("Poisoner")) return;
-  for (const timing of game.poisonTimingKeys) {
+  for (const timing of game.droisonTimingKeys) {
     const poisonerCanAct = roleCanUseAbilityAt(game, doc, "Poisoner", timing as Timing, nightDeathTiming);
     const poisonerDiesBeforeInfo = roleDiesBeforeInfoAt(game, "Poisoner", timing as Timing, nightDeathTiming);
     game.addPoisonerEffect(timing as Timing, {
@@ -1407,7 +1403,7 @@ function roleDiesBeforeInfoAt(
 
 function applyWidowSources(game: BOTCModel, doc: PuzzleDoc): void {
   if (!doc.script.includes("Widow")) return;
-  const timings = [...game.poisonTimingKeys].filter((timing): timing is Timing => timing !== "default");
+  const timings = [...game.droisonTimingKeys].filter((timing): timing is Timing => timing !== "default");
   game.addWidowEffect({ timings, activeIf: roleAliveAt(game, doc, "Widow", "night_1") });
 }
 

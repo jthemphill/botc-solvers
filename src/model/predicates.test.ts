@@ -79,8 +79,8 @@ describe("predicates and helpers", () => {
     expect(await invalid.solveAll({ limit: 1 })).toEqual([]);
   });
 
-  test("Hermit can think they are an out-of-play Townsfolk", async () => {
-    const characters = script(Imp, Hermit, Investigator, Chef);
+  test("Hermit can think they are an out-of-play Townsfolk when Drunk is on script", async () => {
+    const characters = script(Imp, Drunk, Hermit, Investigator, Chef);
     const valid = new BOTCModel(["A", "B", "C"], { characters, backend });
     valid.addRoleClaim({ player: "A", apparentRole: "Investigator" });
     valid.fixActual("A", Hermit);
@@ -88,11 +88,11 @@ describe("predicates and helpers", () => {
     valid.fixActual("C", Chef);
     expect(await valid.solveAll({ limit: 1 })).toHaveLength(1);
 
-    const invalid = new BOTCModel(["A", "B", "C"], { characters, backend });
+    const invalid = new BOTCModel(["A", "B", "C"], { characters: script(Imp, Hermit, Investigator, Chef), backend });
     invalid.addRoleClaim({ player: "A", apparentRole: "Investigator" });
     invalid.fixActual("A", Hermit);
     invalid.fixActual("B", Imp);
-    invalid.fixActual("C", Investigator);
+    invalid.fixActual("C", Chef);
     expect(await invalid.solveAll({ limit: 1 })).toEqual([]);
   });
 
@@ -154,14 +154,13 @@ describe("predicates and helpers", () => {
     expect(await sober.solveAll({ limit: 1 })).toEqual([]);
   });
 
-  test("actual Hermit is drunk and can register as evil", async () => {
-    const game = new BOTCModel(["A", "B", "C"], { characters: script(Imp, ScarletWoman, Hermit, Chef), backend });
+  test("actual Hermit is droisoned when Drunk is on script and can register as evil when Recluse is on the script", async () => {
+    const game = new BOTCModel(["A", "B", "C"], { characters: script(Imp, Recluse, Drunk, Hermit, Chef), backend });
     game.fixActual("A", Hermit);
     game.fixActual("B", Imp);
     game.fixActual("C", Chef);
-    game.addTruth(game.isDrunkAt("A", night(1)));
+    game.addTruth(game.isDroisonedAt("A", night(1)));
     game.addTruth(game.registersAsEvil("A", "hermit_registers_evil"));
-
     expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
   });
 

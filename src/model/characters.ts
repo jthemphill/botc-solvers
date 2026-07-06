@@ -794,10 +794,7 @@ export class Acrobat extends Role {
   }
 
   static targetIsDrunkOrPoisoned(game: BOTCModel, player: string, timing: Timing, name: string): BoolVar {
-    return game.anyOf(
-      [game.isDrunkAt(player, timing), game.isPoisonedAt(player, timing), game.noDashiiPoisonedAt(player, timing)],
-      name,
-    );
+    return game.anyOf([game.isDroisonedAt(player, timing), game.noDashiiPoisonedAt(player, timing)], name);
   }
 
   override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
