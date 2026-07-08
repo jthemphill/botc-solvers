@@ -119,6 +119,9 @@ export class BOTCModel {
   readonly characters: ReadonlyMap<string, RoleRef>;
   readonly uniqueCharacters: boolean;
   readonly apparentRoles = new Map<string, string>();
+  // Timings at which droisoned, poisoned, or drunk state was queried, so script effects that
+  // poison (Poisoner, Widow) or drunk (e.g. Sailor, Courtier) players need their sources
+  // modeled there.
   readonly droisonTimingKeys = new Set<string>();
 
   private variableCount = 0;
@@ -130,8 +133,8 @@ export class BOTCModel {
   private readonly poisonSourceTargetsByTimingPlayer = new Map<string, BoolLike[]>();
   private readonly poisonOverridesByTimingPlayer = new Map<string, BoolLike[]>();
   private readonly drunkSourceTargetsByTimingPlayer = new Map<string, BoolLike[]>();
-  private readonly poisonFlavorVars = new Map<string, BoolVar>();
-  private readonly drunkFlavorVars = new Map<string, BoolVar>();
+  private readonly poisonQueryVars = new Map<string, BoolVar>();
+  private readonly drunkQueryVars = new Map<string, BoolVar>();
   private readonly globalDrunkVars = new Map<string, BoolVar>();
   private readonly globalDrunkSourceTargetsByPlayer = new Map<string, BoolLike[]>();
   private readonly puzzlemasterDrunkSourceTargetsByPlayer = new Map<string, BoolLike[]>();
@@ -143,7 +146,9 @@ export class BOTCModel {
   private readonly explicitDroisonTrue = new Set<number>();
   private globalDrunkSourceConstraintsApplied = false;
   private readonly defaultSoberConstraints = new Set<string>();
-  private readonly predicateCache = new Map<string, BoolVar>();
+  private readonly gateCache = new Map<string, BoolVar>();
+  private trueConstant: BoolVar | undefined;
+  private falseConstant: BoolVar | undefined;
   private readonly fortuneTellerRedHerringVars = new Map<string, RedHerrings>();
   private readonly infoMalfunctionsByTiming = new Map<string, BoolVar[]>();
   private readonly backend: SatBackend;
@@ -189,9 +194,64 @@ export class BOTCModel {
   }
 
   constantBool(value: boolean, name: string): BoolVar {
+    const existing = value ? this.trueConstant : this.falseConstant;
+    if (existing !== undefined) return existing;
     const result = this.newBool(name);
     this.addClause([value ? result.lit : result.not()]);
+    if (value) this.trueConstant = result;
+    else this.falseConstant = result;
     return result;
+  }
+
+  private constantValueOf(literal: Literal): boolean | undefined {
+    if (this.trueConstant !== undefined && Math.abs(literal) === this.trueConstant.id) return literal > 0;
+    if (this.falseConstant !== undefined && Math.abs(literal) === this.falseConstant.id) return literal < 0;
+    return undefined;
+  }
+
+  private literalBool(literal: Literal, name: string): BoolVar {
+    if (literal > 0) return new BoolVar(literal, name);
+    const key = keyOf(["not", String(-literal)]);
+    let cached = this.gateCache.get(key);
+    if (cached === undefined) {
+      cached = this.newBool(name);
+      this.addClause([cached.not(), literal]);
+      this.addClause([cached.lit, negate(literal)]);
+      this.gateCache.set(key, cached);
+    }
+    return cached;
+  }
+
+  // Returns a variable defined as the and/or of `values`, reusing the existing variable when an
+  // equivalent gate was already built. `identity` is the gate's identity element (true for and,
+  // false for or): identity operands are dropped, and an absorbing operand or a complementary
+  // operand pair collapses the gate to a constant.
+  private gate(
+    kind: string,
+    values: readonly BoolLike[],
+    name: string,
+    identity: boolean,
+    build: (literals: readonly Literal[], result: BoolVar) => void,
+  ): BoolVar {
+    const unique = new Set(values.map(lit));
+    const literals: Literal[] = [];
+    for (const literal of unique) {
+      const constant = this.constantValueOf(literal);
+      if (constant === identity) continue;
+      if (constant === !identity || unique.has(-literal)) return this.constantBool(!identity, name);
+      literals.push(literal);
+    }
+    literals.sort((left, right) => left - right);
+    if (literals.length === 0) return this.constantBool(identity, name);
+    if (literals.length === 1) return this.literalBool(literals[0] as Literal, name);
+    const key = keyOf([kind, ...literals.map(String)]);
+    let cached = this.gateCache.get(key);
+    if (cached === undefined) {
+      cached = this.newBool(name);
+      build(literals, cached);
+      this.gateCache.set(key, cached);
+    }
+    return cached;
   }
 
   actualIs(player: string, role: RoleRef): BoolVar {
@@ -202,15 +262,9 @@ export class BOTCModel {
   }
 
   droisoned(player: string, timing?: Timing): BoolVar {
-    const droisonTiming = timing ?? DEFAULT_TIMING_KEY;
-    const result = this.droisonedVar(player, timing);
-    this.droisonTimingKeys.add(droisonTiming);
-    return result;
-  }
-
-  private droisonedVar(player: string, timing?: Timing): BoolVar {
     this.checkPlayer(player);
     const droisonTiming = timing ?? DEFAULT_TIMING_KEY;
+    this.droisonTimingKeys.add(droisonTiming);
     const key = this.timingPlayerKey(droisonTiming, player);
     let result = this.droisonedVars.get(key);
     if (result === undefined) {
@@ -221,14 +275,21 @@ export class BOTCModel {
   }
 
   poisoned(player: string, timing?: Timing): BoolVar {
-    return this.flavorVar(this.poisonFlavorVars, player, timing, "poisoned");
+    this.droisonTimingKeys.add(timing ?? DEFAULT_TIMING_KEY);
+    return this.flavorQueryVar(this.poisonQueryVars, player, timing, "poisoned");
   }
 
   drunk(player: string, timing?: Timing): BoolVar {
-    return this.flavorVar(this.drunkFlavorVars, player, timing, "drunk");
+    this.droisonTimingKeys.add(timing ?? DEFAULT_TIMING_KEY);
+    return this.flavorQueryVar(this.drunkQueryVars, player, timing, "drunk");
   }
 
-  private flavorVar(vars: Map<string, BoolVar>, player: string, timing: Timing | undefined, flavor: string): BoolVar {
+  private flavorQueryVar(
+    vars: Map<string, BoolVar>,
+    player: string,
+    timing: Timing | undefined,
+    flavor: string,
+  ): BoolVar {
     this.checkPlayer(player);
     const flavorTiming = timing ?? DEFAULT_TIMING_KEY;
     const key = this.timingPlayerKey(flavorTiming, player);
@@ -237,8 +298,6 @@ export class BOTCModel {
       result = this.newBool(`${slug(player)}__${flavor}__${slug(flavorTiming)}`);
       vars.set(key, result);
     }
-    this.droisonedVar(player, timing);
-    if (flavor === "poisoned") this.droisonTimingKeys.add(flavorTiming);
     return result;
   }
 
@@ -576,29 +635,18 @@ export class BOTCModel {
   }
 
   private registerPoisonSourceTarget(player: string, timing: string, target: BoolLike): void {
-    this.registerFlavorSource(player, timing, target, (timingArg) => this.poisoned(player, timingArg));
+    this.checkPlayer(player);
     addMapValue(this.poisonSourceTargetsByTimingPlayer, this.timingPlayerKey(timing, player), target);
   }
 
   private registerPoisonOverride(player: string, timing: string, override: BoolLike): void {
-    this.registerFlavorSource(player, timing, override, (timingArg) => this.poisoned(player, timingArg));
+    this.checkPlayer(player);
     addMapValue(this.poisonOverridesByTimingPlayer, this.timingPlayerKey(timing, player), override);
   }
 
   private registerDrunkSourceTarget(player: string, timing: string, target: BoolLike): void {
-    this.registerFlavorSource(player, timing, target, (timingArg) => this.drunk(player, timingArg));
+    this.checkPlayer(player);
     addMapValue(this.drunkSourceTargetsByTimingPlayer, this.timingPlayerKey(timing, player), target);
-  }
-
-  private registerFlavorSource(
-    player: string,
-    timing: string,
-    source: BoolLike,
-    flavor: (timing: Timing | undefined) => BoolVar,
-  ): void {
-    const timingArg = timing === DEFAULT_TIMING_KEY ? undefined : (timing as Timing);
-    this.addImplication(source, this.droisonedVar(player, timingArg));
-    this.addImplication(source, flavor(timingArg));
   }
 
   setCharacterCount(role: RoleRef, count: number): void {
@@ -647,35 +695,39 @@ export class BOTCModel {
   }
 
   boolSumEquals(values: readonly BoolLike[], count: number, name: string): BoolVar {
-    const literals = values.map(lit);
-    const result = this.newBool(name);
-    this.reifyExactCount(literals, count, result);
-    return result;
+    const literals = values.map(lit).sort((left, right) => left - right);
+    if (count < 0 || count > literals.length) return this.constantBool(false, name);
+    if (literals.length === 0) return this.constantBool(true, name);
+    if (literals.length === 1)
+      return this.literalBool(count === 1 ? (literals[0] as Literal) : negate(literals[0] as Literal), name);
+    const key = keyOf(["sum", String(count), ...literals.map(String)]);
+    let cached = this.gateCache.get(key);
+    if (cached === undefined) {
+      cached = this.reifyExactCount(literals, count, name);
+      this.gateCache.set(key, cached);
+    }
+    return cached;
   }
 
   allOf(values: readonly BoolLike[], name: string): BoolVar {
-    const literals = values.map(lit);
-    if (literals.length === 0) return this.constantBool(true, name);
-    const result = this.newBool(name);
-    for (const literal of literals) this.addClause([result.not(), literal]);
-    this.addClause([result.lit, ...literals.map(negate)]);
-    return result;
+    return this.gate("all_of", values, name, true, (literals, result) => {
+      for (const literal of literals) this.addClause([result.not(), literal]);
+      this.addClause([result.lit, ...literals.map(negate)]);
+    });
   }
 
   anyOf(values: readonly BoolLike[], name: string): BoolVar {
-    const literals = values.map(lit);
-    if (literals.length === 0) return this.constantBool(false, name);
-    const result = this.newBool(name);
-    this.addClause([result.not(), ...literals]);
-    for (const literal of literals) this.addClause([result.lit, negate(literal)]);
-    return result;
+    return this.gate("any_of", values, name, false, (literals, result) => {
+      this.addClause([result.not(), ...literals]);
+      for (const literal of literals) this.addClause([result.lit, negate(literal)]);
+    });
   }
 
   not(value: BoolLike, name: string): BoolVar {
-    const result = this.newBool(name);
-    this.addClause([result.not(), negate(lit(value))]);
-    this.addClause([result.lit, lit(value)]);
-    return result;
+    const literal = lit(value);
+    const constant = this.constantValueOf(literal);
+    if (constant !== undefined) return this.constantBool(!constant, name);
+    return this.literalBool(negate(literal), name);
   }
 
   xor(left: BoolLike, right: BoolLike, name: string): BoolVar {
@@ -683,22 +735,22 @@ export class BOTCModel {
   }
 
   isEvil(player: string): BoolVar {
-    return this.cachedPlayerPredicate(
-      "is_evil",
-      player,
+    this.checkPlayer(player);
+    return this.anyOf(
       [...this.characters.entries()]
         .filter(([, character]) => roleAlignment(character) === Alignment.Evil)
         .map(([role]) => this.actualIs(player, role)),
+      `is_evil_${player}`,
     );
   }
 
   isGood(player: string): BoolVar {
-    return this.cachedPlayerPredicate(
-      "is_good",
-      player,
+    this.checkPlayer(player);
+    return this.anyOf(
       [...this.characters.entries()]
         .filter(([, character]) => roleAlignment(character) === Alignment.Good)
         .map(([role]) => this.actualIs(player, role)),
+      `is_good_${player}`,
     );
   }
 
@@ -707,12 +759,12 @@ export class BOTCModel {
   }
 
   hasCharacterType(player: string, characterType: CharacterType): BoolVar {
-    return this.cachedPlayerPredicate(
-      `is_${characterType}`,
-      player,
+    this.checkPlayer(player);
+    return this.anyOf(
       [...this.characters.entries()]
         .filter(([, character]) => roleCharacterType(character) === characterType)
         .map(([role]) => this.actualIs(player, role)),
+      `is_${characterType}_${player}`,
     );
   }
 
@@ -727,16 +779,10 @@ export class BOTCModel {
   roleInPlay(role: RoleRef): BoolVar {
     const roleRef = roleName(role);
     this.checkRole(roleRef);
-    const key = keyOf(["role_in_play", roleRef]);
-    let cached = this.predicateCache.get(key);
-    if (cached === undefined) {
-      cached = this.anyOf(
-        this.players.map((player) => this.actualIs(player, roleRef)),
-        `${roleRef}_in_play`,
-      );
-      this.predicateCache.set(key, cached);
-    }
-    return cached;
+    return this.anyOf(
+      this.players.map((player) => this.actualIs(player, roleRef)),
+      `${roleRef}_in_play`,
+    );
   }
 
   setRoleActiveAt(role: RoleRef, timing: Timing, activeIf: BoolLike): void {
@@ -1088,9 +1134,13 @@ export class BOTCModel {
         if (matching.length !== 1) throw new Error(`Expected exactly one actual character for ${player}.`);
         actual.set(player, matching[0] as string);
       }
-      const poisonedByTiming = this.flavorByTiming(model, this.poisonFlavorVars);
+      const poisonedByTiming = this.flavorByTiming(
+        model,
+        [this.poisonSourceTargetsByTimingPlayer, this.poisonOverridesByTimingPlayer],
+        this.poisonQueryVars,
+      );
       const poisoned = poisonedByTiming.get(DEFAULT_TIMING_KEY) ?? new Set<string>();
-      const drunkByTiming = this.flavorByTiming(model, this.drunkFlavorVars);
+      const drunkByTiming = this.flavorByTiming(model, [this.drunkSourceTargetsByTimingPlayer], this.drunkQueryVars);
       const globallyDrunk = new Set(
         [...this.globalDrunkVars.entries()].filter(([, variable]) => model.has(variable.id)).map(([player]) => player),
       );
@@ -1108,31 +1158,46 @@ export class BOTCModel {
           new World(actual, new Map(this.apparentRoles), poisoned, poisonedByTiming, globallyDrunk, drunkByTiming),
         );
       }
-      const significant = [
+      const significant = new Set<number>([
         ...this.players.flatMap((player) => [...this.characters.keys()].map((role) => this.actualIs(player, role).id)),
         ...[...this.droisonedVars.values()].map((variable) => variable.id),
-        ...[...this.poisonFlavorVars.values()].map((variable) => variable.id),
-        ...[...this.drunkFlavorVars.values()].map((variable) => variable.id),
+        ...[...this.poisonQueryVars.values()].map((variable) => variable.id),
+        ...[...this.drunkQueryVars.values()].map((variable) => variable.id),
         ...[...this.globalDrunkVars.values()].map((variable) => variable.id),
         ...[...this.roleAtVars.values()].map((variable) => variable.id),
-      ];
-      workingClauses.push(significant.map((variable) => (model.has(variable) ? -variable : variable)));
+      ]);
+      for (const sources of [
+        this.poisonSourceTargetsByTimingPlayer,
+        this.poisonOverridesByTimingPlayer,
+        this.drunkSourceTargetsByTimingPlayer,
+      ]) {
+        for (const targets of sources.values()) for (const target of targets) significant.add(Math.abs(lit(target)));
+      }
+      workingClauses.push([...significant].map((variable) => (model.has(variable) ? -variable : variable)));
     }
     return worlds;
   }
 
   private flavorByTiming(
     model: ReadonlySet<number>,
-    vars: ReadonlyMap<string, BoolVar>,
+    sourceMaps: readonly ReadonlyMap<string, readonly BoolLike[]>[],
+    queryVars: ReadonlyMap<string, BoolVar>,
   ): Map<string, ReadonlySet<string>> {
-    const timings = new Set([...vars.keys()].map((key) => key.split("\u0000")[0] as string));
-    const result = new Map<string, ReadonlySet<string>>();
-    for (const timing of [...timings].sort()) {
-      const players = this.players.filter((player) => {
-        const variable = vars.get(this.timingPlayerKey(timing, player));
-        return variable !== undefined && model.has(variable.id);
-      });
-      result.set(timing, new Set(players));
+    const satisfied = (value: BoolLike): boolean => {
+      const literal = lit(value);
+      return literal > 0 ? model.has(literal) : !model.has(-literal);
+    };
+    const keys = new Set([...sourceMaps.flatMap((sources) => [...sources.keys()]), ...queryVars.keys()]);
+    const result = new Map<string, Set<string>>();
+    for (const key of [...keys].sort()) {
+      const [timing, player] = key.split("\u0000") as [string, string];
+      let players = result.get(timing);
+      if (players === undefined) result.set(timing, (players = new Set()));
+      const queryVar = queryVars.get(key);
+      const affected =
+        (queryVar !== undefined && model.has(queryVar.id)) ||
+        sourceMaps.some((sources) => (sources.get(key) ?? []).some(satisfied));
+      if (affected) players.add(player);
     }
     return result;
   }
@@ -1200,31 +1265,28 @@ export class BOTCModel {
     return [...this.atMostNClauses(literals, count), ...this.atLeastNClauses(literals, count)];
   }
 
-  private reifyExactCount(literals: readonly Literal[], count: number, result: BoolVar): void {
-    const assignments = 1 << literals.length;
-    for (let mask = 0; mask < assignments; mask += 1) {
-      const clause: Literal[] = [];
-      let trueCount = 0;
-      for (let index = 0; index < literals.length; index += 1) {
-        const literal = literals[index] as Literal;
-        const isTrue = (mask & (1 << index)) !== 0;
-        if (isTrue) trueCount += 1;
-        clause.push(isTrue ? negate(literal) : literal);
+  // Returns a variable equivalent to "exactly `count` of `literals` are true", via a sequential
+  // counter: row[level - 1] is "at least `level` of the literals seen so far are true", tracked up
+  // to count + 1 levels, so the encoding stays polynomial in the input size. Duplicate literals are
+  // separate counter inputs and count as many times as they appear.
+  private reifyExactCount(literals: readonly Literal[], count: number, name: string): BoolVar {
+    const maxLevel = Math.min(count + 1, literals.length);
+    let row: BoolLike[] = [];
+    for (let index = 0; index < literals.length; index += 1) {
+      const literal = literals[index] as Literal;
+      const levels = Math.min(index + 1, maxLevel);
+      const next: BoolLike[] = [];
+      for (let level = 1; level <= levels; level += 1) {
+        const levelName = `${name}__ge_${level}_of_${index + 1}`;
+        const carry: BoolLike = level === 1 ? literal : this.allOf([literal, row[level - 2] as BoolLike], levelName);
+        next.push(level <= row.length ? this.anyOf([row[level - 1] as BoolLike, carry], levelName) : carry);
       }
-      clause.push(trueCount === count ? result.lit : result.not());
-      this.addClause(clause);
+      row = next;
     }
-  }
-
-  private cachedPlayerPredicate(predicate: string, player: string, values: readonly BoolLike[]): BoolVar {
-    this.checkPlayer(player);
-    const key = keyOf([predicate, player]);
-    let cached = this.predicateCache.get(key);
-    if (cached === undefined) {
-      cached = this.boolSumEquals(values, 1, `${predicate}_${player}`);
-      this.predicateCache.set(key, cached);
-    }
-    return cached;
+    const bounds: BoolLike[] = [];
+    if (count > 0) bounds.push(row[count - 1] as BoolLike);
+    if (count < literals.length) bounds.push(negate(lit(row[count] as BoolLike)));
+    return this.allOf(bounds, name);
   }
 
   private registersAsAlignment(player: string, alignment: Alignment, name: string): BoolVar {
@@ -1374,13 +1436,12 @@ export class BOTCModel {
     this.applyDefaultPoisonCapacityConstraints();
     this.applyFlavorPredicateConstraints();
     for (const [key, droisoned] of this.droisonedVars.entries()) {
-      const [timing] = key.split("\u0000") as [string | undefined, string | undefined];
       const defaultKey = `droison:${key}`;
-      if (timing === undefined) continue;
       if (this.defaultSoberConstraints.has(defaultKey)) continue;
       const sources = [...this.poisonSourceFlavor(key), ...this.drunkSourceFlavor(key)];
       if (sources.length > 0) {
-        this.addImplication(droisoned, this.anyOf(sources, `${timing}_${key}_droison_source`));
+        for (const source of sources) this.addImplication(source, droisoned);
+        this.addClause([droisoned.not(), ...sources.map(lit)]);
       } else if (!this.explicitDroisonTrue.has(droisoned.id)) {
         this.addFalse(droisoned);
       }
@@ -1400,16 +1461,20 @@ export class BOTCModel {
 
   private applyFlavorPredicateConstraints(): void {
     const flavors: Array<[string, ReadonlyMap<string, BoolVar>, (key: string) => readonly BoolLike[]]> = [
-      ["poison", this.poisonFlavorVars, (key) => this.poisonSourceFlavor(key)],
-      ["drunk", this.drunkFlavorVars, (key) => this.drunkSourceFlavor(key)],
+      ["poison", this.poisonQueryVars, (key) => this.poisonSourceFlavor(key)],
+      ["drunk", this.drunkQueryVars, (key) => this.drunkSourceFlavor(key)],
     ];
     for (const [flavor, vars, sourcesForKey] of flavors) {
       for (const [key, flavorVar] of vars.entries()) {
         const defaultKey = `${flavor}_flavor:${key}`;
         if (this.defaultSoberConstraints.has(defaultKey)) continue;
         const sources = sourcesForKey(key);
-        if (sources.length > 0) this.addImplication(flavorVar, this.anyOf(sources, `${flavor}_${key}_source`));
-        else if (!this.explicitDroisonTrue.has(flavorVar.id)) this.addFalse(flavorVar);
+        if (sources.length > 0) {
+          for (const source of sources) this.addImplication(source, flavorVar);
+          this.addClause([flavorVar.not(), ...sources.map(lit)]);
+        } else if (!this.explicitDroisonTrue.has(flavorVar.id)) {
+          this.addFalse(flavorVar);
+        }
         this.defaultSoberConstraints.add(defaultKey);
       }
     }
@@ -1444,9 +1509,7 @@ export class BOTCModel {
         this.addFalse(drunk);
         continue;
       }
-      const sourceActive =
-        sources.length === 1 ? sources[0] : this.anyOf(sources, `${player}_global_drunk_source_active`);
-      this.addImplication(drunk, sourceActive as BoolLike);
+      this.addClause([drunk.not(), ...sources.map(lit)]);
     }
     this.globalDrunkSourceConstraintsApplied = true;
   }
