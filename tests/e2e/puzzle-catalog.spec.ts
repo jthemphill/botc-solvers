@@ -96,7 +96,7 @@ test("solves puzzle 42 with the Widow-poisoned Philosopher world", async ({ page
   await expect(solvePanel.getByLabel("You: Philosopher")).toBeVisible();
 });
 
-test("solves puzzle 43 with a unique Demon and Minion across poison variants", async ({ page }) => {
+test("solves puzzle 43 with a unique Demon and Minion", async ({ page }) => {
   await page.goto("/");
 
   await page.getByLabel("Load example puzzle").selectOption("puzzle-43-two-many-cooks");
@@ -114,10 +114,10 @@ test("solves puzzle 43 with a unique Demon and Minion across poison variants", a
   const solvePanel = page.locator(".solve-panel");
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
-  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("8");
-  await expect(solvePanel.getByLabel("Dan: Imp, claimed Saint")).toHaveCount(8);
-  await expect(solvePanel.getByLabel("Fraser: Poisoner, claimed Chef")).toHaveCount(8);
-  await expect(solvePanel.getByLabel("You: Ravenkeeper")).toHaveCount(8);
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Dan: Imp, claimed Saint")).toBeVisible();
+  await expect(solvePanel.getByLabel("Fraser: Poisoner, claimed Chef")).toBeVisible();
+  await expect(solvePanel.getByLabel("You: Ravenkeeper")).toBeVisible();
 });
 
 test("solves puzzle 44 with the homebrew Prodigy token claims", async ({ page }) => {
@@ -414,10 +414,10 @@ test("solves puzzle 56 with the Imp and Poisoner conclusion", async ({ page }) =
   const solvePanel = page.locator(".solve-panel");
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
-  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("8");
-  await expect(solvePanel.getByLabel("Fraser: Imp, claimed Investigator")).toHaveCount(8);
-  await expect(solvePanel.getByLabel("Aoife: Poisoner, claimed Oracle")).toHaveCount(8);
-  await expect(solvePanel.getByLabel("Matthew: Empath")).toHaveCount(8);
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Fraser: Imp, claimed Investigator")).toBeVisible();
+  await expect(solvePanel.getByLabel("Aoife: Poisoner, claimed Oracle")).toBeVisible();
+  await expect(solvePanel.getByLabel("Matthew: Empath")).toBeVisible();
 });
 
 test("solves puzzle 57 with the Vigormortis and Tea Lady conclusion", async ({ page }) => {
@@ -438,11 +438,10 @@ test("solves puzzle 57 with the Vigormortis and Tea Lady conclusion", async ({ p
   const solvePanel = page.locator(".solve-panel");
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
-  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("10");
-  await expect(solvePanel.getByText("Showing the first 10 solutions.", { exact: false })).toBeVisible();
-  await expect(solvePanel.getByLabel("Fraser: Vigormortis, claimed Artist")).toHaveCount(10);
-  await expect(solvePanel.getByLabel("Aoife: Poisoner, claimed Ravenkeeper")).toHaveCount(10);
-  await expect(solvePanel.getByLabel("Matt: Tea Lady")).toHaveCount(10);
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Fraser: Vigormortis, claimed Artist")).toBeVisible();
+  await expect(solvePanel.getByLabel("Aoife: Poisoner, claimed Ravenkeeper")).toBeVisible();
+  await expect(solvePanel.getByLabel("Matt: Tea Lady")).toBeVisible();
 });
 
 test("solves puzzle 58 with the Riot, Xaan, and Politician conclusion", async ({ page }) => {
@@ -584,7 +583,7 @@ test("solves puzzle 62 with the Storm Catcher Drunk conclusion", async ({ page }
   await expect(solvePanel.getByLabel("You: Recluse")).toBeVisible();
 });
 
-test("solves puzzle 63 with unique evil players across Poisoner variants", async ({ page }) => {
+test("solves puzzle 63 with unique evil players", async ({ page }) => {
   await page.goto("/");
 
   await page.getByLabel("Load example puzzle").selectOption("puzzle-63-the-limiting-factor");
@@ -604,12 +603,11 @@ test("solves puzzle 63 with unique evil players across Poisoner variants", async
   const solvePanel = page.locator(".solve-panel");
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
-  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("10");
-  await expect(solvePanel.getByText("Showing the first 10 solutions.", { exact: false })).toBeVisible();
-  await expect(solvePanel.getByLabel("Tom: Imp, claimed Recluse")).toHaveCount(10);
-  await expect(solvePanel.getByLabel("Steph: Poisoner, claimed Undertaker")).toHaveCount(10);
-  await expect(solvePanel.getByLabel("Olivia: Investigator")).toHaveCount(10);
-  await expect(solvePanel.getByLabel("Dan: Ravenkeeper")).toHaveCount(10);
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Tom: Imp, claimed Recluse")).toBeVisible();
+  await expect(solvePanel.getByLabel("Steph: Poisoner, claimed Undertaker")).toBeVisible();
+  await expect(solvePanel.getByLabel("Olivia: Investigator")).toBeVisible();
+  await expect(solvePanel.getByLabel("Dan: Ravenkeeper")).toBeVisible();
 });
 
 test("solves puzzle 64 with the Pope duplicate Mutants", async ({ page }) => {
@@ -781,7 +779,7 @@ test("solves puzzle 69 with the No Dashii and self-cursing Witch", async ({ page
   await expect(solvePanel.getByLabel("You: Sage")).toBeVisible();
 });
 
-test("solves puzzle 70 with the Imp and Poisoner across poison variants", async ({ page }) => {
+test("solves puzzle 70 with the Imp and Poisoner", async ({ page }) => {
   await page.goto("/");
 
   await page.getByLabel("Load example puzzle").selectOption("puzzle-70-digging-your-own-grave");
@@ -799,12 +797,12 @@ test("solves puzzle 70 with the Imp and Poisoner across poison variants", async 
   const solvePanel = page.locator(".solve-panel");
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
-  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("9");
-  await expect(solvePanel.getByLabel("Matthew: Imp, claimed Saint")).toHaveCount(9);
-  await expect(solvePanel.getByLabel("Hannah: Poisoner, claimed Librarian")).toHaveCount(9);
-  await expect(solvePanel.getByLabel("Sarah: Butler")).toHaveCount(9);
-  await expect(solvePanel.getByLabel("Adam: Recluse")).toHaveCount(9);
-  await expect(solvePanel.getByLabel("You: Empath")).toHaveCount(9);
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Matthew: Imp, claimed Saint")).toBeVisible();
+  await expect(solvePanel.getByLabel("Hannah: Poisoner, claimed Librarian")).toBeVisible();
+  await expect(solvePanel.getByLabel("Sarah: Butler")).toBeVisible();
+  await expect(solvePanel.getByLabel("Adam: Recluse")).toBeVisible();
+  await expect(solvePanel.getByLabel("You: Empath")).toBeVisible();
 });
 
 test("solves puzzle 71 with the No Dashii and Scarlet Woman catch", async ({ page }) => {
@@ -931,11 +929,11 @@ test("solves puzzle 74 with Oscar Imp and Matt Poisoner", async ({ page }) => {
   const solvePanel = page.locator(".solve-panel");
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
-  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("9");
-  await expect(solvePanel.getByLabel("Oscar: Imp, claimed Chef")).toHaveCount(9);
-  await expect(solvePanel.getByLabel("Matt: Poisoner, claimed Recluse")).toHaveCount(9);
-  await expect(solvePanel.getByLabel("You: Investigator")).toHaveCount(9);
-  await expect(solvePanel.getByLabel("Sarah: Undertaker")).toHaveCount(9);
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Oscar: Imp, claimed Chef")).toBeVisible();
+  await expect(solvePanel.getByLabel("Matt: Poisoner, claimed Recluse")).toBeVisible();
+  await expect(solvePanel.getByLabel("You: Investigator")).toBeVisible();
+  await expect(solvePanel.getByLabel("Sarah: Undertaker")).toBeVisible();
 });
 
 test("solves puzzle 75 with the Fang Gu jump world", async ({ page }) => {
@@ -1010,11 +1008,11 @@ test("solves puzzle 77 with Sarah Imp and Matt Poisoner", async ({ page }) => {
   const solvePanel = page.locator(".solve-panel");
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
-  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("9");
-  await expect(solvePanel.getByLabel("Sarah: Imp, claimed Saint")).toHaveCount(9);
-  await expect(solvePanel.getByLabel("Matt: Poisoner, claimed Imp")).toHaveCount(9);
-  await expect(solvePanel.getByLabel("Fraser: Drunk, claimed Undertaker")).toHaveCount(9);
-  await expect(solvePanel.getByLabel("You: Ravenkeeper")).toHaveCount(9);
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Sarah: Imp, claimed Saint")).toBeVisible();
+  await expect(solvePanel.getByLabel("Matt: Poisoner, claimed Imp")).toBeVisible();
+  await expect(solvePanel.getByLabel("Fraser: Drunk, claimed Undertaker")).toBeVisible();
+  await expect(solvePanel.getByLabel("You: Ravenkeeper")).toBeVisible();
 });
 
 test("solves puzzle 78 with the Imp starpass to the Baron", async ({ page }) => {
@@ -1052,10 +1050,10 @@ test("solves puzzle 79 with Goose Vortox and Louisa Witch", async ({ page }) => 
   const solvePanel = page.locator(".solve-panel");
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
-  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("6");
-  await expect(solvePanel.getByLabel("Goose: Vortox, claimed Snake Charmer")).toHaveCount(6);
-  await expect(solvePanel.getByLabel("Louisa: Witch, claimed Artist")).toHaveCount(6);
-  await expect(solvePanel.getByLabel("Edd: Sweetheart")).toHaveCount(6);
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Goose: Vortox, claimed Snake Charmer")).toBeVisible();
+  await expect(solvePanel.getByLabel("Louisa: Witch, claimed Artist")).toBeVisible();
+  await expect(solvePanel.getByLabel("Edd: Sweetheart")).toBeVisible();
 });
 
 test("solves puzzle 80 with Sarah Imp and Fraser Xaan", async ({ page }) => {

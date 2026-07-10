@@ -218,7 +218,7 @@ describe("predicates and helpers", () => {
     expect(await claim.solveAll({ limit: 1 })).toEqual([]);
   });
 
-  test("active Poisoner must poison one player", async () => {
+  test("active Poisoner worlds are deduplicated by actual roles", async () => {
     const game = new BOTCModel(["A", "B", "C"], { characters: POISON_CHARACTERS, backend });
     game.fixActual("A", "Poisoner");
     game.fixActual("B", "Imp");
@@ -227,11 +227,8 @@ describe("predicates and helpers", () => {
 
     const worlds = await game.solveAll();
 
-    expect(worlds).toHaveLength(3);
-    expect(worlds.every((world) => (world.poisonedByTiming.get(day(1))?.size ?? 0) === 1)).toBe(true);
-    expect(new Set(worlds.flatMap((world) => [...(world.poisonedByTiming.get(day(1)) ?? [])]))).toEqual(
-      new Set(["A", "B", "C"]),
-    );
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.poisonedByTiming.get(day(1))?.size).toBe(1);
   });
 
   test.each([0, 1, 2, 3, 4])("Xaan poisons Townsfolk on X = %p", async (numOutsiders) => {

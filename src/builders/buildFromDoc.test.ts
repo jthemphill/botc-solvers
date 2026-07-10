@@ -2227,7 +2227,7 @@ describe("buildFromDoc", () => {
     ).solveAll();
     expect(worlds).toHaveLength(1);
   });
-  test("multiple Village Idiots make one real Village Idiot drunk", async () => {
+  test("multiple Village Idiot worlds are deduplicated by actual roles", async () => {
     const worlds = await buildFromDoc(
       {
         players: ["A", "B", "C"],
@@ -2245,8 +2245,8 @@ describe("buildFromDoc", () => {
       },
       backend,
     ).solveAll();
-    expect(worlds).toHaveLength(2);
-    expect(new Set(worlds.map((world) => (world.isDrunk("A") ? "A" : "B")))).toEqual(new Set(["A", "B"]));
+    expect(worlds).toHaveLength(1);
+    expect([worlds[0]?.isDrunk("A"), worlds[0]?.isDrunk("B")].filter(Boolean)).toHaveLength(1);
   });
   test("Puzzlemaster drunking can coexist with a single Village Idiot", async () => {
     const worlds = await buildFromDoc(
