@@ -55,6 +55,10 @@ function defaultPlayerName(existing: readonly string[]): string {
 function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
   const remap = (s: string) => (s === oldName ? newName : s);
   const remapArr = (arr: readonly string[]) => arr.map(remap);
+  claim = {
+    ...claim,
+    knownEvilTwin: claim.knownEvilTwin === undefined ? undefined : remap(claim.knownEvilTwin),
+  } as Claim;
   const name = claim.name === oldName ? newName : claim.name;
 
   switch (claim.type) {
@@ -99,8 +103,6 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
         ...claim,
         name,
         checks: claim.checks.map((c) => ({ ...c, player: remap(c.player) })),
-        evilTwin:
-          claim.evilTwin === undefined ? undefined : { ...claim.evilTwin, player: remap(claim.evilTwin.player) },
       };
     case "Steward":
       return { ...claim, name, goodPlayer: claim.goodPlayer ? remap(claim.goodPlayer) : claim.goodPlayer };
@@ -150,6 +152,7 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
 
 function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
   if (claim.name === name) return undefined;
+  if (claim.knownEvilTwin === name) claim = { ...claim, knownEvilTwin: undefined } as Claim;
   // Strip references but leave the claim in place.
   const stripArr = (arr: readonly string[] | undefined) => arr?.filter((n) => n !== name);
   switch (claim.type) {
@@ -203,7 +206,6 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
       return {
         ...claim,
         checks: claim.checks.filter((c) => c.player !== name),
-        evilTwin: claim.evilTwin?.player === name ? undefined : claim.evilTwin,
       };
     case "Balloonist":
       return {
@@ -365,7 +367,7 @@ function normalizeClaims(claim: Claim): Claim[] {
     );
   }
   if (normalized.type === "Snake Charmer" && normalized.checks.length > 1) {
-    const { info: _info, evilTwin: _evilTwin, ...claimWithoutSharedInfo } = normalized;
+    const { info: _info, ...claimWithoutSharedInfo } = normalized;
     return normalized.checks.map((check, index) =>
       index === 0 ? { ...normalized, checks: [check] } : { ...claimWithoutSharedInfo, checks: [check] },
     );

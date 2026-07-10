@@ -90,6 +90,7 @@ interface BaseClaim {
   readonly timing?: string;
   readonly possibleActualRoles?: readonly string[];
   readonly heardWidowCall?: boolean;
+  readonly knownEvilTwin?: string;
   readonly info?: readonly CustomInfoStatementDoc[];
 }
 
@@ -120,7 +121,6 @@ export interface InvestigatorClaim extends BaseClaim {
 export interface LibrarianClaim extends BaseClaim {
   readonly type: "Librarian";
   readonly role?: string;
-  readonly outsiderCount?: number;
   readonly among?: readonly string[];
 }
 
@@ -358,15 +358,9 @@ export interface SnakeCharmerCheckDoc {
   readonly timing: string;
 }
 
-export interface SnakeCharmerEvilTwinInfoDoc {
-  readonly player: string;
-  readonly timing: string;
-}
-
 export interface SnakeCharmerClaim extends BaseClaim {
   readonly type: "Snake Charmer";
   readonly checks: readonly SnakeCharmerCheckDoc[];
-  readonly evilTwin?: SnakeCharmerEvilTwinInfoDoc;
 }
 
 export interface VillageIdiotCheckDoc {
@@ -383,7 +377,6 @@ export interface VillageIdiotClaim extends BaseClaim {
 export interface KlutzClaim extends BaseClaim {
   readonly type: "Klutz";
   readonly chosen?: string;
-  readonly lost?: boolean;
 }
 
 export interface VirginClaim extends BaseClaim {

@@ -125,8 +125,10 @@ function validateClaim(input: unknown, path: string): Claim {
       : expectStringArray(input["possibleActualRoles"], `${path}.possibleActualRoles`);
   const heardWidowCall =
     input["heardWidowCall"] === undefined ? undefined : expectBool(input["heardWidowCall"], `${path}.heardWidowCall`);
+  const knownEvilTwin =
+    input["knownEvilTwin"] === undefined ? undefined : expectString(input["knownEvilTwin"], `${path}.knownEvilTwin`);
   const info = input["info"] === undefined ? undefined : validateCustomInfo(input["info"], `${path}.info`, type);
-  const base = { name, timing, possibleActualRoles, heardWidowCall, info };
+  const base = { name, timing, possibleActualRoles, heardWidowCall, knownEvilTwin, info };
 
   switch (type as Claim["type"]) {
     case "Acrobat": {
@@ -163,7 +165,6 @@ function validateClaim(input: unknown, path: string): Claim {
         ...base,
         type: "Librarian",
         role: input["role"] as string | undefined,
-        outsiderCount: input["outsiderCount"] as number | undefined,
         among: input["among"] === undefined ? undefined : expectStringArray(input["among"], `${path}.among`),
       };
     case "Washerwoman":
@@ -543,10 +544,6 @@ function validateClaim(input: unknown, path: string): Claim {
             timing: expectString(c["timing"], `${path}.checks[${i}].timing`),
           };
         }),
-        evilTwin:
-          input["evilTwin"] === undefined
-            ? undefined
-            : validateSnakeCharmerEvilTwin(input["evilTwin"], `${path}.evilTwin`),
       };
     }
     case "VillageIdiot": {
@@ -570,7 +567,6 @@ function validateClaim(input: unknown, path: string): Claim {
         ...base,
         type: "Klutz",
         chosen: input["chosen"] === undefined ? undefined : expectString(input["chosen"], `${path}.chosen`),
-        lost: input["lost"] === undefined ? undefined : expectBool(input["lost"], `${path}.lost`),
       };
     case "Virgin":
       return {
@@ -649,17 +645,6 @@ function validatePhilosopherSeamstress(
     among: expectStringArray(input["among"], `${path}.among`),
     aligned: input["aligned"] === undefined ? undefined : expectBool(input["aligned"], `${path}.aligned`),
     timing: input["timing"] === undefined ? undefined : expectString(input["timing"], `${path}.timing`),
-  };
-}
-
-function validateSnakeCharmerEvilTwin(
-  input: unknown,
-  path: string,
-): NonNullable<Extract<Claim, { type: "Snake Charmer" }>["evilTwin"]> {
-  if (!isObject(input)) throw new ValidationError(`Expected object`, path);
-  return {
-    player: expectString(input["player"], `${path}.player`),
-    timing: expectString(input["timing"], `${path}.timing`),
   };
 }
 

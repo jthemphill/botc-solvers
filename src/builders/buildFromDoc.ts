@@ -47,7 +47,7 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
     applyPoisonerSources(game, doc, nightDeathTiming);
     applyWidowSources(game, doc);
     applyWidowCallClaims(game, doc);
-    applyEvilTwinDeclarationClaims(game, doc);
+    applyEvilTwinKnowledgeClaims(game, doc);
     applyVillageIdiotSources(game, doc);
   }
   return game;
@@ -1434,29 +1434,27 @@ function applyWidowCallClaims(game: BOTCModel, doc: PuzzleDoc): void {
   );
 }
 
-function applyEvilTwinDeclarationClaims(game: BOTCModel, doc: PuzzleDoc): void {
-  const declarationClaims = doc.claims.flatMap((claim) =>
-    claim.type === "Snake Charmer" && claim.evilTwin !== undefined
-      ? [{ name: claim.name, player: claim.evilTwin.player }]
-      : [],
+function applyEvilTwinKnowledgeClaims(game: BOTCModel, doc: PuzzleDoc): void {
+  const knowledgeClaims = doc.claims.filter(
+    (claim): claim is typeof claim & { readonly knownEvilTwin: string } => claim.knownEvilTwin !== undefined,
   );
-  for (const claim of declarationClaims) {
-    const declaredEvilTwin = doc.script.includes("Evil Twin")
-      ? game.actualIs(claim.player, "Evil Twin")
-      : game.constantBool(false, `${slug(claim.name)}_declared_evil_twin_without_evil_twin_on_script`);
-    game.addImplication(game.isGood(claim.name), declaredEvilTwin);
+  for (const claim of knowledgeClaims) {
+    const knownPlayerIsEvilTwin = doc.script.includes("Evil Twin")
+      ? game.actualIs(claim.knownEvilTwin, "Evil Twin")
+      : game.constantBool(false, `${slug(claim.name)}_knows_evil_twin_without_evil_twin_on_script`);
+    game.addImplication(game.isGood(claim.name), knownPlayerIsEvilTwin);
   }
   if (!doc.script.includes("Evil Twin")) return;
   game.addImplication(
     game.roleInPlay("Evil Twin"),
     game.anyOf(
-      declarationClaims.map((claim) =>
+      knowledgeClaims.map((claim) =>
         game.allOf(
-          [game.isGood(claim.name), game.actualIs(claim.player, "Evil Twin")],
-          `${slug(claim.name)}_declares_${slug(claim.player)}_evil_twin`,
+          [game.isGood(claim.name), game.actualIs(claim.knownEvilTwin, "Evil Twin")],
+          `${slug(claim.name)}_knows_${slug(claim.knownEvilTwin)}_is_evil_twin`,
         ),
       ),
-      "good_player_declared_evil_twin",
+      "good_player_knows_evil_twin",
     ),
   );
 }

@@ -66,6 +66,22 @@ interface Props {
 }
 
 export const CLAIM_TYPES = [...SUPPORTED_CLAIM_TYPES];
+const CLAIM_ROLE_OPTIONS = sortedRoleNames(CLAIM_TYPES.map((type) => canonicalRoleName(type) ?? type));
+
+export function ClaimTypeahead({ value, onChange }: { value: Claim["type"]; onChange: (type: Claim["type"]) => void }) {
+  return (
+    <RoleTypeahead
+      value={canonicalRoleName(value) ?? value}
+      onChange={(role) => {
+        const type = CLAIM_TYPES.find((candidate) => (canonicalRoleName(candidate) ?? candidate) === role);
+        if (type !== undefined) onChange(type);
+      }}
+      options={CLAIM_ROLE_OPTIONS}
+      ariaLabel="Claim type"
+      placeholder="Claim type"
+    />
+  );
+}
 
 const TIMING_OPTIONS = [
   "night_1",
@@ -103,19 +119,7 @@ export function ClaimsEditor({ doc, dispatch }: Props) {
     <section className="panel">
       <h3>Claims</h3>
       <div className="row">
-        <select
-          id="claim-type"
-          name="claim-type"
-          aria-label="Claim type"
-          value={newType}
-          onChange={(e) => setNewType(e.target.value as Claim["type"])}
-        >
-          {CLAIM_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
+        <ClaimTypeahead value={newType} onChange={setNewType} />
         <select
           id="claim-player"
           name="claim-player"
@@ -360,6 +364,7 @@ function PlayerSelect({
 
 export function ClaimBody({ doc, claim, onChange }: BodyProps) {
   const showWidowCall = doc.script.includes("Widow") && isGoodClaimType(claim.type);
+  const showEvilTwinKnowledge = doc.script.includes("Evil Twin");
   const body = (() => {
     switch (claim.type) {
       case "Acrobat":
@@ -468,6 +473,16 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
           />
           <span>Heard the Widow's call</span>
         </label>
+      )}
+      {showEvilTwinKnowledge && (
+        <div className="field-grid">
+          <span>Known Evil Twin</span>
+          <PlayerSelect
+            players={doc.players}
+            value={claim.knownEvilTwin}
+            onChange={(knownEvilTwin) => onChange({ ...claim, knownEvilTwin: knownEvilTwin || undefined } as Claim)}
+          />
+        </div>
       )}
       {claim.type === "Artist" && <CustomInfoEditor claim={claim} onChange={onChange} />}
     </>
@@ -686,16 +701,10 @@ function LibrarianBody({
       <RoleSelect
         script={doc.script}
         value={claim.role}
-        onChange={(v) => onChange({ ...claim, role: v || undefined, outsiderCount: undefined })}
+        onChange={(v) => onChange({ ...claim, role: v || undefined })}
         allowEmpty
         options={roleOptionsByCharacterType(doc.script, [CharacterType.Outsider])}
         ariaLabel="Librarian outsider role"
-      />
-      <span>No Outsiders</span>
-      <input
-        type="checkbox"
-        checked={claim.outsiderCount === 0}
-        onChange={(event) => onChange({ ...claim, outsiderCount: event.target.checked ? 0 : undefined })}
       />
       <span>Among</span>
       <MultiPlayerSelect
@@ -1593,17 +1602,6 @@ function SnakeCharmerBody({
 }) {
   const check = claim.checks[0] ?? { player: "", demon: false, timing: "night_1" };
   const setCheck = (next: (typeof claim.checks)[number]) => onChange({ ...claim, checks: [next] });
-  const setEvilTwin = (player: string) => {
-    onChange({
-      ...claim,
-      evilTwin: player === "" ? undefined : { player, timing: claim.evilTwin?.timing ?? check.timing },
-    });
-  };
-  const setEvilTwinTiming = (timing: string | undefined) => {
-    const evilTwin = claim.evilTwin;
-    if (evilTwin === undefined) return;
-    onChange({ ...claim, evilTwin: { ...evilTwin, timing: timing ?? check.timing } });
-  };
 
   return (
     <div className="field-grid">
@@ -1619,14 +1617,6 @@ function SnakeCharmerBody({
       </select>
       <span>Timing</span>
       <TimingField value={check.timing} onChange={(timing) => setCheck({ ...check, timing: timing ?? "night_1" })} />
-      <span>Evil Twin</span>
-      <PlayerSelect players={doc.players} value={claim.evilTwin?.player} onChange={setEvilTwin} />
-      {claim.evilTwin !== undefined && (
-        <>
-          <span>Evil Twin timing</span>
-          <TimingField value={claim.evilTwin.timing} onChange={setEvilTwinTiming} />
-        </>
-      )}
     </div>
   );
 }
@@ -1699,8 +1689,6 @@ function KlutzBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: KlutzClaim
         value={claim.chosen}
         onChange={(chosen) => onChange({ ...claim, chosen: chosen || undefined })}
       />
-      <span>Lost</span>
-      <OptionalBooleanSelect value={claim.lost} onChange={(lost) => onChange({ ...claim, lost })} />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="day_1" />
     </div>

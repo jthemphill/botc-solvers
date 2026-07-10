@@ -33,6 +33,14 @@ export function RoleTypeahead({
 
   useEffect(() => setDraft(value ?? ""), [value]);
 
+  const resolveOption = (rawValue: string): string | undefined => {
+    const trimmed = rawValue.trim();
+    const canonical = canonicalRoleName(trimmed);
+    if (canonical !== undefined && optionSet.has(canonical)) return canonical;
+    const normalized = trimmed.toLowerCase();
+    return roleOptions.find((option) => option.toLowerCase() === normalized);
+  };
+
   const commit = (rawValue = draft) => {
     const trimmed = rawValue.trim();
     if (trimmed === "") {
@@ -45,10 +53,10 @@ export function RoleTypeahead({
       return;
     }
 
-    const canonical = canonicalRoleName(trimmed);
-    if (canonical !== undefined && optionSet.has(canonical)) {
-      setDraft(canonical);
-      if (canonical !== value) onChange(canonical);
+    const option = resolveOption(trimmed);
+    if (option !== undefined) {
+      setDraft(option);
+      if (option !== value) onChange(option);
       return;
     }
 
@@ -76,8 +84,8 @@ export function RoleTypeahead({
         onChange={(event) => {
           const nextDraft = event.target.value;
           setDraft(nextDraft);
-          const canonical = canonicalRoleName(nextDraft);
-          if (canonical !== undefined && optionSet.has(canonical)) onChange(canonical);
+          const option = resolveOption(nextDraft);
+          if (option !== undefined) onChange(option);
           if (allowEmpty && nextDraft === "") onChange("");
         }}
         onBlur={() => commit()}

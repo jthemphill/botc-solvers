@@ -24,8 +24,8 @@ export function claimSummary(claim: Claim): string {
       return `${formatList(claim.among)} is ${rolePhrase(role, "a Minion")}.`;
     }
     case "Librarian":
-      return claim.outsiderCount !== undefined
-        ? `${claim.outsiderCount} Outsider${claim.outsiderCount === 1 ? "" : "s"}`
+      return claim.role === undefined
+        ? "0 Outsiders"
         : `${formatList(claim.among ?? [])} is ${rolePhrase(claim.role, "an Outsider")}.`;
     case "Washerwoman":
       return `${formatList(claim.among)} is ${rolePhrase(claim.role, "a Townsfolk")}.`;
@@ -103,8 +103,6 @@ export function claimSummary(claim: Claim): string {
     }
     case "Klutz": {
       if (claim.chosen === undefined) return "No Klutz choice";
-      if (claim.lost === true) return `Chose ${claim.chosen} and lost.`;
-      if (claim.lost === false) return `Chose ${claim.chosen} and did not lose.`;
       return `Chose ${claim.chosen}.`;
     }
     case "Balloonist":
@@ -362,12 +360,7 @@ function snakeCharmerSummary(claim: Extract<Claim, { readonly type: "Snake Charm
   const checks = claim.checks
     .filter((check) => check.player.trim() !== "")
     .map((check) => `${compactTimingLabel(check.timing)}: ${check.player} is ${check.demon ? "" : "not "}Demon`);
-  const evilTwin =
-    claim.evilTwin === undefined
-      ? undefined
-      : `${compactTimingLabel(claim.evilTwin.timing)}: ${claim.evilTwin.player} is Evil Twin`;
-  const info = evilTwin === undefined ? checks : [...checks, evilTwin];
-  return info.length === 0 ? "No check yet" : info.join("; ");
+  return checks.length === 0 ? "No check yet" : checks.join("; ");
 }
 
 function courtierSummary(claim: Extract<Claim, { readonly type: "Courtier" }>): string {

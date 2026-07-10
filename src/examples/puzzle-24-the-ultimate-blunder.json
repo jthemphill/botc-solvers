@@ -71,8 +71,7 @@
       "type": "Klutz",
       "name": "Olivia",
       "timing": "night_2",
-      "chosen": "Adam",
-      "lost": false
+      "chosen": "Adam"
     },
     {
       "type": "FortuneTeller",

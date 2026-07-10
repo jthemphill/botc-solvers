@@ -162,7 +162,6 @@ describe("puzzle document reducer", () => {
             { player: "B", demon: false, timing: "night_1" },
             { player: "C", demon: true, timing: "night_2" },
           ],
-          evilTwin: { player: "C", timing: "night_1" },
         },
       ],
     };
@@ -174,7 +173,6 @@ describe("puzzle document reducer", () => {
         type: "Snake Charmer",
         name: "A",
         checks: [{ player: "B", demon: false, timing: "night_1" }],
-        evilTwin: { player: "C", timing: "night_1" },
       },
       {
         type: "Snake Charmer",

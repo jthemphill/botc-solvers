@@ -59,6 +59,7 @@ const ROLE_EMOJI_ENTRIES = [
   ["Politician", "🏳️"],
   ["Poppy Grower", "🌺"],
   ["Princess", "👸"],
+  ["Prodigy", "🌟"],
   ["Pukka", "🩸"],
   ["Puzzlemaster", "🧩"],
   ["Ravenkeeper", "🪶"],

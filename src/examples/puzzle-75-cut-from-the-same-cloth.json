@@ -149,8 +149,7 @@
       "type": "Klutz",
       "name": "Jasmine",
       "timing": "day_1",
-      "chosen": "Matt",
-      "lost": false
+      "chosen": "Matt"
     }
   ]
 }

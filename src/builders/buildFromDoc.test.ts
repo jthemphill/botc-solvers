@@ -285,79 +285,45 @@ describe("buildFromDoc", () => {
     ).solveAll();
     expect(worlds).toEqual([]);
   });
-  test("Evil Twin in play requires a good player to declare the Evil Twin", async () => {
+  test("Evil Twin in play requires a good player to claim knowledge", async () => {
     const worlds = await buildFromDoc(
       {
         players: ["A", "B", "C"],
-        script: ["Evil Twin", "Imp", "Snake Charmer"],
+        script: ["Evil Twin", "Imp", "Soldier"],
         setup: "none",
         uniqueCharacters: true,
         roleConstraints: roleConstraints({
           possible: [
             { name: "A", roles: ["Evil Twin"] },
             { name: "B", roles: ["Imp"] },
-            { name: "C", roles: ["Snake Charmer"] },
+            { name: "C", roles: ["Soldier"] },
           ],
         }),
-        claims: [],
+        claims: [{ type: "Soldier", name: "C" }],
       },
       backend,
     ).solveAll();
     expect(worlds).toEqual([]);
   });
-  test("good Evil Twin declarations identify the actual Evil Twin", async () => {
+  test("any good claimant can claim knowledge of an Evil Twin", async () => {
     const worlds = await buildFromDoc(
       {
         players: ["A", "B", "C"],
-        script: ["Evil Twin", "Imp", "Snake Charmer"],
-        setup: "none",
-        uniqueCharacters: true,
-        roleConstraints: roleConstraints({
-          possible: [{ name: "B", roles: ["Snake Charmer"] }],
-        }),
-        claims: [{ type: "Snake Charmer", name: "B", checks: [], evilTwin: { player: "A", timing: "night_1" } }],
-      },
-      backend,
-    ).solveAll();
-    expect(worlds.length).toBeGreaterThan(0);
-    expect(worlds.every((world) => world.holder("Evil Twin") === "A")).toBe(true);
-  });
-  test("wrong good Evil Twin declarations exclude the world", async () => {
-    const worlds = await buildFromDoc(
-      {
-        players: ["A", "B", "C"],
-        script: ["Evil Twin", "Imp", "Snake Charmer"],
+        script: ["Evil Twin", "Imp", "Soldier"],
         setup: "none",
         uniqueCharacters: true,
         roleConstraints: roleConstraints({
           possible: [
             { name: "A", roles: ["Evil Twin"] },
-            { name: "B", roles: ["Snake Charmer"] },
-            { name: "C", roles: ["Imp"] },
+            { name: "B", roles: ["Imp"] },
+            { name: "C", roles: ["Soldier"] },
           ],
         }),
-        claims: [{ type: "Snake Charmer", name: "B", checks: [], evilTwin: { player: "C", timing: "night_1" } }],
+        claims: [{ type: "Soldier", name: "C", knownEvilTwin: "A" }],
       },
       backend,
     ).solveAll();
-    expect(worlds).toEqual([]);
-  });
-  test("evil Evil Twin declarations do not force Evil Twin in play", async () => {
-    const worlds = await buildFromDoc(
-      {
-        players: ["A", "B", "C"],
-        script: ["Evil Twin", "Imp", "Snake Charmer", "Chef"],
-        setup: "none",
-        uniqueCharacters: false,
-        roleConstraints: roleConstraints({
-          possible: [{ name: "A", roles: ["Imp"] }],
-        }),
-        claims: [{ type: "Snake Charmer", name: "A", checks: [], evilTwin: { player: "B", timing: "night_1" } }],
-      },
-      backend,
-    ).solveAll();
-    expect(worlds.length).toBeGreaterThan(0);
-    expect(worlds.every((world) => world.holder("Evil Twin") === undefined)).toBe(true);
+    expect(worlds).toHaveLength(1);
   });
   test("custom info statements and excluded role constraints constrain the model", async () => {
     const worlds = await buildFromDoc(
@@ -2122,7 +2088,7 @@ describe("buildFromDoc", () => {
     expect(noCatchWorlds).toEqual([]);
     expect(catchWorlds).toHaveLength(1);
   });
-  test("Klutz no-loss claims require a healthy Klutz to choose good", async () => {
+  test("Klutz claims require a healthy Klutz to choose good", async () => {
     const worlds = await buildFromDoc(
       {
         players: ["A", "B", "C"],
@@ -2136,13 +2102,13 @@ describe("buildFromDoc", () => {
             { name: "C", roles: ["Chef"] },
           ],
         }),
-        claims: [{ type: "Klutz", name: "A", timing: "night_2", chosen: "B", lost: false }],
+        claims: [{ type: "Klutz", name: "A", timing: "night_2", chosen: "B" }],
       },
       backend,
     ).solveAll();
     expect(worlds).toEqual([]);
   });
-  test("Klutz no-loss claims can be disabled by poisoning", async () => {
+  test("Klutz claims can be disabled by poisoning", async () => {
     const worlds = await buildFromDoc(
       {
         players: ["A", "B", "C"],
@@ -2156,7 +2122,7 @@ describe("buildFromDoc", () => {
             { name: "C", roles: ["Poisoner"] },
           ],
         }),
-        claims: [{ type: "Klutz", name: "A", timing: "night_2", chosen: "B", lost: false }],
+        claims: [{ type: "Klutz", name: "A", timing: "night_2", chosen: "B" }],
       },
       backend,
     ).solveAll();

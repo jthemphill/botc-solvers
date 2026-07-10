@@ -647,7 +647,7 @@ test("solves puzzle 65 with the Fang Gu jump to the Mutant", async ({ page }) =>
   await expect(claims).toContainText("N3: Tom is not Demon");
   await expect(claims).toContainText("Day 1 guesses: Tom=Seamstress; Fraser=Snake Charmer; Matt=Oracle; 1 correct.");
   await expect(claims).toContainText("Demon 4 steps from Minion");
-  await expect(claims).toContainText("Chose Dan and did not lose.");
+  await expect(claims).toContainText("Chose Dan.");
 
   const timeline = page.getByLabel("Puzzle timeline");
   await expect(timeline).toContainText("D2 Witch Curse");
@@ -1194,7 +1194,7 @@ test("formats remaining structured claim summaries with their details", async ({
   await expect(page.getByLabel("Player claim summaries")).toContainText("Chose Snake Charmer.");
 
   await page.getByLabel("Load example puzzle").selectOption("puzzle-24-the-ultimate-blunder");
-  await expect(page.getByLabel("Player claim summaries")).toContainText("Chose Adam and did not lose.");
+  await expect(page.getByLabel("Player claim summaries")).toContainText("Chose Adam.");
 });
 
 test("puzzle 1 formats Savant claim summaries as Alloy XOR expressions", async ({ page }) => {

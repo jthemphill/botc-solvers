@@ -51,10 +51,7 @@
           "timing": "night_1"
         }
       ],
-      "evilTwin": {
-        "player": "Hannah",
-        "timing": "night_1"
-      },
+      "knownEvilTwin": "Hannah",
       "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
@@ -99,8 +96,7 @@
       "type": "Klutz",
       "name": "Oscar",
       "timing": "day_2",
-      "chosen": "Sarah",
-      "lost": false
+      "chosen": "Sarah"
     },
     {
       "type": "Juggler",
@@ -126,10 +122,7 @@
           "timing": "night_1"
         }
       ],
-      "evilTwin": {
-        "player": "Jasmine",
-        "timing": "night_1"
-      },
+      "knownEvilTwin": "Jasmine",
       "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
