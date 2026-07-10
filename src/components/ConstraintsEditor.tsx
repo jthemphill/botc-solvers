@@ -18,6 +18,44 @@ export function ConstraintsEditor({ doc, dispatch }: Props) {
     <section className="panel">
       <h3>Custom constraints</h3>
       <CustomConstraintList constraints={customConstraints} setConstraints={setCustomConstraints} />
+      <details className="advanced-puzzle-rules">
+        <summary>Advanced puzzle rules</summary>
+        <p>
+          Most puzzles can use the inferred defaults. Change these only when the published rules explicitly require it.
+        </p>
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            aria-label="Use standard setup counts"
+            checked={doc.setup !== "none" && doc.setup !== "atheist"}
+            onChange={(event) => dispatch({ type: "setSetup", setup: event.target.checked ? undefined : "none" })}
+          />
+          <span>Use standard setup counts</span>
+        </label>
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            aria-label="Atheist puzzle rules"
+            checked={doc.setup === "atheist"}
+            onChange={(event) => dispatch({ type: "setSetup", setup: event.target.checked ? "atheist" : undefined })}
+          />
+          <span>Atheist puzzle rules</span>
+        </label>
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            aria-label="Unique actual characters"
+            checked={doc.uniqueCharacters !== false}
+            onChange={(event) =>
+              dispatch({
+                type: "setUniqueCharacters",
+                uniqueCharacters: event.target.checked ? undefined : false,
+              })
+            }
+          />
+          <span>Unique actual characters</span>
+        </label>
+      </details>
     </section>
   );
 }

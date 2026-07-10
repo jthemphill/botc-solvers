@@ -4,7 +4,7 @@ export function claimSummary(claim: Claim): string {
   const customInfo = (claim.info ?? [])
     .map((info) => info.expression?.trim())
     .filter((text): text is string => Boolean(text));
-  if (customInfo.length > 0) return customInfo.join("; ");
+  if (customInfo.length > 0) return customInfo.map(artistInfoSummary).join("; ");
 
   switch (claim.type) {
     case "Acrobat":
@@ -123,6 +123,99 @@ export function claimSummary(claim: Claim): string {
     default:
       return `I am the ${claim.type}`;
   }
+}
+
+function artistInfoSummary(expression: string): string {
+  const readable = expression.replace(/`([^`]+)`/g, "$1").trim();
+  if (readable === "false") return "I learned that the answer was no.";
+
+  const registration = /^registers_as\(([^,]+),\s*([^)]+)\)$/.exec(readable);
+  if (registration !== null) {
+    return `I learned that ${registration[1]?.trim()} registered as the ${registration[2]?.trim()}.`;
+  }
+
+  const groupedRole = /^(some|no)\s+p\s*:\s*\{([^}]+)\}\s*\|\s*p\.role\s*==\s*(.+)$/.exec(readable);
+  if (groupedRole !== null) {
+    const players = groupedRole[2]?.split(",").map((player) => player.trim()) ?? [];
+    const role = groupedRole[3]?.trim();
+    return groupedRole[1] === "no"
+      ? `I learned that none of ${formatList(players)} is the ${role}.`
+      : `I learned that one of ${formatList(players)} is the ${role}.`;
+  }
+
+  const someoneRole = /^some\s+p\s*:\s*players\s*\|\s*p\.role\s*==\s*(.+)$/.exec(readable);
+  if (someoneRole !== null) return `I learned that someone is the ${someoneRole[1]?.trim()}.`;
+
+  const timedRole = /^some\s+p\s*:\s*players\s*\|\s*role_at\(p,\s*([^,]+),\s*([^)]+)\)$/.exec(readable);
+  if (timedRole !== null) {
+    return `I learned that someone was the ${timedRole[1]?.trim()} on ${sentenceTimingLabel(timedRole[2]?.trim() ?? "")}.`;
+  }
+
+  const poisoned = readable.split(/\s+or\s+/).map((part) => /^poisoned\(([^,]+),\s*([^)]+)\)$/.exec(part));
+  if (poisoned.every((match) => match !== null)) {
+    const matches = poisoned as RegExpExecArray[];
+    const timing = matches[0]?.[2]?.trim();
+    if (timing !== undefined && matches.every((match) => match[2]?.trim() === timing)) {
+      return `I learned that ${formatList(matches.map((match) => match[1]?.trim() ?? ""))} was poisoned on ${sentenceTimingLabel(timing)}.`;
+    }
+  }
+
+  const comparisons = readable.split(/\s+or\s+/).map(parseSimpleComparison);
+  if (comparisons.every((comparison) => comparison !== undefined)) {
+    const visible = comparisons as SimpleComparison[];
+    const first = visible[0];
+    if (
+      first !== undefined &&
+      visible.every(
+        (comparison) =>
+          comparison.field === first.field &&
+          comparison.operator === first.operator &&
+          comparison.value === first.value,
+      )
+    ) {
+      return learnedComparisonSummary(
+        formatList(visible.map((comparison) => comparison.player)),
+        first.field,
+        first.operator,
+        first.value,
+      );
+    }
+  }
+
+  const comparison = parseSimpleComparison(readable);
+  if (comparison !== undefined) {
+    return learnedComparisonSummary(comparison.player, comparison.field, comparison.operator, comparison.value);
+  }
+
+  return `I learned: ${readable}.`;
+}
+
+interface SimpleComparison {
+  readonly player: string;
+  readonly field: "role" | "type";
+  readonly operator: "==" | "!=";
+  readonly value: string;
+}
+
+function parseSimpleComparison(expression: string): SimpleComparison | undefined {
+  const match = /^([\w '-]+)\.(role|type)\s*(==|!=)\s*([\w '-]+)$/.exec(expression);
+  if (match === null) return undefined;
+  return {
+    player: match[1]?.trim() ?? "Someone",
+    field: match[2] as SimpleComparison["field"],
+    operator: match[3] as SimpleComparison["operator"],
+    value: match[4]?.trim() ?? "unknown",
+  };
+}
+
+function learnedComparisonSummary(
+  player: string,
+  field: SimpleComparison["field"],
+  operator: SimpleComparison["operator"],
+  value: string,
+): string {
+  const article = field === "role" ? "the" : /^[aeiou]/i.test(value) ? "an" : "a";
+  return `I learned that ${player} is${operator === "!=" ? " not" : ""} ${article} ${value}.`;
 }
 
 function acrobatSummary(claim: Extract<Claim, { readonly type: "Acrobat" }>): string {

@@ -5,9 +5,11 @@ interface Props {
   worlds: readonly SerializableWorld[] | undefined;
   players: readonly string[];
   error: string | undefined;
+  busy?: boolean;
+  limit?: number;
 }
 
-export function ResultsView({ worlds, players, error }: Props) {
+export function ResultsView({ worlds, players, error, busy = false, limit }: Props) {
   if (error)
     return (
       <div className="results-view">
@@ -19,7 +21,7 @@ export function ResultsView({ worlds, players, error }: Props) {
   if (worlds === undefined)
     return (
       <div className="results-view empty-results">
-        <p>Press Solve to compute satisfying worlds.</p>
+        <p>{busy ? "Finding satisfying worlds…" : "Add a claimed or hidden role to generate solutions."}</p>
       </div>
     );
   return (
@@ -27,6 +29,9 @@ export function ResultsView({ worlds, players, error }: Props) {
       <div className="results-count">
         Satisfying worlds: <strong>{worlds.length}</strong>
       </div>
+      {limit !== undefined && worlds.length >= limit && (
+        <p className="results-limit">Showing the first {limit} solutions. The puzzle may have more.</p>
+      )}
       {worlds.length === 0 && <p>No worlds — the constraints are unsatisfiable.</p>}
       {worlds.map((w, i) => (
         <article key={i} className="solution-card">

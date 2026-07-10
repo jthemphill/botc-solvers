@@ -1,29 +1,52 @@
-import { useReducer, useState } from "react";
-import { ClaimsEditor } from "./components/ClaimsEditor";
+import { useEffect, useReducer, useState } from "react";
 import { ConstraintsEditor } from "./components/ConstraintsEditor";
+import { HiddenRolesEditor } from "./components/HiddenRolesEditor";
 import { ImportExportBar } from "./components/ImportExportBar";
 import { PuzzleHeader } from "./components/PuzzleHeader";
 import { ResultsView } from "./components/ResultsView";
 import { DrawWorkbench, PuzzleSheet } from "./components/SeatingChartEditor";
-import { ScriptPicker } from "./components/ScriptPicker";
 import { initialDoc, initialState, reducer } from "./state/puzzleDoc";
 import { useSolver } from "./state/useSolver";
 
-type WorkbenchTab = "draw" | "script" | "claims" | "solve";
-
-const WORKBENCH_TABS: Array<{ id: WorkbenchTab; label: string; icon: string }> = [
-  { id: "draw", label: "Draw", icon: "✎" },
-  { id: "script", label: "Script", icon: "▦" },
-  { id: "claims", label: "Claims", icon: "◈" },
-  { id: "solve", label: "Solve", icon: "▶" },
-];
+const SOLUTION_LIMIT = 10;
+const SOLVE_DEBOUNCE_MS = 250;
 
 export function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { doc, solveError, solveResult } = state;
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<WorkbenchTab>("draw");
   const { busy, solve } = useSolver();
+
+  useEffect(() => {
+    if (doc.players.length === 0 || doc.script.length === 0) {
+      dispatch({ type: "solve", status: "cleared", doc });
+      return;
+    }
+
+    let active = true;
+    const timer = window.setTimeout(() => {
+      dispatch({ type: "solve", status: "started", doc });
+      void solve(doc, SOLUTION_LIMIT).then(
+        (worlds) => {
+          if (active) dispatch({ type: "solve", status: "succeeded", doc, worlds });
+        },
+        (error: unknown) => {
+          if (!active) return;
+          dispatch({
+            type: "solve",
+            status: "failed",
+            doc,
+            message: error instanceof Error ? error.message : String(error),
+          });
+        },
+      );
+    }, SOLVE_DEBOUNCE_MS);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [doc, solve]);
 
   const handleError = (message: string | undefined) => {
     dispatch(
@@ -31,17 +54,6 @@ export function App() {
         ? { type: "solve", status: "cleared", doc }
         : { type: "solve", status: "failed", doc, message },
     );
-  };
-
-  const handleSolve = async () => {
-    const solveDoc = doc;
-    dispatch({ type: "solve", status: "started", doc: solveDoc });
-    try {
-      const result = await solve(solveDoc);
-      dispatch({ type: "solve", status: "succeeded", doc: solveDoc, worlds: result });
-    } catch (e) {
-      dispatch({ type: "solve", status: "failed", doc: solveDoc, message: e instanceof Error ? e.message : String(e) });
-    }
   };
 
   const handleNewPuzzle = () => {
@@ -56,26 +68,18 @@ export function App() {
           <span className="brand-mark" aria-hidden="true">
             ◫
           </span>
-          <span>BOTC Puzzle Solver</span>
+          <span>BOTC Solver</span>
         </div>
         <ImportExportBar doc={doc} dispatch={dispatch} onError={handleError} />
         <div className="chrome-actions">
           <button type="button" onClick={handleNewPuzzle}>
             New Puzzle
           </button>
-          <button
-            type="button"
-            className="primary-action"
-            onClick={handleSolve}
-            disabled={busy || doc.players.length === 0 || doc.script.length === 0}
-          >
-            {busy ? "Solving…" : "Solve"}
-          </button>
         </div>
       </header>
 
       <div className="solver-workspace">
-        <section className="puzzle-sheet" aria-label="Puzzle sheet editor">
+        <section id="puzzle-editor" className="puzzle-sheet" aria-label="Puzzle sheet editor">
           <div className="sheet-header">
             <PuzzleHeader doc={doc} dispatch={dispatch} />
           </div>
@@ -83,52 +87,37 @@ export function App() {
         </section>
 
         <aside className="workbench" aria-label="Puzzle workbench">
-          <nav className="workbench-tabs" aria-label="Workbench sections">
-            {WORKBENCH_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                className={activeTab === tab.id ? "active" : undefined}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                <span aria-hidden="true">{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-          <div className="workbench-body">
-            {activeTab === "draw" && <DrawWorkbench doc={doc} dispatch={dispatch} selectedIndex={selectedIndex} />}
-            {activeTab === "script" && (
-              <>
-                <ScriptPicker doc={doc} dispatch={dispatch} />
-                <ConstraintsEditor doc={doc} dispatch={dispatch} />
-              </>
-            )}
-            {activeTab === "claims" && <ClaimsEditor doc={doc} dispatch={dispatch} />}
-            {activeTab === "solve" && (
-              <section className="panel solve-panel">
-                <div className="solve-panel-header">
-                  <div>
-                    <h3>Solve Results</h3>
-                    <span>
-                      {doc.players.length} players · {doc.script.length} roles · {doc.claims.length} claims
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="primary-action"
-                    onClick={handleSolve}
-                    disabled={busy || doc.players.length === 0 || doc.script.length === 0}
-                  >
-                    {busy ? "Solving…" : "Solve"}
-                  </button>
+          <div className="workbench-body workbench-stack">
+            <HiddenRolesEditor doc={doc} dispatch={dispatch} />
+            <DrawWorkbench doc={doc} dispatch={dispatch} selectedIndex={selectedIndex} onSelect={setSelectedIndex} />
+            <ConstraintsEditor doc={doc} dispatch={dispatch} />
+            <section id="solutions-panel" className="panel solve-panel" aria-label="Solutions">
+              <div className="solve-panel-header">
+                <div>
+                  <h3>Solutions</h3>
+                  <span>{busy ? "Finding solutions…" : "Updates automatically"}</span>
                 </div>
-                <ResultsView worlds={solveResult} players={doc.players} error={solveError} />
-              </section>
-            )}
+                <span className={`solve-status${busy ? " busy" : ""}`} aria-live="polite">
+                  {doc.players.length === 0 || doc.script.length === 0 ? "Incomplete" : busy ? "Working" : "Current"}
+                </span>
+              </div>
+              <ResultsView
+                worlds={solveResult}
+                players={doc.players}
+                error={solveError}
+                busy={busy}
+                limit={SOLUTION_LIMIT}
+              />
+            </section>
           </div>
         </aside>
       </div>
+      <nav className="mobile-section-nav" aria-label="Mobile sections">
+        <a href="#puzzle-editor">Puzzle</a>
+        <a href="#claims-panel">Claims</a>
+        <a href="#event-history">Timeline</a>
+        <a href="#solutions-panel">Solutions</a>
+      </nav>
     </main>
   );
 }

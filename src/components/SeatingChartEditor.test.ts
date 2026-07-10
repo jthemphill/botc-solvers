@@ -76,4 +76,21 @@ describe("claimSummary", () => {
       "A or B is the Drunk.",
     );
   });
+
+  test("turns common Artist expressions into human-readable statements", () => {
+    expect(
+      claimSummary({
+        type: "Artist",
+        name: "Steph",
+        info: [{ timing: "night_2", expression: "Aoife.role == `No Dashii`" }],
+      }),
+    ).toBe("I learned that Aoife is the No Dashii.");
+    expect(
+      claimSummary({
+        type: "Artist",
+        name: "Tom",
+        info: [{ expression: "Jasmine.role == Poisoner or Fraser.role == Poisoner or Dan.role == Poisoner" }],
+      }),
+    ).toBe("I learned that Jasmine, Fraser, or Dan is the Poisoner.");
+  });
 });
