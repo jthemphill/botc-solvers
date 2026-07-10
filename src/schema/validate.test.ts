@@ -86,7 +86,7 @@ describe("validatePuzzleDoc", () => {
     ]);
   });
 
-  test("accepts hidden-role knowledge flags on claims", () => {
+  test("accepts hidden-role knowledge on claims", () => {
     const doc = validatePuzzleDoc({
       ...baseDoc,
       script: ["Chef", "Widow", "Evil Twin"],
@@ -97,7 +97,7 @@ describe("validatePuzzleDoc", () => {
           count: 0,
           possibleActualRoles: ["Chef", "Drunk"],
           heardWidowCall: true,
-          knowsEvilTwin: true,
+          knownEvilTwin: "A",
         },
       ],
     });
@@ -108,7 +108,7 @@ describe("validatePuzzleDoc", () => {
       count: 0,
       possibleActualRoles: ["Chef", "Drunk"],
       heardWidowCall: true,
-      knowsEvilTwin: true,
+      knownEvilTwin: "A",
     });
   });
 

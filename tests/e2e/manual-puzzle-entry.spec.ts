@@ -414,7 +414,7 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
 
   for (const role of claim.possibleActualRoles ?? []) await addAdvancedRole(block, role);
   if (claim.heardWidowCall === true) await block.getByLabel("Heard the Widow's call").check();
-  if (claim.knowsEvilTwin === true) await block.getByLabel("Knows an Evil Twin is in play").check();
+  if (claim.knownEvilTwin !== undefined) await selectField(block, "Known Evil Twin", claim.knownEvilTwin);
   if (claim.type === "Artist") await fillArtistInfo(block, claim.info ?? []);
 }
 

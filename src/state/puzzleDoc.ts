@@ -55,6 +55,10 @@ function defaultPlayerName(existing: readonly string[]): string {
 function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
   const remap = (s: string) => (s === oldName ? newName : s);
   const remapArr = (arr: readonly string[]) => arr.map(remap);
+  claim = {
+    ...claim,
+    knownEvilTwin: claim.knownEvilTwin === undefined ? undefined : remap(claim.knownEvilTwin),
+  } as Claim;
   const name = claim.name === oldName ? newName : claim.name;
 
   switch (claim.type) {
@@ -148,6 +152,7 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
 
 function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
   if (claim.name === name) return undefined;
+  if (claim.knownEvilTwin === name) claim = { ...claim, knownEvilTwin: undefined } as Claim;
   // Strip references but leave the claim in place.
   const stripArr = (arr: readonly string[] | undefined) => arr?.filter((n) => n !== name);
   switch (claim.type) {

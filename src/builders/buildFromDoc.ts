@@ -1435,18 +1435,25 @@ function applyWidowCallClaims(game: BOTCModel, doc: PuzzleDoc): void {
 }
 
 function applyEvilTwinKnowledgeClaims(game: BOTCModel, doc: PuzzleDoc): void {
-  const knowledgeClaims = doc.claims.filter((claim) => claim.knowsEvilTwin === true);
+  const knowledgeClaims = doc.claims.filter(
+    (claim): claim is typeof claim & { readonly knownEvilTwin: string } => claim.knownEvilTwin !== undefined,
+  );
   for (const claim of knowledgeClaims) {
-    const evilTwinInPlay = doc.script.includes("Evil Twin")
-      ? game.roleInPlay("Evil Twin")
+    const knownPlayerIsEvilTwin = doc.script.includes("Evil Twin")
+      ? game.actualIs(claim.knownEvilTwin, "Evil Twin")
       : game.constantBool(false, `${slug(claim.name)}_knows_evil_twin_without_evil_twin_on_script`);
-    game.addImplication(game.isGood(claim.name), evilTwinInPlay);
+    game.addImplication(game.isGood(claim.name), knownPlayerIsEvilTwin);
   }
   if (!doc.script.includes("Evil Twin")) return;
   game.addImplication(
     game.roleInPlay("Evil Twin"),
     game.anyOf(
-      knowledgeClaims.map((claim) => game.isGood(claim.name)),
+      knowledgeClaims.map((claim) =>
+        game.allOf(
+          [game.isGood(claim.name), game.actualIs(claim.knownEvilTwin, "Evil Twin")],
+          `${slug(claim.name)}_knows_${slug(claim.knownEvilTwin)}_is_evil_twin`,
+        ),
+      ),
       "good_player_knows_evil_twin",
     ),
   );

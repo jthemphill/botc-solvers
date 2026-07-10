@@ -475,19 +475,14 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         </label>
       )}
       {showEvilTwinKnowledge && (
-        <label className="checkbox-row">
-          <input
-            type="checkbox"
-            checked={claim.knowsEvilTwin === true}
-            onChange={(event) =>
-              onChange({
-                ...claim,
-                knowsEvilTwin: event.target.checked ? true : undefined,
-              } as Claim)
-            }
+        <div className="field-grid">
+          <span>Known Evil Twin</span>
+          <PlayerSelect
+            players={doc.players}
+            value={claim.knownEvilTwin}
+            onChange={(knownEvilTwin) => onChange({ ...claim, knownEvilTwin: knownEvilTwin || undefined } as Claim)}
           />
-          <span>Knows an Evil Twin is in play</span>
-        </label>
+        </div>
       )}
       {claim.type === "Artist" && <CustomInfoEditor claim={claim} onChange={onChange} />}
     </>

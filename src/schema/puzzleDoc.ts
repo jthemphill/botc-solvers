@@ -90,7 +90,7 @@ interface BaseClaim {
   readonly timing?: string;
   readonly possibleActualRoles?: readonly string[];
   readonly heardWidowCall?: boolean;
-  readonly knowsEvilTwin?: boolean;
+  readonly knownEvilTwin?: string;
   readonly info?: readonly CustomInfoStatementDoc[];
 }
 

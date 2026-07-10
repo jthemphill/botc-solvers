@@ -319,7 +319,7 @@ describe("buildFromDoc", () => {
             { name: "C", roles: ["Soldier"] },
           ],
         }),
-        claims: [{ type: "Soldier", name: "C", knowsEvilTwin: true }],
+        claims: [{ type: "Soldier", name: "C", knownEvilTwin: "A" }],
       },
       backend,
     ).solveAll();
