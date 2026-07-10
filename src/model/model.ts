@@ -1122,7 +1122,6 @@ export class BOTCModel {
     this.applyDefaultTimingRoleConstraints();
     this.applyDefaultSoberConstraints();
     const worlds: World[] = [];
-    const seen = new Set<string>();
     const workingClauses = [...this.clauses];
     while (options.limit === undefined || worlds.length < options.limit) {
       const result = await this.backend.solve({ variableCount: this.variableCount, clauses: workingClauses });
@@ -1144,36 +1143,13 @@ export class BOTCModel {
       const globallyDrunk = new Set(
         [...this.globalDrunkVars.entries()].filter(([, variable]) => model.has(variable.id)).map(([player]) => player),
       );
-      const key = JSON.stringify({
-        actual: [...actual.entries()].sort(),
-        apparent: [...this.apparentRoles.entries()].sort(),
-        poisoned: [...poisonedByTiming.entries()].map(([timing, players]) => [timing, [...players].sort()]),
-        drunk: [...globallyDrunk].sort(),
-        drunkByTiming: [...drunkByTiming.entries()].map(([timing, players]) => [timing, [...players].sort()]),
-        players: this.players,
-      });
-      if (!seen.has(key)) {
-        seen.add(key);
-        worlds.push(
-          new World(actual, new Map(this.apparentRoles), poisoned, poisonedByTiming, globallyDrunk, drunkByTiming),
-        );
-      }
-      const significant = new Set<number>([
-        ...this.players.flatMap((player) => [...this.characters.keys()].map((role) => this.actualIs(player, role).id)),
-        ...[...this.droisonedVars.values()].map((variable) => variable.id),
-        ...[...this.poisonQueryVars.values()].map((variable) => variable.id),
-        ...[...this.drunkQueryVars.values()].map((variable) => variable.id),
-        ...[...this.globalDrunkVars.values()].map((variable) => variable.id),
-        ...[...this.roleAtVars.values()].map((variable) => variable.id),
-      ]);
-      for (const sources of [
-        this.poisonSourceTargetsByTimingPlayer,
-        this.poisonOverridesByTimingPlayer,
-        this.drunkSourceTargetsByTimingPlayer,
-      ]) {
-        for (const targets of sources.values()) for (const target of targets) significant.add(Math.abs(lit(target)));
-      }
-      workingClauses.push([...significant].map((variable) => (model.has(variable) ? -variable : variable)));
+      worlds.push(
+        new World(actual, new Map(this.apparentRoles), poisoned, poisonedByTiming, globallyDrunk, drunkByTiming),
+      );
+      const actualRoleVariables = this.players.flatMap((player) =>
+        [...this.characters.keys()].map((role) => this.actualIs(player, role).id),
+      );
+      workingClauses.push(actualRoleVariables.map((variable) => (model.has(variable) ? -variable : variable)));
     }
     return worlds;
   }
