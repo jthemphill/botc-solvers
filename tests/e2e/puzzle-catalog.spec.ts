@@ -29,15 +29,13 @@ test("loads puzzle 34 with structured role clues", async ({ page }) => {
     page.getByRole("button", { name: /1 malfunction \(Night 1\); 0 malfunctions \(Night 2\)/ }),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: /Claims/ }).click();
-
-  await expect(page.getByText("Demon-minion distance").first()).toBeVisible();
-  await expect(page.getByText("Malfunctions").first()).toBeVisible();
-  await expect(page.getByText("Aoife.role == `No Dashii`").first()).toBeVisible();
+  const claimsPanel = page.locator(".claims-panel");
+  await expect(claimsPanel.getByText("Demon-minion distance").first()).toBeVisible();
+  await page.getByLabel("Claiming player").selectOption("You");
+  await expect(claimsPanel.getByText("Malfunctions").first()).toBeVisible();
+  await page.getByLabel("Claiming player").selectOption("Steph");
+  await expect(claimsPanel.getByText("Aoife.role == `No Dashii`").first()).toBeVisible();
   await expect(page.getByText("false info under Vortox")).toHaveCount(0);
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
-  await page.locator(".solve-panel").getByRole("button", { name: "Solve" }).click();
 
   await expect(page.getByText("Satisfying worlds:")).toBeVisible();
   await expect(page.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -63,11 +61,8 @@ test("solves puzzle 41 with the Lunatic and starpassed Imp solution", async ({ p
   await expect(timeline).toContainText("Chris");
   await expect(timeline).toContainText("N3 Night Death");
   await expect(timeline).toContainText("Josef");
-  await expect(page.getByLabel("Player claim summaries")).toContainText("Riley.type != Townsfolk");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
+  await expect(page.getByLabel("Player claim summaries")).toContainText("I learned that Riley is not a Townsfolk.");
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -90,11 +85,8 @@ test("solves puzzle 42 with the Widow-poisoned Philosopher world", async ({ page
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("N1: Fraser + Matthew -> yes");
   await expect(claims).toContainText("Day 1 guesses: You=Philosopher; Matthew=Imp; 1 correct.");
-  await expect(claims).toContainText("poisoned(Oscar, day_1)");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
+  await expect(claims).toContainText("I learned that Oscar, Hannah, or Jasmine was poisoned on day 1.");
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -119,10 +111,7 @@ test("solves puzzle 43 with a unique Demon and Minion across poison variants", a
   await expect(claims).toContainText("Anna or Steph is the Poisoner.");
   await expect(claims).toContainText("N1: You + Fraser -> no");
   await expect(claims).toContainText("Fraser is the Chef.");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("8");
@@ -143,10 +132,7 @@ test("solves puzzle 44 with the homebrew Prodigy token claims", async ({ page })
   await expect(claims).toContainText("N1: Tim + Dan -> no");
   await expect(claims).toContainText("N2: Tim + Fraser -> no");
   await expect(claims).toContainText("N3: You + Steph -> yes");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -169,10 +155,7 @@ test("solves puzzle 45a with the Hermit hidden-role rules", async ({ page }) => 
   await expect(timeline).toContainText("N3 Night Death");
   await expect(timeline).toContainText("Julia");
   await expect(page.getByLabel("Player claim summaries")).toContainText("I shot Ben on day 3 and nothing happened.");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -193,10 +176,7 @@ test("solves puzzle 45b with the Hermit and Spy solution", async ({ page }) => {
   await expect(timeline).toContainText("N3 Night Death");
   await expect(timeline).toContainText("You");
   await expect(page.getByLabel("Player claim summaries")).toContainText("I shot Adam on day 2 and nothing happened.");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -215,10 +195,7 @@ test("solves puzzle 46 with the Princess and Gossip timing rules", async ({ page
   await expect(claims).toContainText("N2: chose Jasmine; N3: chose Aoife");
   await expect(claims).toContainText("Nominated You on day 1");
   await expect(claims).toContainText("Demon 3 steps from Minion");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -243,10 +220,7 @@ test("solves puzzle 47 with the Baron starpass solution", async ({ page }) => {
   await expect(timeline).toContainText("Fraser");
   await expect(timeline).toContainText("N4 Night Death");
   await expect(timeline).toContainText("Olivia");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -269,10 +243,7 @@ test("solves puzzle 48 with the Xaan and Puzzlemaster-drunk solution", async ({ 
   const timeline = page.getByLabel("Puzzle timeline");
   await expect(timeline).toContainText("D3 Nomination Death");
   await expect(timeline).toContainText("Tom");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -299,10 +270,7 @@ test("solves puzzle 49 with the Riot nomination solution", async ({ page }) => {
   await expect(timeline).toContainText("Matthew");
   await expect(timeline).toContainText("Tom");
   await expect(timeline).toContainText("You");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -319,16 +287,13 @@ test("solves puzzle 51 with the Nightwatchman bluff", async ({ page }) => {
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 51 - Weird Science");
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("Tim learned Nightwatchman.");
-  await expect(claims).toContainText("Hannah.role != Boffin");
+  await expect(claims).toContainText("I learned that Hannah is not the Boffin.");
 
   const timeline = page.getByLabel("Puzzle timeline");
   await expect(timeline).toContainText("D1 Slayer Shot");
   await expect(timeline).toContainText("D1 Nomination Death");
   await expect(timeline).toContainText("N2 Night Death");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -350,10 +315,7 @@ test("solves puzzle 52 with the Drunk Undertaker world", async ({ page }) => {
   const timeline = page.getByLabel("Puzzle timeline");
   await expect(timeline).toContainText("D1 Execution");
   await expect(timeline).toContainText("N4 Night Death");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -379,10 +341,7 @@ test("solves puzzle 53 with the Fang Gu jump world", async ({ page }) => {
   await expect(timeline).toContainText("D1 Execution");
   await expect(timeline).toContainText("N2 Night Death");
   await expect(timeline).toContainText("D2 Witch Curse");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -405,10 +364,7 @@ test("solves puzzle 54 with the Baron outsider world", async ({ page }) => {
   const timeline = page.getByLabel("Puzzle timeline");
   await expect(timeline).toContainText("D1 Execution");
   await expect(timeline).toContainText("N3 Night Death");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -424,17 +380,14 @@ test("solves puzzle 55 with the Flowergirl Demon worlds", async ({ page }) => {
 
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 55 - The Life of a Flowergirl");
   const claims = page.getByLabel("Player claim summaries");
-  await expect(claims).toContainText("Aoife.role != Artist");
+  await expect(claims).toContainText("I learned that Aoife is not the Artist.");
   await expect(claims).toContainText("N2: You, Fraser, Steph, Aoife, or Jasmine voted -> yes");
   await expect(claims).toContainText("Sarah and Jasmine are same");
 
   const timeline = page.getByLabel("Puzzle timeline");
   await expect(timeline).toContainText("D2 Witch Curse");
   await expect(timeline).toContainText("N3 Night Death");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("2");
@@ -458,10 +411,7 @@ test("solves puzzle 56 with the Imp and Poisoner conclusion", async ({ page }) =
   const timeline = page.getByLabel("Puzzle timeline");
   await expect(timeline).toContainText("D1 Execution");
   await expect(timeline).toContainText("N3 Night Death");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("8");
@@ -478,23 +428,21 @@ test("solves puzzle 57 with the Vigormortis and Tea Lady conclusion", async ({ p
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 57 - Neither Victims nor Executioners");
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("You and Adam are same");
-  await expect(claims).toContainText("Matt.type != Demon");
+  await expect(claims).toContainText("I learned that Matt is not a Demon.");
   await expect(claims).toContainText("Steph, Sarah, or Aoife: 1 evil");
 
   const timeline = page.getByLabel("Puzzle timeline");
   await expect(timeline).toContainText("D1 Survived Execution");
   await expect(timeline).toContainText("D3 Survived Execution");
   await expect(timeline).toContainText("N4 Night Death");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
-  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("49");
-  await expect(solvePanel.getByLabel("Fraser: Vigormortis, claimed Artist")).toHaveCount(49);
-  await expect(solvePanel.getByLabel("Aoife: Poisoner, claimed Ravenkeeper")).toHaveCount(49);
-  await expect(solvePanel.getByLabel("Matt: Tea Lady")).toHaveCount(49);
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("10");
+  await expect(solvePanel.getByText("Showing the first 10 solutions.", { exact: false })).toBeVisible();
+  await expect(solvePanel.getByLabel("Fraser: Vigormortis, claimed Artist")).toHaveCount(10);
+  await expect(solvePanel.getByLabel("Aoife: Poisoner, claimed Ravenkeeper")).toHaveCount(10);
+  await expect(solvePanel.getByLabel("Matt: Tea Lady")).toHaveCount(10);
 });
 
 test("solves puzzle 58 with the Riot, Xaan, and Politician conclusion", async ({ page }) => {
@@ -514,10 +462,7 @@ test("solves puzzle 58 with the Riot, Xaan, and Politician conclusion", async ({
   await expect(timeline).toContainText("D3 Nomination Death");
   await expect(timeline).toContainText("Jasmine");
   await expect(timeline).toContainText("You");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -545,10 +490,7 @@ test("solves puzzle 59 with the Spy registering to Virgin and Undertaker", async
   await expect(timeline).toContainText("D1 Nomination Death");
   await expect(timeline).toContainText("N4 Night Death");
   await expect(timeline).toContainText("Josh");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -568,7 +510,7 @@ test("solves puzzle 60 with the No Dashii and Drunk conclusion", async ({ page }
   await expect(claims).toContainText("Tim or Fraser is the Artist.");
   await expect(claims).toContainText("N2: 2 evil neighbors");
   await expect(claims).toContainText("Olivia or Fraser is Demon");
-  await expect(claims).toContainText("Olivia.type != Townsfolk");
+  await expect(claims).toContainText("I learned that Olivia is not a Townsfolk.");
   await expect(claims).toContainText("You or Aoife is the Drunk.");
 
   const timeline = page.getByLabel("Puzzle timeline");
@@ -576,10 +518,7 @@ test("solves puzzle 60 with the No Dashii and Drunk conclusion", async ({ page }
   await expect(timeline).toContainText("Aoife");
   await expect(timeline).toContainText("N3 Night Death");
   await expect(timeline).toContainText("You");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -608,10 +547,7 @@ test("solves puzzle 61 with the Sweetheart-drunk Savant conclusion", async ({ pa
   await expect(timeline).toContainText("Oscar");
   await expect(timeline).toContainText("N3 Night Death");
   await expect(timeline).toContainText("Tim");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -638,10 +574,7 @@ test("solves puzzle 62 with the Storm Catcher Drunk conclusion", async ({ page }
   await expect(timeline).toContainText("D1 Execution");
   await expect(timeline).toContainText("N4 Night Death");
   await expect(timeline).toContainText("Dan");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -668,17 +601,15 @@ test("solves puzzle 63 with unique evil players across Poisoner variants", async
   await expect(timeline).toContainText("Fraser");
   await expect(timeline).toContainText("N4 Night Death");
   await expect(timeline).toContainText("Dan");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
-  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("81");
-  await expect(solvePanel.getByLabel("Tom: Imp, claimed Recluse")).toHaveCount(81);
-  await expect(solvePanel.getByLabel("Steph: Poisoner, claimed Undertaker")).toHaveCount(81);
-  await expect(solvePanel.getByLabel("Olivia: Investigator")).toHaveCount(81);
-  await expect(solvePanel.getByLabel("Dan: Ravenkeeper")).toHaveCount(81);
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("10");
+  await expect(solvePanel.getByText("Showing the first 10 solutions.", { exact: false })).toBeVisible();
+  await expect(solvePanel.getByLabel("Tom: Imp, claimed Recluse")).toHaveCount(10);
+  await expect(solvePanel.getByLabel("Steph: Poisoner, claimed Undertaker")).toHaveCount(10);
+  await expect(solvePanel.getByLabel("Olivia: Investigator")).toHaveCount(10);
+  await expect(solvePanel.getByLabel("Dan: Ravenkeeper")).toHaveCount(10);
 });
 
 test("solves puzzle 64 with the Pope duplicate Mutants", async ({ page }) => {
@@ -698,10 +629,7 @@ test("solves puzzle 64 with the Pope duplicate Mutants", async ({ page }) => {
   await expect(timeline).toContainText("Hannah");
   await expect(timeline).toContainText("N4 Night Death");
   await expect(timeline).toContainText("Josh");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -728,10 +656,7 @@ test("solves puzzle 65 with the Fang Gu jump to the Mutant", async ({ page }) =>
   await expect(timeline).toContainText("Anna");
   await expect(timeline).toContainText("N3 Night Death");
   await expect(timeline).toContainText("Tom");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -758,10 +683,7 @@ test("solves puzzle 66 with the starpassed Imp and drunk Village Idiot", async (
   await expect(timeline).toContainText("Tim");
   await expect(timeline).toContainText("N3 Night Death");
   await expect(timeline).toContainText("Olivia");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -789,10 +711,7 @@ test("solves puzzle 67 with Spy registrations and a Puzzlemaster drunk", async (
   await expect(timeline).toContainText("D3 Nomination Death");
   await expect(timeline).toContainText("Fraser");
   await expect(timeline).toContainText("You");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -811,7 +730,7 @@ test("solves puzzle 68 with the Vortox, Witch, and Mutant", async ({ page }) => 
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 68 - The Numbers Are All Wrong");
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("0 dead evil");
-  await expect(claims).toContainText("Tom.type == Townsfolk");
+  await expect(claims).toContainText("I learned that Tom is a Townsfolk.");
   await expect(claims).toContainText("N3: Sarah is not Demon");
   await expect(claims).toContainText("1 malfunction (Night 1); 2 malfunctions (Night 2)");
   await expect(claims).toContainText("Day 1 guesses: Sarah=Witch; Matthew=Mutant; Anna=Snake Charmer");
@@ -821,10 +740,7 @@ test("solves puzzle 68 with the Vortox, Witch, and Mutant", async ({ page }) => 
   await expect(timeline).toContainText("Fraser");
   await expect(timeline).toContainText("N3 Night Death");
   await expect(timeline).toContainText("You");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -841,7 +757,7 @@ test("solves puzzle 69 with the No Dashii and self-cursing Witch", async ({ page
 
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 69 - That's the Sects Number");
   const claims = page.getByLabel("Player claim summaries");
-  await expect(claims).toContainText("Fraser.role != Artist");
+  await expect(claims).toContainText("I learned that Fraser is not the Artist.");
   await expect(claims).toContainText(
     "Day 1 guesses: You=Witch; Hannah=No Dashii; Matt=Mutant; Fraser=No Dashii; 1 correct.",
   );
@@ -854,10 +770,7 @@ test("solves puzzle 69 with the No Dashii and self-cursing Witch", async ({ page
   await expect(timeline).toContainText("Oscar");
   await expect(timeline).toContainText("D2 Witch Curse");
   await expect(timeline).toContainText("Sarah");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -883,10 +796,7 @@ test("solves puzzle 70 with the Imp and Poisoner across poison variants", async 
   await expect(claims).toContainText("N3: Dan + Hannah -> no");
   await expect(claims).toContainText("Tom or Fraser is the Drunk.");
   await expect(claims).toContainText("Dan was Spy");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("9");
@@ -918,10 +828,7 @@ test("solves puzzle 71 with the No Dashii and Scarlet Woman catch", async ({ pag
   await expect(timeline).toContainText("Hannah");
   await expect(timeline).toContainText("N2 Night Death");
   await expect(timeline).toContainText("Fraser");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -941,7 +848,7 @@ test("solves puzzle 72 with the six-Legion world", async ({ page }) => {
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("Matt is the Drunk.");
   await expect(claims).toContainText("1 dead evil");
-  await expect(claims).toContainText("some p : players | p.role == Imp");
+  await expect(claims).toContainText("I learned that someone is the Imp.");
   await expect(claims).toContainText("Hannah was Chambermaid");
   await expect(claims).toContainText("Sarah or Josh is the Spy.");
   await expect(claims).toContainText("N1: 1 evil neighbor");
@@ -954,10 +861,7 @@ test("solves puzzle 72 with the six-Legion world", async ({ page }) => {
   await expect(timeline).toContainText("Hannah");
   await expect(timeline).toContainText("N2 Night Death");
   await expect(timeline).toContainText("Sarah");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -993,10 +897,7 @@ test("solves puzzle 73 with the poisoned Vortox opening", async ({ page }) => {
   await expect(timeline).toContainText("Tom");
   await expect(timeline).toContainText("D2 Execution");
   await expect(timeline).toContainText("Olivia");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -1027,10 +928,7 @@ test("solves puzzle 74 with Oscar Imp and Matt Poisoner", async ({ page }) => {
   await expect(timeline).toContainText("Fraser");
   await expect(timeline).toContainText("N4 Night Death");
   await expect(timeline).toContainText("Dan");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("9");
@@ -1049,7 +947,7 @@ test("solves puzzle 75 with the Fang Gu jump world", async ({ page }) => {
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("Adam is Artist or Vigormortis");
   await expect(claims).toContainText("Demon 2 steps from Minion");
-  await expect(claims).toContainText("Fraser.type == Demon");
+  await expect(claims).toContainText("I learned that Fraser is a Demon.");
   await expect(claims).toContainText("Day 1 guesses: You=No Dashii; Matt=Vigormortis; 0 correct.");
   await expect(claims).toContainText("Sarah and Adam are same");
   await expect(claims).toContainText("2 malfunctions (Night 1); 0 malfunctions (Night 2)");
@@ -1062,10 +960,7 @@ test("solves puzzle 75 with the Fang Gu jump world", async ({ page }) => {
   await expect(timeline).toContainText("Tom");
   await expect(timeline).toContainText("N3 Night Death");
   await expect(timeline).toContainText("Fraser");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -1085,10 +980,7 @@ test("solves puzzle 76 with the full good-team assignment", async ({ page }) => 
   await expect(claims).toContainText("N1: 1 evil neighbor");
   await expect(claims).toContainText("1 adjacent evil pair");
   await expect(claims).toContainText("N1: 0 evil neighbors");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -1115,10 +1007,7 @@ test("solves puzzle 77 with Sarah Imp and Matt Poisoner", async ({ page }) => {
   await expect(claims).toContainText("Sarah is the Baron.");
   await expect(claims).toContainText("Fraser or Tom is the Drunk.");
   await expect(claims).toContainText("Adam was Drunk");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("9");
@@ -1140,10 +1029,7 @@ test("solves puzzle 78 with the Imp starpass to the Baron", async ({ page }) => 
   await expect(claims).toContainText("Jasmine was Scarlet Woman");
   await expect(claims).toContainText("N4: Aoife + Fraser -> yes");
   await expect(claims).toContainText("I shot Charlotte on day 4 and nothing happened.");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -1163,10 +1049,7 @@ test("solves puzzle 79 with Goose Vortox and Louisa Witch", async ({ page }) => 
   await expect(claims).toContainText("Demon 1 step from Minion");
   await expect(claims).toContainText("Day 1 guesses: You=Fang Gu; Edd=Vigormortis; Marc=Mutant; 1 correct.");
   await expect(claims).toContainText("You and Chris are different");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("6");
@@ -1185,10 +1068,7 @@ test("solves puzzle 80 with Sarah Imp and Fraser Xaan", async ({ page }) => {
   await expect(claims).toContainText("Fraser or Hannah is the Xaan.");
   await expect(claims).toContainText("N3: Charlotte + Aoife -> yes");
   await expect(claims).toContainText("Hannah was Chef");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -1207,10 +1087,7 @@ test("solves puzzle 81 with Fraser Imp and Matthew Widow", async ({ page }) => {
   await expect(claims).toContainText("Matthew or Hannah is the Spy.");
   await expect(claims).toContainText("Hannah or Charlotte is the Ravenkeeper.");
   await expect(claims).toContainText("I shot Hannah on day 3 and nothing happened.");
-
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: /Solve/ }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -1232,13 +1109,11 @@ test("loads puzzle 19 with Slayer Shot death markers", async ({ page }) => {
   await expect(oscarSeat).toHaveCSS("border-top-color", "rgb(47, 125, 98)");
 });
 
-test("clears stale solve results when loading another puzzle", async ({ page }) => {
+test("refreshes automatic solve results when loading another puzzle", async ({ page }) => {
   await page.goto("/");
 
   await page.getByLabel("Load example puzzle").selectOption("puzzle-09-the-new-acrobat");
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: "Solve" }).click();
   const solvePanel = page.locator(".solve-panel");
-  await solvePanel.getByRole("button", { name: "Solve" }).click();
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
@@ -1247,9 +1122,9 @@ test("clears stale solve results when loading another puzzle", async ({ page }) 
   await page.getByLabel("Load example puzzle").selectOption("puzzle-10-dont-overcook-it");
 
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 10 - Dont Overcook It");
-  await expect(solvePanel.getByText("Press Solve to compute satisfying worlds.")).toBeVisible();
-  await expect(solvePanel.getByText("Satisfying worlds:")).toHaveCount(0);
-  await expect(solvePanel.getByText("Solution 1")).toHaveCount(0);
+  await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Dan: Imp")).toBeVisible();
 });
 
 test("puzzle 9 formats claim summaries without leaking hidden death causes", async ({ page }) => {
@@ -1271,11 +1146,7 @@ test("puzzle 9 formats claim summaries without leaking hidden death causes", asy
   await expect(claims).toContainText("D1 gossip: Fraser.type == Demon; D2 gossip: Anna.type == Demon");
   await expect(claims).not.toContainText("I am the Gossip");
 
-  await page
-    .getByRole("navigation", { name: "Workbench sections" })
-    .getByRole("button", { name: /Claims/ })
-    .click();
-
+  await page.getByLabel("Claiming player").selectOption("Josh");
   await expect(page.getByText("Josh — ⚔️ Knight")).toBeVisible();
 });
 
@@ -1317,10 +1188,7 @@ test("formats remaining structured claim summaries with their details", async ({
     }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: /N1: Aoife \+ Tim -> no; N2: Aoife \+ Olivia -> no/ })).toBeVisible();
-  await page
-    .getByRole("navigation", { name: "Workbench sections" })
-    .getByRole("button", { name: /Claims/ })
-    .click();
+  await page.getByLabel("Claiming player").selectOption("Olivia");
   await expect(page.getByText("Olivia — 🔮 Fortune Teller")).toHaveCount(2);
   await expect(page.getByText("+ Add check")).toHaveCount(0);
 
@@ -1359,13 +1227,21 @@ test("puzzle 20 keeps full claim summaries visible on mobile", async ({ page }) 
     )
     .toBe(true);
 
-  const balthazarSeat = page.getByRole("button", { name: /Seat 3: Balthazar/ });
-  await expect(balthazarSeat.locator(".seat-player-name")).toHaveCSS("white-space", "nowrap");
+  const roster = page.getByLabel("Players in seating order");
+  const balthazarRow = page.getByRole("button", { name: /Player 3: Balthazar/ });
+  await expect(balthazarRow.locator("strong")).toHaveCSS("white-space", "nowrap");
 
-  const claims = page.getByLabel("Player claim summaries");
-  await expect(claims).toBeVisible();
-  await expect(claims).toContainText("Balthazar nominated me on day 1 and nothing happened.");
-  await expect(claims).toContainText("I checked: Balthazar -> evil, Mary -> evil.");
-  await expect(claims).toContainText("I checked: Joseph -> evil, Caspar -> evil.");
-  await expect(claims).toContainText("I checked: Mary -> evil, Joseph -> evil.");
+  await expect(roster).toBeVisible();
+  await expect(roster).toContainText("Balthazar nominated me on day 1 and nothing happened.");
+  await expect(roster).toContainText("I checked: Balthazar -> evil, Mary -> evil.");
+  await expect(roster).toContainText("I checked: Joseph -> evil, Caspar -> evil.");
+  await expect(roster).toContainText("I checked: Mary -> evil, Joseph -> evil.");
+
+  await expect
+    .poll(() =>
+      roster
+        .locator(".mobile-player-copy small")
+        .evaluateAll((summaries) => summaries.every((summary) => summary.scrollHeight <= summary.clientHeight + 1)),
+    )
+    .toBe(true);
 });

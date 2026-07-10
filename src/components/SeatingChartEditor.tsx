@@ -4,7 +4,6 @@ import {
   useState,
   type CSSProperties,
   type Dispatch,
-  type DragEvent,
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
@@ -20,7 +19,6 @@ import {
   type TimelineEventType,
 } from "../schema/puzzleDoc";
 import { sortTimelineEvents, type PuzzleAction } from "../state/puzzleDoc";
-import { hiddenScriptRoleOptions } from "../state/scriptRoles";
 import { CLAIM_TYPES, ClaimBody, makeEmptyClaim } from "./ClaimsEditor";
 import { claimSummary, compactTimingLabel, formatList, timingLabel } from "./claimSummary";
 
@@ -34,9 +32,7 @@ interface SharedProps extends Props {
   onSelect: (index: number) => void;
 }
 
-interface DrawWorkbenchProps extends Props {
-  selectedIndex: number;
-}
+type DrawWorkbenchProps = SharedProps;
 
 interface ClaimQuoteCard {
   readonly player: string;
@@ -46,15 +42,28 @@ interface ClaimQuoteCard {
   readonly summary: string;
 }
 
-const TYPE_LABEL: Record<CharacterType, string> = {
-  [CharacterType.Townsfolk]: "Townsfolk",
-  [CharacterType.Outsider]: "Outsider",
-  [CharacterType.Minion]: "Minion",
-  [CharacterType.Demon]: "Demon",
-};
+interface MobileDragPreview {
+  readonly fromIndex: number;
+  readonly toIndex: number;
+  readonly offsetY: number;
+  readonly rowHeight: number;
+}
 
-const SEAT_DRAG_TYPE = "application/x-botc-seat-index";
+interface MobileDragOrigin {
+  readonly fromIndex: number;
+  readonly startY: number;
+  readonly rows: readonly { readonly index: number; readonly centerY: number }[];
+}
+
+interface DesktopDragOrigin {
+  readonly fromIndex: number;
+  readonly startX: number;
+  readonly startY: number;
+  readonly seats: readonly { readonly index: number; readonly centerX: number; readonly centerY: number }[];
+}
+
 const DOUBLE_TAP_WINDOW_MS = 450;
+const DESKTOP_DRAG_THRESHOLD_PX = 7;
 const TIMELINE_DAY_OPTIONS = ["day_1", "day_2", "day_3", "day_4", "day_5"];
 const TIMELINE_NIGHT_OPTIONS = ["night_1", "night_2", "night_3", "night_4", "night_5"];
 const TIMELINE_EVENT_TYPE_OPTIONS: Array<{ type: TimelineEventType; label: string }> = [
@@ -72,7 +81,7 @@ export function SeatingChartEditor({ doc, dispatch }: Props) {
   return (
     <section className="seating-composer">
       <PuzzleSheet doc={doc} dispatch={dispatch} selectedIndex={selectedIndex} onSelect={setSelectedIndex} />
-      <DrawWorkbench doc={doc} dispatch={dispatch} selectedIndex={selectedIndex} />
+      <DrawWorkbench doc={doc} dispatch={dispatch} selectedIndex={selectedIndex} onSelect={setSelectedIndex} />
     </section>
   );
 }
@@ -83,13 +92,27 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
   const setupCounts = countSetupRoles(doc);
   const timeline = doc.timeline ?? [];
   const [draggedIndex, setDraggedIndex] = useState<number | undefined>(undefined);
+  const [desktopDropIndex, setDesktopDropIndex] = useState<number | undefined>(undefined);
+  const [desktopDragOffset, setDesktopDragOffset] = useState({ x: 0, y: 0 });
+  const [mobileDragPreview, setMobileDragPreview] = useState<MobileDragPreview | undefined>(undefined);
   const [editingIndex, setEditingIndex] = useState<number | undefined>(undefined);
   const [selectedTimelineIndex, setSelectedTimelineIndex] = useState<number | undefined>(undefined);
+  const [eventComposer, setEventComposer] = useState<
+    { readonly player: string; readonly type: TimelineEventType; readonly timing: string } | undefined
+  >(undefined);
   const [draftName, setDraftName] = useState("");
   const [trashDropActive, setTrashDropActive] = useState(false);
   const lastSeatTap = useRef<{ index: number; time: number }>({ index: -1, time: 0 });
+  const mobileDragOrigin = useRef<MobileDragOrigin | undefined>(undefined);
+  const mobileDropIndex = useRef<number | undefined>(undefined);
+  const desktopDragOrigin = useRef<DesktopDragOrigin | undefined>(undefined);
+  const desktopDragActive = useRef(false);
+  const desktopDropIndexRef = useRef<number | undefined>(undefined);
+  const desktopTrashActive = useRef(false);
   const quoteCards = claimQuoteCardsForDoc(doc);
-  const chartQuoteCards = players.length <= 10 ? mergedQuoteCardsByPlayer(quoteCards) : [];
+  const mergedQuoteCards = mergedQuoteCardsByPlayer(quoteCards);
+  const chartQuoteCards = players.length <= 10 ? mergedQuoteCards : [];
+  const quoteCardByPlayer = new Map(mergedQuoteCards.map((card) => [card.player, card] as const));
 
   useEffect(() => {
     if (selectedIndex >= players.length) onSelect(Math.max(0, players.length - 1));
@@ -130,30 +153,43 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
     });
   };
 
-  const dropSeatOnTimeline = (
-    event: DragEvent<HTMLElement>,
-    type: Extract<TimelineEventType, "execution" | "nightDeath">,
-  ) => {
-    event.preventDefault();
-    const fromIndex = draggedSeatIndex(event);
-    setDraggedIndex(undefined);
-    setTrashDropActive(false);
-    if (fromIndex === undefined || fromIndex < 0 || fromIndex >= players.length) return;
-    const player = players[fromIndex];
-    if (player === undefined) return;
-    const nextEvent: TimelineEventDoc = {
-      timing: nextTimelineTiming(timeline, type),
-      type,
-      players: [player],
-    };
+  const appendTimelineEvent = (nextEvent: TimelineEventDoc) => {
     const nextTimeline = sortTimelineEvents([...timeline, nextEvent]);
     setTimeline(nextTimeline);
     const nextIndex = nextTimeline.indexOf(nextEvent);
     setSelectedTimelineIndex(nextIndex === -1 ? undefined : nextIndex);
   };
 
+  const addTimelineEvent = (player = selectedName ?? players[0], type: TimelineEventType = "execution") => {
+    if (player === undefined) return;
+    const timing = defaultTimingForType(
+      type,
+      type === "nightDeath" ? nextTimelineTiming(timeline, "nightDeath") : nextTimelineTiming(timeline, "execution"),
+    );
+    appendTimelineEvent({ timing, type, players: [player] });
+  };
+
+  const openEventComposer = (player: string) => {
+    setEventComposer({
+      player,
+      type: "execution",
+      timing: nextTimelineTiming(timeline, "execution"),
+    });
+  };
+
+  const commitEventComposer = () => {
+    if (eventComposer === undefined) return;
+    appendTimelineEvent({
+      type: eventComposer.type,
+      timing: eventComposer.timing,
+      players: [eventComposer.player],
+    });
+    setEventComposer(undefined);
+  };
+
   const beginRename = (index: number, name: string) => {
     setDraggedIndex(undefined);
+    setDesktopDropIndex(undefined);
     setTrashDropActive(false);
     onSelect(index);
     setEditingIndex(index);
@@ -176,52 +212,163 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
     setDraftName("");
   };
 
-  const startSeatDrag = (event: DragEvent<HTMLDivElement>, index: number) => {
-    if (editingIndex === index) {
-      event.preventDefault();
+  const clearDesktopSeatDrag = () => {
+    desktopDragOrigin.current = undefined;
+    desktopDragActive.current = false;
+    desktopDropIndexRef.current = undefined;
+    desktopTrashActive.current = false;
+    setDraggedIndex(undefined);
+    setDesktopDropIndex(undefined);
+    setDesktopDragOffset({ x: 0, y: 0 });
+    setTrashDropActive(false);
+  };
+
+  const startDesktopSeatDrag = (event: PointerEvent<HTMLElement>, index: number) => {
+    if (editingIndex === index) return;
+    const chart = event.currentTarget.closest<HTMLElement>(".seating-chart");
+    if (chart === null) return;
+    desktopDragOrigin.current = {
+      fromIndex: index,
+      startX: event.clientX,
+      startY: event.clientY,
+      seats: [...chart.querySelectorAll<HTMLElement>(".seat-button")].map((seat) => {
+        const rect = seat.getBoundingClientRect();
+        return {
+          index: Number(seat.dataset.seatIndex),
+          centerX: rect.left + rect.width / 2,
+          centerY: rect.top + rect.height / 2,
+        };
+      }),
+    };
+    desktopDragActive.current = false;
+    desktopDropIndexRef.current = index;
+    desktopTrashActive.current = false;
+  };
+
+  const moveDesktopSeatDrag = (event: PointerEvent<HTMLElement>) => {
+    const origin = desktopDragOrigin.current;
+    if (origin === undefined) return;
+    const offsetX = event.clientX - origin.startX;
+    const offsetY = event.clientY - origin.startY;
+    if (!desktopDragActive.current && Math.hypot(offsetX, offsetY) < DESKTOP_DRAG_THRESHOLD_PX) return;
+    event.preventDefault();
+    if (!desktopDragActive.current) {
+      desktopDragActive.current = true;
+      setDraggedIndex(origin.fromIndex);
+      setDesktopDropIndex(origin.fromIndex);
+    }
+    setDesktopDragOffset({ x: offsetX, y: offsetY });
+
+    const trashRect = document.querySelector<HTMLElement>(".seat-trash-zone")?.getBoundingClientRect();
+    const overTrash =
+      trashRect !== undefined &&
+      event.clientX >= trashRect.left &&
+      event.clientX <= trashRect.right &&
+      event.clientY >= trashRect.top &&
+      event.clientY <= trashRect.bottom;
+    desktopTrashActive.current = overTrash;
+    setTrashDropActive(overTrash);
+    if (overTrash) return;
+
+    const target = origin.seats.reduce<(typeof origin.seats)[number] | undefined>((closest, seat) => {
+      if (closest === undefined) return seat;
+      const distance = Math.hypot(seat.centerX - event.clientX, seat.centerY - event.clientY);
+      const closestDistance = Math.hypot(closest.centerX - event.clientX, closest.centerY - event.clientY);
+      return distance < closestDistance ? seat : closest;
+    }, undefined);
+    const toIndex = target?.index ?? origin.fromIndex;
+    desktopDropIndexRef.current = toIndex;
+    setDesktopDropIndex(toIndex);
+  };
+
+  const finishDesktopSeatDrag = (event: PointerEvent<HTMLElement>) => {
+    const origin = desktopDragOrigin.current;
+    if (origin === undefined) return;
+    if (!desktopDragActive.current) {
+      desktopDragOrigin.current = undefined;
       return;
     }
-    setDraggedIndex(index);
-    setTrashDropActive(false);
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData(SEAT_DRAG_TYPE, String(index));
-    event.dataTransfer.setData("text/plain", String(index));
-  };
-
-  const draggedSeatIndex = (event: DragEvent<HTMLElement>) => {
-    const value = event.dataTransfer.getData(SEAT_DRAG_TYPE) || event.dataTransfer.getData("text/plain");
-    if (value === "") return draggedIndex;
-    const dataIndex = Number(value);
-    return Number.isInteger(dataIndex) ? dataIndex : draggedIndex;
-  };
-
-  const allowSeatDrop = (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-  };
-
-  const dropSeat = (event: DragEvent<HTMLDivElement>, toIndex: number) => {
-    event.preventDefault();
-    const fromIndex = draggedSeatIndex(event);
-    setDraggedIndex(undefined);
-    setTrashDropActive(false);
-    if (fromIndex === undefined || fromIndex === toIndex || fromIndex < 0 || fromIndex >= players.length) return;
+    moveDesktopSeatDrag(event);
+    const fromIndex = origin.fromIndex;
+    const toIndex = desktopDropIndexRef.current;
+    const removePlayer = desktopTrashActive.current;
+    clearDesktopSeatDrag();
+    if (removePlayer) {
+      dispatch({ type: "removePlayer", index: fromIndex });
+      onSelect(Math.max(0, Math.min(fromIndex, players.length - 2)));
+      return;
+    }
+    if (toIndex === undefined || fromIndex === toIndex || toIndex < 0 || toIndex >= players.length) return;
     dispatch({ type: "movePlayerTo", fromIndex, toIndex });
     onSelect(toIndex);
   };
 
-  const dropSeatOnTrash = (event: DragEvent<HTMLDivElement>) => {
+  const startMobileSeatDrag = (event: PointerEvent<HTMLButtonElement>, index: number) => {
+    if (editingIndex === index) return;
     event.preventDefault();
-    const fromIndex = draggedSeatIndex(event);
-    setDraggedIndex(undefined);
+    const row = event.currentTarget.closest<HTMLElement>("[data-seat-index]");
+    const list = row?.closest<HTMLElement>(".mobile-player-list");
+    if (row === null || row === undefined || list === null || list === undefined) return;
+    const rowRect = row.getBoundingClientRect();
+    mobileDragOrigin.current = {
+      fromIndex: index,
+      startY: event.clientY,
+      rows: [...list.querySelectorAll<HTMLElement>("[data-seat-index]")].map((entry) => {
+        const rect = entry.getBoundingClientRect();
+        return { index: Number(entry.dataset.seatIndex), centerY: rect.top + rect.height / 2 };
+      }),
+    };
+    mobileDropIndex.current = index;
+    setMobileDragPreview({ fromIndex: index, toIndex: index, offsetY: 0, rowHeight: rowRect.height });
+    setDraggedIndex(index);
     setTrashDropActive(false);
-    if (fromIndex === undefined || fromIndex < 0 || fromIndex >= players.length) return;
-    dispatch({ type: "removePlayer", index: fromIndex });
-    onSelect(Math.max(0, Math.min(fromIndex, players.length - 2)));
+  };
+
+  const moveMobileSeatDrag = (event: PointerEvent<HTMLElement>) => {
+    const origin = mobileDragOrigin.current;
+    if (origin === undefined) return;
+    event.preventDefault();
+    const target = origin.rows.reduce<(typeof origin.rows)[number] | undefined>((closest, row) => {
+      if (closest === undefined) return row;
+      return Math.abs(row.centerY - event.clientY) < Math.abs(closest.centerY - event.clientY) ? row : closest;
+    }, undefined);
+    const toIndex = target?.index ?? origin.fromIndex;
+    mobileDropIndex.current = toIndex;
+    setMobileDragPreview((current) =>
+      current === undefined ? current : { ...current, toIndex, offsetY: event.clientY - origin.startY },
+    );
+  };
+
+  const clearMobileSeatDrag = () => {
+    mobileDragOrigin.current = undefined;
+    mobileDropIndex.current = undefined;
+    setMobileDragPreview(undefined);
+    setDraggedIndex(undefined);
+  };
+
+  const finishMobileSeatDrag = (event: PointerEvent<HTMLElement>) => {
+    const origin = mobileDragOrigin.current;
+    if (origin === undefined) return;
+    event.preventDefault();
+    moveMobileSeatDrag(event);
+    const fromIndex = origin.fromIndex;
+    const toIndex = mobileDropIndex.current;
+    clearMobileSeatDrag();
+    if (
+      toIndex === undefined ||
+      !Number.isInteger(toIndex) ||
+      fromIndex === toIndex ||
+      toIndex < 0 ||
+      toIndex >= players.length
+    )
+      return;
+    dispatch({ type: "movePlayerTo", fromIndex, toIndex });
+    onSelect(toIndex);
   };
 
   const handleSeatPointerUp = (event: PointerEvent<HTMLDivElement>, index: number, player: string) => {
-    if (event.pointerType === "mouse" || editingIndex === index) return;
+    if (desktopDragActive.current || event.pointerType === "mouse" || editingIndex === index) return;
     const now = Date.now();
     if (lastSeatTap.current.index === index && now - lastSeatTap.current.time <= DOUBLE_TAP_WINDOW_MS) {
       event.preventDefault();
@@ -243,7 +390,12 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
   };
 
   return (
-    <div className="sheet-content">
+    <div
+      className="sheet-content"
+      onPointerMove={moveDesktopSeatDrag}
+      onPointerUp={finishDesktopSeatDrag}
+      onPointerCancel={clearDesktopSeatDrag}
+    >
       <div className="sheet-tools">
         <label>
           Players
@@ -254,13 +406,6 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
           <div
             className={`seat-trash-zone${trashDropActive ? " drop-target" : ""}`}
             aria-label="Trash zone for removing seats"
-            onDragEnter={(event) => {
-              allowSeatDrop(event);
-              setTrashDropActive(true);
-            }}
-            onDragOver={allowSeatDrop}
-            onDragLeave={() => setTrashDropActive(false)}
-            onDrop={dropSeatOnTrash}
           >
             <span aria-hidden="true">×</span>
             <strong>Trash</strong>
@@ -268,8 +413,143 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
         )}
       </div>
 
+      <section className="mobile-player-roster" aria-label="Players in seating order">
+        <header>
+          <div>
+            <strong>Players</strong>
+            <span>Drag to reorder</span>
+          </div>
+          <span>{players.length}</span>
+        </header>
+        <div
+          className={`mobile-player-list${mobileDragPreview === undefined ? "" : " drag-active"}`}
+          onPointerMove={moveMobileSeatDrag}
+          onPointerUp={finishMobileSeatDrag}
+          onPointerCancel={clearMobileSeatDrag}
+        >
+          {players.map((player, index) => {
+            const card = quoteCardByPlayer.get(player);
+            const primaryClaim = mostRecentClaim(claimIndexesForPlayer(doc, player));
+            const deathMarker = deathMarkerForPlayer(doc.timeline, player);
+            const deathClass = deathMarker === undefined ? undefined : deathMarkerClass(deathMarker);
+            const deathIndex =
+              deathMarker === undefined
+                ? -1
+                : timeline.findIndex(
+                    (event) =>
+                      event.type === deathMarker.type &&
+                      event.timing === deathMarker.timing &&
+                      event.players.includes(player),
+                  );
+            const isEditing = editingIndex === index;
+            const dragDirection =
+              mobileDragPreview === undefined || mobileDragPreview.fromIndex === mobileDragPreview.toIndex
+                ? ""
+                : mobileDragPreview.fromIndex < mobileDragPreview.toIndex
+                  ? " down"
+                  : " up";
+            const shiftClass =
+              mobileDragPreview === undefined || index === mobileDragPreview.fromIndex
+                ? ""
+                : mobileDragPreview.fromIndex < mobileDragPreview.toIndex &&
+                    index > mobileDragPreview.fromIndex &&
+                    index <= mobileDragPreview.toIndex
+                  ? " shift-up"
+                  : mobileDragPreview.fromIndex > mobileDragPreview.toIndex &&
+                      index >= mobileDragPreview.toIndex &&
+                      index < mobileDragPreview.fromIndex
+                    ? " shift-down"
+                    : "";
+            const isDropTarget = mobileDragPreview !== undefined && index === mobileDragPreview.toIndex;
+            const dragStyle =
+              mobileDragPreview === undefined
+                ? undefined
+                : ({
+                    "--mobile-drag-row-height": `${mobileDragPreview.rowHeight}px`,
+                    "--mobile-drag-offset-y": `${mobileDragPreview.offsetY}px`,
+                  } as CSSProperties);
+            return (
+              <article
+                key={`${player}-mobile`}
+                data-seat-index={index}
+                data-drop-target={isDropTarget ? "true" : undefined}
+                className={`mobile-player-row${index === selectedIndex ? " selected" : ""}${
+                  index === draggedIndex ? " dragging" : ""
+                }${shiftClass}${isDropTarget ? ` drop-target${dragDirection}` : ""}`}
+                style={dragStyle}
+              >
+                <button
+                  type="button"
+                  className="mobile-drag-handle"
+                  aria-label={`Reorder ${player}`}
+                  title={`Drag to reorder ${player}`}
+                  onPointerDown={(event) => startMobileSeatDrag(event, index)}
+                >
+                  ⋮⋮
+                </button>
+                <button
+                  type="button"
+                  className="mobile-player-main"
+                  onClick={() => onSelect(index)}
+                  onDoubleClick={() => beginRename(index, player)}
+                  aria-label={`Player ${index + 1}: ${player}. Double-click to rename.`}
+                >
+                  <span className="mobile-player-role" aria-hidden="true">
+                    {roleEmoji(primaryClaim?.type) ?? index + 1}
+                  </span>
+                  <span className="mobile-player-copy">
+                    <span>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={draftName}
+                          autoFocus
+                          aria-label={`Rename ${player} on mobile`}
+                          onFocus={(event) => event.currentTarget.select()}
+                          onChange={(event) => setDraftName(event.target.value)}
+                          onBlur={commitRename}
+                          onClick={(event) => event.stopPropagation()}
+                          onKeyDown={(event) => {
+                            event.stopPropagation();
+                            if (event.key === "Enter") commitRename();
+                            if (event.key === "Escape") cancelRename();
+                          }}
+                        />
+                      ) : (
+                        <strong>{player}</strong>
+                      )}
+                      {card !== undefined && <em>{card.roleLabel}</em>}
+                    </span>
+                    <small>{card === undefined ? "No claim yet." : `“${card.summary}”`}</small>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className={`mobile-player-event${deathClass === undefined ? "" : ` ${deathClass}`}`}
+                  aria-label={deathMarker === undefined ? `Add event for ${player}` : `Edit event for ${player}`}
+                  onClick={() => {
+                    onSelect(index);
+                    if (deathIndex >= 0) setSelectedTimelineIndex(deathIndex);
+                    else openEventComposer(player);
+                  }}
+                >
+                  {deathMarker === undefined ? "+" : compactTimingLabel(deathMarker.timing)}
+                </button>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
       <div className="seating-chart" aria-label="Clockwise seating chart">
         <div className="seating-ring" />
+        {draggedIndex !== undefined && desktopDropIndex !== undefined && draggedIndex !== desktopDropIndex && (
+          <div
+            className="seat-drop-placeholder"
+            style={seatPosition(desktopDropIndex, players.length)}
+            aria-hidden="true"
+          />
+        )}
         {players.map((player, index) => {
           const roleClaims = claimIndexesForPlayer(doc, player);
           const roleLabels = roleClaims.map(([claim]) => roleEmojiLabel(claim.type));
@@ -278,23 +558,28 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
           const deathClass = deathMarker === undefined ? undefined : deathMarkerClass(deathMarker);
           const deathLabel = deathMarker === undefined ? "" : `, ${deathMarkerLabel(deathMarker)}`;
           const isEditing = editingIndex === index;
+          const previewIndex = previewSeatIndex(index, draggedIndex, desktopDropIndex);
+          const seatStyle = {
+            ...seatButtonStyle(previewIndex, players.length, player),
+            ...(index === draggedIndex
+              ? {
+                  "--desktop-drag-x": `${desktopDragOffset.x}px`,
+                  "--desktop-drag-y": `${desktopDragOffset.y}px`,
+                }
+              : {}),
+          } as CSSProperties;
           return (
             <div
               key={player}
+              data-seat-index={index}
+              data-preview-index={previewIndex}
               className={`seat-button${deathClass === undefined ? "" : ` death-${deathClass}`}${
                 index === selectedIndex ? " selected" : ""
               }${index === draggedIndex ? " dragging" : ""}${isEditing ? " editing" : ""}`}
-              style={seatButtonStyle(index, players.length, player)}
-              draggable={!isEditing}
+              style={seatStyle}
               role="button"
               tabIndex={0}
-              onDragStart={(event) => startSeatDrag(event, index)}
-              onDragOver={allowSeatDrop}
-              onDrop={(event) => dropSeat(event, index)}
-              onDragEnd={() => {
-                setDraggedIndex(undefined);
-                setTrashDropActive(false);
-              }}
+              onPointerDown={(event) => startDesktopSeatDrag(event, index)}
               onClick={() => onSelect(index)}
               onDoubleClick={() => beginRename(index, player)}
               onPointerUp={(event) => handleSeatPointerUp(event, index, player)}
@@ -353,8 +638,8 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
           <button
             key={`${card.claimIndex}-${card.player}-callout`}
             type="button"
-            className="claim-callout"
-            style={calloutPosition(card.playerIndex, players.length)}
+            className={`claim-callout${card.playerIndex === draggedIndex ? " dragging" : ""}`}
+            style={calloutPosition(previewSeatIndex(card.playerIndex, draggedIndex, desktopDropIndex), players.length)}
             onClick={() => onSelect(card.playerIndex)}
           >
             "{card.summary}"
@@ -377,9 +662,104 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
         onSelect={setSelectedTimelineIndex}
         onUpdate={updateTimelineEvent}
         onRemove={removeTimelineEvent}
-        onDropPlayer={dropSeatOnTimeline}
-        onAllowDrop={allowSeatDrop}
+        onAdd={() => addTimelineEvent()}
       />
+
+      {eventComposer !== undefined && (
+        <div className="event-composer-backdrop" role="presentation" onClick={() => setEventComposer(undefined)}>
+          <section
+            className="event-composer-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="event-composer-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header>
+              <h3 id="event-composer-title">Add event for {eventComposer.player}</h3>
+              <button type="button" aria-label="Close event editor" onClick={() => setEventComposer(undefined)}>
+                ×
+              </button>
+            </header>
+            <div className="event-quick-actions">
+              <button
+                type="button"
+                className={eventComposer.type === "execution" ? "active" : undefined}
+                onClick={() =>
+                  setEventComposer({
+                    ...eventComposer,
+                    type: "execution",
+                    timing: nextTimelineTiming(timeline, "execution"),
+                  })
+                }
+              >
+                <span aria-hidden="true">X</span>
+                Executed
+              </button>
+              <button
+                type="button"
+                className={eventComposer.type === "nightDeath" ? "active" : undefined}
+                onClick={() =>
+                  setEventComposer({
+                    ...eventComposer,
+                    type: "nightDeath",
+                    timing: nextTimelineTiming(timeline, "nightDeath"),
+                  })
+                }
+              >
+                <span aria-hidden="true">N</span>
+                Killed at night
+              </button>
+              <button
+                type="button"
+                className={
+                  eventComposer.type !== "execution" && eventComposer.type !== "nightDeath" ? "active" : undefined
+                }
+                onClick={() =>
+                  setEventComposer({
+                    ...eventComposer,
+                    type: "witchCurse",
+                    timing: defaultTimingForType("witchCurse", eventComposer.timing),
+                  })
+                }
+              >
+                <span aria-hidden="true">…</span>
+                Other event
+              </button>
+            </div>
+            <label>
+              Cause
+              <select
+                value={eventComposer.type}
+                onChange={(event) => {
+                  const type = event.target.value as TimelineEventType;
+                  setEventComposer({
+                    ...eventComposer,
+                    type,
+                    timing: defaultTimingForType(type, eventComposer.timing),
+                  });
+                }}
+              >
+                {TIMELINE_EVENT_TYPE_OPTIONS.map((option) => (
+                  <option key={option.type} value={option.type}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Timing
+              <TimelineTimingSelect
+                type={eventComposer.type}
+                value={eventComposer.timing}
+                onChange={(timing) => setEventComposer({ ...eventComposer, timing })}
+              />
+            </label>
+            <button type="button" className="primary-action" onClick={commitEventComposer}>
+              Add event
+            </button>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
@@ -458,7 +838,7 @@ function ClaimQuoteDeck({ cards, onSelect }: { cards: readonly ClaimQuoteCard[];
   );
 }
 
-export function DrawWorkbench({ doc, dispatch, selectedIndex }: DrawWorkbenchProps) {
+export function DrawWorkbench({ doc, dispatch, selectedIndex, onSelect }: DrawWorkbenchProps) {
   const players = doc.players;
   const [newType, setNewType] = useState<Claim["type"]>("Investigator");
   const selectedName = players[selectedIndex];
@@ -471,15 +851,12 @@ export function DrawWorkbench({ doc, dispatch, selectedIndex }: DrawWorkbenchPro
 
   return (
     <div className="draw-workbench">
-      <section className="panel claims-panel">
+      <section id="claims-panel" className="panel claims-panel">
         <header className="panel-heading-row">
           <div>
             <h3>Claims</h3>
             <span>{selectedClaims.length} for selected player</span>
           </div>
-          <button type="button" onClick={addClaim} disabled={selectedName === undefined}>
-            Add Claim
-          </button>
         </header>
         <div className="claim-add-row">
           <select
@@ -495,13 +872,30 @@ export function DrawWorkbench({ doc, dispatch, selectedIndex }: DrawWorkbenchPro
               </option>
             ))}
           </select>
+          <select
+            aria-label="Claiming player"
+            value={selectedName ?? ""}
+            onChange={(event) => onSelect(players.indexOf(event.target.value))}
+          >
+            <option value="">— player —</option>
+            {players.map((player) => (
+              <option key={player} value={player}>
+                {player}
+              </option>
+            ))}
+          </select>
+          <button type="button" onClick={addClaim} disabled={selectedName === undefined}>
+            + Add claim
+          </button>
         </div>
         <div className="selected-claims">
           {selectedName !== undefined && selectedClaims.length === 0 && <p>No claims for {selectedName}.</p>}
           {selectedClaims.map(([claim, index]) => (
             <div key={index} className="claim-block">
               <header>
-                <strong>{roleEmojiLabel(claim.type)}</strong>
+                <strong>
+                  {claim.name} — {roleEmojiLabel(claim.type)}
+                </strong>
                 <button type="button" onClick={() => dispatch({ type: "removeClaim", index })}>
                   Remove
                 </button>
@@ -515,8 +909,6 @@ export function DrawWorkbench({ doc, dispatch, selectedIndex }: DrawWorkbenchPro
           ))}
         </div>
       </section>
-
-      <HiddenRolesTray roles={doc.script} />
     </div>
   );
 }
@@ -552,24 +944,25 @@ function TimelinePlayerPicker({
   onChange: (players: readonly string[]) => void;
   maxSelections?: number;
 }) {
+  const singleSelection = maxSelections === 1;
   return (
     <div className="timeline-player-picker">
       {players.map((player) => {
         const selected = value.includes(player);
-        const limitReached = maxSelections !== undefined && value.length >= maxSelections;
         return (
           <label key={player}>
             <input
-              type="checkbox"
+              type={singleSelection ? "radio" : "checkbox"}
+              name={singleSelection ? "timeline-event-player" : undefined}
               checked={selected}
-              disabled={!selected && limitReached}
               onChange={(event) => {
                 if (event.target.checked) {
-                  if (!selected && (maxSelections === undefined || value.length < maxSelections)) {
+                  if (singleSelection) onChange([player]);
+                  else if (!selected && (maxSelections === undefined || value.length < maxSelections))
                     onChange([...value, player]);
-                  }
                   return;
                 }
+                if (singleSelection) return;
                 onChange(value.filter((name) => name !== player));
               }}
             />
@@ -610,35 +1003,6 @@ function nextTimelineTiming(
   return `${prefix}_${Math.max(fallback, latest + 1)}`;
 }
 
-function HiddenRolesTray({ roles }: { roles: readonly string[] }) {
-  const selected = new Set(roles);
-  const hiddenRoles = hiddenScriptRoleOptions().filter((role) => selected.has(role));
-
-  return (
-    <section className="panel hidden-role-tray">
-      <header className="panel-heading-row">
-        <div>
-          <h3>Potential hidden roles</h3>
-          <span>{hiddenRoles.length} roles</span>
-        </div>
-      </header>
-      <div className="role-palette script-role-palette">
-        {hiddenRoles.map((role) => {
-          const type = ROLE_CLASSES.get(role)?.characterType;
-          return (
-            <div key={role} className="role-stamp selected hidden-role-preview" aria-label={role}>
-              <span aria-hidden="true">{roleEmoji(role) ?? "?"}</span>
-              <small>{role}</small>
-              {type !== undefined && <em>{TYPE_LABEL[type]}</em>}
-            </div>
-          );
-        })}
-        {hiddenRoles.length === 0 && <p className="palette-empty">No hidden roles selected.</p>}
-      </div>
-    </section>
-  );
-}
-
 function SetupCountSummary({ setupCounts }: { setupCounts: Record<CharacterType, number> }) {
   return (
     <div className="setup-counts" aria-label="Setup role counts">
@@ -666,8 +1030,7 @@ function TimelineStrip({
   onSelect,
   onUpdate,
   onRemove,
-  onDropPlayer,
-  onAllowDrop,
+  onAdd,
 }: {
   timeline: readonly TimelineEventDoc[];
   players: readonly string[];
@@ -675,33 +1038,26 @@ function TimelineStrip({
   onSelect: (index: number | undefined) => void;
   onUpdate: (index: number, event: TimelineEventDoc) => void;
   onRemove: (index: number) => void;
-  onDropPlayer: (event: DragEvent<HTMLElement>, type: Extract<TimelineEventType, "execution" | "nightDeath">) => void;
-  onAllowDrop: (event: DragEvent<HTMLElement>) => void;
+  onAdd: () => void;
 }) {
   const deathCount = timeline.reduce((sum, event) => sum + (isTimelineDeathEvent(event) ? event.players.length : 0), 0);
   const selectedEvent = selectedIndex === undefined ? undefined : timeline[selectedIndex];
   return (
-    <div className="timeline-strip" aria-label="Puzzle timeline">
-      <div
-        className="timeline-drop-zone execution"
-        onDragEnter={onAllowDrop}
-        onDragOver={onAllowDrop}
-        onDrop={(event) => onDropPlayer(event, "execution")}
-      >
-        <span aria-hidden="true">X</span>
-        <strong>Execution</strong>
-        <em>Drop a player here</em>
-      </div>
-
+    <div id="event-history" className="timeline-strip" aria-label="Puzzle timeline">
       <div className="timeline-main">
         <div className="timeline-legend">
-          <strong>Timeline</strong>
-          <span>
-            {deathCount} death{deathCount === 1 ? "" : "s"} tracked
-          </span>
+          <div>
+            <strong>Event history</strong>
+            <span>
+              {deathCount} death{deathCount === 1 ? "" : "s"} tracked
+            </span>
+          </div>
+          <button type="button" onClick={onAdd} disabled={players.length === 0}>
+            + Add event
+          </button>
         </div>
         {timeline.length === 0 ? (
-          <p className="timeline-empty">Drag a player to record the first death.</p>
+          <p className="timeline-empty">Add an execution, night death, or other public event.</p>
         ) : (
           <ol className="timeline-event-list">
             {timeline.map((event, index) => {
@@ -740,17 +1096,6 @@ function TimelineStrip({
             onRemove={() => onRemove(selectedIndex)}
           />
         )}
-      </div>
-
-      <div
-        className="timeline-drop-zone night-kill"
-        onDragEnter={onAllowDrop}
-        onDragOver={onAllowDrop}
-        onDrop={(event) => onDropPlayer(event, "nightDeath")}
-      >
-        <span aria-hidden="true">N</span>
-        <strong>Night Death</strong>
-        <em>Drop a player here</em>
       </div>
     </div>
   );
@@ -954,6 +1299,14 @@ function seatPosition(index: number, count: number): CSSProperties {
     left: `${50 + Math.cos(radians) * radius}%`,
     top: `${50 + Math.sin(radians) * radius}%`,
   };
+}
+
+function previewSeatIndex(index: number, draggedIndex: number | undefined, dropIndex: number | undefined): number {
+  if (draggedIndex === undefined || dropIndex === undefined || draggedIndex === dropIndex || index === draggedIndex)
+    return index;
+  if (draggedIndex < dropIndex && index > draggedIndex && index <= dropIndex) return index - 1;
+  if (draggedIndex > dropIndex && index >= dropIndex && index < draggedIndex) return index + 1;
+  return index;
 }
 
 function seatButtonStyle(index: number, count: number, player: string): CSSProperties {

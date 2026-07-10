@@ -50,11 +50,10 @@ test.describe("manual puzzle entry", () => {
       await page.goto("/");
 
       await setTitleAndPlayers(page, editorDoc);
-      await setScriptRules(page, editorDoc);
-      await setTimeline(page, editorDoc.timeline ?? []);
+      await setRoleUniverseAndRules(page, editorDoc);
+      await setTimeline(page, editorDoc.timeline ?? [], editorDoc.players);
       const claims = manualClaimsFor(editorDoc.claims);
-      await addClaimShells(page, claims);
-      await fillClaims(page, claims, editorDoc);
+      await addAndFillClaims(page, claims, editorDoc);
       await setCustomConstraints(page, editorDoc);
 
       const exported = await exportPuzzleDoc(page);
@@ -70,7 +69,7 @@ function editorDocFor(doc: PuzzleDoc): PuzzleDoc {
 async function setTitleAndPlayers(page: Page, doc: PuzzleDoc) {
   if (doc.title !== undefined) await page.getByLabel("Title").fill(doc.title);
 
-  const countInput = page.getByLabel("Players");
+  const countInput = page.getByRole("spinbutton", { name: "Players" });
   await countInput.fill("");
   await countInput.fill(String(doc.players.length));
   await expect(page.locator(".seat-button")).toHaveCount(doc.players.length);
@@ -81,49 +80,33 @@ async function setTitleAndPlayers(page: Page, doc: PuzzleDoc) {
     if (currentName === name) continue;
     await seatFor(page, currentName).focus();
     await page.keyboard.press("F2");
-    const input = page.getByLabel(`Rename ${currentName}`);
+    const input = page.locator(".seating-chart").getByLabel(`Rename ${currentName}`);
     await input.fill(name);
     await input.press("Enter");
     currentNames[index] = name;
   }
 }
 
-async function setScriptRules(page: Page, doc: PuzzleDoc) {
-  await openWorkbenchTab(page, "Script");
-  const rules = page.locator(".script-rules-grid");
-  await rules.getByLabel("Setup").selectOption(doc.setup ?? "standard");
-  if (doc.uniqueCharacters === false) await rules.getByLabel("Unique characters").uncheck();
-
-  for (const role of doc.script) {
-    const search = page.getByLabel("Search roles");
-    await search.fill(role);
-    await search.press("Enter");
-    await expect(page.locator(".script-picker-panel .role-stamp", { hasText: role })).toBeVisible();
-  }
-}
-
-async function setTimeline(page: Page, timeline: readonly TimelineEventDoc[]) {
+async function setTimeline(page: Page, timeline: readonly TimelineEventDoc[], players: readonly string[]) {
   if (timeline.length === 0) return;
-  await openWorkbenchTab(page, "Draw");
 
   for (const event of timeline) {
-    const firstPlayer = event.players[0];
-    if (firstPlayer === undefined) continue;
-    const dropZone =
-      event.type === "nightDeath"
-        ? page.locator(".timeline-drop-zone.night-kill")
-        : page.locator(".timeline-drop-zone.execution");
-    const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
-    await seatFor(page, firstPlayer).dispatchEvent("dragstart", { dataTransfer });
-    await dropZone.dispatchEvent("dragenter", { dataTransfer });
-    await dropZone.dispatchEvent("dragover", { dataTransfer });
-    await dropZone.dispatchEvent("drop", { dataTransfer });
+    await page.getByRole("button", { name: "+ Add event" }).click();
 
     const details = page.locator(".timeline-event-details");
     await details.getByLabel("Cause").selectOption(event.type);
     await details.getByLabel("Timing").selectOption(event.timing);
-    for (const player of event.players) {
-      await details.locator(".timeline-detail-players").getByLabel(player, { exact: true }).check();
+    const playerPicker = details.locator(".timeline-detail-players");
+    if (event.type === "nightDeath") {
+      for (const player of event.players) await playerPicker.getByLabel(player, { exact: true }).check();
+      for (const player of players) {
+        if (event.players.includes(player)) continue;
+        const checkbox = playerPicker.getByLabel(player, { exact: true });
+        if (await checkbox.isChecked()) await checkbox.uncheck();
+      }
+    } else {
+      const player = event.players[0];
+      if (player !== undefined) await playerPicker.getByLabel(player, { exact: true }).check();
     }
     if (event.caller !== undefined) {
       await details.getByLabel("Caller").selectOption(event.caller);
@@ -131,24 +114,35 @@ async function setTimeline(page: Page, timeline: readonly TimelineEventDoc[]) {
   }
 }
 
-async function addClaimShells(page: Page, claims: readonly Claim[]) {
-  await openWorkbenchTab(page, "Claims");
+async function addAndFillClaims(page: Page, claims: readonly Claim[], doc: PuzzleDoc) {
   const panel = claimsPanel(page);
-  const addRow = panel.locator(":scope > .row").first();
 
   for (const claim of claims) {
-    await addRow.locator("select").nth(0).selectOption(claim.type);
-    await addRow.locator("select").nth(1).selectOption(claim.name);
-    await addRow.getByRole("button", { name: "+ Add claim" }).click();
+    await panel.getByLabel("Claim type").selectOption(claim.type);
+    await panel.getByLabel("Claiming player").selectOption(claim.name);
+    await panel.getByRole("button", { name: "+ Add claim" }).click();
+    const blocks = panel.locator(":scope .selected-claims > .claim-block");
+    await fillClaim(blocks.last(), claim, doc);
   }
-
-  await expect(panel.locator(":scope > .claim-block")).toHaveCount(claims.length);
 }
 
-async function fillClaims(page: Page, claims: readonly Claim[], doc: PuzzleDoc) {
-  const blocks = claimsPanel(page).locator(":scope > .claim-block");
-  for (const [index, claim] of claims.entries()) {
-    await fillClaim(blocks.nth(index), claim, doc);
+async function setRoleUniverseAndRules(page: Page, doc: PuzzleDoc) {
+  const panel = page.locator("section.hidden-roles-editor");
+
+  for (const role of doc.script) {
+    const existing = panel.getByRole("button", { name: new RegExp(`^${escapeRegExp(role)}(?: |$)`) });
+    if ((await existing.count()) > 0) continue;
+    const input = panel.getByLabel("Add hidden role");
+    await input.fill(role);
+    await expect(panel.getByText(role, { exact: true })).toBeVisible();
+  }
+
+  if (doc.setup === "none" || doc.setup === "atheist" || doc.uniqueCharacters === false) {
+    const advanced = page.locator("details.advanced-puzzle-rules");
+    await advanced.locator("summary").click();
+    if (doc.setup === "none") await advanced.getByLabel("Use standard setup counts").uncheck();
+    if (doc.setup === "atheist") await advanced.getByLabel("Atheist puzzle rules").check();
+    if (doc.uniqueCharacters === false) await advanced.getByLabel("Unique actual characters").uncheck();
   }
 }
 
@@ -440,7 +434,6 @@ async function fillArtistInfo(block: Locator, info: readonly Record<string, stri
 
 async function setCustomConstraints(page: Page, doc: PuzzleDoc) {
   if ((doc.constraints ?? []).length === 0) return;
-  await openWorkbenchTab(page, "Script");
   const panel = page.locator("section.panel", { hasText: "Custom constraints" });
 
   for (const constraint of doc.constraints ?? []) {
@@ -457,10 +450,6 @@ async function exportPuzzleDoc(page: Page): Promise<PuzzleDoc> {
   const path = await download.path();
   if (path === null) throw new Error("Export download did not produce a local file");
   return JSON.parse(readFileSync(path, "utf8")) as PuzzleDoc;
-}
-
-async function openWorkbenchTab(page: Page, tab: "Draw" | "Script" | "Claims" | "Solve") {
-  await page.getByRole("navigation", { name: "Workbench sections" }).getByRole("button", { name: tab }).click();
 }
 
 function claimsPanel(page: Page): Locator {
