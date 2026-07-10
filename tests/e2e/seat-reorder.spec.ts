@@ -71,6 +71,7 @@ test("animates and reorders the mobile roster with continuous handle drags", asy
   const target = page.getByRole("button", { name: /Player 3: Player 3\./ });
   await expect(handle).toBeVisible();
   await expect(target).toBeVisible();
+  await expect(handle).toHaveCSS("user-select", "none");
 
   const { start, end, initialTops } = await page.evaluate(() => {
     const handleRect = document.querySelector('[data-seat-index="0"] .mobile-drag-handle')?.getBoundingClientRect();
