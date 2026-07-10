@@ -86,10 +86,10 @@ describe("validatePuzzleDoc", () => {
     ]);
   });
 
-  test("accepts Widow call flags on claims", () => {
+  test("accepts hidden-role knowledge flags on claims", () => {
     const doc = validatePuzzleDoc({
       ...baseDoc,
-      script: ["Chef", "Widow"],
+      script: ["Chef", "Widow", "Evil Twin"],
       claims: [
         {
           type: "Chef",
@@ -97,6 +97,7 @@ describe("validatePuzzleDoc", () => {
           count: 0,
           possibleActualRoles: ["Chef", "Drunk"],
           heardWidowCall: true,
+          knowsEvilTwin: true,
         },
       ],
     });
@@ -107,6 +108,7 @@ describe("validatePuzzleDoc", () => {
       count: 0,
       possibleActualRoles: ["Chef", "Drunk"],
       heardWidowCall: true,
+      knowsEvilTwin: true,
     });
   });
 
@@ -235,7 +237,7 @@ describe("validatePuzzleDoc", () => {
         { type: "Chambermaid", name: "You", checks: [{ left: "A", right: "B", timing: "night_1", count: 1 }] },
         { type: "Clockmaker", name: "You", distance: 3 },
         { type: "Courtier", name: "You", timing: "night_1", role: "Vortox", drunkTimings: ["night_1"] },
-        { type: "Klutz", name: "You", timing: "night_2", chosen: "A", lost: false },
+        { type: "Klutz", name: "You", timing: "night_2", chosen: "A" },
         { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
         { type: "Oracle", name: "You", timing: "night_2", count: 1 },
         { type: "Sage", name: "You", demonAmong: ["A", "B"] },
@@ -247,7 +249,7 @@ describe("validatePuzzleDoc", () => {
       { type: "Chambermaid", name: "You", checks: [{ left: "A", right: "B", timing: "night_1", count: 1 }] },
       { type: "Clockmaker", name: "You", distance: 3 },
       { type: "Courtier", name: "You", timing: "night_1", role: "Vortox", drunkTimings: ["night_1"] },
-      { type: "Klutz", name: "You", timing: "night_2", chosen: "A", lost: false },
+      { type: "Klutz", name: "You", timing: "night_2", chosen: "A" },
       { type: "Mathematician", name: "You", malfunctions: [{ timing: "night_1", count: 1 }] },
       { type: "Oracle", name: "You", timing: "night_2", count: 1 },
       { type: "Sage", name: "You", demonAmong: ["A", "B"] },

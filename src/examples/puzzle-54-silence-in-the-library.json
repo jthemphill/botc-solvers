@@ -87,7 +87,6 @@
       "type": "Librarian",
       "name": "You",
       "timing": "night_1",
-      "outsiderCount": 0,
       "possibleActualRoles": ["Librarian", "Drunk"]
     },
     {

@@ -118,7 +118,6 @@
       "name": "You",
       "timing": "day_1",
       "chosen": "Dan",
-      "lost": false,
       "possibleActualRoles": ["Klutz"]
     },
     {

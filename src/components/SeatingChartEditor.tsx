@@ -19,7 +19,7 @@ import {
   type TimelineEventType,
 } from "../schema/puzzleDoc";
 import { sortTimelineEvents, type PuzzleAction } from "../state/puzzleDoc";
-import { CLAIM_TYPES, ClaimBody, makeEmptyClaim } from "./ClaimsEditor";
+import { ClaimBody, ClaimTypeahead, makeEmptyClaim } from "./ClaimsEditor";
 import { claimSummary, compactTimingLabel, formatList, timingLabel } from "./claimSummary";
 
 interface Props {
@@ -859,19 +859,7 @@ export function DrawWorkbench({ doc, dispatch, selectedIndex, onSelect }: DrawWo
           </div>
         </header>
         <div className="claim-add-row">
-          <select
-            id="draw-claim-type"
-            name="draw-claim-type"
-            aria-label="Claim type"
-            value={newType}
-            onChange={(event) => setNewType(event.target.value as Claim["type"])}
-          >
-            {CLAIM_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
+          <ClaimTypeahead value={newType} onChange={setNewType} />
           <select
             aria-label="Claiming player"
             value={selectedName ?? ""}

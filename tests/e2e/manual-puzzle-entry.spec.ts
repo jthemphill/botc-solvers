@@ -118,7 +118,7 @@ async function addAndFillClaims(page: Page, claims: readonly Claim[], doc: Puzzl
   const panel = claimsPanel(page);
 
   for (const claim of claims) {
-    await panel.getByLabel("Claim type").selectOption(claim.type);
+    await panel.getByLabel("Claim type").fill(claim.type);
     await panel.getByLabel("Claiming player").selectOption(claim.name);
     await panel.getByRole("button", { name: "+ Add claim" }).click();
     const blocks = panel.locator(":scope .selected-claims > .claim-block");
@@ -164,7 +164,6 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
       break;
     case "Librarian":
       if (claim.role !== undefined) await fillRoleField(block, "Role", claim.role);
-      if (claim.outsiderCount === 0) await checkboxField(block, "No Outsiders").check();
       await checkPlayers(block, "Among", claim.among ?? []);
       if (claim.timing !== undefined) await selectField(block, "Timing", claim.timing);
       break;
@@ -295,10 +294,6 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
         await selectField(block, "Is Demon", check.demon ? "yes" : "no");
         await selectField(block, "Timing", check.timing);
       }
-      if (claim.evilTwin !== undefined) {
-        await selectField(block, "Evil Twin", claim.evilTwin.player);
-        await selectField(block, "Evil Twin timing", claim.evilTwin.timing);
-      }
       break;
     }
     case "VillageIdiot":
@@ -395,7 +390,6 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
       break;
     case "Klutz":
       if (claim.chosen !== undefined) await selectField(block, "Chosen player", claim.chosen);
-      if (claim.lost !== undefined) await selectField(block, "Lost", claim.lost ? "true" : "false");
       if (claim.timing !== undefined) await selectField(block, "Timing", claim.timing);
       break;
     case "Virgin":
@@ -420,6 +414,7 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
 
   for (const role of claim.possibleActualRoles ?? []) await addAdvancedRole(block, role);
   if (claim.heardWidowCall === true) await block.getByLabel("Heard the Widow's call").check();
+  if (claim.knowsEvilTwin === true) await block.getByLabel("Knows an Evil Twin is in play").check();
   if (claim.type === "Artist") await fillArtistInfo(block, claim.info ?? []);
 }
 
@@ -535,7 +530,7 @@ function manualClaimsFor(claims: readonly Claim[]): Claim[] {
       );
     }
     if (claim.type === "Snake Charmer" && claim.checks.length > 1) {
-      const { info: _info, evilTwin: _evilTwin, ...claimWithoutSharedInfo } = claim;
+      const { info: _info, ...claimWithoutSharedInfo } = claim;
       return claim.checks.map((check: unknown, index: number) =>
         index === 0 ? { ...claim, checks: [check] } : { ...claimWithoutSharedInfo, checks: [check] },
       );

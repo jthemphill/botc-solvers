@@ -82,7 +82,6 @@
       "type": "Librarian",
       "name": "Oscar",
       "timing": "night_1",
-      "outsiderCount": 0,
       "among": []
     }
   ]

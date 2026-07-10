@@ -90,7 +90,6 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
       return new Librarian({
         ...base,
         role: claim.role ? resolveRoleRef(claim.role) : undefined,
-        outsiderCount: claim.outsiderCount,
         among: claim.among,
       });
     case "Washerwoman":
@@ -236,7 +235,7 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
         })),
       });
     case "Klutz":
-      return new Klutz({ ...base, chosen: claim.chosen, lost: claim.lost });
+      return new Klutz({ ...base, chosen: claim.chosen });
     case "Seamstress":
       return new Seamstress({ ...base, among: claim.among, aligned: claim.aligned });
     case "Juggler": {
@@ -373,15 +372,7 @@ function snakeCharmerInfoClaims(claim: Extract<Claim, { readonly type: "Snake Ch
     };
   });
 
-  const evilTwin = claim.evilTwin;
-  if (evilTwin === undefined) return checkClaims;
-  return [
-    ...checkClaims,
-    {
-      timing: timingOf(evilTwin.timing),
-      learned: (game) => game.actualIs(evilTwin.player, "Evil Twin"),
-    },
-  ];
+  return checkClaims;
 }
 
 function slug(value: string): string {

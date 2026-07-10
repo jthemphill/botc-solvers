@@ -14,6 +14,17 @@
     "Seamstress",
     "Snake Charmer"
   ],
+  "constraints": [
+    {
+      "expression": "(Jasmine.alignment == Good) => Hannah.role == `Evil Twin`"
+    },
+    {
+      "expression": "(Hannah.alignment == Good) => Jasmine.role == `Evil Twin`"
+    },
+    {
+      "expression": "(some p : players | p.role == `Evil Twin`) => ((Jasmine.alignment == Good && Hannah.role == `Evil Twin`) || (Hannah.alignment == Good && Jasmine.role == `Evil Twin`))"
+    }
+  ],
   "claims": [
     {
       "type": "Clockmaker",
@@ -51,10 +62,7 @@
           "timing": "night_1"
         }
       ],
-      "evilTwin": {
-        "player": "Hannah",
-        "timing": "night_1"
-      },
+      "knowsEvilTwin": true,
       "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
@@ -99,8 +107,7 @@
       "type": "Klutz",
       "name": "Oscar",
       "timing": "day_2",
-      "chosen": "Sarah",
-      "lost": false
+      "chosen": "Sarah"
     },
     {
       "type": "Juggler",
@@ -126,10 +133,7 @@
           "timing": "night_1"
         }
       ],
-      "evilTwin": {
-        "player": "Jasmine",
-        "timing": "night_1"
-      },
+      "knowsEvilTwin": true,
       "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {

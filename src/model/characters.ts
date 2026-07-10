@@ -452,22 +452,15 @@ export class Klutz extends Role {
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Outsider;
   readonly chosen?: string;
-  readonly lost?: boolean;
 
-  constructor(
-    options: RoleBaseOptions & {
-      readonly chosen?: string;
-      readonly lost?: boolean;
-    },
-  ) {
+  constructor(options: RoleBaseOptions & { readonly chosen?: string }) {
     super(options);
     this.chosen = options.chosen;
-    this.lost = options.lost;
   }
 
   override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
     this.applyRoleClaim(game, Klutz, options);
-    if (this.chosen === undefined || this.lost === undefined) {
+    if (this.chosen === undefined) {
       this.applyInfoClaimBuilders(game, Klutz, this.infoClaims, options);
       return;
     }
@@ -477,7 +470,7 @@ export class Klutz extends Role {
       [game.hasRoleAt(this.name, Klutz, timing), game.soberAndHealthy(this.name, timing)],
       claimName(this.name, Klutz, "choice_active"),
     );
-    game.addImplication(activeHealthy, this.lost ? game.isEvil(this.chosen) : game.isGood(this.chosen));
+    game.addImplication(activeHealthy, game.isGood(this.chosen));
     this.applyInfoClaimBuilders(game, Klutz, this.infoClaims, options);
   }
 }
@@ -1801,18 +1794,15 @@ export class Librarian extends Role {
   static readonly characterType = CharacterType.Townsfolk;
   readonly among: readonly string[];
   readonly role?: RoleRef;
-  readonly outsiderCount?: number;
   constructor(
     options: RoleBaseOptions & {
       readonly among?: readonly string[];
       readonly role?: RoleRef;
-      readonly outsiderCount?: number;
     },
   ) {
     super(options);
     this.among = options.among ?? [];
     this.role = options.role;
-    this.outsiderCount = options.outsiderCount;
   }
   static learnsRoleAmong(game: BOTCModel, players: readonly string[], role: RoleRef, name: string): BoolVar {
     return learnsRoleAmong(game, players, role, name);
@@ -1829,15 +1819,13 @@ export class Librarian extends Role {
   override learnedInfo(game: BOTCModel): BoolLike | undefined {
     if (this.role !== undefined)
       return Librarian.learnsRoleAmong(game, this.among, this.role, claimName(this.name, Librarian, "role_among"));
-    if (this.outsiderCount !== undefined)
-      return Librarian.learnsCharacterTypeCount(
-        game,
-        game.players,
-        CharacterType.Outsider,
-        this.outsiderCount,
-        claimName(this.name, Librarian, "outsider_count"),
-      );
-    return undefined;
+    return Librarian.learnsCharacterTypeCount(
+      game,
+      game.players,
+      CharacterType.Outsider,
+      0,
+      claimName(this.name, Librarian, "outsider_count"),
+    );
   }
 }
 

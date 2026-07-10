@@ -99,8 +99,6 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
         ...claim,
         name,
         checks: claim.checks.map((c) => ({ ...c, player: remap(c.player) })),
-        evilTwin:
-          claim.evilTwin === undefined ? undefined : { ...claim.evilTwin, player: remap(claim.evilTwin.player) },
       };
     case "Steward":
       return { ...claim, name, goodPlayer: claim.goodPlayer ? remap(claim.goodPlayer) : claim.goodPlayer };
@@ -203,7 +201,6 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
       return {
         ...claim,
         checks: claim.checks.filter((c) => c.player !== name),
-        evilTwin: claim.evilTwin?.player === name ? undefined : claim.evilTwin,
       };
     case "Balloonist":
       return {
@@ -365,7 +362,7 @@ function normalizeClaims(claim: Claim): Claim[] {
     );
   }
   if (normalized.type === "Snake Charmer" && normalized.checks.length > 1) {
-    const { info: _info, evilTwin: _evilTwin, ...claimWithoutSharedInfo } = normalized;
+    const { info: _info, ...claimWithoutSharedInfo } = normalized;
     return normalized.checks.map((check, index) =>
       index === 0 ? { ...normalized, checks: [check] } : { ...claimWithoutSharedInfo, checks: [check] },
     );

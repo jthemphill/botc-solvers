@@ -122,8 +122,7 @@
       "type": "Klutz",
       "name": "Dan",
       "timing": "night_2",
-      "chosen": "Tom",
-      "lost": false
+      "chosen": "Tom"
     },
     {
       "type": "Sage",
