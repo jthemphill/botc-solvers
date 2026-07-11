@@ -16,9 +16,6 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
     setup: doc.setup === "none" || doc.setup === "atheist" ? false : "standard",
   };
   const game = buildPuzzleModel(spec, backend);
-  if (doc.claims.some((claim) => claim.type === "Mathematician" && claim.countsDrunkInfo === true)) {
-    game.enableDrunkInfoMalfunctions();
-  }
   const ctx = { players: doc.players, script: doc.script };
   applyGlobalConstraints(game, doc, ctx);
   if (doc.setup === "atheist") applyAtheistSetup(game, doc);

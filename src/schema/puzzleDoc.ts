@@ -334,7 +334,6 @@ export interface MathematicianCountDoc {
 export interface MathematicianClaim extends BaseClaim {
   readonly type: "Mathematician";
   readonly malfunctions?: readonly MathematicianCountDoc[];
-  readonly countsDrunkInfo?: boolean;
 }
 
 export interface TownCrierCheckDoc {

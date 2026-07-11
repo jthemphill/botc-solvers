@@ -33,7 +33,6 @@
         { "timing": "night_2", "count": 2 },
         { "timing": "night_3", "count": 0 }
       ],
-      "countsDrunkInfo": true,
       "possibleActualRoles": ["Mathematician", "Drunk"]
     },
     {

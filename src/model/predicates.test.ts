@@ -20,6 +20,7 @@ import {
   Legion,
   Librarian,
   LunarProdigy,
+  Mathematician,
   NoDashii,
   Noble,
   Poisoner,
@@ -139,11 +140,13 @@ describe("predicates and helpers", () => {
   });
 
   test("actual Drunk is an info malfunction source", async () => {
-    const drunk = new BOTCModel(["A", "B", "C"], { characters: script(Imp, Drunk, Empath, Chef), backend });
+    const drunk = new BOTCModel(["A", "B", "C"], {
+      characters: script(Imp, Drunk, Empath, Chef, Mathematician),
+      backend,
+    });
     drunk.fixActual("A", Drunk);
     drunk.fixActual("B", Imp);
     drunk.fixActual("C", Chef);
-    drunk.enableDrunkInfoMalfunctions();
     applyClaims(drunk, [new Empath({ name: "A", count: 0 })]);
     drunk.addTruth(drunk.malfunctionCountAt(night(1), 1, "drunk_math_one"));
     expect(await drunk.solveAll({ limit: 1 })).toHaveLength(1);

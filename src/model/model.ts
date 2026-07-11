@@ -115,7 +115,6 @@ export class World {
 export class KeyError extends Error {}
 
 export class BOTCModel {
-  private countDrunkInfoMalfunctions = false;
   readonly players: string[];
   readonly characters: ReadonlyMap<string, RoleRef>;
   readonly uniqueCharacters: boolean;
@@ -1122,10 +1121,6 @@ export class BOTCModel {
     return this.boolSumEquals(this.infoMalfunctions(timing), count, name);
   }
 
-  enableDrunkInfoMalfunctions(): void {
-    this.countDrunkInfoMalfunctions = true;
-  }
-
   neighbors(player: string): [string, string] {
     this.checkPlayer(player);
     const index = this.players.indexOf(player);
@@ -1381,9 +1376,9 @@ export class BOTCModel {
     const timingName = timing;
     const falseInfo = this.not(reportedInfo, `${player}_${role}_${timingName}_reported_info_false`);
     const actualDrunkUsingClaimedAbility =
-      this.countDrunkInfoMalfunctions && this.characters.has("Drunk")
+      this.characters.has("Drunk") && this.characters.has("Mathematician")
         ? this.actualIs(player, "Drunk")
-        : this.constantBool(false, `${player}_${role}_${timingName}_no_drunk_on_script`);
+        : this.constantBool(false, `${player}_${role}_${timingName}_no_mathematician_drunk_jinx`);
     const causes: BoolVar[] = [
       this.allOf(
         [activeRole, this.isDroisonedAt(player, timing), falseInfo],

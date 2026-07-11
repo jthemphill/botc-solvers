@@ -508,10 +508,6 @@ function validateClaim(input: unknown, path: string): Claim {
           input["malfunctions"] === undefined
             ? undefined
             : validateMathematicianCounts(input["malfunctions"], `${path}.malfunctions`),
-        countsDrunkInfo:
-          input["countsDrunkInfo"] === undefined
-            ? undefined
-            : expectBool(input["countsDrunkInfo"], `${path}.countsDrunkInfo`),
       };
     case "Town Crier": {
       const checks = input["checks"];

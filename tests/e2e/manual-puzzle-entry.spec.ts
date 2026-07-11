@@ -276,7 +276,6 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
         await selectField(block, "Timing", entry.timing, index);
         await fillField(block, "Malfunctions", String(entry.count), index);
       }
-      if (claim.countsDrunkInfo === true) await block.getByLabel("Count false Drunk info (Djinn rule)").check();
       break;
     case "Town Crier":
       for (let index = 1; index < claim.checks.length; index += 1) {

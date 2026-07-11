@@ -1522,14 +1522,6 @@ function MathematicianBody({ claim, onChange }: { claim: MathematicianClaim; onC
       <button type="button" onClick={addCount}>
         + Add count
       </button>
-      <label>
-        <input
-          type="checkbox"
-          checked={claim.countsDrunkInfo ?? false}
-          onChange={(event) => onChange({ ...claim, countsDrunkInfo: event.target.checked || undefined })}
-        />
-        Count false Drunk info (Djinn rule)
-      </label>
     </div>
   );
 }
