@@ -79,6 +79,7 @@ const ROLE_CLASS_LIST: readonly RoleClass[] = [
   characters.Steward,
   characters.Sweetheart,
   characters.TeaLady,
+  characters.TownCrier,
   characters.Undertaker,
   characters.VillageIdiot,
   characters.Virgin,

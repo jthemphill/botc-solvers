@@ -115,6 +115,7 @@ export class World {
 export class KeyError extends Error {}
 
 export class BOTCModel {
+  private countDrunkInfoMalfunctions = false;
   readonly players: string[];
   readonly characters: ReadonlyMap<string, RoleRef>;
   readonly uniqueCharacters: boolean;
@@ -575,6 +576,27 @@ export class BOTCModel {
     const poisonerRole = options.poisonerRole ?? "Poisoner";
     const poisonerActive = this.activeRole(poisonerRole, `${poisonTiming}_${roleName(poisonerRole)}`, options.activeIf);
     this.addOnePlayerPoisonSource(timing, poisonerActive, slug(roleName(poisonerRole)));
+  }
+
+  addPersistentPoisonSource(
+    timings: readonly Timing[],
+    candidates: readonly string[],
+    activeIf: BoolLike,
+    sourceName: string,
+  ): void {
+    const targets = candidates.map((player) => {
+      this.checkPlayer(player);
+      const target = this.newBool(`${sourceName}_poisons_${slug(player)}`);
+      this.addImplication(target, this.hasCharacterType(player, CharacterType.Townsfolk));
+      for (const timing of timings) this.registerPoisonSourceTarget(player, timing, target);
+      return target;
+    });
+    this.addEnforcedExactlyN(targets, 1, activeIf);
+    this.addEnforcedExactlyN(targets, 0, negate(lit(activeIf)));
+    for (const timing of timings) {
+      this.droisonTimingKeys.add(timing);
+      this.registerActivePoisonSource(timing, activeIf);
+    }
   }
 
   addWidowEffect(
@@ -1100,6 +1122,10 @@ export class BOTCModel {
     return this.boolSumEquals(this.infoMalfunctions(timing), count, name);
   }
 
+  enableDrunkInfoMalfunctions(): void {
+    this.countDrunkInfoMalfunctions = true;
+  }
+
   neighbors(player: string): [string, string] {
     this.checkPlayer(player);
     const index = this.players.indexOf(player);
@@ -1354,6 +1380,10 @@ export class BOTCModel {
   ): void {
     const timingName = timing;
     const falseInfo = this.not(reportedInfo, `${player}_${role}_${timingName}_reported_info_false`);
+    const actualDrunkUsingClaimedAbility =
+      this.countDrunkInfoMalfunctions && this.characters.has("Drunk")
+        ? this.actualIs(player, "Drunk")
+        : this.constantBool(false, `${player}_${role}_${timingName}_no_drunk_on_script`);
     const causes: BoolVar[] = [
       this.allOf(
         [activeRole, this.isDroisonedAt(player, timing), falseInfo],
@@ -1363,6 +1393,7 @@ export class BOTCModel {
         [activeRole, this.noDashiiPoisonedAt(player, timing), falseInfo],
         `${player}_${role}_${timingName}_nodashii_malfunction`,
       ),
+      this.allOf([actualDrunkUsingClaimedAbility, falseInfo], `${player}_${role}_${timingName}_drunk_role_malfunction`),
     ];
     if (vortoxAffected && this.characters.has(roleName("Vortox"))) {
       causes.push(

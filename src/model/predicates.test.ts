@@ -143,7 +143,9 @@ describe("predicates and helpers", () => {
     drunk.fixActual("A", Drunk);
     drunk.fixActual("B", Imp);
     drunk.fixActual("C", Chef);
+    drunk.enableDrunkInfoMalfunctions();
     applyClaims(drunk, [new Empath({ name: "A", count: 0 })]);
+    drunk.addTruth(drunk.malfunctionCountAt(night(1), 1, "drunk_math_one"));
     expect(await drunk.solveAll({ limit: 1 })).toHaveLength(1);
 
     const sober = new BOTCModel(["A", "B", "C"], { characters: script(Imp, Drunk, Empath), backend });

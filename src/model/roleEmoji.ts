@@ -79,6 +79,7 @@ const ROLE_EMOJI_ENTRIES = [
   ["Steward", "🗝️"],
   ["Sweetheart", "💔"],
   ["Tea Lady", "🍵"],
+  ["Town Crier", "🔔"],
   ["Undertaker", "⚰️"],
   ["Village Idiot", "🃏"],
   ["Virgin", "💍"],

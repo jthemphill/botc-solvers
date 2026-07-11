@@ -83,6 +83,8 @@ import doc_78_its_pronounced_eefa from "./puzzle-78-its-pronounced-eefa.json";
 import doc_79_erudition_lesson from "./puzzle-79-erudition-lesson.json";
 import doc_80_the_x_factor from "./puzzle-80-the-x-factor.json";
 import doc_81_arachnophobia from "./puzzle-81-arachnophobia.json";
+import doc_82_shoot_the_messenger from "./puzzle-82-shoot-the-messenger.json";
+import doc_83_be_the_one from "./puzzle-83-be-the-one.json";
 
 export interface PuzzleExample {
   readonly id: string;
@@ -184,6 +186,8 @@ const PUZZLE_DOCS = [
   { id: "puzzle-79-erudition-lesson", data: doc_79_erudition_lesson },
   { id: "puzzle-80-the-x-factor", data: doc_80_the_x_factor },
   { id: "puzzle-81-arachnophobia", data: doc_81_arachnophobia },
+  { id: "puzzle-82-shoot-the-messenger", data: doc_82_shoot_the_messenger },
+  { id: "puzzle-83-be-the-one", data: doc_83_be_the_one },
 ] as const;
 
 export const PUZZLE_EXAMPLES: readonly PuzzleExample[] = [

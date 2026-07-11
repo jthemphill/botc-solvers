@@ -1107,6 +1107,7 @@ function TimelineEventDetails({
       timing: defaultTimingForType(type, event.timing),
       players: normalizeTimelinePlayers(type, event.players),
       caller: timelineEventHasCaller(type) ? event.caller : undefined,
+      sourceActedBeforeDeath: type === "witchCurse" ? event.sourceActedBeforeDeath : undefined,
     });
   };
 
@@ -1153,6 +1154,18 @@ function TimelineEventDetails({
               </option>
             ))}
           </select>
+        </label>
+      )}
+      {event.type === "witchCurse" && (
+        <label>
+          <input
+            type="checkbox"
+            checked={event.sourceActedBeforeDeath ?? false}
+            onChange={(changeEvent) =>
+              onChange({ ...event, sourceActedBeforeDeath: changeEvent.target.checked || undefined })
+            }
+          />
+          Curse set before Witch died
         </label>
       )}
       <button type="button" onClick={onRemove}>

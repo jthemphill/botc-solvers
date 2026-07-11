@@ -51,6 +51,7 @@ import type {
   SlayerClaim,
   SnakeCharmerClaim,
   StewardClaim,
+  TownCrierClaim,
   UndertakerClaim,
   VirginClaim,
   VillageIdiotClaim,
@@ -209,6 +210,12 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
       return { type: "Courtier", name, timing: "night_1", role: "", drunkTimings: ["night_1"] };
     case "Mathematician":
       return { type: "Mathematician", name, malfunctions: [{ timing: "night_1", count: 0 }] };
+    case "Town Crier":
+      return {
+        type: "Town Crier",
+        name,
+        checks: [{ timing: "night_2", nominators: [], minionNominated: false }],
+      };
     case "Ravenkeeper":
       return { type: "Ravenkeeper", name, player: "", role: "", timing: "night_2" };
     case "Sage":
@@ -421,6 +428,8 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         return <CourtierBody doc={doc} claim={claim} onChange={onChange} />;
       case "Mathematician":
         return <MathematicianBody claim={claim} onChange={onChange} />;
+      case "Town Crier":
+        return <TownCrierBody doc={doc} claim={claim} onChange={onChange} />;
       case "Ravenkeeper":
         return <RavenkeeperBody doc={doc} claim={claim} onChange={onChange} />;
       case "Sage":
@@ -1512,6 +1521,75 @@ function MathematicianBody({ claim, onChange }: { claim: MathematicianClaim; onC
       ))}
       <button type="button" onClick={addCount}>
         + Add count
+      </button>
+      <label>
+        <input
+          type="checkbox"
+          checked={claim.countsDrunkInfo ?? false}
+          onChange={(event) => onChange({ ...claim, countsDrunkInfo: event.target.checked || undefined })}
+        />
+        Count false Drunk info (Djinn rule)
+      </label>
+    </div>
+  );
+}
+
+function TownCrierBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: TownCrierClaim;
+  onChange: (c: Claim) => void;
+}) {
+  const setCheck = (index: number, next: TownCrierClaim["checks"][number]) => {
+    onChange({ ...claim, checks: claim.checks.map((check, i) => (i === index ? next : check)) });
+  };
+  return (
+    <div>
+      {claim.checks.map((check, index) => (
+        <div key={index} className="field-grid">
+          <span>Timing</span>
+          <TimingField
+            value={check.timing}
+            onChange={(timing) => setCheck(index, { ...check, timing: timing ?? "night_2" })}
+          />
+          <span>Nominators</span>
+          <MultiPlayerSelect
+            players={doc.players}
+            value={check.nominators}
+            onChange={(nominators) => setCheck(index, { ...check, nominators })}
+          />
+          <label>
+            <input
+              type="checkbox"
+              checked={check.minionNominated}
+              onChange={(event) => setCheck(index, { ...check, minionNominated: event.target.checked })}
+            />
+            Minion nominated
+          </label>
+          <button
+            type="button"
+            onClick={() => onChange({ ...claim, checks: claim.checks.filter((_, i) => i !== index) })}
+          >
+            Remove check
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() =>
+          onChange({
+            ...claim,
+            checks: [
+              ...claim.checks,
+              { timing: `night_${claim.checks.length + 2}`, nominators: [], minionNominated: false },
+            ],
+          })
+        }
+      >
+        + Add check
       </button>
     </div>
   );

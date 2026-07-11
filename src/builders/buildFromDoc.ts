@@ -16,6 +16,9 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
     setup: doc.setup === "none" || doc.setup === "atheist" ? false : "standard",
   };
   const game = buildPuzzleModel(spec, backend);
+  if (doc.claims.some((claim) => claim.type === "Mathematician" && claim.countsDrunkInfo === true)) {
+    game.enableDrunkInfoMalfunctions();
+  }
   const ctx = { players: doc.players, script: doc.script };
   applyGlobalConstraints(game, doc, ctx);
   if (doc.setup === "atheist") applyAtheistSetup(game, doc);
@@ -44,6 +47,7 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
     applyPhilosopherDrunking(game, doc);
     applyChangedRoleClaimExplanations(game, doc);
     applyXaanActivity(game, doc);
+    applyVigormortisPoisonSources(game, doc, nightDeathTiming);
     applyPoisonerSources(game, doc, nightDeathTiming);
     applyWidowSources(game, doc);
     applyWidowCallClaims(game, doc);
@@ -429,6 +433,9 @@ function witchCurseSourceAvailable(
   event: NonNullable<PuzzleDoc["timeline"]>[number],
 ): BoolLike {
   const timing = event.timing as Timing;
+  if (event.sourceActedBeforeDeath === true) {
+    return game.constantBool(true, `${timing}_witch_curse_source_acted_before_death`);
+  }
   const abilityTiming = healthTimingForDayAbility(timing);
   return game.anyOf(
     livingPlayersBeforeDeathEvent(doc, event).map((player) =>
@@ -1315,6 +1322,41 @@ function applyPoisonerSources(game: BOTCModel, doc: PuzzleDoc, nightDeathTiming:
         `${timing}_poisoner_active_for_timing`,
       ),
     });
+  }
+}
+
+function applyVigormortisPoisonSources(
+  game: BOTCModel,
+  doc: PuzzleDoc,
+  nightDeathTiming: NightDeathTimingContext,
+): void {
+  if (!doc.script.includes("Vigormortis")) return;
+  if (!(doc.timeline ?? []).some((event) => event.sourceActedBeforeDeath === true)) return;
+  for (const [eventIndex, event] of (doc.timeline ?? []).entries()) {
+    if (event.type !== "nightDeath") continue;
+    for (const deadPlayer of event.players) {
+      const demonKill = nightDeathTiming.demonKillAssignmentsByEventPlayer.get(
+        timelineEventPlayerKey(eventIndex, deadPlayer),
+      );
+      if (demonKill === undefined) continue;
+      const active = game.allOf(
+        [
+          demonKill,
+          isMinionBeforeEvent(game, doc, deadPlayer, event),
+          livingVigormortisPathBeforeDeathEvent(game, doc, event),
+        ],
+        `${event.timing}_${slug(deadPlayer)}_vigormortis_killed_minion_poison`,
+      );
+      const timings = [...game.droisonTimingKeys]
+        .filter((timing): timing is Timing => /^(night|day)_\d+$/.test(timing))
+        .filter((timing) => phaseStartOrder(timing) > phaseStartOrder(event.timing as Timing));
+      game.addPersistentPoisonSource(
+        timings,
+        game.neighbors(deadPlayer),
+        active,
+        `${event.timing}_${slug(deadPlayer)}_vigormortis`,
+      );
+    }
   }
 }
 

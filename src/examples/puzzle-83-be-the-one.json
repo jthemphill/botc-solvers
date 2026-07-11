@@ -1,0 +1,50 @@
+{
+  "title": "Puzzle 83 - Be the One",
+  "players": ["Charlotte", "Olivia", "Jasmine", "Fraser", "You", "Aoife", "Sarah", "Hannah"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Drunk",
+    "Ravenkeeper",
+    "Empath",
+    "Librarian",
+    "Undertaker",
+    "Mathematician",
+    "Town Crier",
+    "Clockmaker",
+    "Seamstress"
+  ],
+  "timeline": [
+    { "timing": "day_1", "type": "execution", "players": ["Olivia"] },
+    { "timing": "night_2", "type": "nightDeath", "players": ["Jasmine"] },
+    { "timing": "day_2", "type": "execution", "players": ["Fraser"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["Charlotte"] }
+  ],
+  "claims": [
+    { "type": "Ravenkeeper", "name": "Charlotte", "timing": "night_3", "player": "Aoife", "role": "Drunk" },
+    { "type": "Empath", "name": "Olivia", "timing": "night_1", "count": 0 },
+    { "type": "Librarian", "name": "Jasmine", "timing": "night_1", "role": "Drunk", "among": ["Hannah", "Charlotte"] },
+    { "type": "Undertaker", "name": "Fraser", "timing": "night_2", "player": "Olivia", "role": "Drunk" },
+    {
+      "type": "Mathematician",
+      "name": "You",
+      "malfunctions": [
+        { "timing": "night_1", "count": 1 },
+        { "timing": "night_2", "count": 2 },
+        { "timing": "night_3", "count": 0 }
+      ],
+      "countsDrunkInfo": true,
+      "possibleActualRoles": ["Mathematician", "Drunk"]
+    },
+    {
+      "type": "Town Crier",
+      "name": "Aoife",
+      "checks": [
+        { "timing": "night_2", "nominators": ["Hannah", "Fraser"], "minionNominated": false },
+        { "timing": "night_3", "nominators": ["You", "Sarah"], "minionNominated": false }
+      ]
+    },
+    { "type": "Clockmaker", "name": "Sarah", "distance": 3 },
+    { "type": "Seamstress", "name": "Hannah", "timing": "night_3", "among": ["Charlotte", "Jasmine"], "aligned": false }
+  ]
+}

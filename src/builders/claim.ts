@@ -36,6 +36,7 @@ import {
   Slayer,
   SnakeCharmer,
   Steward,
+  TownCrier,
   Undertaker,
   VillageIdiot,
   Virgin,
@@ -261,6 +262,15 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
         malfunctions: claim.malfunctions?.map((entry) => ({
           timing: timingOf(entry.timing) as Timing,
           count: entry.count,
+        })),
+      });
+    case "Town Crier":
+      return new TownCrier({
+        ...base,
+        checks: claim.checks.map((check) => ({
+          timing: timingOf(check.timing) as Timing,
+          nominators: check.nominators,
+          minionNominated: check.minionNominated,
         })),
       });
     case "Ravenkeeper":
