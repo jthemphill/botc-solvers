@@ -1,6 +1,7 @@
 import { CharacterType, type RoleClass } from "../model/core";
 import { Chef } from "../model/characters";
 import type { BoolLike, BoolVar, BOTCModel, Timing } from "../model/model";
+import { roleByName } from "../model/roleRegistry";
 import type { AstCall, AstJoin, AstNode, AstPath } from "./ast";
 import { DslError, lex } from "./lex";
 import { parse } from "./parse";
@@ -54,6 +55,13 @@ const ALL_CHARACTER_TYPES: readonly CharacterType[] = [
   CharacterType.Minion,
   CharacterType.Demon,
 ];
+
+const ROLE_SET_TYPES: Readonly<Record<string, CharacterType>> = {
+  townsfolk: CharacterType.Townsfolk,
+  outsiders: CharacterType.Outsider,
+  minions: CharacterType.Minion,
+  demons: CharacterType.Demon,
+};
 
 const ALIGNMENTS: readonly AlignmentName[] = ["Good", "Evil"];
 
@@ -140,13 +148,21 @@ class Compiler {
     const bound = env.get(name);
     if (bound !== undefined) return { ...bound, span };
     if (name === "players") return { kind: "playerSet", names: this.ctx.players, span };
+    const roleSetType = ROLE_SET_TYPES[name];
+    if (roleSetType !== undefined) {
+      return {
+        kind: "roleSet",
+        names: this.ctx.script.filter((role) => roleByName(role).characterType === roleSetType),
+        span,
+      };
+    }
     if (name === "Good" || name === "Evil") return { kind: "alignment", value: name, span };
     const type = CHARACTER_TYPES[name];
     if (type !== undefined) return { kind: "type", value: type, span };
     if (this.ctx.players.includes(name)) return { kind: "player", name, span };
     if (this.ctx.script.includes(name)) return { kind: "role", name, span };
     throw new DslError(
-      `Unknown identifier '${name}'. Expected a player, role, 'players', 'Good'/'Evil', a character type, or a bound variable.`,
+      `Unknown identifier '${name}'. Expected a player, role, static player/role set, 'Good'/'Evil', a character type, or a bound variable.`,
       span,
     );
   }

@@ -155,6 +155,20 @@ describe("DSL", () => {
     expect(await game.solveAll()).toHaveLength(1);
   });
 
+  test("static character-type role sets contain the matching script roles", async () => {
+    const game = buildPuzzleModel(PUZZLE, backend);
+    const ctx: CompileCtx = {
+      players: PLAYERS,
+      script: CHARACTERS.map((character) => (typeof character === "string" ? character : character.roleName)),
+      nameRoot: "character_type_role_sets",
+    };
+
+    game.addTruth(compile("#townsfolk = 6 && #outsiders = 1 && #minions = 1 && #demons = 1", game, ctx) as BoolLike);
+    game.addTruth(compile("some r : townsfolk + outsiders | some p : players | p.role = r", game, ctx) as BoolLike);
+
+    expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
+  });
+
   test("Alloy-style joins expose distinct character types in a player set", async () => {
     const game = buildPuzzleModel(
       { players: ["A", "B", "C", "D"], characters: [Imp, Savant, Clockmaker, Goblin], setup: false },

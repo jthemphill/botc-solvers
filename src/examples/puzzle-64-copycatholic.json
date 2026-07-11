@@ -19,7 +19,7 @@
   "uniqueCharacters": false,
   "constraints": [
     {
-      "expression": "#{r : {Washerwoman, Slayer, Saint, Recluse, Ravenkeeper, Empath, Librarian, Mutant} | #{p : players | p.role == r} != 0 && #{p : players | p.role == r} != 1} != 0"
+      "expression": "some r : townsfolk + outsiders | not lone {p : players | p.role = r}"
     }
   ],
   "timeline": [
