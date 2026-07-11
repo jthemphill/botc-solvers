@@ -1,0 +1,18 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Witch",
+        "Charlotte": "Artist",
+        "Dan": "Clockmaker",
+        "Fraser": "Mutant",
+        "Hannah": "Oracle",
+        "Josh": "Seamstress",
+        "Olivia": "Town Crier",
+        "Sarah": "Vigormortis",
+        "You": "Mathematician"
+      },
+      "poisoned": { "day_2": ["Charlotte"], "night_3": ["Charlotte"] }
+    }
+  ]
+}

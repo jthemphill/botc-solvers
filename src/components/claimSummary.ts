@@ -65,6 +65,13 @@ export function claimSummary(claim: Claim): string {
         : (claim.malfunctions ?? [])
             .map((entry) => `${entry.count} malfunction${entry.count === 1 ? "" : "s"} (${timingLabel(entry.timing)})`)
             .join("; ");
+    case "Town Crier":
+      return claim.checks
+        .map(
+          (check) =>
+            `${timingLabel(check.timing)}: ${formatList(check.nominators)} -> ${check.minionNominated ? "yes" : "no"}`,
+        )
+        .join("; ");
     case "Oracle":
       return oracleSummary(claim);
     case "Philosopher":

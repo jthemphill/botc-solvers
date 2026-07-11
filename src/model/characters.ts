@@ -953,6 +953,44 @@ export class Mathematician extends Role {
   }
 }
 
+export interface TownCrierCheck {
+  readonly timing: Timing;
+  readonly nominators: readonly string[];
+  readonly minionNominated: boolean;
+}
+
+export class TownCrier extends Role {
+  static readonly roleName = "Town Crier";
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+  readonly checks: readonly TownCrierCheck[];
+
+  constructor(options: RoleBaseOptions & { readonly checks?: readonly TownCrierCheck[] }) {
+    super(options);
+    this.checks = options.checks ?? [];
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, TownCrier, options);
+    this.applyInfoClaimBuilders(
+      game,
+      TownCrier,
+      this.checks.map((check) => ({
+        timing: check.timing,
+        learned: (model: BOTCModel) => {
+          const aMinionNominated = model.anyOf(
+            check.nominators.map((player) => model.hasCharacterType(player, CharacterType.Minion)),
+            claimName(this.name, TownCrier, `${check.timing}_minion_nominated`),
+          );
+          return check.minionNominated ? aMinionNominated : aMinionNominated.not();
+        },
+      })),
+      options,
+    );
+    this.applyInfoClaimBuilders(game, TownCrier, this.infoClaims, options);
+  }
+}
+
 export interface PrincessNomination {
   readonly player: string;
   readonly timing?: Timing;
@@ -1132,7 +1170,7 @@ const EVERY_NIGHT_WAKE_ROLES = new Set([
   "Snake Charmer",
   "Village Idiot",
 ]);
-const SECOND_NIGHT_PLUS_WAKE_ROLES = new Set(["Exorcist", "Oracle", "Undertaker"]);
+const SECOND_NIGHT_PLUS_WAKE_ROLES = new Set(["Exorcist", "Oracle", "Town Crier", "Undertaker"]);
 const SECOND_NIGHT_WAKE_ROLES = new Set(["Juggler"]);
 
 function nightNumber(timing: Timing): number | undefined {

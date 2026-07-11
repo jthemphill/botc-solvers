@@ -107,6 +107,10 @@ function validateTimeline(v: unknown, pathRoot: string): TimelineEventDoc[] {
       type: type as TimelineEventDoc["type"],
       players: expectStringArray(entry["players"], `${path}.players`),
       caller: entry["caller"] === undefined ? undefined : expectString(entry["caller"], `${path}.caller`),
+      sourceActedBeforeDeath:
+        entry["sourceActedBeforeDeath"] === undefined
+          ? undefined
+          : expectBool(entry["sourceActedBeforeDeath"], `${path}.sourceActedBeforeDeath`),
     };
   });
 }
@@ -505,6 +509,23 @@ function validateClaim(input: unknown, path: string): Claim {
             ? undefined
             : validateMathematicianCounts(input["malfunctions"], `${path}.malfunctions`),
       };
+    case "Town Crier": {
+      const checks = input["checks"];
+      if (!Array.isArray(checks)) throw new ValidationError(`Expected array`, `${path}.checks`);
+      return {
+        ...base,
+        type: "Town Crier",
+        checks: checks.map((entry, index) => {
+          const entryPath = `${path}.checks[${index}]`;
+          if (!isObject(entry)) throw new ValidationError(`Expected object`, entryPath);
+          return {
+            timing: expectString(entry["timing"], `${entryPath}.timing`),
+            nominators: expectStringArray(entry["nominators"], `${entryPath}.nominators`),
+            minionNominated: expectBool(entry["minionNominated"], `${entryPath}.minionNominated`),
+          };
+        }),
+      };
+    }
     case "Ravenkeeper":
       return {
         ...base,

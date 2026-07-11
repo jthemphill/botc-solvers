@@ -1,0 +1,112 @@
+{
+  "title": "Puzzle 82 - Shoot the Messenger",
+  "players": ["Dan", "Aoife", "Charlotte", "Olivia", "Hannah", "You", "Josh", "Sarah", "Fraser"],
+  "script": [
+    "Fang Gu",
+    "Vigormortis",
+    "No Dashii",
+    "Vortox",
+    "Witch",
+    "Mutant",
+    "Klutz",
+    "Sweetheart",
+    "Clockmaker",
+    "Artist",
+    "Town Crier",
+    "Oracle",
+    "Mathematician",
+    "Seamstress",
+    "Snake Charmer",
+    "Juggler"
+  ],
+  "timeline": [
+    { "timing": "day_1", "type": "execution", "players": ["You"] },
+    { "timing": "night_2", "type": "nightDeath", "players": ["Aoife"] },
+    {
+      "timing": "day_2",
+      "type": "witchCurse",
+      "players": ["Charlotte"],
+      "caller": "Charlotte",
+      "sourceActedBeforeDeath": true
+    },
+    { "timing": "day_2", "type": "execution", "players": ["Dan"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["Josh"] }
+  ],
+  "claims": [
+    {
+      "type": "Clockmaker",
+      "name": "Dan",
+      "distance": 3,
+      "possibleActualRoles": ["Clockmaker", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch"]
+    },
+    {
+      "type": "Artist",
+      "name": "Charlotte",
+      "timing": "day_2",
+      "info": [{ "timing": "day_2", "expression": "Sarah.type == Townsfolk" }],
+      "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    {
+      "type": "Town Crier",
+      "name": "Olivia",
+      "checks": [
+        { "timing": "night_2", "nominators": ["Dan", "Hannah"], "minionNominated": false },
+        { "timing": "night_3", "nominators": ["Charlotte", "Sarah"], "minionNominated": false }
+      ],
+      "possibleActualRoles": ["Town Crier", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    {
+      "type": "Oracle",
+      "name": "Hannah",
+      "timing": "night_2",
+      "count": 1,
+      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    {
+      "type": "Oracle",
+      "name": "Hannah",
+      "timing": "night_3",
+      "count": 1,
+      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    {
+      "type": "Mathematician",
+      "name": "You",
+      "malfunctions": [{ "timing": "night_1", "count": 0 }],
+      "possibleActualRoles": ["Mathematician"]
+    },
+    {
+      "type": "Seamstress",
+      "name": "Josh",
+      "timing": "night_2",
+      "among": ["You", "Dan"],
+      "aligned": true,
+      "possibleActualRoles": ["Seamstress", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Sarah",
+      "checks": [
+        { "timing": "night_1", "player": "Charlotte", "demon": false },
+        { "timing": "night_2", "player": "Josh", "demon": false },
+        { "timing": "night_3", "player": "Hannah", "demon": false }
+      ],
+      "possibleActualRoles": ["Snake Charmer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    {
+      "type": "Juggler",
+      "name": "Fraser",
+      "timing": "night_2",
+      "guesses": { "Aoife": "Klutz", "Hannah": "No Dashii" },
+      "correctCount": 1,
+      "possibleActualRoles": ["Juggler", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    {
+      "type": "Klutz",
+      "name": "Aoife",
+      "timing": "night_2",
+      "chosen": "Olivia",
+      "possibleActualRoles": ["Klutz", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch"]
+    }
+  ]
+}

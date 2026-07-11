@@ -1,0 +1,17 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Drunk",
+        "Charlotte": "Ravenkeeper",
+        "Fraser": "Undertaker",
+        "Hannah": "Poisoner",
+        "Jasmine": "Librarian",
+        "Olivia": "Empath",
+        "Sarah": "Imp",
+        "You": "Mathematician"
+      },
+      "poisoned": { "night_1": ["Jasmine"], "night_2": ["Fraser"], "night_3": ["You"] }
+    }
+  ]
+}

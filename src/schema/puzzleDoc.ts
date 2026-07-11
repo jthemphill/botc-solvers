@@ -23,6 +23,7 @@ export interface TimelineEventDoc {
   readonly type: TimelineEventType;
   readonly players: readonly string[];
   readonly caller?: string;
+  readonly sourceActedBeforeDeath?: boolean;
 }
 
 export const TIMELINE_DEATH_EVENT_TYPES = [
@@ -73,6 +74,7 @@ export type Claim =
   | ClockmakerClaim
   | CourtierClaim
   | MathematicianClaim
+  | TownCrierClaim
   | RavenkeeperClaim
   | SageClaim
   | SlayerClaim
@@ -334,6 +336,17 @@ export interface MathematicianClaim extends BaseClaim {
   readonly malfunctions?: readonly MathematicianCountDoc[];
 }
 
+export interface TownCrierCheckDoc {
+  readonly timing: string;
+  readonly nominators: readonly string[];
+  readonly minionNominated: boolean;
+}
+
+export interface TownCrierClaim extends BaseClaim {
+  readonly type: "Town Crier";
+  readonly checks: readonly TownCrierCheckDoc[];
+}
+
 export interface RavenkeeperClaim extends BaseClaim {
   readonly type: "Ravenkeeper";
   readonly player?: string;
@@ -489,6 +502,7 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Clockmaker",
   "Courtier",
   "Mathematician",
+  "Town Crier",
   "Ravenkeeper",
   "Sage",
   "Slayer",

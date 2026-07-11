@@ -1,5 +1,34 @@
 import { expect, test } from "@playwright/test";
 
+test("solves puzzle 82 with the Vigormortis-killed Witch world", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-82-shoot-the-messenger");
+
+  await expect(page.locator("input.title-input")).toHaveValue("Puzzle 82 - Shoot the Messenger");
+  await expect(page.getByLabel("Puzzle timeline")).toContainText("D2 Witch Curse");
+  await expect(page.getByLabel("Player claim summaries")).toContainText("Night 2: Dan or Hannah -> no");
+  const solvePanel = page.locator(".solve-panel");
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Sarah: Vigormortis, claimed Snake Charmer")).toBeVisible();
+  await expect(solvePanel.getByLabel("Aoife: Witch, claimed Klutz")).toBeVisible();
+  await expect(solvePanel.getByLabel("Fraser: Mutant, claimed Juggler")).toBeVisible();
+});
+
+test("solves puzzle 83 with the Mathematician-Drunk jinx", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-83-be-the-one");
+
+  await expect(page.locator("input.title-input")).toHaveValue("Puzzle 83 - Be the One");
+  await expect(page.getByLabel("Player claim summaries")).toContainText("2 malfunctions (Night 2)");
+  const solvePanel = page.locator(".solve-panel");
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Sarah: Imp, claimed Clockmaker")).toBeVisible();
+  await expect(solvePanel.getByLabel("Hannah: Poisoner, claimed Seamstress")).toBeVisible();
+  await expect(solvePanel.getByLabel("Aoife: Drunk, claimed Town Crier")).toBeVisible();
+});
+
 test("loads puzzle 34 with structured role clues", async ({ page }) => {
   await page.goto("/");
 

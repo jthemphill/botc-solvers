@@ -33,6 +33,7 @@ type TimelineEventDoc = {
   readonly type: "nominationDeath" | "witchCurse" | "slayerShot" | "execution" | "nightDeath" | "doomsayerDeath";
   readonly players: readonly string[];
   readonly caller?: string;
+  readonly sourceActedBeforeDeath?: boolean;
 };
 
 type Claim = Record<string, any> & {
@@ -110,6 +111,9 @@ async function setTimeline(page: Page, timeline: readonly TimelineEventDoc[], pl
     }
     if (event.caller !== undefined) {
       await details.getByLabel("Caller").selectOption(event.caller);
+    }
+    if (event.sourceActedBeforeDeath === true) {
+      await details.getByLabel("Curse set before Witch died").check();
     }
   }
 }
@@ -271,6 +275,16 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
       for (const [index, entry] of (claim.malfunctions ?? []).entries()) {
         await selectField(block, "Timing", entry.timing, index);
         await fillField(block, "Malfunctions", String(entry.count), index);
+      }
+      break;
+    case "Town Crier":
+      for (let index = 1; index < claim.checks.length; index += 1) {
+        await block.getByRole("button", { name: "+ Add check" }).click();
+      }
+      for (const [index, check] of claim.checks.entries()) {
+        await selectField(block, "Timing", check.timing, index);
+        await checkPlayers(block, "Nominators", check.nominators, index);
+        if (check.minionNominated) await block.getByLabel("Minion nominated").nth(index).check();
       }
       break;
     case "Ravenkeeper":
