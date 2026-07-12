@@ -1,4 +1,7 @@
 import type { Claim } from "../schema/puzzleDoc";
+import type { AstNode } from "../dsl/ast";
+import { lex } from "../dsl/lex";
+import { parse } from "../dsl/parse";
 
 export function claimSummary(claim: Claim): string {
   const customInfo = (claim.info ?? [])
@@ -132,40 +135,75 @@ export function claimSummary(claim: Claim): string {
 
 function artistInfoSummary(expression: string): string {
   const readable = expression.replace(/`([^`]+)`/g, "$1").trim();
-  if (readable === "false") return "I learned that the answer was no.";
-
-  const registration = /^registers_as\(([^,]+),\s*([^)]+)\)$/.exec(readable);
-  if (registration !== null) {
-    return `I learned that ${registration[1]?.trim()} registered as the ${registration[2]?.trim()}.`;
+  try {
+    const summary = artistInfoAstSummary(parse(lex(expression)));
+    if (summary !== undefined) return summary;
+  } catch {
+    // Invalid or unsupported expressions remain visible as entered.
   }
 
-  const groupedRole = /^(some|no)\s+p\s*:\s*\{([^}]+)\}\s*\|\s*p\.role\s*==\s*(.+)$/.exec(readable);
-  if (groupedRole !== null) {
-    const players = groupedRole[2]?.split(",").map((player) => player.trim()) ?? [];
-    const role = groupedRole[3]?.trim();
-    return groupedRole[1] === "no"
-      ? `I learned that none of ${formatList(players)} is the ${role}.`
-      : `I learned that one of ${formatList(players)} is the ${role}.`;
+  return `I learned: ${readable}.`;
+}
+
+function artistInfoAstSummary(node: AstNode): string | undefined {
+  if (node.kind === "boollit" && !node.value) return "I learned that the answer was no.";
+
+  const registration = callArguments(node, "registers_as");
+  if (registration?.length === 2) {
+    return `I learned that ${registration[0]} registered as the ${registration[1]}.`;
   }
 
-  const someoneRole = /^some\s+p\s*:\s*players\s*\|\s*p\.role\s*==\s*(.+)$/.exec(readable);
-  if (someoneRole !== null) return `I learned that someone is the ${someoneRole[1]?.trim()}.`;
+  if (node.kind === "quant") {
+    const players = setNames(node.set);
+    const roleComparison = simpleComparisonFromAst(node.body);
+    if (
+      roleComparison?.player === node.variable &&
+      roleComparison.field === "role" &&
+      roleComparison.operator === "eq"
+    ) {
+      if (isPath(node.set, "players") && node.quantifier === "some") {
+        return `I learned that someone is the ${roleComparison.value}.`;
+      }
+      if (players !== undefined && (node.quantifier === "some" || node.quantifier === "no")) {
+        return node.quantifier === "no"
+          ? `I learned that none of ${formatList(players)} is the ${roleComparison.value}.`
+          : `I learned that one of ${formatList(players)} is the ${roleComparison.value}.`;
+      }
+    }
 
-  const timedRole = /^some\s+p\s*:\s*players\s*\|\s*role_at\(p,\s*([^,]+),\s*([^)]+)\)$/.exec(readable);
-  if (timedRole !== null) {
-    return `I learned that someone was the ${timedRole[1]?.trim()} on ${sentenceTimingLabel(timedRole[2]?.trim() ?? "")}.`;
-  }
+    const poisoned = poisonedCall(node.body);
+    if (
+      players !== undefined &&
+      poisoned?.player === node.variable &&
+      (node.quantifier === "some" || node.quantifier === "no")
+    ) {
+      return node.quantifier === "no"
+        ? `I learned that none of ${formatList(players)} was poisoned on ${sentenceTimingLabel(poisoned.timing)}.`
+        : `I learned that ${formatList(players)} was poisoned on ${sentenceTimingLabel(poisoned.timing)}.`;
+    }
 
-  const poisoned = readable.split(/\s+or\s+/).map((part) => /^poisoned\(([^,]+),\s*([^)]+)\)$/.exec(part));
-  if (poisoned.every((match) => match !== null)) {
-    const matches = poisoned as RegExpExecArray[];
-    const timing = matches[0]?.[2]?.trim();
-    if (timing !== undefined && matches.every((match) => match[2]?.trim() === timing)) {
-      return `I learned that ${formatList(matches.map((match) => match[1]?.trim() ?? ""))} was poisoned on ${sentenceTimingLabel(timing)}.`;
+    const timedRole = callArguments(node.body, "role_at");
+    if (
+      node.quantifier === "some" &&
+      isPath(node.set, "players") &&
+      timedRole?.length === 3 &&
+      timedRole[0] === node.variable
+    ) {
+      return `I learned that someone was the ${timedRole[1]} on ${sentenceTimingLabel(timedRole[2] ?? "")}.`;
     }
   }
 
-  const comparisons = readable.split(/\s+or\s+/).map(parseSimpleComparison);
+  const alternatives = flattenBinary(node, "or");
+  const poisoned = alternatives.map(poisonedCall);
+  if (poisoned.every((entry) => entry !== undefined)) {
+    const visible = poisoned as { readonly player: string; readonly timing: string }[];
+    const timing = visible[0]?.timing;
+    if (timing !== undefined && visible.every((entry) => entry.timing === timing)) {
+      return `I learned that ${formatList(visible.map((entry) => entry.player))} was poisoned on ${sentenceTimingLabel(timing)}.`;
+    }
+  }
+
+  const comparisons = alternatives.map(simpleComparisonFromAst);
   if (comparisons.every((comparison) => comparison !== undefined)) {
     const visible = comparisons as SimpleComparison[];
     const first = visible[0];
@@ -187,30 +225,38 @@ function artistInfoSummary(expression: string): string {
     }
   }
 
-  const comparison = parseSimpleComparison(readable);
+  const membership = joinedSetMembership(node);
+  if (membership !== undefined) {
+    return learnedComparisonSummary(membership.players, membership.field, "eq", membership.value);
+  }
+
+  const comparison = simpleComparisonFromAst(node);
   if (comparison !== undefined) {
     return learnedComparisonSummary(comparison.player, comparison.field, comparison.operator, comparison.value);
   }
 
-  return `I learned: ${readable}.`;
+  return undefined;
 }
 
 interface SimpleComparison {
   readonly player: string;
   readonly field: "role" | "type";
-  readonly operator: "==" | "!=";
+  readonly operator: "eq" | "neq";
   readonly value: string;
 }
 
-function parseSimpleComparison(expression: string): SimpleComparison | undefined {
-  const match = /^([\w '-]+)\.(role|type)\s*(==|!=)\s*([\w '-]+)$/.exec(expression);
-  if (match === null) return undefined;
-  return {
-    player: match[1]?.trim() ?? "Someone",
-    field: match[2] as SimpleComparison["field"],
-    operator: match[3] as SimpleComparison["operator"],
-    value: match[4]?.trim() ?? "unknown",
-  };
+function simpleComparisonFromAst(node: AstNode): SimpleComparison | undefined {
+  if (node.kind !== "binop" || (node.op !== "eq" && node.op !== "neq")) return undefined;
+  const direct = playerField(node.left);
+  const directValue = pathName(node.right);
+  if (direct !== undefined && directValue !== undefined) {
+    return { ...direct, operator: node.op, value: directValue };
+  }
+  const reverse = playerField(node.right);
+  const reverseValue = pathName(node.left);
+  return reverse === undefined || reverseValue === undefined
+    ? undefined
+    : { ...reverse, operator: node.op, value: reverseValue };
 }
 
 function learnedComparisonSummary(
@@ -220,7 +266,69 @@ function learnedComparisonSummary(
   value: string,
 ): string {
   const article = field === "role" ? "the" : /^[aeiou]/i.test(value) ? "an" : "a";
-  return `I learned that ${player} is${operator === "!=" ? " not" : ""} ${article} ${value}.`;
+  return `I learned that ${player} is${operator === "neq" ? " not" : ""} ${article} ${value}.`;
+}
+
+function playerField(node: AstNode): Pick<SimpleComparison, "player" | "field"> | undefined {
+  if (
+    node.kind !== "join" ||
+    node.inverse ||
+    (node.field !== "role" && node.field !== "type") ||
+    node.left.kind !== "path"
+  ) {
+    return undefined;
+  }
+  return { player: node.left.root, field: node.field };
+}
+
+function joinedSetMembership(
+  node: AstNode,
+): { readonly players: string; readonly field: "role" | "type"; readonly value: string } | undefined {
+  if (
+    node.kind !== "binop" ||
+    node.op !== "in" ||
+    node.right.kind !== "join" ||
+    node.right.inverse ||
+    (node.right.field !== "role" && node.right.field !== "type")
+  ) {
+    return undefined;
+  }
+  const value = pathName(node.left);
+  const players = setNames(node.right.left);
+  return value === undefined || players === undefined
+    ? undefined
+    : { players: formatList(players), field: node.right.field, value };
+}
+
+function poisonedCall(node: AstNode): { readonly player: string; readonly timing: string } | undefined {
+  const args = callArguments(node, "poisoned");
+  return args?.length === 2 ? { player: args[0] ?? "Someone", timing: args[1] ?? "" } : undefined;
+}
+
+function callArguments(node: AstNode, name: string): readonly string[] | undefined {
+  if (node.kind !== "call" || node.name !== name) return undefined;
+  const args = node.args.map((arg) => pathName(arg.value));
+  return args.every((arg) => arg !== undefined) ? (args as string[]) : undefined;
+}
+
+function flattenBinary(node: AstNode, op: "or"): readonly AstNode[] {
+  return node.kind === "binop" && node.op === op
+    ? [...flattenBinary(node.left, op), ...flattenBinary(node.right, op)]
+    : [node];
+}
+
+function setNames(node: AstNode): readonly string[] | undefined {
+  if (node.kind !== "setlit") return undefined;
+  const names = node.elements.map(pathName);
+  return names.every((name) => name !== undefined) ? (names as string[]) : undefined;
+}
+
+function pathName(node: AstNode): string | undefined {
+  return node.kind === "path" && node.fields.length === 0 ? node.root : undefined;
+}
+
+function isPath(node: AstNode, name: string): boolean {
+  return pathName(node) === name;
 }
 
 function acrobatSummary(claim: Extract<Claim, { readonly type: "Acrobat" }>): string {
