@@ -107,7 +107,7 @@
       "statements": [
         {
           "options": [
-            "#{r : {Juggler, Shugenja, `Village Idiot`} | some p : players | p.role == r} == 2",
+            "#({Juggler, Shugenja, `Village Idiot`} & players.role) = 2",
             "#{p : {Oscar, Anna, Tim} | p.type == Townsfolk} == 2"
           ]
         }

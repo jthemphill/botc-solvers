@@ -8,6 +8,7 @@ export type TokenKind =
   | "comma"
   | "colon"
   | "dot"
+  | "tilde"
   | "pipe"
   | "plus"
   | "minus"

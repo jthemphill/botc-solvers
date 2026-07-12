@@ -21,6 +21,7 @@ import {
   FortuneTeller,
   Goblin,
   Klutz,
+  Legion,
   Leviathan,
   VillageIdiot,
 } from "../model/characters";
@@ -167,6 +168,26 @@ describe("DSL", () => {
     game.addTruth(compile("some r : townsfolk + outsiders | some p : players | p.role = r", game, ctx) as BoolLike);
 
     expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
+  });
+
+  test("inverse role joins expose role holders and cardinalities support numeric set membership", async () => {
+    const players = ["A", "B", "C", "D", "E", "F"];
+    const game = buildPuzzleModel({ players, characters: [Legion, Savant], setup: false }, backend);
+    const ctx: CompileCtx = {
+      players,
+      script: ["Legion", "Savant"],
+      nameRoot: "inverse_role",
+    };
+
+    for (const player of players.slice(0, 5)) game.fixActual(player, Legion);
+    game.fixActual("F", Savant);
+    game.addTruth(compile("#Legion.~role in {0, 5, 6}", game, ctx) as BoolLike);
+    game.addTruth(compile("one townsfolk.~role", game, ctx) as BoolLike);
+    game.addTruth(compile("#Evil.~alignment = 5 && #Townsfolk.~type = 1", game, ctx) as BoolLike);
+    game.addTruth(compile("F.role in townsfolk", game, ctx) as BoolLike);
+    game.addFalse(compile("lone demons.~role", game, ctx) as BoolLike);
+
+    expect(await game.solveAll()).toHaveLength(1);
   });
 
   test("Alloy-style joins expose distinct character types in a player set", async () => {

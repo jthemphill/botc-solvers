@@ -20,16 +20,16 @@
   "setup": "none",
   "constraints": [
     {
-      "expression": "#{p : players | some (p.role & {`Fang Gu`, Vigormortis, `No Dashii`, Vortox})} == 1"
+      "expression": "one demons.~role"
     },
     {
-      "expression": "#{p : players | p.role == Witch} == 1"
+      "expression": "one Witch.~role"
     },
     {
-      "expression": "(some p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Sweetheart})} == 2"
+      "expression": "some `Fang Gu`.~role => #outsiders.~role = 2"
     },
     {
-      "expression": "(no p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Sweetheart})} == 1"
+      "expression": "no `Fang Gu`.~role => #outsiders.~role = 1"
     },
     {
       "expression": "Anna.role == Vortox => Fraser.role != Mathematician"
@@ -138,7 +138,7 @@
         {
           "options": [
             "#{p : {Steph, Josh, Oscar} | p.type == Townsfolk} == 2",
-            "((Matthew.type != Steph.type and Steph.type == Josh.type and Josh.type == Tim.type) or (Steph.type != Matthew.type and Matthew.type == Josh.type and Josh.type == Tim.type) or (Josh.type != Matthew.type and Matthew.type == Steph.type and Steph.type == Tim.type) or (Tim.type != Matthew.type and Matthew.type == Steph.type and Steph.type == Josh.type) or (Matthew.type == Steph.type and Josh.type == Tim.type and Matthew.type != Josh.type) or (Matthew.type == Josh.type and Steph.type == Tim.type and Matthew.type != Steph.type) or (Matthew.type == Tim.type and Steph.type == Josh.type and Matthew.type != Steph.type))"
+            "#({Matthew, Steph, Josh, Tim}.type) = 2"
           ]
         }
       ],

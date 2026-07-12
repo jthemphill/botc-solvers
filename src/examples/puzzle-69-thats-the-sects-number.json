@@ -21,16 +21,16 @@
   "setup": "none",
   "constraints": [
     {
-      "expression": "#{p : players | some (p.role & {`Fang Gu`, Vigormortis, `No Dashii`, Vortox})} == 1"
+      "expression": "one demons.~role"
     },
     {
-      "expression": "#{p : players | p.role == Witch} == 1"
+      "expression": "one Witch.~role"
     },
     {
-      "expression": "(some p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Klutz, Sweetheart})} == 3"
+      "expression": "some `Fang Gu`.~role => #outsiders.~role = 3"
     },
     {
-      "expression": "(no p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Klutz, Sweetheart})} == 2"
+      "expression": "no `Fang Gu`.~role => #outsiders.~role = 2"
     }
   ],
   "timeline": [

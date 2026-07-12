@@ -98,7 +98,7 @@
       "statements": [
         {
           "options": [
-            "#{r : {Mathematician, Juggler, Vigormortis, `No Dashii`} | some p : players | p.role == r} == 3",
+            "#({Mathematician, Juggler, Vigormortis, `No Dashii`} & players.role) = 3",
             "#{p : {Edd, Louisa, Chris} | p.type == Townsfolk} == 2"
           ]
         }
@@ -124,7 +124,7 @@
         {
           "options": [
             "#((Seb + Louisa + Marc + Chris).type) = 3",
-            "some p : players | p.role == Vigormortis && (p.left.role == Mutant || p.right.role == Mutant)"
+            "some p : Vigormortis.~role | Mutant in p.neighbors.role"
           ]
         }
       ],

@@ -40,25 +40,25 @@
   "setup": "none",
   "constraints": [
     {
-      "expression": "#{p : players | p.type == Townsfolk} == 8"
+      "expression": "#Townsfolk.~type = 8"
     },
     {
-      "expression": "#{p : players | p.type == Outsider} == 3"
+      "expression": "#Outsider.~type = 3"
     },
     {
-      "expression": "#{p : players | p.type == Minion} == 3"
+      "expression": "#Minion.~type = 3"
     },
     {
-      "expression": "#{p : players | p.type == Demon} == 1"
+      "expression": "#Demon.~type = 1"
     },
     {
-      "expression": "no p : players | p.role == Slayer"
+      "expression": "no Slayer.~role"
     },
     {
-      "expression": "no p : players | p.role == Ravenkeeper"
+      "expression": "no Ravenkeeper.~role"
     },
     {
-      "expression": "no p : players | p.role == Mayor"
+      "expression": "no Mayor.~role"
     },
     {
       "expression": "poisoned(Sarah, night_1)"
@@ -67,28 +67,28 @@
       "expression": "Adam.role == Poisoner"
     },
     {
-      "expression": "some (Sarah.role & {Washerwoman, Undertaker, Butler})"
+      "expression": "Sarah.role in {Washerwoman, Undertaker, Butler}"
     },
     {
       "expression": "Sula.role == Godfather"
     },
     {
-      "expression": "some (Aoife.role & {Librarian, Saint, Mayor})"
+      "expression": "Aoife.role in {Librarian, Saint, Mayor}"
     },
     {
-      "expression": "some (Jasmine.role & {Investigator, `Fortune Teller`, Butler})"
+      "expression": "Jasmine.role in {Investigator, `Fortune Teller`, Butler}"
     },
     {
       "expression": "You.role == Imp"
     },
     {
-      "expression": "some (Anna.role & {`Fortune Teller`, Monk, Recluse})"
+      "expression": "Anna.role in {`Fortune Teller`, Monk, Recluse}"
     },
     {
       "expression": "Oscar.role == `Scarlet Woman`"
     },
     {
-      "expression": "some (Olivia.role & {Washerwoman, Monk, Recluse})"
+      "expression": "Olivia.role in {Washerwoman, Monk, Recluse}"
     }
   ],
   "claims": [

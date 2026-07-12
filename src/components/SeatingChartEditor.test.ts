@@ -92,5 +92,26 @@ describe("claimSummary", () => {
         info: [{ expression: "Jasmine.role == Poisoner or Fraser.role == Poisoner or Dan.role == Poisoner" }],
       }),
     ).toBe("I learned that Jasmine, Fraser, or Dan is the Poisoner.");
+    expect(
+      claimSummary({
+        type: "Artist",
+        name: "Tom",
+        info: [{ expression: "Poisoner in {Jasmine, Fraser, Dan}.role" }],
+      }),
+    ).toBe("I learned that Jasmine, Fraser, or Dan is the Poisoner.");
+    expect(
+      claimSummary({
+        type: "Artist",
+        name: "Sarah",
+        info: [{ expression: "Demon in {Tom, Matt}.type" }],
+      }),
+    ).toBe("I learned that Tom or Matt is a Demon.");
+    expect(
+      claimSummary({
+        type: "Artist",
+        name: "Adam",
+        info: [{ expression: "some p : {Oscar, Hannah, Jasmine} | poisoned(p, day_1)" }],
+      }),
+    ).toBe("I learned that Oscar, Hannah, or Jasmine was poisoned on day 1.");
   });
 });

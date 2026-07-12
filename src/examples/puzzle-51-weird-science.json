@@ -25,7 +25,7 @@
       "expression": "some p : {Dan, Josh, Oscar, Fraser} | p.role == Kazali"
     },
     {
-      "expression": "#{p : players | some (p.role & {Poisoner, `Scarlet Woman`, Spy, Boffin})} == 1"
+      "expression": "one minions.~role"
     }
   ],
   "timeline": [

@@ -101,7 +101,7 @@
       "info": [
         {
           "timing": "day_1",
-          "expression": "poisoned(Oscar, day_1) or poisoned(Hannah, day_1) or poisoned(Jasmine, day_1)"
+          "expression": "some p : {Oscar, Hannah, Jasmine} | poisoned(p, day_1)"
         }
       ]
     },

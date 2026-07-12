@@ -17,28 +17,28 @@
   "setup": "none",
   "constraints": [
     {
-      "expression": "#{p : players | p.role == Legion} == 0 or #{p : players | p.role == Legion} == 5 or #{p : players | p.role == Legion} == 6"
+      "expression": "#Legion.~role in {0, 5, 6}"
     },
     {
-      "expression": "(no p : players | p.role == Legion) => #{p : players | p.role == Imp} == 1"
+      "expression": "no Legion.~role => one Imp.~role"
     },
     {
-      "expression": "(no p : players | p.role == Legion) => #{p : players | p.role == Poisoner} == 1"
+      "expression": "no Legion.~role => one Poisoner.~role"
     },
     {
-      "expression": "(some p : players | p.role == Legion) => #{p : players | p.role == Imp} == 0"
+      "expression": "some Legion.~role => no Imp.~role"
     },
     {
-      "expression": "(some p : players | p.role == Legion) => #{p : players | p.role == Poisoner} == 0"
+      "expression": "some Legion.~role => no Poisoner.~role"
     },
     {
-      "expression": "(some p : players | p.role == Legion) => (some p : {Aoife, Hannah, Tom, Sula, Sarah} | p.alignment == Good)"
+      "expression": "some Legion.~role => some ({Aoife, Hannah, Tom, Sula, Sarah} & Good.~alignment)"
     },
     {
-      "expression": "(some p : players | p.role == Legion) => (some p : {Aoife, Hannah, Tom, Fraser} | p.alignment == Good)"
+      "expression": "some Legion.~role => some ({Aoife, Hannah, Tom, Fraser} & Good.~alignment)"
     },
     {
-      "expression": "(some p : players | p.role == Legion) => #{p : {You, Aoife, Hannah, Fraser} | p.alignment == Good} != 1"
+      "expression": "some Legion.~role => #({You, Aoife, Hannah, Fraser} & Good.~alignment) != 1"
     }
   ],
   "timeline": [

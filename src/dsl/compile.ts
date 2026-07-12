@@ -23,6 +23,7 @@ type DslValue =
   | { kind: "role"; name: string; span: Span }
   | { kind: "typeSet"; values: readonly CharacterType[]; span: Span }
   | { kind: "alignmentSet"; values: readonly AlignmentName[]; span: Span }
+  | { kind: "numberSet"; values: readonly number[]; span: Span }
   | { kind: "dynamicSet"; atomKind: AtomKind; elements: readonly SetElement[]; span: Span }
   | { kind: "cardinality"; literals: readonly BoolLike[]; span: Span }
   | { kind: "alignment"; value: AlignmentName; span: Span }
@@ -141,7 +142,39 @@ class Compiler {
 
   private evalJoin(node: AstJoin, env: ReadonlyMap<string, DslValue>): DslValue {
     const left = this.evalNode(node.left, env);
-    return this.applyField(left, node.field, node.fieldSpan, node.span);
+    return node.inverse
+      ? this.applyInverseField(left, node.field, node.fieldSpan, node.span)
+      : this.applyField(left, node.field, node.fieldSpan, node.span);
+  }
+
+  private applyInverseField(value: DslValue, field: string, fieldSpan: Span, fullSpan: Span): DslValue {
+    const source = this.setElements(value, value.span);
+    if (field === "role" && source.kind !== "role")
+      throw new DslError(`Cannot apply '.~role' to a ${value.kind}`, fieldSpan);
+    if (field === "type" && source.kind !== "type")
+      throw new DslError(`Cannot apply '.~type' to a ${value.kind}`, fieldSpan);
+    if (field === "alignment" && source.kind !== "alignment")
+      throw new DslError(`Cannot apply '.~alignment' to a ${value.kind}`, fieldSpan);
+    if (field !== "role" && field !== "type" && field !== "alignment")
+      throw new DslError(`Unknown inverse field '~${field}'`, fieldSpan);
+
+    const elements = this.ctx.players.flatMap((player) =>
+      source.elements.map((entry) => {
+        const matches =
+          entry.atom.kind === "role"
+            ? this.game.actualIs(player, entry.atom.name)
+            : entry.atom.kind === "type"
+              ? this.game.hasCharacterType(player, entry.atom.value)
+              : entry.atom.kind === "alignment" && entry.atom.value === "Evil"
+                ? this.game.isEvil(player)
+                : this.game.isGood(player);
+        return {
+          atom: { kind: "player" as const, name: player, span: fullSpan },
+          present: this.game.allOf([entry.present, matches], this.freshName(`inverse_${field}`)),
+        };
+      }),
+    );
+    return { kind: "dynamicSet", atomKind: "player", elements: this.mergeElements(elements), span: fullSpan };
   }
 
   private resolveRoot(name: string, span: Span, env: ReadonlyMap<string, DslValue>): DslValue {
@@ -293,7 +326,15 @@ class Compiler {
       }
       return { kind: "alignmentSet", values: alignmentValues, span };
     }
-    throw new DslError(`Set literals support only players, roles, character types, or alignments`, span);
+    if (first.kind === "number") {
+      const numberValues: number[] = [];
+      for (const v of values) {
+        if (v.kind !== "number") throw new DslError(`Mixed-type set literal; expected a number`, v.span);
+        if (!numberValues.includes(v.value)) numberValues.push(v.value);
+      }
+      return { kind: "numberSet", values: numberValues, span };
+    }
+    throw new DslError(`Set literals support only players, roles, character types, alignments, or numbers`, span);
   }
 
   private evalQuant(node: Extract<AstNode, { kind: "quant" }>, env: ReadonlyMap<string, DslValue>): DslValue {
@@ -662,6 +703,23 @@ class Compiler {
   }
 
   private compileMembership(lhs: DslValue, rhs: DslValue, span: Span): BoolLike {
+    if (lhs.kind === "cardinality" && rhs.kind === "numberSet") {
+      return this.game.anyOf(
+        rhs.values.map((value) =>
+          this.game.boolSumEquals(lhs.literals, value, this.freshName(`cardinality_in_${value}`)),
+        ),
+        this.freshName("cardinality_in_set"),
+      );
+    }
+    if (lhs.kind === "playerRole" || lhs.kind === "playerType" || lhs.kind === "playerAlignment") {
+      const lhsSet = this.setElements(lhs, lhs.span);
+      const rhsSet = this.setElements(rhs, rhs.span);
+      if (lhsSet.kind !== rhsSet.kind) throw new DslError(`'in' requires matching set types`, span);
+      return this.game.anyOf(
+        this.intersectElements(lhsSet.elements, rhsSet.elements).map((entry) => entry.present),
+        this.freshName("field_in_set"),
+      );
+    }
     if (isSetAtom(lhs)) {
       const rhsSet = this.setElements(rhs, rhs.span);
       if (rhsSet.kind !== lhs.kind) throw new DslError(`'in' requires matching atom and set types`, span);
