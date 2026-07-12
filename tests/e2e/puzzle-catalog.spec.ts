@@ -114,7 +114,7 @@ test("solves puzzle 42 with the Widow-poisoned Philosopher world", async ({ page
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("N1: Fraser + Matthew -> yes");
   await expect(claims).toContainText("Day 1 guesses: You=Philosopher; Matthew=Imp; 1 correct.");
-  await expect(claims).toContainText("I learned that Oscar, Hannah, or Jasmine was poisoned on day 1.");
+  await expect(claims).toContainText("I learned: some p : {Oscar, Hannah, Jasmine} | poisoned(p, day_1).");
   const solvePanel = page.locator(".solve-panel");
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();

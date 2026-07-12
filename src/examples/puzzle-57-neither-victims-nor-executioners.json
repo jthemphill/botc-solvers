@@ -17,10 +17,10 @@
   "setup": "none",
   "constraints": [
     {
-      "expression": "#{p : players | p.role == Vigormortis} == 1"
+      "expression": "one Vigormortis.~role"
     },
     {
-      "expression": "#{p : players | some (p.role & {Poisoner, `Devil's Advocate`})} == 1"
+      "expression": "one minions.~role"
     }
   ],
   "timeline": [

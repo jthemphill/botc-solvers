@@ -54,7 +54,7 @@
       "info": [
         {
           "timing": "day_3",
-          "expression": "Jasmine.role == Poisoner or Fraser.role == Poisoner or Dan.role == Poisoner"
+          "expression": "Poisoner in {Jasmine, Fraser, Dan}.role"
         }
       ]
     },

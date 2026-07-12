@@ -17,6 +17,7 @@ const SINGLE: ReadonlyMap<string, TokenKind> = new Map([
   [",", "comma"],
   [":", "colon"],
   [".", "dot"],
+  ["~", "tilde"],
   ["|", "pipe"],
   ["+", "plus"],
   ["-", "minus"],

@@ -18,31 +18,31 @@
   "setup": "none",
   "constraints": [
     {
-      "expression": "#{p : players | p.role == Legion} == 0 or #{p : players | p.role == Legion} == 5 or #{p : players | p.role == Legion} == 6"
+      "expression": "#Legion.~role in {0, 5, 6}"
     },
     {
-      "expression": "(no p : players | p.role == Legion) => #{p : players | p.role == Imp} == 1"
+      "expression": "no Legion.~role => one Imp.~role"
     },
     {
-      "expression": "(no p : players | p.role == Legion) => #{p : players | p.role == Spy} == 1"
+      "expression": "no Legion.~role => one Spy.~role"
     },
     {
-      "expression": "(no p : players | p.role == Legion) => #{p : players | p.role == Drunk} == 1"
+      "expression": "no Legion.~role => one Drunk.~role"
     },
     {
-      "expression": "(some p : players | p.role == Legion) => #{p : players | p.role == Imp} == 0"
+      "expression": "some Legion.~role => no Imp.~role"
     },
     {
-      "expression": "(some p : players | p.role == Legion) => #{p : players | p.role == Spy} == 0"
+      "expression": "some Legion.~role => no Spy.~role"
     },
     {
-      "expression": "(some p : players | p.role == Legion) => #{p : players | p.role == Drunk} == 0"
+      "expression": "some Legion.~role => no Drunk.~role"
     },
     {
-      "expression": "(some p : players | p.role == Legion) => (some p : {Matt, Fraser, Tim, Josh, Oscar} | p.alignment == Good)"
+      "expression": "some Legion.~role => some ({Matt, Fraser, Tim, Josh, Oscar} & Good.~alignment)"
     },
     {
-      "expression": "(some p : players | p.role == Legion) => #{p : {Tim, Josh, Oscar, You, Matt, Fraser} | p.alignment == Good} != 1"
+      "expression": "some Legion.~role => #({Tim, Josh, Oscar, You, Matt, Fraser} & Good.~alignment) != 1"
     }
   ],
   "timeline": [

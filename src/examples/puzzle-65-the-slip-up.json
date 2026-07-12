@@ -19,16 +19,16 @@
   "setup": "none",
   "constraints": [
     {
-      "expression": "#{p : players | some (p.role & {`Fang Gu`, `No Dashii`, Vortox})} == 1"
+      "expression": "one demons.~role"
     },
     {
-      "expression": "#{p : players | p.role == Witch} == 1"
+      "expression": "one Witch.~role"
     },
     {
-      "expression": "(some p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Klutz})} == 2"
+      "expression": "some `Fang Gu`.~role => #outsiders.~role = 2"
     },
     {
-      "expression": "(no p : players | p.role == `Fang Gu`) => #{p : players | some (p.role & {Mutant, Klutz})} == 1"
+      "expression": "no `Fang Gu`.~role => #outsiders.~role = 1"
     }
   ],
   "timeline": [
@@ -149,7 +149,7 @@
       "info": [
         {
           "timing": "day_1",
-          "expression": "Tom.type == Demon or Matt.type == Demon"
+          "expression": "Demon in {Tom, Matt}.type"
         }
       ]
     }

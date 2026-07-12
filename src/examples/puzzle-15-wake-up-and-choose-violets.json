@@ -84,10 +84,7 @@
       "timing": "day_1",
       "statements": [
         {
-          "options": [
-            "#{r : {Clockmaker, Klutz, Juggler, Vortox} | some p : players | p.role == r} == 3",
-            "townsfolk_chain_length(5)"
-          ]
+          "options": ["#({Clockmaker, Klutz, Juggler, Vortox} & players.role) = 3", "townsfolk_chain_length(5)"]
         }
       ],
       "possibleActualRoles": ["Savant"]

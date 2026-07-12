@@ -170,11 +170,13 @@ class Parser {
     let left = this.parsePrimary();
     while (this.peek().kind === "dot") {
       this.consume();
+      const inverse = this.match("tilde");
       const field = this.expect("ident", "field name");
       left = {
         kind: "join",
         left,
         field: field.text,
+        inverse,
         fieldSpan: field.span,
         span: { start: left.span.start, end: field.span.end },
       };

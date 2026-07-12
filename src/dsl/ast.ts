@@ -46,6 +46,7 @@ export interface AstJoin {
   readonly kind: "join";
   readonly left: AstNode;
   readonly field: string;
+  readonly inverse: boolean;
   readonly fieldSpan: Span;
   readonly span: Span;
 }

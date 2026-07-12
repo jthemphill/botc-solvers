@@ -38,10 +38,7 @@
       "timing": "day_2",
       "statements": [
         {
-          "options": [
-            "chef(1)",
-            "some p: players | p.role == Drunk && p.left.type == Townsfolk && p.right.type == Townsfolk"
-          ]
+          "options": ["chef(1)", "some p : Drunk.~role | all n : p.neighbors | n.type = Townsfolk"]
         }
       ],
       "possibleActualRoles": ["Savant"]
