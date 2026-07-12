@@ -585,18 +585,21 @@ export class Slayer extends Role {
   readonly target?: string;
   readonly killed?: boolean;
   readonly gameContinued: boolean;
+  readonly alivePlayerCount?: number;
 
   constructor(
     options: RoleBaseOptions & {
       readonly target?: string;
       readonly killed?: boolean;
       readonly gameContinued?: boolean;
+      readonly alivePlayerCount?: number;
     },
   ) {
     super(options);
     this.target = options.target;
     this.killed = options.killed;
     this.gameContinued = options.gameContinued ?? options.killed === true;
+    this.alivePlayerCount = options.alivePlayerCount;
   }
 
   static shotResult(game: BOTCModel, target: string, killed: boolean, timing: Timing, name: string): BoolVar {
@@ -614,8 +617,8 @@ export class Slayer extends Role {
     );
   }
 
-  static scarletWomanCanCatch(game: BOTCModel, name: string): BoolVar {
-    return game.characters.has("Scarlet Woman")
+  static scarletWomanCanCatch(game: BOTCModel, name: string, alivePlayerCount = game.players.length): BoolVar {
+    return alivePlayerCount >= 5 && game.characters.has("Scarlet Woman")
       ? game.roleInPlay("Scarlet Woman")
       : game.constantBool(false, `${name}_no_scarlet_woman_to_catch`);
   }
@@ -640,7 +643,7 @@ export class Slayer extends Role {
     if (this.killed && this.gameContinued) {
       game.addImplication(
         Slayer.actualDemonTarget(game, this.target, claimName(this.name, Slayer, "shot")),
-        Slayer.scarletWomanCanCatch(game, claimName(this.name, Slayer, "shot_continued")),
+        Slayer.scarletWomanCanCatch(game, claimName(this.name, Slayer, "shot_continued"), this.alivePlayerCount),
       );
     }
     this.applyInfoClaimBuilders(game, Slayer, this.infoClaims, options);
@@ -1055,7 +1058,9 @@ export class Sage extends Role {
     return this.demonAmong.length === 0
       ? undefined
       : game.anyOf(
-          this.demonAmong.map((player) => game.isDemon(player)),
+          this.demonAmong.map((player) =>
+            game.registersAsCharacterType(player, CharacterType.Demon, claimName(this.name, Sage, player)),
+          ),
           claimName(this.name, Sage, "demon_among"),
         );
   }
@@ -1145,21 +1150,27 @@ export interface ChambermaidCheck {
 }
 
 const FIRST_NIGHT_WAKE_ROLES = new Set([
+  "Boffin",
   "Chef",
   "Clockmaker",
+  "Evil Twin",
+  "Godfather",
   "Investigator",
+  "Kazali",
   "Knight",
   "Librarian",
   "Noble",
   "Shugenja",
   "Steward",
   "Washerwoman",
+  "Widow",
 ]);
 const EVERY_NIGHT_WAKE_ROLES = new Set([
   "Balloonist",
   "Butler",
   "Chambermaid",
   "Dreamer",
+  "Devil's Advocate",
   "Empath",
   "Fortune Teller",
   "Lunar Prodigy",
@@ -1168,9 +1179,30 @@ const EVERY_NIGHT_WAKE_ROLES = new Set([
   "Pukka",
   "Solar Prodigy",
   "Snake Charmer",
+  "Spy",
   "Village Idiot",
+  "Witch",
 ]);
-const SECOND_NIGHT_PLUS_WAKE_ROLES = new Set(["Exorcist", "Oracle", "Town Crier", "Undertaker"]);
+const SECOND_NIGHT_PLUS_WAKE_ROLES = new Set([
+  "Acrobat",
+  "Cerenovus",
+  "Exorcist",
+  "Fang Gu",
+  "Flowergirl",
+  "Gambler",
+  "Imp",
+  "Kazali",
+  "Lord of Typhon",
+  "Monk",
+  "No Dashii",
+  "Oracle",
+  "Pit-Hag",
+  "Po",
+  "Town Crier",
+  "Undertaker",
+  "Vigormortis",
+  "Vortox",
+]);
 const SECOND_NIGHT_WAKE_ROLES = new Set(["Juggler"]);
 
 function nightNumber(timing: Timing): number | undefined {
@@ -1464,11 +1496,20 @@ export class Flowergirl extends Role {
     timing: Timing,
     name: string,
   ): BoolVar {
+    const voteTiming = Flowergirl.voteTiming(timing);
     const anyDemonVoted = game.anyOf(
-      voters.map((player) => game.registersAsCharacterTypeAt(player, CharacterType.Demon, timing, `${name}_${player}`)),
+      voters.map((player) =>
+        game.registersAsCharacterTypeAt(player, CharacterType.Demon, voteTiming, `${name}_${player}`),
+      ),
       `${name}_any_demon_voted`,
     );
     return demonVoted ? anyDemonVoted : game.not(anyDemonVoted, `${name}_no_demon_voted`);
+  }
+
+  private static voteTiming(timing: Timing): Timing {
+    const match = /^night_(\d+)$/.exec(timing);
+    if (match === null) return timing;
+    return `day_${Math.max(1, Number(match[1]) - 1)}` as Timing;
   }
 
   override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {

@@ -344,12 +344,16 @@ export class BOTCModel {
       ...(this.characters.has(drunkRole) ? [drunkRole] : []),
       ...(drunkRole !== "Hermit" && this.characters.has(drunkRole) && this.characters.has("Hermit") ? ["Hermit"] : []),
     ];
+    const thinksRoleIsOutOfPlayRoles = [
+      ...drunkLikeRoles,
+      ...(this.characters.has("Marionette") ? ["Marionette"] : []),
+    ];
     const claimedTownsfolk = roleCharacterType(claimedRole) === CharacterType.Townsfolk;
     if (claimedTownsfolk && options.possibleActualRoles === undefined) possibleRoles.push(...drunkLikeRoles);
     this.setPossibleActualRoles(claim.player, possibleRoles);
     if (claimedTownsfolk)
-      for (const drunkLikeRole of drunkLikeRoles)
-        this.addDrunkThinksOutOfPlayRole(claim.player, apparentRole, drunkLikeRole);
+      for (const hiddenRole of thinksRoleIsOutOfPlayRoles)
+        this.addThinksOutOfPlayRole(claim.player, apparentRole, hiddenRole);
   }
 
   addClaim(
@@ -363,7 +367,7 @@ export class BOTCModel {
     this.setApparentRole(player, apparentRoleRef);
     this.setPossibleActualRoles(player, possibleRoles);
     if (possibleRoles.some((role) => roleName(role) === roleName(drunkRole)))
-      this.addDrunkThinksOutOfPlayRole(player, apparentRoleRef, drunkRole);
+      this.addThinksOutOfPlayRole(player, apparentRoleRef, drunkRole);
   }
 
   setPossibleActualRoles(player: string, roles: readonly RoleRef[]): void {
@@ -381,9 +385,9 @@ export class BOTCModel {
     this.addFalse(this.actualIs(player, role));
   }
 
-  addDrunkThinksOutOfPlayRole(player: string, apparentRole: RoleRef, drunkRole: RoleRef): void {
+  addThinksOutOfPlayRole(player: string, apparentRole: RoleRef, hiddenRole: RoleRef): void {
     if (!this.uniqueCharacters) return;
-    this.addImplication(this.actualIs(player, drunkRole), this.roleInPlay(apparentRole).not());
+    this.addImplication(this.actualIs(player, hiddenRole), this.roleInPlay(apparentRole).not());
   }
 
   forceOutsiderCount(

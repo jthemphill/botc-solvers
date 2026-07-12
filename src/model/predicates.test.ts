@@ -21,6 +21,7 @@ import {
   Librarian,
   LunarProdigy,
   Mathematician,
+  Marionette,
   NoDashii,
   Noble,
   Poisoner,
@@ -78,6 +79,18 @@ describe("predicates and helpers", () => {
     invalid.fixActual("A", "Drunk");
     invalid.fixActual("B", "Imp");
     expect(await invalid.solveAll({ limit: 1 })).toEqual([]);
+  });
+
+  test("Marionette thinks they are an out-of-play Townsfolk", async () => {
+    const game = new BOTCModel(["A", "B", "C"], {
+      characters: script(Imp, Marionette, Chef),
+      backend,
+    });
+    game.fixActual("B", Chef);
+    game.fixActual("C", Imp);
+    applyClaims(game, [new Chef({ name: "A", possibleActualRoles: [Marionette] })]);
+
+    expect(await game.solveAll({ limit: 1 })).toEqual([]);
   });
 
   test("Hermit can think they are an out-of-play Townsfolk when Drunk is on script", async () => {

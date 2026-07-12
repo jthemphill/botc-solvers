@@ -247,18 +247,33 @@ function enforceLordOfTyphonSetup(game: BOTCModel, baseCounts: StandardSetupCoun
 
   game.addEnforcedExactlyN(demonPlayers, 1, condition);
   game.addEnforcedExactlyN(minionPlayers, minionCount, condition);
-  if (minionCount === 2) enforceTwoMinionLordOfTyphonLine(game, condition);
+  enforceLordOfTyphonLine(game, minionCount, condition);
 }
 
-function enforceTwoMinionLordOfTyphonLine(game: BOTCModel, condition: BoolLike): void {
-  for (const player of game.players) {
-    const [left, right] = game.neighbors(player);
+function enforceLordOfTyphonLine(game: BOTCModel, minionCount: number, condition: BoolLike): void {
+  for (const [playerIndex, player] of game.players.entries()) {
     const playerIsLordOfTyphon = game.allOf(
       [condition, game.actualIs(player, "Lord of Typhon")],
       `${player}_lord_of_typhon_line_active`,
     );
-    game.addImplication(playerIsLordOfTyphon, game.isMinion(left));
-    game.addImplication(playerIsLordOfTyphon, game.isMinion(right));
+    const lineOptions = Array.from({ length: minionCount - 1 }, (_, index) => index + 1).map((leftCount) => {
+      const rightCount = minionCount - leftCount;
+      const minionSeats = [
+        ...Array.from(
+          { length: leftCount },
+          (_, offset) => game.players[(playerIndex - offset - 1 + game.players.length) % game.players.length] as string,
+        ),
+        ...Array.from(
+          { length: rightCount },
+          (_, offset) => game.players[(playerIndex + offset + 1) % game.players.length] as string,
+        ),
+      ];
+      return game.allOf(
+        minionSeats.map((minion) => game.isMinion(minion)),
+        `${player}_lord_of_typhon_${leftCount}_left_${rightCount}_right`,
+      );
+    });
+    game.addImplication(playerIsLordOfTyphon, game.anyOf(lineOptions, `${player}_lord_of_typhon_line`));
   }
 }
 

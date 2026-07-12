@@ -467,6 +467,8 @@ function livingScarletWomanCanCatchDemonDeath(
   event: NonNullable<PuzzleDoc["timeline"]>[number],
 ): BoolLike {
   if (!doc.script.includes("Scarlet Woman")) return game.constantBool(false, "no_scarlet_woman_to_catch_demon");
+  if (livingPlayersBeforeDeathEvent(doc, event).length < 5)
+    return game.constantBool(false, `${event.timing}_fewer_than_five_alive_for_scarlet_woman`);
   const candidates = livingPlayersAfterDeathEvent(doc, event);
   return game.anyOf(
     candidates.map((player) => roleAtBeforeEvent(game, doc, player, "Scarlet Woman", event)),
@@ -553,6 +555,9 @@ interface NightDeathSource {
   readonly id: string;
   readonly available: BoolLike;
   readonly players?: readonly string[];
+  readonly maxAssignments?: number;
+  readonly requiredWhenAvailable?: boolean;
+  readonly poKill?: boolean;
   readonly demonKill?: boolean;
   readonly starpassesImp?: boolean;
   readonly fangGuJumps?: boolean;
@@ -577,9 +582,17 @@ function applyNightDeathSourceConstraints(
   const roleTimings = collectTimings(doc);
   const beforeInfoAssignments = new Map<Timing, Map<string, BoolLike[]>>();
   const demonKillAssignments = new Map<string, BoolLike[]>();
+  const poKillAssignmentsByTiming = new Map<Timing, BoolLike>();
   for (const [eventIndex, event] of (doc.timeline ?? []).entries()) {
     if (event.type !== "nightDeath") continue;
-    const sources = nightDeathSources(game, doc, event, ctx);
+    const timing = event.timing as Timing;
+    const priorNight = previousNight(timing);
+    const priorPoKill = priorNight === undefined ? undefined : poKillAssignmentsByTiming.get(priorNight);
+    const poCharged =
+      priorNight === undefined || priorNight === "night_1"
+        ? game.constantBool(false, `${timing}_po_cannot_be_charged`)
+        : game.not(priorPoKill ?? game.constantBool(false, `${timing}_no_prior_po_kill`), `${timing}_po_charged`);
+    const sources = nightDeathSources(game, doc, event, ctx, poCharged);
     const assignmentsBySource = new Map<NightDeathSource, BoolLike[]>();
 
     for (const player of event.players) {
@@ -614,13 +627,17 @@ function applyNightDeathSourceConstraints(
 
     const sourceCapacityActive = game.constantBool(true, `${event.timing}_night_death_source_capacity_active`);
     for (const [source, assignments] of assignmentsBySource) {
-      game.addEnforcedAtMostN(assignments, 1, sourceCapacityActive);
+      game.addEnforcedAtMostN(assignments, source.maxAssignments ?? 1, sourceCapacityActive);
       const sourceAssigned =
         assignments.length === 1
           ? (assignments[0] as BoolLike)
           : game.anyOf(assignments, `${event.timing}_${source.id}_assigned`);
-      game.addImplication(source.available, sourceAssigned);
+      if (source.requiredWhenAvailable !== false) game.addImplication(source.available, sourceAssigned);
     }
+    const poKillAssignments = [...assignmentsBySource.entries()].flatMap(([source, assignments]) =>
+      source.poKill === true ? assignments : [],
+    );
+    poKillAssignmentsByTiming.set(timing, game.anyOf(poKillAssignments, `${timing}_po_kill_assigned`));
   }
 
   const beforeInfoDeathsByTiming = new Map<Timing, ReadonlyMap<string, BoolLike>>();
@@ -657,35 +674,80 @@ function nightDeathSources(
   doc: PuzzleDoc,
   event: NonNullable<PuzzleDoc["timeline"]>[number],
   ctx: Omit<CompileCtx, "nameRoot">,
+  poCharged: BoolLike,
 ): readonly NightDeathSource[] {
   const timing = event.timing as Timing;
   return [
-    demonKillDeathSource(game, doc, event),
+    ...demonKillDeathSources(game, doc, event, poCharged),
     ...gossipDeathSources(game, doc, event, ctx),
     ...acrobatDeathSources(game, doc, timing),
     ...gamblerDeathSources(game, doc, timing),
   ];
 }
 
-function demonKillDeathSource(
+function demonKillDeathSources(
   game: BOTCModel,
   doc: PuzzleDoc,
   event: NonNullable<PuzzleDoc["timeline"]>[number],
-): NightDeathSource {
+  poCharged: BoolLike,
+): readonly NightDeathSource[] {
   const timing = event.timing as Timing;
   const unblockedDemonKill = game.not(demonKillBlockedAt(game, doc, timing), `${timing}_demon_kill_not_blocked`);
-  return {
-    id: `${timing}_demon_kill`,
+  const demonRoleNames = doc.script
+    .map(resolveRoleRef)
+    .filter((role) => roleCharacterType(role) === CharacterType.Demon)
+    .map(roleName);
+  const sourceSpecs: readonly {
+    readonly id: string;
+    readonly roles: readonly string[];
+    readonly activeIf?: BoolLike;
+    readonly maxAssignments: number;
+    readonly requiredWhenAvailable: boolean;
+    readonly poKill?: boolean;
+  }[] = [
+    {
+      id: "demon_kill",
+      roles: demonRoleNames.filter((role) => role !== "Leviathan" && role !== "Po"),
+      maxAssignments: 1,
+      requiredWhenAvailable: true,
+    },
+    {
+      id: "po_regular_kill",
+      roles: demonRoleNames.filter((role) => role === "Po"),
+      activeIf: game.not(poCharged, `${timing}_po_not_charged`),
+      maxAssignments: 1,
+      requiredWhenAvailable: false,
+      poKill: true,
+    },
+    {
+      id: "po_charged_kill",
+      roles: demonRoleNames.filter((role) => role === "Po"),
+      activeIf: poCharged,
+      maxAssignments: 3,
+      requiredWhenAvailable: false,
+      poKill: true,
+    },
+  ].filter((source) => source.roles.length > 0);
+
+  return sourceSpecs.map((source): NightDeathSource => ({
+    id: `${timing}_${source.id}`,
     available: game.allOf(
-      [livingDemonPathBeforeDeathEvent(game, doc, event), unblockedDemonKill],
-      `${timing}_demon_kill_source_available`,
+      [
+        livingDemonPathBeforeDeathEvent(game, doc, event, new Set(source.roles)),
+        unblockedDemonKill,
+        ...(source.activeIf === undefined ? [] : [source.activeIf]),
+      ],
+      `${timing}_${source.id}_source_available`,
     ),
+    maxAssignments: source.maxAssignments,
+    requiredWhenAvailable: source.requiredWhenAvailable,
+    poKill: source.poKill,
     demonKill: true,
-    starpassesImp: true,
-    fangGuJumps: true,
+    starpassesImp: source.roles.includes("Imp"),
+    fangGuJumps: source.roles.includes("Fang Gu"),
     deathTiming: "beforeInfo",
     constrainAssignment: (player, assignment) => {
-      if (doc.script.includes("Fang Gu")) {
+      if (source.roles.includes("Fang Gu")) {
         game.addImplication(assignment, fangGuDemonKillVictimAllowed(game, doc, event, player));
       }
       if (!doc.script.includes("Soldier")) return;
@@ -698,7 +760,7 @@ function demonKillDeathSource(
         game.not(soberHealthySoldier, `${timing}_${slug(player)}_not_sober_healthy_soldier_demon_kill`),
       );
     },
-  };
+  }));
 }
 
 function fangGuDemonKillVictimAllowed(
@@ -867,6 +929,7 @@ function applyScarletWomanCatch(
   roleTimings: readonly Timing[],
 ): void {
   if (!doc.script.includes("Scarlet Woman")) return;
+  if (livingPlayersBeforeDeathEvent(doc, event).length < 5) return;
   const timing = event.timing as Timing;
   const demonRoles = doc.script.map(resolveRoleRef).filter((role) => {
     if (roleCharacterType(role) !== CharacterType.Demon) return false;
@@ -1007,17 +1070,24 @@ function livingDemonPathBeforeDeathEvent(
   game: BOTCModel,
   doc: PuzzleDoc,
   event: NonNullable<PuzzleDoc["timeline"]>[number],
+  allowedRoles?: ReadonlySet<string>,
 ): BoolLike {
   const livingPlayers = livingPlayersBeforeDeathEvent(doc, event);
   const livingPlayerSet = new Set(livingPlayers);
   const deadPlayers = doc.players.filter((player) => !livingPlayerSet.has(player));
-  const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
+  const demonRoles = doc.script
+    .map(resolveRoleRef)
+    .filter(
+      (role) =>
+        roleCharacterType(role) === CharacterType.Demon &&
+        (allowedRoles === undefined || allowedRoles.has(roleName(role))),
+    );
   const livingDemonBeforeDeath = livingPlayers.flatMap((player) =>
     demonRoles.map((role) => roleAtBeforeEvent(game, doc, player, role, event)),
   );
   const possibleSuccessions: BoolLike[] = [];
 
-  if (doc.script.includes("Imp")) {
+  if (demonRoles.some((role) => roleName(role) === "Imp")) {
     possibleSuccessions.push(
       game.allOf(
         [
@@ -1148,6 +1218,12 @@ function followingNight(timing: Timing): Timing | undefined {
   return `night_${Number(match[1]) + 1}` as Timing;
 }
 
+function previousNight(timing: Timing): Timing | undefined {
+  const match = /^night_(\d+)$/.exec(timing);
+  if (match === null || Number(match[1]) <= 1) return undefined;
+  return `night_${Number(match[1]) - 1}` as Timing;
+}
+
 function healthTimingForDayAbility(timing: Timing): Timing {
   const match = /^day_(\d+)$/.exec(timing);
   return match === null ? timing : (`night_${Number(match[1])}` as Timing);
@@ -1182,6 +1258,9 @@ function applyTimelineClaimContext(
   game: BOTCModel,
   nightDeathTiming: NightDeathTimingContext,
 ): ClaimWithTimelineContext {
+  if (claim.type === "Slayer" && claim.timing !== undefined) {
+    return { ...claim, alivePlayerCount: livingPlayersAt(doc, claim.timing as Timing).length };
+  }
   if (claim.type === "Legionary" && claim.counts !== undefined) {
     return {
       ...claim,
