@@ -1,3 +1,5 @@
+import type { BoolLike, BOTCModel, Timing } from "./model";
+
 export enum Alignment {
   Good = "good",
   Evil = "evil",
@@ -14,11 +16,16 @@ export enum StatusEffect {
   Poisoned = "poisoned",
 }
 
+export interface WakeRule {
+  wakes(game: BOTCModel, player: string, timing: Timing, name: string): BoolLike;
+}
+
 export interface RoleClass {
   readonly roleName: string;
   readonly alignment: Alignment;
   readonly characterType: CharacterType;
   readonly maxCopies?: number;
+  readonly wake: WakeRule;
 }
 
 export interface RoleInstance {
@@ -89,4 +96,12 @@ export function roleMaxCopies(role: RoleRef): number {
   if (Number.isInteger(maxCopies) && (maxCopies as number) > 0) return maxCopies as number;
   if (roleName(role) === "Village Idiot") return 3;
   return 1;
+}
+
+export function roleWakeRule(role: RoleRef): WakeRule {
+  const wake = (role as { wake?: unknown }).wake;
+  if (typeof wake === "object" && wake !== null && typeof (wake as { wakes?: unknown }).wakes === "function") {
+    return wake as WakeRule;
+  }
+  throw new TypeError(`${roleName(role)} does not expose wake metadata.`);
 }

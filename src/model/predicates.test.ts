@@ -45,6 +45,7 @@ import {
 import { chefCountRegistersAs, drunkBetweenTwoTownsfolk, registersAsRoleAmong } from "./predicates";
 import { World, night, type Timing } from "./model";
 import { KissatBackend, type SatBackend } from "./sat";
+import { ROLE_CLASSES } from "./roleRegistry";
 
 const TEST_CHARACTERS = script(Imp, ScarletWoman, Drunk, Recluse, Investigator, Noble);
 const POISON_CHARACTERS = script(Imp, Poisoner, Investigator);
@@ -55,6 +56,10 @@ describe("predicates and helpers", () => {
 
   beforeAll(async () => {
     backend = await KissatBackend.create();
+  });
+
+  test("every registered role owns a wake definition", () => {
+    expect([...ROLE_CLASSES.values()].filter((role) => !Object.hasOwn(role, "wake"))).toEqual([]);
   });
 
   test("left neighbor is the next seated player", () => {

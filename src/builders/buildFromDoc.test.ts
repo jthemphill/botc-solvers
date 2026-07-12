@@ -558,6 +558,73 @@ describe("buildFromDoc", () => {
 
     expect(worlds).toHaveLength(1);
   });
+  test("Chambermaid stops counting a Seamstress after they use their ability", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Chambermaid", "Seamstress", "Chef", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Chambermaid"] },
+            { name: "B", roles: ["Seamstress"] },
+            { name: "C", roles: ["Chef"] },
+            { name: "D", roles: ["Imp"] },
+          ],
+        }),
+        claims: [
+          {
+            type: "Chambermaid",
+            name: "A",
+            checks: [
+              { left: "B", right: "C", timing: "night_2", count: 1 },
+              { left: "B", right: "C", timing: "night_3", count: 0 },
+            ],
+          },
+          {
+            type: "Seamstress",
+            name: "B",
+            timing: "night_2",
+            among: ["C", "D"],
+            aligned: false,
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
+  test("Chambermaid does not count a Demon chosen by the Exorcist", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Chambermaid", "Exorcist", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Chambermaid"] },
+            { name: "B", roles: ["Exorcist"] },
+            { name: "C", roles: ["Imp"] },
+            { name: "D", roles: ["Chef"] },
+          ],
+        }),
+        claims: [
+          {
+            type: "Chambermaid",
+            name: "A",
+            checks: [{ left: "B", right: "C", timing: "night_2", count: 1 }],
+          },
+          { type: "Exorcist", name: "B", choices: [{ timing: "night_2", player: "C" }] },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
   test("Princess nominations block Demon night kills unless poisoned", async () => {
     const blockedWorlds = await buildFromDoc(
       {
