@@ -118,6 +118,21 @@ describe("puzzle document reducer", () => {
     ]);
   });
 
+  test("load preserves an explicit night with no deaths", () => {
+    const input: PuzzleDoc = {
+      players: ["A", "B"],
+      script: ["Chef", "Imp"],
+      claims: [],
+      timeline: [{ timing: "night_2", type: "nightDeath", players: [] }],
+    };
+    const doc = reducer(input, {
+      type: "load",
+      doc: input,
+    });
+
+    expect(doc.timeline).toEqual([{ timing: "night_2", type: "nightDeath", players: [] }]);
+  });
+
   test("Fortune Teller checks normalize into one claim per night", () => {
     const doc: PuzzleDoc = {
       players: ["A", "B", "C"],
@@ -225,6 +240,49 @@ describe("puzzle document reducer", () => {
     expect(next.claims).toEqual([{ type: "Chambermaid", name: "A", checks: [{ left: "Bea", right: "C", count: 1 }] }]);
   });
 
+  test("player edits update Innkeeper choices", () => {
+    const doc: PuzzleDoc = {
+      players: ["A", "B", "C"],
+      script: ["Innkeeper"],
+      claims: [{ type: "Innkeeper", name: "A", choices: [{ players: ["B", "C"], timing: "night_2" }] }],
+    };
+
+    const renamed = reducer(doc, { type: "renamePlayer", index: 1, name: "Bea" });
+    expect(renamed.claims).toEqual([
+      { type: "Innkeeper", name: "A", choices: [{ players: ["Bea", "C"], timing: "night_2" }] },
+    ]);
+
+    const removed = reducer(renamed, { type: "setPlayerCount", count: 2 });
+    expect(removed.claims).toEqual([
+      { type: "Innkeeper", name: "A", choices: [{ players: ["Bea"], timing: "night_2" }] },
+    ]);
+  });
+
+  test("player edits update structured Bad Moon Rising targets", () => {
+    const doc: PuzzleDoc = {
+      players: ["A", "B", "C"],
+      script: ["Assassin", "Devil's Advocate", "Godfather", "Grandmother", "Sailor", "Moonchild"],
+      claims: [
+        { type: "Assassin", name: "A", target: "B", timing: "night_2" },
+        { type: "Devil's Advocate", name: "A", choices: [{ player: "B", timing: "night_2" }] },
+        { type: "Godfather", name: "A", choices: [{ player: "B", timing: "night_2" }] },
+        { type: "Grandmother", name: "A", grandchild: "B", role: "Chef" },
+        { type: "Sailor", name: "A", choices: [{ player: "B", timing: "night_2" }] },
+        { type: "Moonchild", name: "A", chosen: "B", timing: "day_2" },
+      ],
+    };
+
+    const renamed = reducer(doc, { type: "renamePlayer", index: 1, name: "Bea" });
+    expect(renamed.claims).toEqual([
+      { type: "Assassin", name: "A", target: "Bea", timing: "night_2" },
+      { type: "Devil's Advocate", name: "A", choices: [{ player: "Bea", timing: "night_2" }] },
+      { type: "Godfather", name: "A", choices: [{ player: "Bea", timing: "night_2" }] },
+      { type: "Grandmother", name: "A", grandchild: "Bea", role: "Chef" },
+      { type: "Sailor", name: "A", choices: [{ player: "Bea", timing: "night_2" }] },
+      { type: "Moonchild", name: "A", chosen: "Bea", timing: "day_2" },
+    ]);
+  });
+
   test("renamePlayer updates Slayer targets", () => {
     const doc: PuzzleDoc = {
       players: ["A", "B"],
@@ -235,6 +293,18 @@ describe("puzzle document reducer", () => {
     const next = reducer(doc, { type: "renamePlayer", index: 1, name: "Bea" });
 
     expect(next.claims).toEqual([{ type: "Slayer", name: "A", timing: "day_1", target: "Bea", killed: false }]);
+  });
+
+  test("renamePlayer updates Professor targets", () => {
+    const doc: PuzzleDoc = {
+      players: ["A", "B"],
+      script: ["Professor"],
+      claims: [{ type: "Professor", name: "A", timing: "night_2", target: "B" }],
+    };
+
+    const next = reducer(doc, { type: "renamePlayer", index: 1, name: "Bea" });
+
+    expect(next.claims).toEqual([{ type: "Professor", name: "A", timing: "night_2", target: "Bea" }]);
   });
 
   test("removePlayer removes empty timeline events", () => {

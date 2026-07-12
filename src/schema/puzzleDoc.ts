@@ -16,7 +16,15 @@ export interface PuzzleConstraintDoc {
 }
 
 export type TimelineEventType =
-  "nominationDeath" | "witchCurse" | "slayerShot" | "execution" | "survivedExecution" | "nightDeath" | "doomsayerDeath";
+  | "nominationDeath"
+  | "witchCurse"
+  | "slayerShot"
+  | "execution"
+  | "survivedExecution"
+  | "nightDeath"
+  | "tinkerDeath"
+  | "resurrection"
+  | "doomsayerDeath";
 
 export interface TimelineEventDoc {
   readonly timing: string;
@@ -32,12 +40,14 @@ export const TIMELINE_DEATH_EVENT_TYPES = [
   "slayerShot",
   "execution",
   "nightDeath",
+  "tinkerDeath",
   "doomsayerDeath",
 ] as const satisfies readonly TimelineEventType[];
 
 export const TIMELINE_EVENT_TYPES = [
   ...TIMELINE_DEATH_EVENT_TYPES,
   "survivedExecution",
+  "resurrection",
 ] as const satisfies readonly TimelineEventType[];
 
 export function isTimelineDeathEvent(event: TimelineEventDoc): boolean {
@@ -45,6 +55,7 @@ export function isTimelineDeathEvent(event: TimelineEventDoc): boolean {
 }
 
 export type Claim =
+  | AssassinClaim
   | AcrobatClaim
   | InvestigatorClaim
   | LibrarianClaim
@@ -53,12 +64,18 @@ export type Claim =
   | ChambermaidClaim
   | EmpathClaim
   | ExorcistClaim
+  | DevilsAdvocateClaim
+  | GodfatherClaim
+  | GrandmotherClaim
+  | InnkeeperClaim
   | FlowergirlClaim
   | FortuneTellerClaim
   | UndertakerClaim
   | LegionaryClaim
   | NobleClaim
   | OracleClaim
+  | ProfessorClaim
+  | SailorClaim
   | StewardClaim
   | KnightClaim
   | GamblerClaim
@@ -85,6 +102,7 @@ export type Claim =
   | BalloonistClaim
   | SavantClaim
   | NightwatchmanClaim
+  | MoonchildClaim
   | BareClaim;
 
 interface BaseClaim {
@@ -111,6 +129,11 @@ export interface AcrobatChoiceDoc {
 export interface AcrobatClaim extends BaseClaim {
   readonly type: "Acrobat";
   readonly choices?: readonly AcrobatChoiceDoc[];
+}
+
+export interface AssassinClaim extends BaseClaim {
+  readonly type: "Assassin";
+  readonly target?: string;
 }
 
 export interface InvestigatorClaim extends BaseClaim {
@@ -164,6 +187,48 @@ export interface ExorcistClaim extends BaseClaim {
   readonly choices?: readonly ExorcistChoiceDoc[];
 }
 
+export interface InnkeeperChoiceDoc {
+  readonly players: readonly string[];
+  readonly timing?: string;
+}
+
+export interface InnkeeperClaim extends BaseClaim {
+  readonly type: "Innkeeper";
+  readonly choices?: readonly InnkeeperChoiceDoc[];
+}
+
+export interface NightlyPlayerChoiceDoc {
+  readonly player: string;
+  readonly timing?: string;
+}
+
+export interface DevilsAdvocateClaim extends BaseClaim {
+  readonly type: "Devil's Advocate";
+  readonly choices?: readonly NightlyPlayerChoiceDoc[];
+}
+
+export interface SailorClaim extends BaseClaim {
+  readonly type: "Sailor";
+  readonly choices?: readonly NightlyPlayerChoiceDoc[];
+}
+
+export interface GrandmotherClaim extends BaseClaim {
+  readonly type: "Grandmother";
+  readonly grandchild?: string;
+  readonly role?: string;
+}
+
+export interface GodfatherClaim extends BaseClaim {
+  readonly type: "Godfather";
+  readonly outsiderRoles?: readonly string[];
+  readonly choices?: readonly NightlyPlayerChoiceDoc[];
+}
+
+export interface MoonchildClaim extends BaseClaim {
+  readonly type: "Moonchild";
+  readonly chosen?: string;
+}
+
 export interface FortuneTellerCheckDoc {
   readonly left: string;
   readonly right: string;
@@ -214,6 +279,11 @@ export interface NobleClaim extends BaseClaim {
 export interface OracleClaim extends BaseClaim {
   readonly type: "Oracle";
   readonly count?: number;
+}
+
+export interface ProfessorClaim extends BaseClaim {
+  readonly type: "Professor";
+  readonly target?: string;
 }
 
 export interface StewardClaim extends BaseClaim {
@@ -428,11 +498,12 @@ export const BARE_CLAIM_TYPES = [
   "Butler",
   "Cerenovus",
   "Damsel",
-  "Devil's Advocate",
   "Drunk",
   "Evil Twin",
+  "Fool",
   "Golem",
   "Goblin",
+  "Goon",
   "Hermit",
   "Imp",
   "Kazali",
@@ -442,9 +513,12 @@ export const BARE_CLAIM_TYPES = [
   "Lunar Prodigy",
   "Lunatic",
   "Marionette",
+  "Mastermind",
   "Mayor",
+  "Minstrel",
   "Mutant",
   "No Dashii",
+  "Pacifist",
   "Pit-Hag",
   "Po",
   "Poisoner",
@@ -455,15 +529,18 @@ export const BARE_CLAIM_TYPES = [
   "Riot",
   "Saint",
   "Scarlet Woman",
+  "Shabaloth",
   "Soldier",
   "Solar Prodigy",
   "Spy",
   "Sweetheart",
   "Tea Lady",
+  "Tinker",
   "Vortox",
   "Widow",
   "Witch",
   "Xaan",
+  "Zombuul",
 ] as const;
 
 export type BareClaimType = (typeof BARE_CLAIM_TYPES)[number];
@@ -473,6 +550,7 @@ export interface BareClaim extends BaseClaim {
 }
 
 export const STRUCTURED_CLAIM_TYPES = [
+  "Assassin",
   "Acrobat",
   "Investigator",
   "Librarian",
@@ -481,12 +559,18 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Chambermaid",
   "Empath",
   "Exorcist",
+  "Devil's Advocate",
+  "Godfather",
+  "Grandmother",
+  "Innkeeper",
   "Flowergirl",
   "FortuneTeller",
   "Undertaker",
   "Legionary",
   "Noble",
   "Oracle",
+  "Professor",
+  "Sailor",
   "Steward",
   "Knight",
   "Gambler",
@@ -513,6 +597,7 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Balloonist",
   "Savant",
   "Nightwatchman",
+  "Moonchild",
 ] as const satisfies readonly Claim["type"][];
 
 export const SUPPORTED_CLAIM_TYPES = new Set<Claim["type"]>([...STRUCTURED_CLAIM_TYPES, ...BARE_CLAIM_TYPES]);

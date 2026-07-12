@@ -1,0 +1,37 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Ada": "Godfather",
+        "Cora": "Moonchild",
+        "Drew": "Sailor",
+        "Eve": "Gambler",
+        "Finn": "Gossip",
+        "Gia": "Tinker",
+        "Hugo": "Pukka",
+        "Iris": "Goon",
+        "You": "Chambermaid"
+      },
+      "poisoned": {
+        "night_1": ["Gia"],
+        "day_1": ["Gia"],
+        "night_2": ["Cora"],
+        "day_2": ["Cora"],
+        "night_3": ["Ada", "Cora"],
+        "day_3": ["Ada"],
+        "night_4": ["Ada"],
+        "day_4": ["Ada"]
+      },
+      "drunkByTiming": {
+        "night_1": ["Drew"],
+        "day_1": ["Drew"],
+        "night_2": ["Ada", "Eve"],
+        "day_2": ["Ada", "Eve"],
+        "night_3": ["Drew"],
+        "day_3": ["Drew"],
+        "night_4": ["Hugo"],
+        "day_4": ["Hugo"]
+      }
+    }
+  ]
+}

@@ -135,6 +135,12 @@ function validateClaim(input: unknown, path: string): Claim {
   const base = { name, timing, possibleActualRoles, heardWidowCall, knownEvilTwin, info };
 
   switch (type as Claim["type"]) {
+    case "Assassin":
+      return {
+        ...base,
+        type: "Assassin",
+        target: input["target"] === undefined ? undefined : expectString(input["target"], `${path}.target`),
+      };
     case "Acrobat": {
       const choices = input["choices"];
       return {
@@ -233,6 +239,56 @@ function validateClaim(input: unknown, path: string): Claim {
               }),
       };
     }
+    case "Innkeeper": {
+      const choices = input["choices"];
+      return {
+        ...base,
+        type: "Innkeeper",
+        choices:
+          choices === undefined
+            ? undefined
+            : expectArray(choices, `${path}.choices`).map((entry, index) => {
+                const choicePath = `${path}.choices[${index}]`;
+                if (!isObject(entry)) throw new ValidationError(`Expected object`, choicePath);
+                const players = expectStringArray(entry["players"], `${choicePath}.players`);
+                if (players.length > 2)
+                  throw new ValidationError(`Innkeeper choice must have at most 2 players`, `${choicePath}.players`);
+                return {
+                  players,
+                  timing:
+                    entry["timing"] === undefined ? undefined : expectString(entry["timing"], `${choicePath}.timing`),
+                };
+              }),
+      };
+    }
+    case "Devil's Advocate":
+      return { ...base, type: "Devil's Advocate", choices: validateNightlyPlayerChoices(input["choices"], path) };
+    case "Sailor":
+      return { ...base, type: "Sailor", choices: validateNightlyPlayerChoices(input["choices"], path) };
+    case "Godfather":
+      return {
+        ...base,
+        type: "Godfather",
+        outsiderRoles:
+          input["outsiderRoles"] === undefined
+            ? undefined
+            : expectStringArray(input["outsiderRoles"], `${path}.outsiderRoles`),
+        choices: validateNightlyPlayerChoices(input["choices"], path),
+      };
+    case "Grandmother":
+      return {
+        ...base,
+        type: "Grandmother",
+        grandchild:
+          input["grandchild"] === undefined ? undefined : expectString(input["grandchild"], `${path}.grandchild`),
+        role: input["role"] === undefined ? undefined : expectString(input["role"], `${path}.role`),
+      };
+    case "Moonchild":
+      return {
+        ...base,
+        type: "Moonchild",
+        chosen: input["chosen"] === undefined ? undefined : expectString(input["chosen"], `${path}.chosen`),
+      };
     case "Flowergirl": {
       const votes = input["votes"];
       return {
@@ -311,6 +367,12 @@ function validateClaim(input: unknown, path: string): Claim {
         ...base,
         type: "Oracle",
         count: input["count"] === undefined ? undefined : expectNumber(input["count"], `${path}.count`),
+      };
+    case "Professor":
+      return {
+        ...base,
+        type: "Professor",
+        target: input["target"] === undefined ? undefined : expectString(input["target"], `${path}.target`),
       };
     case "Steward":
       return {
@@ -640,6 +702,21 @@ function validateClaim(input: unknown, path: string): Claim {
     default:
       return { ...base, type: type as Claim["type"] } as Claim;
   }
+}
+
+function validateNightlyPlayerChoices(
+  input: unknown,
+  path: string,
+): readonly { readonly player: string; readonly timing?: string }[] | undefined {
+  if (input === undefined) return undefined;
+  return expectArray(input, `${path}.choices`).map((entry, index) => {
+    const choicePath = `${path}.choices[${index}]`;
+    if (!isObject(entry)) throw new ValidationError(`Expected object`, choicePath);
+    return {
+      player: expectString(entry["player"], `${choicePath}.player`),
+      timing: entry["timing"] === undefined ? undefined : expectString(entry["timing"], `${choicePath}.timing`),
+    };
+  });
 }
 
 function validateCustomInfo(input: unknown, path: string, claimType: string): Claim["info"] {

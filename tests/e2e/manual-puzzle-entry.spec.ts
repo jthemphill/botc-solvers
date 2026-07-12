@@ -30,7 +30,8 @@ type PuzzleConstraintDoc = {
 
 type TimelineEventDoc = {
   readonly timing: string;
-  readonly type: "nominationDeath" | "witchCurse" | "slayerShot" | "execution" | "nightDeath" | "doomsayerDeath";
+  readonly type:
+    "nominationDeath" | "witchCurse" | "slayerShot" | "execution" | "nightDeath" | "tinkerDeath" | "doomsayerDeath";
   readonly players: readonly string[];
   readonly caller?: string;
   readonly sourceActedBeforeDeath?: boolean;
@@ -61,6 +62,56 @@ test.describe("manual puzzle entry", () => {
       expect(normalizeDoc(exported)).toEqual(normalizeDoc({ ...editorDoc, claims: manualClaimsFor(editorDoc.claims) }));
     });
   }
+
+  test("Innkeeper can record two protected players each night", async ({ page }) => {
+    const doc: PuzzleDoc = {
+      title: "Innkeeper choices",
+      players: ["Cara", "Ann", "Bob"],
+      script: ["Innkeeper"],
+      setup: "none",
+      claims: [
+        {
+          type: "Innkeeper",
+          name: "Cara",
+          choices: [{ players: ["Ann", "Bob"], timing: "night_2" }],
+        },
+      ],
+    };
+    await page.goto("/");
+    await setTitleAndPlayers(page, doc);
+    await setRoleUniverseAndRules(page, doc);
+    await addAndFillClaims(page, doc.claims, doc);
+
+    expect(normalizeDoc(await exportPuzzleDoc(page))).toEqual(normalizeDoc(doc));
+  });
+
+  test("Bad Moon Rising actions and on-death choices round-trip through the editor", async ({ page }) => {
+    const doc: PuzzleDoc = {
+      title: "BMR actions",
+      players: ["Ada", "Ben", "Cara", "Drew", "Eve", "Finn", "Gia"],
+      script: ["Assassin", "Devil's Advocate", "Godfather", "Grandmother", "Sailor", "Moonchild", "Tinker", "Chef"],
+      setup: "none",
+      claims: [
+        { type: "Assassin", name: "Ada", target: "Gia", timing: "night_2" },
+        { type: "Devil's Advocate", name: "Ben", choices: [{ player: "Cara", timing: "night_2" }] },
+        {
+          type: "Godfather",
+          name: "Cara",
+          outsiderRoles: ["Moonchild", "Tinker"],
+          choices: [{ player: "Gia", timing: "night_3" }],
+        },
+        { type: "Grandmother", name: "Drew", grandchild: "Eve", role: "Chef", timing: "night_1" },
+        { type: "Sailor", name: "Eve", choices: [{ player: "Finn", timing: "night_2" }] },
+        { type: "Moonchild", name: "Finn", chosen: "Gia", timing: "day_2" },
+      ],
+    };
+    await page.goto("/");
+    await setTitleAndPlayers(page, doc);
+    await setRoleUniverseAndRules(page, doc);
+    await addAndFillClaims(page, doc.claims, doc);
+
+    expect(normalizeDoc(await exportPuzzleDoc(page))).toEqual(normalizeDoc(doc));
+  });
 });
 
 function editorDocFor(doc: PuzzleDoc): PuzzleDoc {
@@ -152,6 +203,10 @@ async function setRoleUniverseAndRules(page: Page, doc: PuzzleDoc) {
 
 async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
   switch (claim.type) {
+    case "Assassin":
+      if (claim.target !== undefined) await selectField(block, "Kill target", claim.target);
+      if (claim.timing !== undefined) await selectField(block, "Action timing", claim.timing);
+      break;
     case "Acrobat":
       for (const [index, choice] of (claim.choices ?? []).entries()) {
         await block.getByRole("button", { name: "+ Add choice" }).click();
@@ -199,6 +254,43 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
         if (choice.timing !== undefined) await selectField(block, "Choice timing", choice.timing, index);
         await selectField(block, "Chosen player", choice.player, index);
       }
+      break;
+    case "Innkeeper":
+      for (const [index, choice] of (claim.choices ?? []).entries()) {
+        await block.getByRole("button", { name: "+ Add choice" }).click();
+        if (choice.timing !== undefined) await selectField(block, "Choice timing", choice.timing, index);
+        await checkPlayers(block, "Protected players", choice.players, index);
+      }
+      break;
+    case "Devil's Advocate":
+      for (const [index, choice] of (claim.choices ?? []).entries()) {
+        await block.getByRole("button", { name: "+ Add choice" }).click();
+        if (choice.timing !== undefined) await selectField(block, "Choice timing", choice.timing, index);
+        await selectField(block, "Protected player", choice.player, index);
+      }
+      break;
+    case "Godfather":
+      for (const role of claim.outsiderRoles ?? []) await addRoleToList(block, "Godfather known Outsiders", role);
+      for (const [index, choice] of (claim.choices ?? []).entries()) {
+        await block.getByRole("button", { name: "+ Add choice" }).click();
+        if (choice.timing !== undefined) await selectField(block, "Choice timing", choice.timing, index);
+        await selectField(block, "Revenge target", choice.player, index);
+      }
+      break;
+    case "Grandmother":
+      if (claim.grandchild !== undefined) await selectField(block, "Grandchild", claim.grandchild);
+      if (claim.role !== undefined) await fillRoleField(block, "Grandchild role", claim.role);
+      break;
+    case "Sailor":
+      for (const [index, choice] of (claim.choices ?? []).entries()) {
+        await block.getByRole("button", { name: "+ Add choice" }).click();
+        if (choice.timing !== undefined) await selectField(block, "Choice timing", choice.timing, index);
+        await selectField(block, "Drinking partner", choice.player, index);
+      }
+      break;
+    case "Moonchild":
+      if (claim.chosen !== undefined) await selectField(block, "Chosen player", claim.chosen);
+      if (claim.timing !== undefined) await selectField(block, "Choice timing", claim.timing);
       break;
     case "Flowergirl":
       for (const [index, vote] of (claim.votes ?? []).entries()) {
@@ -295,6 +387,10 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
     case "Sage":
       await checkPlayers(block, "Demon among", claim.demonAmong ?? []);
       if (claim.timing !== undefined) await selectField(block, "Timing", claim.timing);
+      break;
+    case "Professor":
+      if (claim.target !== undefined) await selectField(block, "Resurrection target", claim.target);
+      if (claim.timing !== undefined) await selectField(block, "Action timing", claim.timing);
       break;
     case "Slayer":
       if (claim.target !== undefined) await selectField(block, "Shot player", claim.target);

@@ -52,7 +52,7 @@ describe("JSON puzzle solutions", () => {
     backend = await KissatBackend.create();
   });
 
-  test("every numbered JSON puzzle has solution coverage", () => {
+  test("every catalog JSON puzzle has solution coverage", () => {
     const catalogIds = PUZZLE_EXAMPLES.map((example) => example.id).filter((id) => id !== "intro");
     const solutionIds = PUZZLE_SOLUTIONS.map((solutions) => solutions.id);
 

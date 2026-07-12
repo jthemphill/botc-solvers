@@ -1,5 +1,5 @@
 import { CharacterType, type RoleRef, roleCharacterType, roleName } from "./core";
-import type { BoolVar, BOTCModel } from "./model";
+import type { BoolVar, BOTCModel, Timing } from "./model";
 
 export function exactlyNEvil(game: BOTCModel, players: readonly string[], count: number): BoolVar {
   return game.boolSumEquals(
@@ -27,6 +27,22 @@ export function differentAlignments(game: BOTCModel, left: string, right: string
 
 export function sameAlignment(game: BOTCModel, left: string, right: string): BoolVar {
   return game.not(differentAlignments(game, left, right), `${left}_${right}_same_alignment`);
+}
+
+export function differentAlignmentsAt(game: BOTCModel, left: string, right: string, timing: Timing): BoolVar {
+  const registersAsEvilAt = (player: string, side: string) =>
+    game.hasAlignmentOverrideAt(player, timing)
+      ? game.isEvilAt(player, timing)
+      : game.registersAsEvil(player, `${left}_${right}_${timing}_${side}`);
+  return game.xor(
+    registersAsEvilAt(left, "left"),
+    registersAsEvilAt(right, "right"),
+    `${left}_${right}_different_alignments_at_${timing}`,
+  );
+}
+
+export function sameAlignmentAt(game: BOTCModel, left: string, right: string, timing: Timing): BoolVar {
+  return game.not(differentAlignmentsAt(game, left, right, timing), `${left}_${right}_same_alignment_at_${timing}`);
 }
 
 export function differentCharacterTypes(game: BOTCModel, left: string, right: string): BoolVar {

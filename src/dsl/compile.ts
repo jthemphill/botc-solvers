@@ -11,6 +11,7 @@ export interface CompileCtx {
   readonly players: readonly string[];
   readonly script: readonly string[];
   readonly nameRoot: string;
+  readonly timing?: Timing;
 }
 
 type AtomKind = "player" | "role" | "type" | "alignment";
@@ -77,6 +78,14 @@ class Compiler {
   private freshName(label: string): string {
     this.counter += 1;
     return `${this.ctx.nameRoot}_${label}_${this.counter}`;
+  }
+
+  private goodAtContext(player: string): BoolLike {
+    return this.ctx.timing === undefined ? this.game.isGood(player) : this.game.isGoodAt(player, this.ctx.timing);
+  }
+
+  private evilAtContext(player: string): BoolLike {
+    return this.ctx.timing === undefined ? this.game.isEvil(player) : this.game.isEvilAt(player, this.ctx.timing);
   }
 
   compile(node: AstNode): BoolLike {
@@ -166,8 +175,8 @@ class Compiler {
             : entry.atom.kind === "type"
               ? this.game.hasCharacterType(player, entry.atom.value)
               : entry.atom.kind === "alignment" && entry.atom.value === "Evil"
-                ? this.game.isEvil(player)
-                : this.game.isGood(player);
+                ? this.evilAtContext(player)
+                : this.goodAtContext(player);
         return {
           atom: { kind: "player" as const, name: player, span: fullSpan },
           present: this.game.allOf([entry.present, matches], this.freshName(`inverse_${field}`)),
@@ -279,7 +288,7 @@ class Compiler {
           present: this.game.allOf(
             [
               entry.present,
-              alignment === "Evil" ? this.game.isEvil(entry.atom.name) : this.game.isGood(entry.atom.name),
+              alignment === "Evil" ? this.evilAtContext(entry.atom.name) : this.goodAtContext(entry.atom.name),
             ],
             this.freshName("join_alignment"),
           ),
@@ -510,7 +519,7 @@ class Compiler {
         kind: "alignment",
         elements: ALIGNMENTS.map((alignment) => ({
           atom: { kind: "alignment", value: alignment, span },
-          present: alignment === "Evil" ? this.game.isEvil(value.player) : this.game.isGood(value.player),
+          present: alignment === "Evil" ? this.evilAtContext(value.player) : this.goodAtContext(value.player),
         })),
       };
     throw new DslError(`Expected a set, got ${value.kind}`, span);
@@ -671,12 +680,12 @@ class Compiler {
       return this.game.constantBool(a.value === b.value, this.freshName("number_eq"));
     if (a.kind === "playerRole" && b.kind === "role") return this.game.actualIs(a.player, b.name);
     if (a.kind === "playerAlignment" && b.kind === "alignment")
-      return b.value === "Evil" ? this.game.isEvil(a.player) : this.game.isGood(a.player);
+      return b.value === "Evil" ? this.evilAtContext(a.player) : this.goodAtContext(a.player);
     if (a.kind === "playerAlignment" && b.kind === "playerAlignment")
       return this.game.anyOf(
         [
-          this.game.allOf([this.game.isGood(a.player), this.game.isGood(b.player)], this.freshName("both_good")),
-          this.game.allOf([this.game.isEvil(a.player), this.game.isEvil(b.player)], this.freshName("both_evil")),
+          this.game.allOf([this.goodAtContext(a.player), this.goodAtContext(b.player)], this.freshName("both_good")),
+          this.game.allOf([this.evilAtContext(a.player), this.evilAtContext(b.player)], this.freshName("both_evil")),
         ],
         this.freshName("same_alignment"),
       );

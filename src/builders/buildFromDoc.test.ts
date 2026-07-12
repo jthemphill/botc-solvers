@@ -93,6 +93,754 @@ describe("buildFromDoc", () => {
     const worlds = await buildFromDoc(doc, backend).solveAll();
     expect(worlds.length).toBeGreaterThanOrEqual(0);
   });
+  test("Innkeeper choices make exactly one protected player drunk until dusk", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Innkeeper", "Chef", "Gambler", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Innkeeper"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Gambler"] },
+            { name: "D", roles: ["Imp"] },
+          ],
+        }),
+        claims: [{ type: "Innkeeper", name: "A", choices: [{ players: ["B", "C"], timing: "night_2" }] }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    const world = worlds[0];
+    expect([world?.isDrunk("B", "night_2"), world?.isDrunk("C", "night_2")].filter(Boolean)).toHaveLength(1);
+    expect(world?.isDrunk("B", "day_2")).toBe(world?.isDrunk("B", "night_2"));
+    expect(world?.isDrunk("C", "day_2")).toBe(world?.isDrunk("C", "night_2"));
+    expect(world?.isDrunk("B", "night_3")).toBe(false);
+    expect(world?.isDrunk("C", "night_3")).toBe(false);
+  });
+  test("a sober Innkeeper choice protects both players from the Demon", async () => {
+    const baseDoc: TestPuzzleDoc = {
+      players: ["A", "B", "C", "D"],
+      script: ["Innkeeper", "Chef", "Gambler", "Imp"],
+      setup: "none",
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Innkeeper"] },
+          { name: "B", roles: ["Chef"] },
+          { name: "C", roles: ["Gambler"] },
+          { name: "D", roles: ["Imp"] },
+        ],
+      }),
+      timeline: [{ timing: "night_2", type: "nightDeath", players: ["B"] }],
+      claims: [],
+    };
+
+    expect(await buildFromDoc(baseDoc, backend).solveAll()).toHaveLength(1);
+    expect(
+      await buildFromDoc(
+        {
+          ...baseDoc,
+          claims: [{ type: "Innkeeper", name: "A", choices: [{ players: ["B", "C"], timing: "night_2" }] }],
+        },
+        backend,
+      ).solveAll(),
+    ).toEqual([]);
+  });
+  test("a drunk Demon cannot produce a night death", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C"],
+        script: ["Courtier", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Courtier"] },
+            { name: "B", roles: ["Imp"] },
+            { name: "C", roles: ["Chef"] },
+          ],
+        }),
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["C"] }],
+        claims: [{ type: "Courtier", name: "A", timing: "night_1", role: "Imp", drunkTimings: ["night_2"] }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
+  });
+  test("a healthy Fool survives their first death but not a later one", async () => {
+    const baseDoc: TestPuzzleDoc = {
+      players: ["A", "B", "C"],
+      script: ["Fool", "Chef", "Imp"],
+      setup: "none",
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Fool"] },
+          { name: "B", roles: ["Chef"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+      }),
+      claims: [],
+    };
+
+    expect(
+      await buildFromDoc(
+        { ...baseDoc, timeline: [{ timing: "day_1", type: "execution", players: ["A"] }] },
+        backend,
+      ).solveAll(),
+    ).toEqual([]);
+    expect(
+      await buildFromDoc(
+        {
+          ...baseDoc,
+          timeline: [
+            { timing: "day_1", type: "survivedExecution", players: ["A"] },
+            { timing: "day_2", type: "execution", players: ["A"] },
+          ],
+        },
+        backend,
+      ).solveAll(),
+    ).toHaveLength(1);
+  });
+  test("another role's protection does not consume the Fool ability", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D", "E"],
+        script: ["Fool", "Tea Lady", "Chef", "Empath", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Fool"] },
+            { name: "B", roles: ["Tea Lady"] },
+            { name: "C", roles: ["Chef"] },
+            { name: "D", roles: ["Empath"] },
+            { name: "E", roles: ["Imp"] },
+          ],
+        }),
+        timeline: [
+          { timing: "day_1", type: "survivedExecution", players: ["A"] },
+          { timing: "night_2", type: "nightDeath", players: ["B"] },
+          { timing: "day_2", type: "execution", players: ["A"] },
+        ],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
+  });
+  test("a healthy Pacifist can explain a good player's survived execution", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C"],
+        script: ["Pacifist", "Chef", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Pacifist"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Imp"] },
+          ],
+        }),
+        timeline: [{ timing: "day_1", type: "survivedExecution", players: ["B"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
+  test("an executed Minion makes everyone except the Minstrel drunk through the following day", async () => {
+    const baseDoc: TestPuzzleDoc = {
+      players: ["A", "B", "C", "D"],
+      script: ["Minstrel", "Devil's Advocate", "Imp", "Chef"],
+      setup: "none",
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Minstrel"] },
+          { name: "B", roles: ["Devil's Advocate"] },
+          { name: "C", roles: ["Imp"] },
+          { name: "D", roles: ["Chef"] },
+        ],
+      }),
+      timeline: [{ timing: "day_1", type: "execution", players: ["B"] }],
+      claims: [],
+    };
+
+    const worlds = await buildFromDoc(baseDoc, backend).solveAll();
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.isDrunk("A", "night_2")).toBe(false);
+    expect(worlds[0]?.isDrunk("C", "night_2")).toBe(true);
+    expect(worlds[0]?.isDrunk("C", "day_2")).toBe(true);
+    expect(worlds[0]?.isDrunk("C", "night_3")).toBe(false);
+
+    expect(
+      await buildFromDoc(
+        {
+          ...baseDoc,
+          timeline: [...(baseDoc.timeline ?? []), { timing: "night_2", type: "nightDeath", players: ["D"] }],
+        },
+        backend,
+      ).solveAll(),
+    ).toEqual([]);
+  });
+  test("an Assassin kill bypasses Fool protection and consumes the ability", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C"],
+        script: ["Assassin", "Fool", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Assassin"] },
+            { name: "B", roles: ["Fool"] },
+            { name: "C", roles: ["Chef"] },
+          ],
+        }),
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["B"] }],
+        claims: [
+          {
+            type: "Assassin",
+            name: "A",
+            target: "B",
+            timing: "night_2",
+            possibleActualRoles: ["Assassin"],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
+  test("the Assassin still kills the Goon before becoming drunk", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C"],
+        script: ["Assassin", "Goon", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Assassin"] },
+            { name: "B", roles: ["Goon"] },
+            { name: "C", roles: ["Chef"] },
+          ],
+        }),
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["B"] }],
+        claims: [{ type: "Assassin", name: "A", target: "B", timing: "night_2", possibleActualRoles: ["Assassin"] }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.isDrunk("A", "night_2")).toBe(true);
+  });
+  test("the Assassin cannot use their ability more than once", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C"],
+        script: ["Assassin", "Chef", "Empath"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Assassin"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Empath"] },
+          ],
+        }),
+        timeline: [
+          { timing: "night_2", type: "nightDeath", players: ["B"] },
+          { timing: "night_3", type: "nightDeath", players: ["C"] },
+        ],
+        claims: [
+          { type: "Assassin", name: "A", target: "B", timing: "night_2", possibleActualRoles: ["Assassin"] },
+          { type: "Assassin", name: "A", target: "C", timing: "night_3", possibleActualRoles: ["Assassin"] },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
+  });
+  test("Sailor choice drunks exactly one participant and only a drunk Sailor can die", async () => {
+    const baseDoc: TestPuzzleDoc = {
+      players: ["A", "B", "C", "D"],
+      script: ["Sailor", "Chef", "Empath", "Imp"],
+      setup: "none",
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Sailor"] },
+          { name: "B", roles: ["Chef"] },
+          { name: "C", roles: ["Empath"] },
+          { name: "D", roles: ["Imp"] },
+        ],
+      }),
+      claims: [{ type: "Sailor", name: "A", choices: [{ player: "B", timing: "night_1" }] }],
+    };
+    const worlds = await buildFromDoc(baseDoc, backend).solveAll();
+    expect(worlds).toHaveLength(1);
+    expect([worlds[0]?.isDrunk("A", "night_1"), worlds[0]?.isDrunk("B", "night_1")].filter(Boolean)).toHaveLength(1);
+
+    const deathWorlds = await buildFromDoc(
+      { ...baseDoc, timeline: [{ timing: "night_1", type: "nightDeath", players: ["A"] }] },
+      backend,
+    ).solveAll();
+    expect(deathWorlds).toHaveLength(1);
+    expect(deathWorlds[0]?.isDrunk("A", "night_1")).toBe(true);
+  });
+  test("a Sailor cannot choose a dead player", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C"],
+        script: ["Sailor", "Chef", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Sailor"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Imp"] },
+          ],
+        }),
+        timeline: [{ timing: "day_1", type: "execution", players: ["B"] }],
+        claims: [
+          {
+            type: "Sailor",
+            name: "A",
+            choices: [{ player: "B", timing: "night_2" }],
+            possibleActualRoles: ["Sailor"],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
+  });
+  test("Grandmother dies when the Demon kills their grandchild", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Grandmother", "Chef", "Empath", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Grandmother"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Empath"] },
+            { name: "D", roles: ["Imp"] },
+          ],
+        }),
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A", "B"] }],
+        claims: [{ type: "Grandmother", name: "A", grandchild: "B", role: "Chef", timing: "night_1" }],
+      },
+      backend,
+    ).solveAll();
+    expect(worlds).toHaveLength(1);
+  });
+  test("Moonchild and Godfather choices provide conditional night-death sources", async () => {
+    const moonchildWorlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C"],
+        script: ["Moonchild", "Chef", "Empath"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Moonchild"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Empath"] },
+          ],
+        }),
+        timeline: [
+          { timing: "day_1", type: "execution", players: ["A"] },
+          { timing: "night_2", type: "nightDeath", players: ["B"] },
+        ],
+        claims: [{ type: "Moonchild", name: "A", chosen: "B", timing: "day_1" }],
+      },
+      backend,
+    ).solveAll();
+    expect(moonchildWorlds).toHaveLength(1);
+
+    const godfatherWorlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C"],
+        script: ["Godfather", "Moonchild", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Godfather"] },
+            { name: "B", roles: ["Moonchild"] },
+            { name: "C", roles: ["Chef"] },
+          ],
+        }),
+        timeline: [
+          { timing: "day_1", type: "execution", players: ["B"] },
+          { timing: "night_2", type: "nightDeath", players: ["C"] },
+        ],
+        claims: [
+          {
+            type: "Godfather",
+            name: "A",
+            choices: [{ player: "C", timing: "night_2" }],
+            possibleActualRoles: ["Godfather"],
+          },
+          { type: "Moonchild", name: "B" },
+        ],
+      },
+      backend,
+    ).solveAll();
+    expect(godfatherWorlds).toHaveLength(1);
+  });
+  test("the Godfather wakes and must choose a victim after an Outsider dies during the day", async () => {
+    const baseDoc: TestPuzzleDoc = {
+      players: ["A", "B", "C", "D", "E"],
+      script: ["Godfather", "Moonchild", "Chambermaid", "Empath", "Chef"],
+      setup: "none",
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Godfather"] },
+          { name: "B", roles: ["Moonchild"] },
+          { name: "C", roles: ["Chambermaid"] },
+          { name: "D", roles: ["Empath"] },
+          { name: "E", roles: ["Chef"] },
+        ],
+      }),
+      claims: [
+        {
+          type: "Chambermaid",
+          name: "C",
+          checks: [{ left: "A", right: "D", timing: "night_2", count: 1 }],
+        },
+      ],
+    };
+
+    expect(await buildFromDoc(baseDoc, backend).solveAll()).toHaveLength(1);
+
+    const revengeDoc: TestPuzzleDoc = {
+      ...baseDoc,
+      timeline: [
+        { timing: "day_1", type: "execution", players: ["B"] },
+        { timing: "night_2", type: "nightDeath", players: ["E"] },
+      ],
+      claims: [
+        {
+          type: "Godfather",
+          name: "A",
+          choices: [{ player: "E", timing: "night_2" }],
+          possibleActualRoles: ["Godfather"],
+        },
+        {
+          type: "Chambermaid",
+          name: "C",
+          checks: [{ left: "A", right: "D", timing: "night_2", count: 2 }],
+        },
+      ],
+    };
+    expect(await buildFromDoc(revengeDoc, backend).solveAll()).toHaveLength(1);
+    expect(
+      await buildFromDoc(
+        { ...revengeDoc, timeline: revengeDoc.timeline?.filter((event) => event.type !== "nightDeath") },
+        backend,
+      ).solveAll(),
+    ).toEqual([]);
+  });
+  test("a healthy Tinker can die at night without another death source", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B"],
+        script: ["Tinker", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Tinker"] },
+            { name: "B", roles: ["Chef"] },
+          ],
+        }),
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+    expect(worlds).toHaveLength(1);
+  });
+  test("an explicit Tinker death can happen by day only while the Tinker is healthy", async () => {
+    const baseDoc: TestPuzzleDoc = {
+      players: ["A", "B", "C"],
+      script: ["Tinker", "Courtier", "Chef"],
+      setup: "none",
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Tinker"] },
+          { name: "B", roles: ["Courtier"] },
+          { name: "C", roles: ["Chef"] },
+        ],
+      }),
+      timeline: [{ timing: "day_1", type: "tinkerDeath", players: ["A"] }],
+      claims: [],
+    };
+
+    expect(await buildFromDoc(baseDoc, backend).solveAll()).toHaveLength(1);
+    expect(
+      await buildFromDoc(
+        {
+          ...baseDoc,
+          claims: [{ type: "Courtier", name: "B", timing: "night_1", role: "Tinker", drunkTimings: ["night_1"] }],
+        },
+        backend,
+      ).solveAll(),
+    ).toEqual([]);
+  });
+  test("Pukka poisons on the first night and kills the previous target later", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C"],
+        script: ["Pukka", "Chef", "Empath"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Pukka"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Empath"] },
+          ],
+        }),
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["B"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.isPoisoned("B", "night_1")).toBe(true);
+    expect(worlds[0]?.isPoisoned("B", "day_1")).toBe(true);
+  });
+  test("Pukka may poison itself without suppressing the choice that caused the poison", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A"],
+        script: ["Pukka"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({ possible: [{ name: "A", roles: ["Pukka"] }] }),
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.isPoisoned("A", "night_1")).toBe(true);
+    expect(worlds[0]?.isPoisoned("A", "day_1")).toBe(true);
+  });
+  test("Pukka can choose the Goon even though the resulting drunkenness prevents poison", async () => {
+    const game = buildFromDoc(
+      {
+        players: ["A", "B"],
+        script: ["Pukka", "Goon"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Pukka"] },
+            { name: "B", roles: ["Goon"] },
+          ],
+        }),
+        claims: [],
+      },
+      backend,
+    );
+    game.addTruth(game.drunk("A", "night_1"));
+    const worlds = await game.solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.isDrunk("A", "night_1")).toBe(true);
+    expect(worlds[0]?.isPoisoned("B", "night_1")).toBe(false);
+  });
+  test("Pukka poison persists while the Pukka is drunk and kills after they recover", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Pukka", "Chef", "Courtier", "Empath"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Pukka"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Courtier"] },
+            { name: "D", roles: ["Empath"] },
+          ],
+        }),
+        timeline: [
+          { timing: "day_1", type: "execution", players: ["D"] },
+          { timing: "night_4", type: "nightDeath", players: ["B"] },
+        ],
+        claims: [
+          {
+            type: "Courtier",
+            name: "C",
+            role: "Pukka",
+            timing: "night_1",
+            drunkTimings: ["night_3"],
+            possibleActualRoles: ["Courtier"],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.isPoisoned("B", "night_2")).toBe(true);
+    expect(worlds[0]?.isPoisoned("B", "night_3")).toBe(true);
+    expect(worlds[0]?.isPoisoned("B", "night_4")).toBe(true);
+  });
+  test("an Exorcist blocks the Pukka's new choice but not the prior poisoned player's death", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C"],
+        script: ["Pukka", "Chef", "Exorcist"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Pukka"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Exorcist"] },
+          ],
+        }),
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["B"] }],
+        claims: [
+          {
+            type: "Exorcist",
+            name: "C",
+            choices: [{ player: "A", timing: "night_2" }],
+            possibleActualRoles: ["Exorcist"],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.isPoisoned("B", "night_1")).toBe(true);
+    expect(worlds[0]?.isPoisoned("C", "night_2")).toBe(false);
+  });
+  test("a resurrection requires a matching Professor action claim when no Shabaloth is in play", async () => {
+    const baseDoc: TestPuzzleDoc = {
+      players: ["A", "B", "C"],
+      script: ["Professor", "Chef", "Imp"],
+      setup: "none",
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Professor"] },
+          { name: "B", roles: ["Chef"] },
+          { name: "C", roles: ["Imp"] },
+        ],
+      }),
+      timeline: [
+        { timing: "day_1", type: "execution", players: ["B"] },
+        { timing: "night_2", type: "resurrection", players: ["B"] },
+      ],
+      claims: [],
+    };
+
+    expect(await buildFromDoc(baseDoc, backend).solveAll()).toEqual([]);
+
+    const worlds = await buildFromDoc(
+      {
+        ...baseDoc,
+        claims: [{ type: "Professor", name: "A", timing: "night_2", target: "B" }],
+      },
+      backend,
+    ).solveAll();
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("A")).toBe("Professor");
+  });
+  test("an evil Professor bluff does not replace the Shabaloth as a resurrection source", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C"],
+        script: ["Professor", "Mastermind", "Chef", "Shabaloth"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Mastermind"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Shabaloth"] },
+          ],
+        }),
+        timeline: [
+          { timing: "night_2", type: "nightDeath", players: ["B"] },
+          { timing: "night_3", type: "resurrection", players: ["B"] },
+        ],
+        claims: [
+          {
+            type: "Professor",
+            name: "A",
+            timing: "night_3",
+            target: "B",
+            possibleActualRoles: ["Mastermind"],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("A")).toBe("Mastermind");
+    expect(worlds[0]?.actualRole("C")).toBe("Shabaloth");
+  });
+  test("a healthy Shabaloth can regurgitate a player who was already dead when chosen", async () => {
+    const baseDoc: TestPuzzleDoc = {
+      players: ["A", "B", "C", "D"],
+      script: ["Shabaloth", "Chef", "Courtier", "Empath"],
+      setup: "none",
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Shabaloth"] },
+          { name: "B", roles: ["Chef"] },
+          { name: "C", roles: ["Courtier"] },
+          { name: "D", roles: ["Empath"] },
+        ],
+      }),
+      timeline: [
+        { timing: "day_1", type: "execution", players: ["B"] },
+        { timing: "night_3", type: "resurrection", players: ["B"] },
+      ],
+      claims: [],
+    };
+
+    expect(await buildFromDoc(baseDoc, backend).solveAll()).toHaveLength(1);
+    expect(
+      await buildFromDoc(
+        {
+          ...baseDoc,
+          claims: [{ type: "Courtier", name: "C", timing: "night_2", role: "Shabaloth", drunkTimings: ["night_3"] }],
+        },
+        backend,
+      ).solveAll(),
+    ).toEqual([]);
+  });
   test("constraints allow multiple possible actual roles", async () => {
     const worlds = await buildFromDoc(
       {
@@ -558,6 +1306,301 @@ describe("buildFromDoc", () => {
 
     expect(worlds).toHaveLength(1);
   });
+  test("the first player to choose the Goon becomes drunk until dusk", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Chambermaid", "Goon", "Chef", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Chambermaid"] },
+            { name: "B", roles: ["Goon"] },
+            { name: "C", roles: ["Chef"] },
+            { name: "D", roles: ["Imp"] },
+          ],
+        }),
+        claims: [
+          {
+            type: "Chambermaid",
+            name: "A",
+            checks: [{ left: "B", right: "C", timing: "night_1", count: 0 }],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.isDrunk("A", "night_1")).toBe(true);
+    expect(worlds[0]?.isDrunk("A", "day_1")).toBe(true);
+    expect(worlds[0]?.isDrunk("A", "night_2")).toBe(false);
+  });
+  test("a Demon cannot kill the Goon unless another ability chose the Goon first", async () => {
+    const baseDoc: TestPuzzleDoc = {
+      players: ["A", "B", "C", "D"],
+      script: ["Sailor", "Goon", "Shabaloth", "Chef"],
+      setup: "none",
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Sailor"] },
+          { name: "B", roles: ["Goon"] },
+          { name: "C", roles: ["Shabaloth"] },
+          { name: "D", roles: ["Chef"] },
+        ],
+      }),
+      timeline: [{ timing: "night_2", type: "nightDeath", players: ["B"] }],
+      claims: [],
+    };
+
+    expect(await buildFromDoc(baseDoc, backend).solveAll()).toEqual([]);
+
+    const worlds = await buildFromDoc(
+      {
+        ...baseDoc,
+        claims: [
+          {
+            type: "Sailor",
+            name: "A",
+            choices: [{ player: "B", timing: "night_2" }],
+            possibleActualRoles: ["Sailor"],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.isDrunk("A", "night_2")).toBe(true);
+  });
+  test("only the first nightly choice of the Goon makes its chooser drunk", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Chambermaid", "Goon", "Devil's Advocate", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Chambermaid"] },
+            { name: "B", roles: ["Goon"] },
+            { name: "C", roles: ["Devil's Advocate"] },
+            { name: "D", roles: ["Imp"] },
+          ],
+        }),
+        claims: [
+          {
+            type: "Chambermaid",
+            name: "A",
+            checks: [{ left: "B", right: "D", timing: "night_2", count: 1 }],
+          },
+          {
+            type: "Devil's Advocate",
+            name: "C",
+            choices: [{ player: "B", timing: "night_2" }],
+            possibleActualRoles: ["Devil's Advocate"],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.isDrunk("C", "night_2")).toBe(true);
+    expect(worlds[0]?.isDrunk("A", "night_2")).toBe(false);
+  });
+  test("an evil chooser turns the Goon evil for later alignment checks", async () => {
+    const baseDoc: TestPuzzleDoc = {
+      players: ["A", "B", "C", "D"],
+      script: ["Moonchild", "Goon", "Devil's Advocate", "Chef"],
+      setup: "none",
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Moonchild"] },
+          { name: "B", roles: ["Goon"] },
+          { name: "C", roles: ["Devil's Advocate"] },
+          { name: "D", roles: ["Chef"] },
+        ],
+      }),
+      timeline: [
+        { timing: "day_1", type: "execution", players: ["A"] },
+        { timing: "night_2", type: "nightDeath", players: ["B"] },
+      ],
+      claims: [
+        { type: "Moonchild", name: "A", chosen: "B", timing: "day_1" },
+        {
+          type: "Devil's Advocate",
+          name: "C",
+          choices: [{ player: "D", timing: "night_1" }],
+          possibleActualRoles: ["Devil's Advocate"],
+        },
+      ],
+    };
+
+    expect(await buildFromDoc(baseDoc, backend).solveAll()).toHaveLength(1);
+    expect(
+      await buildFromDoc(
+        {
+          ...baseDoc,
+          claims: baseDoc.claims.map((claim) =>
+            claim.type === "Devil's Advocate" ? { ...claim, choices: [{ player: "B", timing: "night_1" }] } : claim,
+          ),
+        },
+        backend,
+      ).solveAll(),
+    ).toEqual([]);
+  });
+  test("an evil Goon may lie in later claims", async () => {
+    const game = buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Devil's Advocate", "Goon", "Chef", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Devil's Advocate"] },
+            { name: "B", roles: ["Goon"] },
+            { name: "C", roles: ["Chef"] },
+            { name: "D", roles: ["Imp"] },
+          ],
+        }),
+        claims: [
+          {
+            type: "Devil's Advocate",
+            name: "A",
+            choices: [{ player: "B", timing: "night_1" }],
+            possibleActualRoles: ["Devil's Advocate"],
+          },
+          { type: "Chef", name: "B", count: 0 },
+        ],
+      },
+      backend,
+    );
+    game.addInfoClaim({
+      player: "B",
+      role: "Goon",
+      timing: "day_1",
+      learned: game.constantBool(false, "evil_goon_lie"),
+    });
+
+    const worlds = await game.solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("B")).toBe("Goon");
+    expect(worlds[0]?.apparent.get("B")).toBe("Chef");
+    expect(worlds[0]?.isDrunk("A", "night_1")).toBe(true);
+  });
+  test("only an evil Goon can make an ordinary changed-role claim", async () => {
+    const baseDoc: TestPuzzleDoc = {
+      players: ["A", "B", "C", "D"],
+      script: ["Devil's Advocate", "Goon", "Artist", "Imp"],
+      setup: "none",
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Devil's Advocate"] },
+          { name: "B", roles: ["Goon"] },
+          { name: "C", roles: ["Artist"] },
+          { name: "D", roles: ["Imp"] },
+        ],
+      }),
+      claims: [
+        { type: "Goon", name: "B", timing: "night_1", possibleActualRoles: ["Goon"] },
+        {
+          type: "Artist",
+          name: "B",
+          timing: "day_1",
+          possibleActualRoles: ["Goon"],
+        },
+      ],
+    };
+
+    const goodGoonWorlds = await buildFromDoc(
+      {
+        ...baseDoc,
+        claims: [
+          {
+            type: "Devil's Advocate",
+            name: "A",
+            choices: [{ player: "C", timing: "night_1" }],
+            possibleActualRoles: ["Devil's Advocate"],
+          },
+          ...baseDoc.claims,
+        ],
+      },
+      backend,
+    ).solveAll();
+    expect(goodGoonWorlds).toEqual([]);
+
+    const evilGoonWorlds = await buildFromDoc(
+      {
+        ...baseDoc,
+        claims: [
+          {
+            type: "Devil's Advocate",
+            name: "A",
+            choices: [{ player: "B", timing: "night_1" }],
+            possibleActualRoles: ["Devil's Advocate"],
+          },
+          ...baseDoc.claims,
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(evilGoonWorlds).toHaveLength(1);
+  });
+  test("a good Goon stays honest while the good chooser is drunk", async () => {
+    const doc: TestPuzzleDoc = {
+      players: ["A", "B", "C", "D"],
+      script: ["Chambermaid", "Goon", "Chef", "Imp"],
+      setup: "none",
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Chambermaid"] },
+          { name: "B", roles: ["Goon"] },
+          { name: "C", roles: ["Chef"] },
+          { name: "D", roles: ["Imp"] },
+        ],
+      }),
+      claims: [
+        {
+          type: "Chambermaid",
+          name: "A",
+          checks: [{ left: "B", right: "C", timing: "night_1", count: 0 }],
+          possibleActualRoles: ["Chambermaid"],
+        },
+        { type: "Chef", name: "B", count: 0 },
+      ],
+    };
+    const lyingGame = buildFromDoc(doc, backend);
+    lyingGame.addInfoClaim({
+      player: "B",
+      role: "Goon",
+      timing: "day_1",
+      learned: lyingGame.constantBool(false, "good_goon_lie"),
+    });
+    expect(await lyingGame.solveAll()).toEqual([]);
+
+    const honestGame = buildFromDoc(doc, backend);
+    honestGame.addInfoClaim({
+      player: "B",
+      role: "Goon",
+      timing: "day_1",
+      learned: honestGame.constantBool(true, "good_goon_truth"),
+    });
+    const worlds = await honestGame.solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("B")).toBe("Goon");
+    expect(worlds[0]?.apparent.get("B")).toBe("Chef");
+    expect(worlds[0]?.isDrunk("A", "night_1")).toBe(true);
+    expect(worlds[0]?.isDrunk("A", "day_1")).toBe(true);
+  });
   test("Chambermaid stops counting a Seamstress after they use their ability", async () => {
     const worlds = await buildFromDoc(
       {
@@ -724,6 +1767,97 @@ describe("buildFromDoc", () => {
     ).solveAll();
     expect(worlds.length).toBeGreaterThan(0);
     expect(worlds.every((world) => !world.isPoisoned("A", "night_2"))).toBe(true);
+  });
+  test("an executed Gossip has no ability when the statement would resolve", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B"],
+        script: ["Gossip", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Gossip"] },
+            { name: "B", roles: ["Chef"] },
+          ],
+        }),
+        timeline: [
+          { timing: "day_1", type: "execution", players: ["A"] },
+          { timing: "night_2", type: "nightDeath", players: [] },
+        ],
+        claims: [
+          {
+            type: "Gossip",
+            name: "A",
+            statements: [{ timing: "day_1", expression: "B.role == Chef" }],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
+  test("a Professor resurrection occurs after the Gossip ability would resolve", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C"],
+        script: ["Gossip", "Professor", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Gossip"] },
+            { name: "B", roles: ["Professor"] },
+            { name: "C", roles: ["Chef"] },
+          ],
+        }),
+        timeline: [
+          { timing: "day_1", type: "execution", players: ["A"] },
+          { timing: "night_2", type: "nightDeath", players: [] },
+          { timing: "night_2", type: "resurrection", players: ["A"] },
+        ],
+        claims: [
+          {
+            type: "Gossip",
+            name: "A",
+            statements: [{ timing: "day_1", expression: "C.role == Chef" }],
+          },
+          { type: "Professor", name: "B", timing: "night_2", target: "A" },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
+  test("a Gossip killed before their night-order position does not cause another death", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C"],
+        script: ["Gossip", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Gossip"] },
+            { name: "B", roles: ["Imp"] },
+            { name: "C", roles: ["Chef"] },
+          ],
+        }),
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
+        claims: [
+          {
+            type: "Gossip",
+            name: "A",
+            statements: [{ timing: "day_1", expression: "C.role == Chef" }],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
   });
   test("same-night Poisoner death removes poison before night information", async () => {
     const worlds = await buildFromDoc(
@@ -975,6 +2109,54 @@ describe("buildFromDoc", () => {
     expect(poWorlds).toHaveLength(1);
     expect(unchargedPoWorlds).toEqual([]);
   });
+  test("a charged Po cannot contribute only two deaths without a protected third target", async () => {
+    const base = {
+      players: ["A", "B", "C", "D", "E"],
+      script: ["Po", "Chef", "Empath", "Gambler", "Steward"],
+      setup: "none" as const,
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Po"] },
+          { name: "B", roles: ["Chef"] },
+          { name: "C", roles: ["Empath"] },
+          { name: "D", roles: ["Gambler"] },
+          { name: "E", roles: ["Steward"] },
+        ],
+      }),
+      timeline: [
+        { timing: "night_2", type: "nightDeath" as const, players: [] },
+        { timing: "night_3", type: "nightDeath" as const, players: ["B", "C", "D"] },
+      ],
+      claims: [
+        {
+          type: "Gambler" as const,
+          name: "D",
+          guesses: [{ timing: "night_3", player: "B", role: "Empath", survived: false }],
+        },
+      ],
+    };
+    const shortPoWorlds = await buildFromDoc(base, backend).solveAll();
+    const protectedThirdTargetWorlds = await buildFromDoc(
+      {
+        ...base,
+        script: [...base.script, "Soldier"],
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Po"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Empath"] },
+            { name: "D", roles: ["Gambler"] },
+            { name: "E", roles: ["Soldier"] },
+          ],
+        }),
+      },
+      backend,
+    ).solveAll();
+
+    expect(shortPoWorlds).toEqual([]);
+    expect(protectedThirdTargetWorlds).toHaveLength(1);
+  });
   test("Demon-sourced night deaths cannot kill sober healthy Soldiers", async () => {
     const worlds = await buildFromDoc(
       {
@@ -1101,7 +2283,14 @@ describe("buildFromDoc", () => {
           ],
         }),
         timeline: [{ timing: "day_1", type: "survivedExecution", players: ["A"] }],
-        claims: [],
+        claims: [
+          {
+            type: "Devil's Advocate",
+            name: "B",
+            choices: [{ player: "A", timing: "night_1" }],
+            possibleActualRoles: ["Devil's Advocate"],
+          },
+        ],
       },
       backend,
     ).solveAll();
@@ -1515,6 +2704,93 @@ describe("buildFromDoc", () => {
     ).solveAll();
     expect(ongoingWorlds).toHaveLength(1);
     expect(endedWorlds).toEqual([]);
+  });
+  test("a healthy Mastermind keeps the game going for the extra night and day after an executed Demon", async () => {
+    const baseDoc: TestPuzzleDoc = {
+      players: ["A", "B", "C", "D", "E"],
+      script: ["Chambermaid", "Mastermind", "Imp", "Chef", "Empath"],
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Chambermaid"] },
+          { name: "B", roles: ["Mastermind"] },
+          { name: "C", roles: ["Imp"] },
+          { name: "D", roles: ["Chef"] },
+          { name: "E", roles: ["Empath"] },
+        ],
+      }),
+      timeline: [{ timing: "day_1", type: "execution", players: ["C"] }],
+      claims: [
+        {
+          type: "Chambermaid",
+          name: "A",
+          checks: [{ left: "D", right: "E", count: 1, timing: "night_2" }],
+        },
+      ],
+    };
+
+    expect(await buildFromDoc(baseDoc, backend).solveAll()).toHaveLength(1);
+    expect(
+      await buildFromDoc(
+        {
+          ...baseDoc,
+          timeline: [...(baseDoc.timeline ?? []), { timing: "day_2", type: "survivedExecution", players: ["D"] }],
+        },
+        backend,
+      ).solveAll(),
+    ).toEqual([]);
+  });
+  test("a drunk Mastermind cannot extend the game after the Demon is executed", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D", "E"],
+        script: ["Courtier", "Mastermind", "Imp", "Chef", "Empath"],
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Courtier"] },
+            { name: "B", roles: ["Mastermind"] },
+            { name: "C", roles: ["Imp"] },
+            { name: "D", roles: ["Chef"] },
+            { name: "E", roles: ["Empath"] },
+          ],
+        }),
+        timeline: [{ timing: "day_1", type: "execution", players: ["C"] }],
+        claims: [{ type: "Courtier", name: "A", timing: "night_1", role: "Mastermind", drunkTimings: ["night_1"] }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
+  });
+  test("a drunk Zombuul dies for real on its first apparent death", async () => {
+    const baseDoc: TestPuzzleDoc = {
+      players: ["A", "B", "C", "D", "E"],
+      script: ["Zombuul", "Courtier", "Goblin", "Chef", "Empath"],
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Zombuul"] },
+          { name: "B", roles: ["Courtier"] },
+          { name: "C", roles: ["Goblin"] },
+          { name: "D", roles: ["Chef"] },
+          { name: "E", roles: ["Empath"] },
+        ],
+      }),
+      timeline: [{ timing: "day_1", type: "execution", players: ["A"] }],
+      claims: [],
+    };
+
+    expect(await buildFromDoc(baseDoc, backend).solveAll()).toHaveLength(1);
+    expect(
+      await buildFromDoc(
+        {
+          ...baseDoc,
+          claims: [{ type: "Courtier", name: "B", timing: "night_1", role: "Zombuul", drunkTimings: ["night_1"] }],
+        },
+        backend,
+      ).solveAll(),
+    ).toEqual([]);
   });
   test("standard puzzle docs allow a final observed Fang Gu jump", async () => {
     const worlds = await buildFromDoc(
@@ -2571,4 +3847,171 @@ describe("buildFromDoc", () => {
     const worlds = await buildFromDoc(doc, backend).solveAll();
     expect(worlds.length).toBeGreaterThan(0);
   });
+  test("a-clean-sweep uniquely identifies the Demon and Minion players", async () => {
+    const doc = loadDoc("a-clean-sweep.json");
+    const bmrEvilRoles = ["Godfather", "Zombuul", "Pukka", "Shabaloth", "Po"];
+    expect(doc.script).toEqual(expect.arrayContaining(bmrEvilRoles));
+    expect(doc.claims.filter((claim) => bmrEvilRoles.includes(claim.type))).toEqual([]);
+    expect(doc.script).not.toContain("Seamstress");
+    expect(doc.script).not.toContain("Washerwoman");
+    expect(doc.players).toHaveLength(9);
+    expect(doc.setup).toBe("standard");
+    expect(doc.constraints ?? []).toEqual([]);
+    expect(doc.claims).toHaveLength(9);
+    expect(doc.claims.some((claim) => claim.type === "Pacifist")).toBe(false);
+    expect(doc.claims.some((claim) => ["Goon", "Lunatic", "Tinker", "Moonchild"].includes(claim.type))).toBe(true);
+    expect(doc.timeline).toEqual([
+      { timing: "day_1", type: "execution", players: ["Gia"] },
+      { timing: "night_2", type: "nightDeath", players: [] },
+      { timing: "day_2", type: "survivedExecution", players: ["Drew"] },
+      { timing: "night_3", type: "nightDeath", players: ["Cora", "Finn", "Eve"] },
+      { timing: "day_3", type: "execution", players: ["Iris"] },
+      { timing: "night_4", type: "nightDeath", players: [] },
+    ]);
+
+    const worlds = await buildFromDoc(doc, backend).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    const forcedRoles: Record<string, string> = {
+      Ada: "Godfather",
+      Cora: "Moonchild",
+      Drew: "Sailor",
+      Eve: "Gambler",
+      Finn: "Gossip",
+      Gia: "Tinker",
+      Hugo: "Pukka",
+      Iris: "Goon",
+      You: "Chambermaid",
+    };
+    for (const world of worlds) {
+      for (const [player, role] of Object.entries(forcedRoles)) expect(world.actualRole(player)).toBe(role);
+      const goon = world.holder("Goon");
+      expect(goon).toBeDefined();
+      expect(goon).toBe("Iris");
+      expect(world.apparent.get("Ada")).toBe("Exorcist");
+      expect(world.apparent.get("Iris")).toBe("Minstrel");
+    }
+    expect(new Set(doc.claims.map((claim) => claim.type)).size).toBe(doc.claims.length);
+    expect(doc.claims.filter((claim) => claim.type === "Sailor")).toEqual([
+      {
+        type: "Sailor",
+        name: "Drew",
+        choices: [
+          { player: "Eve", timing: "night_1" },
+          { player: "Eve", timing: "night_2" },
+          { player: "Eve", timing: "night_3" },
+          { player: "Hugo", timing: "night_4" },
+        ],
+      },
+    ]);
+    expect(doc.claims.filter((claim) => claim.type === "Exorcist")).toEqual([
+      {
+        type: "Exorcist",
+        name: "Ada",
+        choices: [
+          { player: "Iris", timing: "night_2" },
+          { player: "Hugo", timing: "night_3" },
+          { player: "Drew", timing: "night_4" },
+        ],
+      },
+    ]);
+    expect(doc.claims.filter((claim) => claim.type === "Chambermaid")).toEqual([
+      {
+        type: "Chambermaid",
+        name: "You",
+        possibleActualRoles: ["Chambermaid"],
+        checks: [
+          { left: "Finn", right: "Drew", count: 1, timing: "night_1" },
+          { left: "Ada", right: "Hugo", count: 2, timing: "night_2" },
+          { left: "Cora", right: "Hugo", count: 1, timing: "night_3" },
+          { left: "Drew", right: "Hugo", count: 2, timing: "night_4" },
+        ],
+      },
+    ]);
+    expect(doc.claims).toContainEqual({
+      type: "Gambler",
+      name: "Eve",
+      guesses: [
+        { player: "Hugo", role: "Professor", timing: "night_2", survived: true },
+        { player: "Hugo", role: "Professor", timing: "night_3", survived: false },
+      ],
+    });
+    expect(doc.claims).toContainEqual({ type: "Minstrel", name: "Iris" });
+    expect(doc.claims).toContainEqual({
+      type: "Gossip",
+      name: "Finn",
+      statements: [
+        { expression: "some Pukka.~role" },
+        { timing: "day_2", expression: "some Pukka.~role" },
+        { timing: "day_3", expression: "some Pukka.~role" },
+      ],
+    });
+
+    const goodGoonAtPuzzleTime = buildFromDoc(doc, backend);
+    goodGoonAtPuzzleTime.addTruth(
+      goodGoonAtPuzzleTime.anyOf(
+        doc.players.map((player) =>
+          goodGoonAtPuzzleTime.allOf(
+            [
+              goodGoonAtPuzzleTime.actualIs(player, "Goon"),
+              goodGoonAtPuzzleTime.not(
+                goodGoonAtPuzzleTime.isEvilAt(player, "night_4"),
+                `${player}_good_at_puzzle_time`,
+              ),
+            ],
+            `${player}_is_good_goon`,
+          ),
+        ),
+        "some_good_goon_at_puzzle_time",
+      ),
+    );
+    expect(await goodGoonAtPuzzleTime.solveAll({ limit: 1 })).toEqual([]);
+
+    expect(doc.claims.filter((claim) => claim.possibleActualRoles !== undefined)).toEqual([
+      expect.objectContaining({ name: "You", possibleActualRoles: ["Chambermaid"] }),
+    ]);
+
+    const hasUniqueExpectedAnswer = async (candidate: PuzzleDoc): Promise<boolean> => {
+      const expected = buildFromDoc(candidate, backend);
+      expected.addTruth(expected.isDemon("Hugo"));
+      expected.addTruth(expected.isMinion("Ada"));
+      if ((await expected.solveAll({ limit: 1 })).length === 0) return false;
+
+      for (const player of candidate.players) {
+        if (player !== "Hugo") {
+          const otherDemon = buildFromDoc(candidate, backend);
+          otherDemon.addTruth(otherDemon.isDemon(player));
+          if ((await otherDemon.solveAll({ limit: 1 })).length > 0) return false;
+        }
+
+        const changesMinionSet = buildFromDoc(candidate, backend);
+        if (player === "Ada") changesMinionSet.addFalse(changesMinionSet.isMinion(player));
+        else changesMinionSet.addTruth(changesMinionSet.isMinion(player));
+        if ((await changesMinionSet.solveAll({ limit: 1 })).length > 0) return false;
+      }
+
+      return true;
+    };
+
+    expect(await hasUniqueExpectedAnswer(doc)).toBe(true);
+
+    const removableWithoutChangingTeam: string[] = [];
+    for (const removedClaim of doc.claims) {
+      const changed = { ...doc, claims: doc.claims.filter((claim) => claim !== removedClaim) };
+      if (await hasUniqueExpectedAnswer(changed)) removableWithoutChangingTeam.push(removedClaim.name);
+    }
+    expect(removableWithoutChangingTeam).toEqual(["Ada", "Gia", "Cora", "Hugo"]);
+
+    const simplePerturbationsThatPreserveTeam: string[] = [];
+    for (const changedClaim of doc.claims) {
+      const changed = {
+        ...doc,
+        claims: doc.claims.map((claim): PuzzleDoc["claims"][number] =>
+          claim === changedClaim ? { type: "Minstrel", name: claim.name } : claim,
+        ),
+      };
+      if (await hasUniqueExpectedAnswer(changed)) simplePerturbationsThatPreserveTeam.push(changedClaim.name);
+    }
+    expect(simplePerturbationsThatPreserveTeam).toEqual(["Ada", "Hugo", "Iris"]);
+  }, 60_000);
 });

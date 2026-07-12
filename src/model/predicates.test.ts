@@ -11,6 +11,7 @@ import {
   Drunk,
   Empath,
   FortuneTeller,
+  Goon,
   Hermit,
   Imp,
   Investigator,
@@ -84,6 +85,19 @@ describe("predicates and helpers", () => {
     invalid.fixActual("A", "Drunk");
     invalid.fixActual("B", "Imp");
     expect(await invalid.solveAll({ limit: 1 })).toEqual([]);
+  });
+
+  test("Goon can be hidden behind a Townsfolk claim", async () => {
+    const game = new BOTCModel(["A", "B", "C"], {
+      characters: script(Imp, Goon, Chef),
+      backend,
+    });
+    game.addRoleClaim({ player: "A", apparentRole: Chef });
+    game.fixActual("A", Goon);
+    game.fixActual("B", Imp);
+    game.fixActual("C", Chef);
+
+    expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
   });
 
   test("Marionette thinks they are an out-of-play Townsfolk", async () => {

@@ -62,6 +62,8 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
   const name = claim.name === oldName ? newName : claim.name;
 
   switch (claim.type) {
+    case "Assassin":
+      return { ...claim, name, target: claim.target ? remap(claim.target) : claim.target };
     case "Investigator":
       return { ...claim, name, among: remapArr(claim.among) };
     case "Librarian":
@@ -76,6 +78,29 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
       };
     case "Knight":
       return { ...claim, name, noDemonAmong: remapArr(claim.noDemonAmong) };
+    case "Innkeeper":
+      return {
+        ...claim,
+        name,
+        choices: claim.choices?.map((choice) => ({ ...choice, players: remapArr(choice.players) })),
+      };
+    case "Devil's Advocate":
+    case "Sailor":
+      return {
+        ...claim,
+        name,
+        choices: claim.choices?.map((choice) => ({ ...choice, player: remap(choice.player) })),
+      };
+    case "Godfather":
+      return {
+        ...claim,
+        name,
+        choices: claim.choices?.map((choice) => ({ ...choice, player: remap(choice.player) })),
+      };
+    case "Grandmother":
+      return { ...claim, name, grandchild: claim.grandchild ? remap(claim.grandchild) : claim.grandchild };
+    case "Moonchild":
+      return { ...claim, name, chosen: claim.chosen ? remap(claim.chosen) : claim.chosen };
     case "Noble":
       return {
         ...claim,
@@ -97,6 +122,8 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
     case "Sage":
       return { ...claim, name, demonAmong: claim.demonAmong ? remapArr(claim.demonAmong) : claim.demonAmong };
     case "Slayer":
+      return { ...claim, name, target: claim.target ? remap(claim.target) : claim.target };
+    case "Professor":
       return { ...claim, name, target: claim.target ? remap(claim.target) : claim.target };
     case "Snake Charmer":
       return {
@@ -156,6 +183,8 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
   // Strip references but leave the claim in place.
   const stripArr = (arr: readonly string[] | undefined) => arr?.filter((n) => n !== name);
   switch (claim.type) {
+    case "Assassin":
+      return claim.target === name ? { ...claim, target: undefined } : claim;
     case "Investigator":
     case "Librarian":
     case "Washerwoman":
@@ -164,6 +193,20 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
       return { ...claim, checks: claim.checks?.filter((c) => c.left !== name && c.right !== name) };
     case "Knight":
       return { ...claim, noDemonAmong: stripArr(claim.noDemonAmong) ?? [] };
+    case "Innkeeper":
+      return {
+        ...claim,
+        choices: claim.choices?.map((choice) => ({ ...choice, players: choice.players.filter((p) => p !== name) })),
+      };
+    case "Devil's Advocate":
+    case "Sailor":
+      return { ...claim, choices: claim.choices?.filter((choice) => choice.player !== name) };
+    case "Godfather":
+      return { ...claim, choices: claim.choices?.filter((choice) => choice.player !== name) };
+    case "Grandmother":
+      return claim.grandchild === name ? { ...claim, grandchild: undefined } : claim;
+    case "Moonchild":
+      return claim.chosen === name ? { ...claim, chosen: undefined } : claim;
     case "Noble":
       return {
         ...claim,
@@ -201,6 +244,8 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
     case "Sage":
       return { ...claim, demonAmong: stripArr(claim.demonAmong) };
     case "Slayer":
+      return claim.target === name ? { ...claim, target: undefined } : claim;
+    case "Professor":
       return claim.target === name ? { ...claim, target: undefined } : claim;
     case "Snake Charmer":
       return {
@@ -270,7 +315,7 @@ function normalizeTimeline(timeline: PuzzleDoc["timeline"], players: readonly st
         caller: event.caller === undefined || knownPlayers.has(event.caller) ? event.caller : undefined,
       };
     })
-    .filter((event) => event.players.length > 0);
+    .filter((event) => event.players.length > 0 || event.type === "nightDeath");
   return normalized.length === 0 ? undefined : sortTimelineEvents(normalized);
 }
 
