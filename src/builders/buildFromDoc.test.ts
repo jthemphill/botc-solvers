@@ -529,6 +529,102 @@ describe("buildFromDoc", () => {
     ).solveAll();
     expect(worlds).toHaveLength(1);
   });
+
+  test("Chambermaid counts a Gambler waking on the second night", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Chambermaid", "Gambler", "Chef", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Chambermaid"] },
+            { name: "B", roles: ["Gambler"] },
+            { name: "C", roles: ["Chef"] },
+            { name: "D", roles: ["Imp"] },
+          ],
+        }),
+        claims: [
+          {
+            type: "Chambermaid",
+            name: "A",
+            checks: [{ left: "B", right: "C", timing: "night_2", count: 1 }],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
+  test("Chambermaid stops counting a Seamstress after they use their ability", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Chambermaid", "Seamstress", "Chef", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Chambermaid"] },
+            { name: "B", roles: ["Seamstress"] },
+            { name: "C", roles: ["Chef"] },
+            { name: "D", roles: ["Imp"] },
+          ],
+        }),
+        claims: [
+          {
+            type: "Chambermaid",
+            name: "A",
+            checks: [
+              { left: "B", right: "C", timing: "night_2", count: 1 },
+              { left: "B", right: "C", timing: "night_3", count: 0 },
+            ],
+          },
+          {
+            type: "Seamstress",
+            name: "B",
+            timing: "night_2",
+            among: ["C", "D"],
+            aligned: false,
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
+  test("Chambermaid does not count a Demon chosen by the Exorcist", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Chambermaid", "Exorcist", "Imp", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Chambermaid"] },
+            { name: "B", roles: ["Exorcist"] },
+            { name: "C", roles: ["Imp"] },
+            { name: "D", roles: ["Chef"] },
+          ],
+        }),
+        claims: [
+          {
+            type: "Chambermaid",
+            name: "A",
+            checks: [{ left: "B", right: "C", timing: "night_2", count: 1 }],
+          },
+          { type: "Exorcist", name: "B", choices: [{ timing: "night_2", player: "C" }] },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
   test("Princess nominations block Demon night kills unless poisoned", async () => {
     const blockedWorlds = await buildFromDoc(
       {
@@ -658,6 +754,36 @@ describe("buildFromDoc", () => {
     ).solveAll();
     expect(worlds).toEqual([]);
   });
+  test("Flowergirl remembers a Demon vote across same-night succession", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D", "E"],
+        script: ["Flowergirl", "Imp", "Scarlet Woman", "Chef", "Empath"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Flowergirl"] },
+            { name: "B", roles: ["Imp"] },
+            { name: "C", roles: ["Scarlet Woman"] },
+            { name: "D", roles: ["Chef"] },
+            { name: "E", roles: ["Empath"] },
+          ],
+        }),
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["B"] }],
+        claims: [
+          {
+            type: "Flowergirl",
+            name: "A",
+            votes: [{ timing: "night_2", voters: ["B"], demonVoted: false }],
+          },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
+  });
   test("Gossip-killed Imp does not create an Imp starpass", async () => {
     const worlds = await buildFromDoc(
       {
@@ -782,6 +908,72 @@ describe("buildFromDoc", () => {
     ).solveAll();
     expect(worlds.length).toBeGreaterThan(0);
     expect(new Set(worlds.map((world) => world.actualRole("B")))).not.toContain("Imp");
+  });
+
+  test("night death sources distinguish Leviathan from a charged Po", async () => {
+    const leviathanWorlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D", "E"],
+        script: ["Leviathan", "Chef", "Empath", "Steward", "Knight"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Leviathan"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Empath"] },
+            { name: "D", roles: ["Steward"] },
+            { name: "E", roles: ["Knight"] },
+          ],
+        }),
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["B"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+    const poWorlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D", "E"],
+        script: ["Po", "Chef", "Empath", "Steward", "Knight"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Po"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Empath"] },
+            { name: "D", roles: ["Steward"] },
+            { name: "E", roles: ["Knight"] },
+          ],
+        }),
+        timeline: [{ timing: "night_3", type: "nightDeath", players: ["B", "C", "D"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+    const unchargedPoWorlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Po", "Chef", "Empath", "Steward"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Po"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Empath"] },
+            { name: "D", roles: ["Steward"] },
+          ],
+        }),
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["B", "C"] }],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(leviathanWorlds).toEqual([]);
+    expect(poWorlds).toHaveLength(1);
+    expect(unchargedPoWorlds).toEqual([]);
   });
   test("Demon-sourced night deaths cannot kill sober healthy Soldiers", async () => {
     const worlds = await buildFromDoc(
@@ -1116,14 +1308,17 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const poWithScarletWomanWorlds = await buildFromDoc(
       {
-        players: ["A", "B"],
-        script: ["Po", "Scarlet Woman"],
+        players: ["A", "B", "C", "D", "E"],
+        script: ["Po", "Scarlet Woman", "Chef", "Empath", "Steward"],
         setup: "none",
         uniqueCharacters: true,
         roleConstraints: roleConstraints({
           possible: [
             { name: "A", roles: ["Po"] },
             { name: "B", roles: ["Scarlet Woman"] },
+            { name: "C", roles: ["Chef"] },
+            { name: "D", roles: ["Empath"] },
+            { name: "E", roles: ["Steward"] },
           ],
         }),
         timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
@@ -1156,14 +1351,17 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const slayerShotWithCatchWorlds = await buildFromDoc(
       {
-        players: ["A", "B"],
-        script: ["Imp", "Scarlet Woman"],
+        players: ["A", "B", "C", "D", "E"],
+        script: ["Imp", "Scarlet Woman", "Chef", "Empath", "Steward"],
         setup: "none",
         uniqueCharacters: true,
         roleConstraints: roleConstraints({
           possible: [
             { name: "A", roles: ["Imp"] },
             { name: "B", roles: ["Scarlet Woman"] },
+            { name: "C", roles: ["Chef"] },
+            { name: "D", roles: ["Empath"] },
+            { name: "E", roles: ["Steward"] },
           ],
         }),
         timeline: [{ timing: "day_1", type: "slayerShot", players: ["A"] }],
@@ -1173,14 +1371,17 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const witchCurseWithCatchWorlds = await buildFromDoc(
       {
-        players: ["A", "B"],
-        script: ["Imp", "Scarlet Woman", "Witch"],
+        players: ["A", "B", "C", "D", "E"],
+        script: ["Imp", "Scarlet Woman", "Witch", "Chef", "Empath", "Steward"],
         setup: "none",
         uniqueCharacters: true,
         roleConstraints: roleConstraints({
           possible: [
             { name: "A", roles: ["Imp"] },
             { name: "B", roles: ["Scarlet Woman"] },
+            { name: "C", roles: ["Witch"] },
+            { name: "D", roles: ["Chef"] },
+            { name: "E", roles: ["Empath"] },
           ],
         }),
         timeline: [{ timing: "day_1", type: "witchCurse", players: ["A"] }],
@@ -1742,6 +1943,28 @@ describe("buildFromDoc", () => {
     expect(worlds).toHaveLength(1);
     expect(worlds[0]?.actualRole("A")).toBe("Nightwatchman");
   });
+  test("Sage information allows a Recluse to register as the Demon", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Sage", "Recluse", "Chef", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Sage"] },
+            { name: "B", roles: ["Recluse"] },
+            { name: "C", roles: ["Chef"] },
+            { name: "D", roles: ["Imp"] },
+          ],
+        }),
+        claims: [{ type: "Sage", name: "A", timing: "night_2", demonAmong: ["B", "C"] }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
   test("Ravenkeeper learned role constrains sober healthy claims", async () => {
     const worlds = await buildFromDoc(
       {
@@ -2070,8 +2293,8 @@ describe("buildFromDoc", () => {
     ).solveAll();
     const catchWorlds = await buildFromDoc(
       {
-        players: ["A", "B", "C"],
-        script: ["Slayer", "Imp", "Scarlet Woman"],
+        players: ["A", "B", "C", "D", "E"],
+        script: ["Slayer", "Imp", "Scarlet Woman", "Chef", "Empath"],
         setup: "none",
         uniqueCharacters: true,
         roleConstraints: roleConstraints({
@@ -2079,6 +2302,8 @@ describe("buildFromDoc", () => {
             { name: "A", roles: ["Slayer"] },
             { name: "B", roles: ["Imp"] },
             { name: "C", roles: ["Scarlet Woman"] },
+            { name: "D", roles: ["Chef"] },
+            { name: "E", roles: ["Empath"] },
           ],
         }),
         claims: [{ type: "Slayer", name: "A", timing: "day_1", target: "B", killed: true }],
@@ -2087,6 +2312,29 @@ describe("buildFromDoc", () => {
     ).solveAll();
     expect(noCatchWorlds).toEqual([]);
     expect(catchWorlds).toHaveLength(1);
+  });
+  test("Scarlet Woman cannot catch a slain Demon below five alive players", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Slayer", "Imp", "Scarlet Woman", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Slayer"] },
+            { name: "B", roles: ["Imp"] },
+            { name: "C", roles: ["Scarlet Woman"] },
+            { name: "D", roles: ["Chef"] },
+          ],
+        }),
+        timeline: [{ timing: "day_1", type: "slayerShot", caller: "A", players: ["B"] }],
+        claims: [{ type: "Slayer", name: "A", timing: "day_1", target: "B", killed: true }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toEqual([]);
   });
   test("Klutz claims require a healthy Klutz to choose good", async () => {
     const worlds = await buildFromDoc(

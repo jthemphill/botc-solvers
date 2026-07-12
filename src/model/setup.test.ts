@@ -309,6 +309,29 @@ describe("standard setup lowering", () => {
     expect(await invalid.solveAll({ limit: 1 })).toEqual([]);
   });
 
+  test("Lord of Typhon keeps three minions in one continuous line", async () => {
+    const characters = script(
+      LordOfTyphon,
+      Poisoner,
+      Spy,
+      Baron,
+      Drunk,
+      Recluse,
+      Saint,
+      Chef,
+      Empath,
+      Investigator,
+      Librarian,
+    );
+    const game = buildPuzzleModel({ players: players(10), characters }, backend);
+    game.fixActual("A", LordOfTyphon);
+    game.fixActual("C", Poisoner);
+    game.fixActual("E", Spy);
+    game.fixActual("G", Baron);
+
+    expect(await game.solveAll({ limit: 1 })).toEqual([]);
+  });
+
   test("Xaan setup allows the Outsider count to define X", async () => {
     const characters = script(Leviathan, Xaan, Drunk, Recluse, Saint, Chef, Empath, Investigator, Librarian);
     const game = buildPuzzleModel({ players: players(8), characters }, backend);

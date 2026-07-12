@@ -70,6 +70,13 @@ function keyOf(items: readonly string[]): string {
   return items.join("\u0000");
 }
 
+function timingOrder(timing: Timing): number {
+  const match = /^(night|day)_(\d+)$/.exec(timing);
+  if (match === null) throw new Error(`Invalid timing: ${timing}.`);
+  const round = Number(match[2]);
+  return round * 2 + (match[1] === "day" ? 1 : 0);
+}
+
 function addMapValue<K, V>(map: Map<K, V[]>, key: K, value: V): void {
   const values = map.get(key);
   if (values === undefined) map.set(key, [value]);
@@ -142,6 +149,19 @@ export class BOTCModel {
   private readonly roleAtSources = new Map<string, BoolLike[]>();
   private readonly roleAtRemovals = new Map<string, BoolLike[]>();
   private readonly roleActiveByTimingRole = new Map<string, BoolLike>();
+  private readonly abilityUses: Array<{
+    readonly player: string;
+    readonly role: string;
+    readonly timing: Timing;
+    readonly activeIf: BoolLike;
+  }> = [];
+  private readonly abilityUsedBeforeQueries = new Map<
+    string,
+    { readonly player: string; readonly role: string; readonly timing: Timing; readonly variable: BoolVar }
+  >();
+  private readonly wakePreventionSources = new Map<string, BoolLike[]>();
+  private readonly wakePreventionQueries = new Map<string, BoolVar>();
+  private readonly defaultWakeConstraints = new Set<string>();
   private readonly defaultRoleAtConstraints = new Set<string>();
   private readonly explicitDroisonTrue = new Set<number>();
   private globalDrunkSourceConstraintsApplied = false;
@@ -344,12 +364,16 @@ export class BOTCModel {
       ...(this.characters.has(drunkRole) ? [drunkRole] : []),
       ...(drunkRole !== "Hermit" && this.characters.has(drunkRole) && this.characters.has("Hermit") ? ["Hermit"] : []),
     ];
+    const thinksRoleIsOutOfPlayRoles = [
+      ...drunkLikeRoles,
+      ...(this.characters.has("Marionette") ? ["Marionette"] : []),
+    ];
     const claimedTownsfolk = roleCharacterType(claimedRole) === CharacterType.Townsfolk;
     if (claimedTownsfolk && options.possibleActualRoles === undefined) possibleRoles.push(...drunkLikeRoles);
     this.setPossibleActualRoles(claim.player, possibleRoles);
     if (claimedTownsfolk)
-      for (const drunkLikeRole of drunkLikeRoles)
-        this.addDrunkThinksOutOfPlayRole(claim.player, apparentRole, drunkLikeRole);
+      for (const hiddenRole of thinksRoleIsOutOfPlayRoles)
+        this.addThinksOutOfPlayRole(claim.player, apparentRole, hiddenRole);
   }
 
   addClaim(
@@ -363,7 +387,7 @@ export class BOTCModel {
     this.setApparentRole(player, apparentRoleRef);
     this.setPossibleActualRoles(player, possibleRoles);
     if (possibleRoles.some((role) => roleName(role) === roleName(drunkRole)))
-      this.addDrunkThinksOutOfPlayRole(player, apparentRoleRef, drunkRole);
+      this.addThinksOutOfPlayRole(player, apparentRoleRef, drunkRole);
   }
 
   setPossibleActualRoles(player: string, roles: readonly RoleRef[]): void {
@@ -381,9 +405,9 @@ export class BOTCModel {
     this.addFalse(this.actualIs(player, role));
   }
 
-  addDrunkThinksOutOfPlayRole(player: string, apparentRole: RoleRef, drunkRole: RoleRef): void {
+  addThinksOutOfPlayRole(player: string, apparentRole: RoleRef, hiddenRole: RoleRef): void {
     if (!this.uniqueCharacters) return;
-    this.addImplication(this.actualIs(player, drunkRole), this.roleInPlay(apparentRole).not());
+    this.addImplication(this.actualIs(player, hiddenRole), this.roleInPlay(apparentRole).not());
   }
 
   forceOutsiderCount(
@@ -833,6 +857,42 @@ export class BOTCModel {
     return result;
   }
 
+  registerAbilityUse(player: string, role: RoleRef, timing: Timing, activeIf: BoolLike): void {
+    this.checkPlayer(player);
+    const roleRef = roleName(role);
+    this.checkRole(roleRef);
+    this.abilityUses.push({ player, role: roleRef, timing, activeIf });
+  }
+
+  abilityUsedBefore(player: string, role: RoleRef, timing: Timing, name: string): BoolVar {
+    this.checkPlayer(player);
+    const roleRef = roleName(role);
+    this.checkRole(roleRef);
+    const key = keyOf(["ability_used_before", player, roleRef, timing]);
+    let query = this.abilityUsedBeforeQueries.get(key);
+    if (query === undefined) {
+      query = { player, role: roleRef, timing, variable: this.newBool(name) };
+      this.abilityUsedBeforeQueries.set(key, query);
+    }
+    return query.variable;
+  }
+
+  preventWakeAt(player: string, timing: Timing, activeIf: BoolLike): void {
+    this.checkPlayer(player);
+    addMapValue(this.wakePreventionSources, keyOf(["wake_prevented", player, timing]), activeIf);
+  }
+
+  wakePreventedAt(player: string, timing: Timing, name: string): BoolVar {
+    this.checkPlayer(player);
+    const key = keyOf(["wake_prevented", player, timing]);
+    let result = this.wakePreventionQueries.get(key);
+    if (result === undefined) {
+      result = this.newBool(name);
+      this.wakePreventionQueries.set(key, result);
+    }
+    return result;
+  }
+
   addRoleAt(player: string, role: RoleRef, timing: Timing, value: BoolLike | boolean = true): BoolVar {
     const roleRef = roleName(role);
     const roleAt = this.hasRoleAt(player, roleRef, timing);
@@ -1141,6 +1201,7 @@ export class BOTCModel {
 
   async solveAll(options: { readonly limit?: number } = {}): Promise<World[]> {
     this.applyDefaultTimingRoleConstraints();
+    this.applyDefaultWakeConstraints();
     this.applyDefaultSoberConstraints();
     const worlds: World[] = [];
     const workingClauses = [...this.clauses];
@@ -1430,6 +1491,26 @@ export class BOTCModel {
       this.addClause([roleAt.not(), this.actualIs(player, role).lit, ...sources.map(lit)]);
       this.addClause([this.actualIs(player, role).not(), ...removals.map(lit), roleAt.lit]);
       this.defaultRoleAtConstraints.add(key);
+    }
+  }
+
+  private constrainToAnySource(key: string, variable: BoolVar, sources: readonly BoolLike[]): void {
+    if (this.defaultWakeConstraints.has(key)) return;
+    for (const source of sources) this.addImplication(source, variable);
+    this.addClause([variable.not(), ...sources.map(lit)]);
+    this.defaultWakeConstraints.add(key);
+  }
+
+  private applyDefaultWakeConstraints(): void {
+    for (const [key, query] of this.abilityUsedBeforeQueries) {
+      const queryOrder = timingOrder(query.timing);
+      const sources = this.abilityUses
+        .filter((use) => use.player === query.player && use.role === query.role && timingOrder(use.timing) < queryOrder)
+        .map((use) => use.activeIf);
+      this.constrainToAnySource(key, query.variable, sources);
+    }
+    for (const [key, query] of this.wakePreventionQueries) {
+      this.constrainToAnySource(key, query, this.wakePreventionSources.get(key) ?? []);
     }
   }
 

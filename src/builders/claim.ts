@@ -55,6 +55,7 @@ export type ClaimWithTimelineContext = Claim & {
   readonly neighborOptions?: readonly EmpathNeighborOption[];
   readonly deadPlayers?: readonly string[];
   readonly deadPlayerOptions?: readonly OracleDeadPlayerOption[];
+  readonly alivePlayerCount?: number;
 };
 
 function timingOf(t: string | undefined): Timing | undefined {
@@ -287,6 +288,7 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
         target: claim.target,
         killed: claim.killed,
         gameContinued: claim.killed === true ? true : claim.gameContinued,
+        alivePlayerCount: claim.alivePlayerCount,
       });
     case "Snake Charmer":
       return new SnakeCharmer({
