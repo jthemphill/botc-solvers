@@ -658,7 +658,10 @@ function normalizeDoc(doc: PuzzleDoc): unknown {
     setup: doc.setup === "standard" ? undefined : doc.setup,
     uniqueCharacters: doc.uniqueCharacters === true ? undefined : doc.uniqueCharacters,
     script: sorted(doc.script),
-    timeline: doc.timeline === undefined ? undefined : [...doc.timeline].sort(compareTimelineEvents),
+    timeline:
+      doc.timeline === undefined
+        ? undefined
+        : doc.timeline.map((event) => ({ ...event, players: sorted(event.players) })).sort(compareTimelineEvents),
     claims: manualClaimsFor(doc.claims).map(normalizeClaim),
   });
   return normalized;
