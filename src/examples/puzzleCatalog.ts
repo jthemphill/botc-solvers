@@ -85,6 +85,7 @@ import doc_80_the_x_factor from "./puzzle-80-the-x-factor.json";
 import doc_81_arachnophobia from "./puzzle-81-arachnophobia.json";
 import doc_82_shoot_the_messenger from "./puzzle-82-shoot-the-messenger.json";
 import doc_83_be_the_one from "./puzzle-83-be-the-one.json";
+import doc_a_clean_sweep from "./a-clean-sweep.json";
 
 export interface PuzzleExample {
   readonly id: string;
@@ -188,6 +189,7 @@ const PUZZLE_DOCS = [
   { id: "puzzle-81-arachnophobia", data: doc_81_arachnophobia },
   { id: "puzzle-82-shoot-the-messenger", data: doc_82_shoot_the_messenger },
   { id: "puzzle-83-be-the-one", data: doc_83_be_the_one },
+  { id: "a-clean-sweep", data: doc_a_clean_sweep },
 ] as const;
 
 export const PUZZLE_EXAMPLES: readonly PuzzleExample[] = [

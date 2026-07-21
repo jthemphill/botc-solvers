@@ -10,6 +10,10 @@ export function claimSummary(claim: Claim): string {
   if (customInfo.length > 0) return customInfo.map(artistInfoSummary).join("; ");
 
   switch (claim.type) {
+    case "Assassin":
+      return claim.target === undefined
+        ? "Assassin ability unused"
+        : `${compactTimingLabel(claim.timing ?? "night_2")}: killed ${claim.target}`;
     case "Acrobat":
       return acrobatSummary(claim);
     case "Chef":
@@ -20,6 +24,25 @@ export function claimSummary(claim: Claim): string {
       return empathSummary(claim);
     case "Exorcist":
       return exorcistSummary(claim);
+    case "Innkeeper":
+      return innkeeperSummary(claim);
+    case "Devil's Advocate":
+      return nightlyChoiceSummary(claim.choices, "protected");
+    case "Sailor":
+      return nightlyChoiceSummary(claim.choices, "drank with");
+    case "Godfather": {
+      const known = formatList(claim.outsiderRoles ?? []);
+      const choices = nightlyChoiceSummary(claim.choices, "targeted");
+      return `Known Outsiders: ${known || "none"}; ${choices}`;
+    }
+    case "Grandmother":
+      return claim.grandchild === undefined
+        ? "No Grandchild information"
+        : `${claim.grandchild} is the ${claim.role ?? "unknown role"}`;
+    case "Moonchild":
+      return claim.chosen === undefined
+        ? "No Moonchild choice"
+        : `${compactTimingLabel(claim.timing ?? "day_1")}: chose ${claim.chosen}`;
     case "Flowergirl":
       return flowergirlSummary(claim);
     case "Investigator": {
@@ -77,6 +100,11 @@ export function claimSummary(claim: Claim): string {
         .join("; ");
     case "Oracle":
       return oracleSummary(claim);
+    case "Professor": {
+      if (claim.target === undefined) return "I did not use my ability.";
+      const timing = claim.timing === undefined ? "that night" : sentenceTimingLabel(claim.timing);
+      return `I chose to resurrect ${claim.target} on ${timing}.`;
+    }
     case "Philosopher":
       return philosopherSummary(claim);
     case "Princess":
@@ -131,6 +159,16 @@ export function claimSummary(claim: Claim): string {
     default:
       return `I am the ${claim.type}`;
   }
+}
+
+function nightlyChoiceSummary(
+  choices: readonly { readonly player: string; readonly timing?: string }[] | undefined,
+  verb: string,
+): string {
+  const entries = (choices ?? []).map(
+    (choice, index) => `${compactTimingLabel(choice.timing ?? `night_${index + 1}`)}: ${verb} ${choice.player}`,
+  );
+  return entries.length === 0 ? "No choices" : entries.join("; ");
 }
 
 function artistInfoSummary(expression: string): string {
@@ -484,6 +522,16 @@ function courtierSummary(claim: Extract<Claim, { readonly type: "Courtier" }>): 
   const drunkTimings = (claim.drunkTimings ?? []).map(compactTimingLabel);
   const drunkSummary = drunkTimings.length === 0 ? "" : `; drunk ${drunkTimings.join(", ")}`;
   return `Chose ${role}${choiceTiming}${drunkSummary}.`;
+}
+
+function innkeeperSummary(claim: Extract<Claim, { readonly type: "Innkeeper" }>): string {
+  const choices = (claim.choices ?? [])
+    .filter((choice) => choice.players.length > 0)
+    .map((choice, index) => {
+      const timing = choice.timing === undefined ? defaultNightLabel(index + 1) : compactTimingLabel(choice.timing);
+      return `${timing}: protected ${formatList(choice.players)}; one drunk`;
+    });
+  return choices.length === 0 ? "No Innkeeper choices" : choices.join("; ");
 }
 
 function legionarySummary(claim: Extract<Claim, { readonly type: "Legionary" }>): string {

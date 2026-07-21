@@ -11,6 +11,9 @@ import {
   Drunk,
   Empath,
   FangGu,
+  Fool,
+  Godfather,
+  Goon,
   Imp,
   Investigator,
   Klutz,
@@ -20,6 +23,7 @@ import {
   Mutant,
   Marionette,
   Poisoner,
+  Professor,
   Recluse,
   Saint,
   ScarletWoman,
@@ -170,6 +174,42 @@ describe("standard setup lowering", () => {
     const withoutVigormortis = buildPuzzleModel({ players: players(8), characters }, backend);
     withoutVigormortis.addFalse(withoutVigormortis.roleInPlay(Vigormortis));
     expect(characterTypeCounts((await withoutVigormortis.solveAll({ limit: 1 }))[0] as World, characters)).toEqual({
+      [CharacterType.Townsfolk]: 5,
+      [CharacterType.Outsider]: 1,
+      [CharacterType.Minion]: 1,
+      [CharacterType.Demon]: 1,
+    });
+  });
+
+  test("conditions Godfather outsider modification on Godfather being in play", async () => {
+    const characters = script(
+      Imp,
+      Godfather,
+      Poisoner,
+      Goon,
+      Drunk,
+      Professor,
+      Fool,
+      Chef,
+      Empath,
+      Investigator,
+      Librarian,
+      Slayer,
+      Washerwoman,
+    );
+
+    const withGodfather = buildPuzzleModel({ players: players(8), characters }, backend);
+    withGodfather.fixActual("A", Godfather);
+    expect(characterTypeCounts((await withGodfather.solveAll({ limit: 1 }))[0] as World, characters)).toEqual({
+      [CharacterType.Townsfolk]: 4,
+      [CharacterType.Outsider]: 2,
+      [CharacterType.Minion]: 1,
+      [CharacterType.Demon]: 1,
+    });
+
+    const withoutGodfather = buildPuzzleModel({ players: players(8), characters }, backend);
+    withoutGodfather.addFalse(withoutGodfather.roleInPlay(Godfather));
+    expect(characterTypeCounts((await withoutGodfather.solveAll({ limit: 1 }))[0] as World, characters)).toEqual({
       [CharacterType.Townsfolk]: 5,
       [CharacterType.Outsider]: 1,
       [CharacterType.Minion]: 1,

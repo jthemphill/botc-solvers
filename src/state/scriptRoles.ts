@@ -6,7 +6,7 @@ import type { Claim, PuzzleDoc } from "../schema/puzzleDoc";
 export const ALL_ROLE_NAMES = [...ROLE_CLASSES.keys()].sort((left, right) => left.localeCompare(right));
 
 const ROLE_BY_NORMALIZED_NAME = new Map(ALL_ROLE_NAMES.map((role) => [normalizeRoleName(role), role] as const));
-const SPECIAL_HIDDEN_SCRIPT_ROLES = new Set<string>(["Damsel", "Drunk", "Mutant"]);
+const SPECIAL_HIDDEN_SCRIPT_ROLES = new Set<string>(["Damsel", "Drunk", "Goon", "Mutant"]);
 
 export function normalizeRoleName(role: string): string {
   return role.toLowerCase().replace(/[^a-z0-9]+/g, "");

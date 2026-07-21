@@ -29,6 +29,28 @@ test("solves puzzle 83 with the Mathematician-Drunk jinx", async ({ page }) => {
   await expect(solvePanel.getByLabel("Aoife: Drunk, claimed Town Crier")).toBeVisible();
 });
 
+test("solves A Clean Sweep with the hidden evil Goon and three distinct night kills", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByLabel("Load example puzzle").selectOption("a-clean-sweep");
+
+  await expect(page.locator("input.title-input")).toHaveValue("A Clean Sweep");
+  const timeline = page.getByLabel("Puzzle timeline");
+  await expect(timeline).toContainText("N2 Night Death");
+  await expect(timeline).toContainText("N3 Night Death");
+  const hiddenRoles = page.getByLabel("Potential hidden roles");
+  for (const role of ["Godfather", "Zombuul", "Pukka", "Shabaloth", "Po"]) {
+    await expect(hiddenRoles).toContainText(role);
+  }
+  await expect(page.locator(".solve-panel").getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(page.getByLabel("Ada: Godfather, claimed Exorcist").first()).toBeVisible();
+  await expect(page.getByLabel("Cora: Moonchild").first()).toBeVisible();
+  await expect(page.getByLabel("Drew: Sailor").first()).toBeVisible();
+  await expect(page.getByLabel("Gia: Tinker").first()).toBeVisible();
+  await expect(page.getByLabel("Hugo: Pukka, claimed Professor").first()).toBeVisible();
+  await expect(page.getByLabel("Iris: Goon, claimed Minstrel").first()).toBeVisible();
+});
+
 test("loads puzzle 34 with structured role clues", async ({ page }) => {
   await page.goto("/");
 

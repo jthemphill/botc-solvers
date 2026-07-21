@@ -1,5 +1,6 @@
 import {
   Acrobat,
+  Assassin,
   Balloonist,
   Chambermaid,
   Chef,
@@ -12,8 +13,11 @@ import {
   Flowergirl,
   FortuneTeller,
   Gambler,
+  Godfather,
   Gossip,
+  Grandmother,
   Investigator,
+  Innkeeper,
   Juggler,
   Knight,
   Klutz,
@@ -30,6 +34,7 @@ import {
   Puzzlemaster,
   Ravenkeeper,
   Sage,
+  Sailor,
   Savant,
   Seamstress,
   Shugenja,
@@ -72,6 +77,8 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
   };
 
   switch (claim.type) {
+    case "Assassin":
+      return new Assassin({ ...base, target: claim.target });
     case "Acrobat":
       return new Acrobat({
         ...base,
@@ -87,6 +94,30 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
         minionRole: claim.minionRole ? resolveRoleRef(claim.minionRole) : undefined,
         role: claim.role ? resolveRoleRef(claim.role) : undefined,
         among: claim.among,
+      });
+    case "Innkeeper":
+      return new Innkeeper({
+        ...base,
+        choices: claim.choices?.map((choice) => ({
+          players: choice.players,
+          timing: timingOf(choice.timing),
+        })),
+      });
+    case "Godfather":
+      return new Godfather({
+        ...base,
+        outsiderRoles: claim.outsiderRoles?.map(resolveRoleRef),
+      });
+    case "Grandmother":
+      return new Grandmother({
+        ...base,
+        grandchild: claim.grandchild,
+        role: claim.role ? resolveRoleRef(claim.role) : undefined,
+      });
+    case "Sailor":
+      return new Sailor({
+        ...base,
+        choices: claim.choices?.map((choice) => ({ player: choice.player, timing: timingOf(choice.timing) })),
       });
     case "Librarian":
       return new Librarian({

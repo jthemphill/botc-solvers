@@ -70,6 +70,8 @@ const TIMELINE_EVENT_TYPE_OPTIONS: Array<{ type: TimelineEventType; label: strin
   { type: "execution", label: "Execution" },
   { type: "survivedExecution", label: "Survived Execution" },
   { type: "nightDeath", label: "Night Death" },
+  { type: "tinkerDeath", label: "Tinker Death" },
+  { type: "resurrection", label: "Resurrection" },
   { type: "slayerShot", label: "Slayer Shot" },
   { type: "witchCurse", label: "Witch Curse" },
   { type: "nominationDeath", label: "Nomination Death" },
@@ -963,12 +965,19 @@ function TimelinePlayerPicker({
 }
 
 function defaultTimingForType(type: TimelineEventType, currentTiming: string): string {
-  if (type === "nightDeath") return currentTiming.startsWith("night_") ? currentTiming : "night_2";
+  if (type === "tinkerDeath") return /^(night|day)_\d+$/.test(currentTiming) ? currentTiming : "day_1";
+  if (type === "nightDeath" || type === "resurrection")
+    return currentTiming.startsWith("night_") ? currentTiming : "night_2";
   return currentTiming.startsWith("day_") ? currentTiming : "day_1";
 }
 
 function timingOptionsForType(type: TimelineEventType, currentTiming: string): readonly string[] {
-  const base = type === "nightDeath" ? TIMELINE_NIGHT_OPTIONS : TIMELINE_DAY_OPTIONS;
+  const base =
+    type === "tinkerDeath"
+      ? [...TIMELINE_DAY_OPTIONS, ...TIMELINE_NIGHT_OPTIONS]
+      : type === "nightDeath" || type === "resurrection"
+        ? TIMELINE_NIGHT_OPTIONS
+        : TIMELINE_DAY_OPTIONS;
   return base.includes(currentTiming) ? base : [currentTiming, ...base];
 }
 
@@ -1233,16 +1242,12 @@ function mergedQuoteCardsByPlayer(cards: readonly ClaimQuoteCard[]): ClaimQuoteC
 
 function deathMarkerForPlayer(timeline: PuzzleDoc["timeline"], player: string): TimelineEventDoc | undefined {
   const events = timeline ?? [];
-  const nominationDeath = events.find((event) => event.type === "nominationDeath" && event.players.includes(player));
-  if (nominationDeath !== undefined) return nominationDeath;
-  const witchCurse = events.find((event) => event.type === "witchCurse" && event.players.includes(player));
-  if (witchCurse !== undefined) return witchCurse;
-  const slayerShot = events.find((event) => event.type === "slayerShot" && event.players.includes(player));
-  if (slayerShot !== undefined) return slayerShot;
-  const execution = events.find((event) => event.type === "execution" && event.players.includes(player));
-  if (execution !== undefined) return execution;
-  const nightDeath = events.find((event) => event.type === "nightDeath" && event.players.includes(player));
-  if (nightDeath !== undefined) return nightDeath;
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const event = events[index] as TimelineEventDoc;
+    if (!event.players.includes(player)) continue;
+    if (event.type === "resurrection") return undefined;
+    if (isTimelineDeathEvent(event)) return event;
+  }
   return undefined;
 }
 
@@ -1258,6 +1263,7 @@ function deathMarkerClass(
   if (type === "witchCurse") return "witch-curse";
   if (type === "slayerShot") return "slayer-shot";
   if (type === "survivedExecution") return "survived-execution";
+  if (type === "resurrection") return "survived-execution";
   return type === "execution" ? "execution" : "night-kill";
 }
 
@@ -1267,7 +1273,9 @@ function deathMarkerLabel(event: TimelineEventDoc): string {
   if (type === "witchCurse") return "died to a Witch curse";
   if (type === "slayerShot") return "died to a Slayer shot";
   if (type === "survivedExecution") return "survived execution";
+  if (type === "resurrection") return "resurrected";
   if (type === "execution") return "executed";
+  if (type === "tinkerDeath") return "died to the Tinker ability";
   return "killed at night";
 }
 
@@ -1277,7 +1285,9 @@ function timelineEventAction(event: TimelineEventDoc): string {
   if (type === "witchCurse") return "Witch Curse";
   if (type === "slayerShot") return "Slayer Shot";
   if (type === "survivedExecution") return "Survived Execution";
+  if (type === "resurrection") return "Resurrection";
   if (type === "execution") return "Execution";
+  if (type === "tinkerDeath") return "Tinker Death";
   return event.players.length === 1 ? "Night Death" : "Night Deaths";
 }
 
@@ -1287,7 +1297,9 @@ function timelineEventGlyph(event: TimelineEventDoc): string {
   if (type === "witchCurse") return "🪄";
   if (type === "slayerShot") return "🏹";
   if (type === "survivedExecution") return "S";
+  if (type === "resurrection") return "↑";
   if (type === "execution") return "X";
+  if (type === "tinkerDeath") return "T";
   return "N";
 }
 

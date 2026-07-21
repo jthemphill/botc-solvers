@@ -6,6 +6,7 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "search:bmr": "bun scripts/search-bmr.ts",
     "test": "bun run test:unit && bun run test:e2e",
     "test:unit": "bun test src",
     "test:e2e": "playwright test",

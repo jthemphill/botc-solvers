@@ -19,6 +19,7 @@ import {
   script,
   Clockmaker,
   FortuneTeller,
+  Goon,
   Goblin,
   Klutz,
   Legion,
@@ -133,6 +134,31 @@ describe("DSL", () => {
     game.addTruth(compile("registers_as(B, Imp)", game, ctx) as BoolLike);
 
     expect(await game.solveAll()).toHaveLength(1);
+  });
+
+  test("timed alignment expressions use a Goon's current alignment", async () => {
+    const game = buildPuzzleModel({ players: ["A", "B"], characters: [Goon, Imp], setup: false }, backend);
+    game.fixActual("A", Goon);
+    game.fixActual("B", Imp);
+    game.setGoodAt("A", "day_2", game.constantBool(false, "a_is_evil_on_day_2"));
+
+    game.addTruth(
+      compile("A.alignment == Evil", game, {
+        players: ["A", "B"],
+        script: ["Goon", "Imp"],
+        nameRoot: "timed_alignment",
+        timing: "day_2",
+      }) as BoolLike,
+    );
+    game.addTruth(
+      compile("A.alignment == Good", game, {
+        players: ["A", "B"],
+        script: ["Goon", "Imp"],
+        nameRoot: "base_alignment",
+      }) as BoolLike,
+    );
+
+    expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
   });
 
   test("cardinality comprehensions count roles in play", async () => {

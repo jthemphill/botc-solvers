@@ -1,0 +1,183 @@
+{
+  "title": "A Clean Sweep",
+  "players": ["Ada", "Cora", "Finn", "Gia", "Hugo", "Iris", "You", "Drew", "Eve"],
+  "script": [
+    "Chambermaid",
+    "Exorcist",
+    "Gambler",
+    "Gossip",
+    "Sailor",
+    "Professor",
+    "Minstrel",
+    "Goon",
+    "Tinker",
+    "Moonchild",
+    "Godfather",
+    "Zombuul",
+    "Pukka",
+    "Shabaloth",
+    "Po"
+  ],
+  "setup": "standard",
+  "uniqueCharacters": true,
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Gia"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": []
+    },
+    {
+      "timing": "day_2",
+      "type": "survivedExecution",
+      "players": ["Drew"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Cora", "Finn", "Eve"]
+    },
+    {
+      "timing": "day_3",
+      "type": "execution",
+      "players": ["Iris"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": []
+    }
+  ],
+  "claims": [
+    {
+      "name": "Ada",
+      "type": "Exorcist",
+      "choices": [
+        {
+          "player": "Iris",
+          "timing": "night_2"
+        },
+        {
+          "player": "Hugo",
+          "timing": "night_3"
+        },
+        {
+          "player": "Drew",
+          "timing": "night_4"
+        }
+      ]
+    },
+    {
+      "name": "Gia",
+      "type": "Tinker"
+    },
+    {
+      "name": "You",
+      "possibleActualRoles": ["Chambermaid"],
+      "type": "Chambermaid",
+      "checks": [
+        {
+          "left": "Finn",
+          "right": "Drew",
+          "count": 1,
+          "timing": "night_1"
+        },
+        {
+          "left": "Ada",
+          "right": "Hugo",
+          "count": 2,
+          "timing": "night_2"
+        },
+        {
+          "left": "Cora",
+          "right": "Hugo",
+          "count": 1,
+          "timing": "night_3"
+        },
+        {
+          "left": "Drew",
+          "right": "Hugo",
+          "count": 2,
+          "timing": "night_4"
+        }
+      ]
+    },
+    {
+      "name": "Eve",
+      "type": "Gambler",
+      "guesses": [
+        {
+          "player": "Hugo",
+          "role": "Professor",
+          "timing": "night_2",
+          "survived": true
+        },
+        {
+          "player": "Hugo",
+          "role": "Professor",
+          "timing": "night_3",
+          "survived": false
+        }
+      ]
+    },
+    {
+      "name": "Drew",
+      "type": "Sailor",
+      "choices": [
+        {
+          "player": "Eve",
+          "timing": "night_1"
+        },
+        {
+          "player": "Eve",
+          "timing": "night_2"
+        },
+        {
+          "player": "Eve",
+          "timing": "night_3"
+        },
+        {
+          "player": "Hugo",
+          "timing": "night_4"
+        }
+      ]
+    },
+    {
+      "name": "Finn",
+      "type": "Gossip",
+      "statements": [
+        {
+          "expression": "some Pukka.~role"
+        },
+        {
+          "expression": "some Pukka.~role",
+          "timing": "day_2"
+        },
+        {
+          "expression": "some Pukka.~role",
+          "timing": "day_3"
+        }
+      ]
+    },
+    {
+      "name": "Cora",
+      "timing": "day_3",
+      "type": "Moonchild",
+      "chosen": "Drew"
+    },
+    {
+      "name": "Hugo",
+      "timing": "night_4",
+      "type": "Professor",
+      "target": "Eve"
+    },
+    {
+      "name": "Iris",
+      "type": "Minstrel"
+    }
+  ]
+}

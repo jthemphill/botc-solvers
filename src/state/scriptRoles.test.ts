@@ -11,8 +11,26 @@ describe("script role helpers", () => {
     expect(options).toContain("Widow");
     expect(options).toContain("Damsel");
     expect(options).toContain("Drunk");
+    expect(options).toContain("Goon");
     expect(options).toContain("Mutant");
     expect(options).not.toContain("Chef");
+  });
+
+  test("lists every Bad Moon Rising evil role as a hidden option", () => {
+    const options = hiddenScriptRoleOptions();
+
+    expect(options).toEqual(
+      expect.arrayContaining([
+        "Godfather",
+        "Devil's Advocate",
+        "Assassin",
+        "Mastermind",
+        "Zombuul",
+        "Pukka",
+        "Shabaloth",
+        "Po",
+      ]),
+    );
   });
 
   test("orders juggler guesses by claimed role, hidden roles, then remaining script roles", () => {

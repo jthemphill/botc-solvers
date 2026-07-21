@@ -8,6 +8,6 @@
     "allowSyntheticDefaultImports": true,
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "src/**/*.json", "tests/**/*.ts", "vendor/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.json", "scripts/**/*.ts", "tests/**/*.ts", "vendor/**/*.ts"],
   "exclude": ["tests/e2e/**/*.ts"]
 }

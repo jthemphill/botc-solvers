@@ -55,6 +55,55 @@ describe("validatePuzzleDoc", () => {
     ).toThrow("Knight 'noDemonAmong' must have at most 2 players");
   });
 
+  test("accepts Innkeeper nightly choices and rejects more than two players", () => {
+    const doc = validatePuzzleDoc({
+      ...baseDoc,
+      players: ["You", "A", "B"],
+      script: ["Innkeeper"],
+      claims: [{ type: "Innkeeper", name: "You", choices: [{ players: ["A", "B"], timing: "night_2" }] }],
+    });
+    expect(doc.claims[0]).toEqual({
+      type: "Innkeeper",
+      name: "You",
+      choices: [{ players: ["A", "B"], timing: "night_2" }],
+    });
+
+    expect(() =>
+      validatePuzzleDoc({
+        ...baseDoc,
+        players: ["You", "A", "B", "C"],
+        script: ["Innkeeper"],
+        claims: [{ type: "Innkeeper", name: "You", choices: [{ players: ["A", "B", "C"], timing: "night_2" }] }],
+      }),
+    ).toThrow("Innkeeper choice must have at most 2 players");
+  });
+
+  test("accepts structured Bad Moon Rising actions and choices", () => {
+    const claims = [
+      { type: "Assassin", name: "You", target: "A", timing: "night_2" },
+      { type: "Devil's Advocate", name: "A", choices: [{ player: "B", timing: "night_2" }] },
+      {
+        type: "Godfather",
+        name: "B",
+        outsiderRoles: ["Moonchild", "Tinker"],
+        choices: [{ player: "A", timing: "night_3" }],
+      },
+      { type: "Grandmother", name: "A", grandchild: "B", role: "Chef" },
+      { type: "Sailor", name: "B", choices: [{ player: "You", timing: "night_2" }] },
+      { type: "Moonchild", name: "You", chosen: "A", timing: "day_2" },
+    ] as const;
+    const doc = validatePuzzleDoc({
+      ...baseDoc,
+      players: ["You", "A", "B"],
+      script: ["Assassin", "Devil's Advocate", "Godfather", "Grandmother", "Sailor", "Moonchild", "Tinker", "Chef"],
+      timeline: [{ type: "tinkerDeath", timing: "day_2", players: ["B"] }],
+      claims,
+    });
+
+    expect(doc.claims).toEqual(claims);
+    expect(doc.timeline).toEqual([{ type: "tinkerDeath", timing: "day_2", players: ["B"] }]);
+  });
+
   test("accepts Artist custom info statements and constraints", () => {
     const doc = validatePuzzleDoc({
       ...baseDoc,
@@ -224,7 +273,7 @@ describe("validatePuzzleDoc", () => {
         claims: [],
       }),
     ).toThrow(
-      'Timeline event type must be "nominationDeath", "witchCurse", "slayerShot", "execution", "nightDeath", "doomsayerDeath", "survivedExecution"',
+      'Timeline event type must be "nominationDeath", "witchCurse", "slayerShot", "execution", "nightDeath", "tinkerDeath", "doomsayerDeath", "survivedExecution"',
     );
   });
 

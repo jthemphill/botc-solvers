@@ -7,6 +7,7 @@ import { ROLE_CLASSES } from "../model/roleRegistry";
 import { canonicalRoleName, jugglerGuessRoleOptions } from "../state/scriptRoles";
 import type {
   AcrobatChoiceDoc,
+  AssassinClaim,
   BalloonistClaim,
   ChambermaidCheckDoc,
   Claim,
@@ -15,6 +16,7 @@ import type {
   CustomInfoStatementDoc,
   ChefClaim,
   DreamerClaim,
+  DevilsAdvocateClaim,
   EmpathClaim,
   ExorcistChoiceDoc,
   ExorcistClaim,
@@ -24,7 +26,11 @@ import type {
   FortuneTellerClaim,
   GamblerGuessDoc,
   GossipStatementDoc,
+  GodfatherClaim,
+  GrandmotherClaim,
   InvestigatorClaim,
+  InnkeeperChoiceDoc,
+  InnkeeperClaim,
   JugglerClaim,
   KlutzClaim,
   LegionaryCountDoc,
@@ -32,12 +38,15 @@ import type {
   KnightClaim,
   LibrarianClaim,
   MathematicianClaim,
+  MoonchildClaim,
+  NightlyPlayerChoiceDoc,
   NightwatchmanClaim,
   NobleClaim,
   OracleClaim,
   PhilosopherClaim,
   PrincessNominationDoc,
   PrincessClaim,
+  ProfessorClaim,
   ProdigyCheckDoc,
   ProdigyClaim,
   PuzzlemasterClaim,
@@ -45,6 +54,7 @@ import type {
   PuzzleDoc,
   RavenkeeperClaim,
   SageClaim,
+  SailorClaim,
   SavantClaim,
   SeamstressClaim,
   ShugenjaClaim,
@@ -156,6 +166,8 @@ export function ClaimsEditor({ doc, dispatch }: Props) {
 
 export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
   switch (type) {
+    case "Assassin":
+      return { type: "Assassin", name, timing: "night_2" };
     case "Acrobat":
       return { type: "Acrobat", name, choices: [] };
     case "Investigator":
@@ -172,6 +184,14 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
       return { type: "Empath", name, count: 0 };
     case "Exorcist":
       return { type: "Exorcist", name, choices: [] };
+    case "Devil's Advocate":
+      return { type: "Devil's Advocate", name, choices: [] };
+    case "Godfather":
+      return { type: "Godfather", name, outsiderRoles: [], choices: [] };
+    case "Grandmother":
+      return { type: "Grandmother", name, timing: "night_1" };
+    case "Innkeeper":
+      return { type: "Innkeeper", name, choices: [] };
     case "Flowergirl":
       return { type: "Flowergirl", name, votes: [] };
     case "FortuneTeller":
@@ -184,6 +204,10 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
       return { type: "Noble", name, oneEvilAmong: [] };
     case "Oracle":
       return { type: "Oracle", name };
+    case "Professor":
+      return { type: "Professor", name, timing: "night_2" };
+    case "Sailor":
+      return { type: "Sailor", name, choices: [] };
     case "Philosopher":
       return { type: "Philosopher", name, timing: "night_1", role: "" };
     case "Princess":
@@ -240,6 +264,8 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
       return { type: "Gossip", name, statements: [] };
     case "Nightwatchman":
       return { type: "Nightwatchman", name, timing: "night_1" };
+    case "Moonchild":
+      return { type: "Moonchild", name, timing: "day_1" };
     default:
       return { type, name } as Claim;
   }
@@ -374,6 +400,8 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
   const showEvilTwinKnowledge = doc.script.includes("Evil Twin");
   const body = (() => {
     switch (claim.type) {
+      case "Assassin":
+        return <AssassinBody doc={doc} claim={claim} onChange={onChange} />;
       case "Acrobat":
         return <AcrobatBody doc={doc} claim={claim} onChange={onChange} />;
       case "Investigator":
@@ -390,6 +418,14 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         return <EmpathBody doc={doc} claim={claim} onChange={onChange} />;
       case "Exorcist":
         return <ExorcistBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Devil's Advocate":
+        return <NightlyPlayerChoicesBody doc={doc} claim={claim} onChange={onChange} label="Protected player" />;
+      case "Godfather":
+        return <GodfatherBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Grandmother":
+        return <GrandmotherBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Innkeeper":
+        return <InnkeeperBody doc={doc} claim={claim} onChange={onChange} />;
       case "Flowergirl":
         return <FlowergirlBody doc={doc} claim={claim} onChange={onChange} />;
       case "FortuneTeller":
@@ -402,6 +438,10 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         return <NobleBody doc={doc} claim={claim} onChange={onChange} />;
       case "Oracle":
         return <OracleBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Professor":
+        return <ProfessorBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Sailor":
+        return <NightlyPlayerChoicesBody doc={doc} claim={claim} onChange={onChange} label="Drinking partner" />;
       case "Philosopher":
         return <PhilosopherBody doc={doc} claim={claim} onChange={onChange} />;
       case "Princess":
@@ -454,6 +494,8 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         return <GossipBody claim={claim} onChange={onChange} />;
       case "Nightwatchman":
         return <NightwatchmanBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Moonchild":
+        return <MoonchildBody doc={doc} claim={claim} onChange={onChange} />;
       default:
         return (
           <div className="field-grid">
@@ -608,6 +650,29 @@ function OptionalBooleanSelect({
       <option value="true">{trueLabel}</option>
       <option value="false">{falseLabel}</option>
     </select>
+  );
+}
+
+function AssassinBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: AssassinClaim;
+  onChange: (c: Claim) => void;
+}) {
+  return (
+    <div className="field-grid">
+      <span>Kill target</span>
+      <PlayerSelect
+        players={doc.players}
+        value={claim.target}
+        onChange={(target) => onChange({ ...claim, target: target || undefined })}
+      />
+      <span>Action timing</span>
+      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="night_2" />
+    </div>
   );
 }
 
@@ -939,6 +1004,176 @@ function ExorcistBody({
       <button type="button" onClick={addChoice}>
         + Add choice
       </button>
+    </div>
+  );
+}
+
+function InnkeeperBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: InnkeeperClaim;
+  onChange: (c: Claim) => void;
+}) {
+  const choices = claim.choices ?? [];
+  const eligiblePlayers = doc.players.filter((player) => player !== claim.name);
+  const setChoice = (index: number, choice: InnkeeperChoiceDoc) =>
+    onChange({ ...claim, choices: choices.map((entry, choiceIndex) => (choiceIndex === index ? choice : entry)) });
+  const addChoice = () =>
+    onChange({
+      ...claim,
+      choices: [...choices, { players: eligiblePlayers.slice(0, 2), timing: `night_${choices.length + 2}` }],
+    });
+  const removeChoice = (index: number) =>
+    onChange({ ...claim, choices: choices.filter((_, choiceIndex) => choiceIndex !== index) });
+
+  return (
+    <div>
+      {choices.map((choice, index) => (
+        <div key={index} className="field-grid">
+          <span>Choice timing</span>
+          <TimingField
+            value={choice.timing}
+            onChange={(timing) => setChoice(index, { ...choice, timing })}
+            defaultValue="night_2"
+          />
+          <span>Protected players</span>
+          <MultiPlayerSelect
+            players={eligiblePlayers}
+            value={choice.players}
+            onChange={(players) => setChoice(index, { ...choice, players })}
+            maxSelections={2}
+          />
+          <span />
+          <button type="button" onClick={() => removeChoice(index)}>
+            Remove choice
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addChoice}>
+        + Add choice
+      </button>
+    </div>
+  );
+}
+
+function NightlyPlayerChoicesBody({
+  doc,
+  claim,
+  onChange,
+  label,
+}: {
+  doc: PuzzleDoc;
+  claim: DevilsAdvocateClaim | SailorClaim;
+  onChange: (c: Claim) => void;
+  label: string;
+}) {
+  const choices = claim.choices ?? [];
+  const setChoice = (index: number, choice: NightlyPlayerChoiceDoc) =>
+    onChange({
+      ...claim,
+      choices: choices.map((entry, choiceIndex) => (choiceIndex === index ? choice : entry)),
+    } as Claim);
+  const addChoice = () =>
+    onChange({
+      ...claim,
+      choices: [...choices, { player: doc.players[0] ?? "", timing: `night_${choices.length + 1}` }],
+    } as Claim);
+  const removeChoice = (index: number) =>
+    onChange({ ...claim, choices: choices.filter((_, choiceIndex) => choiceIndex !== index) } as Claim);
+
+  return (
+    <div>
+      {choices.map((choice, index) => (
+        <div key={index} className="field-grid">
+          <span>Choice timing</span>
+          <TimingField value={choice.timing} onChange={(timing) => setChoice(index, { ...choice, timing })} />
+          <span>{label}</span>
+          <PlayerSelect
+            players={doc.players}
+            value={choice.player}
+            onChange={(player) => setChoice(index, { ...choice, player })}
+          />
+          <span />
+          <button type="button" onClick={() => removeChoice(index)}>
+            Remove choice
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addChoice}>
+        + Add choice
+      </button>
+    </div>
+  );
+}
+
+function GodfatherBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: GodfatherClaim;
+  onChange: (c: Claim) => void;
+}) {
+  const choiceClaim: DevilsAdvocateClaim = {
+    ...claim,
+    type: "Devil's Advocate",
+    choices: claim.choices,
+  };
+  return (
+    <div>
+      <div className="field-grid">
+        <span>Known Outsiders</span>
+        <RoleListEditor
+          value={claim.outsiderRoles ?? []}
+          onChange={(outsiderRoles) => onChange({ ...claim, outsiderRoles })}
+          options={roleOptionsForScript(doc.script)}
+          label="Godfather known Outsiders"
+        />
+      </div>
+      <NightlyPlayerChoicesBody
+        doc={doc}
+        claim={choiceClaim}
+        label="Revenge target"
+        onChange={(updated) =>
+          onChange({
+            ...claim,
+            choices: (updated as DevilsAdvocateClaim).choices,
+          })
+        }
+      />
+    </div>
+  );
+}
+
+function GrandmotherBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: GrandmotherClaim;
+  onChange: (c: Claim) => void;
+}) {
+  return (
+    <div className="field-grid">
+      <span>Grandchild</span>
+      <PlayerSelect
+        players={doc.players.filter((player) => player !== claim.name)}
+        value={claim.grandchild}
+        onChange={(grandchild) => onChange({ ...claim, grandchild: grandchild || undefined })}
+      />
+      <span>Grandchild role</span>
+      <RoleSelect
+        script={doc.script}
+        value={claim.role}
+        onChange={(role) => onChange({ ...claim, role: role || undefined })}
+        allowEmpty
+        ariaLabel="Grandchild role"
+      />
     </div>
   );
 }
@@ -1630,6 +1865,52 @@ function SageBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SageClaim; 
       />
       <span>Timing</span>
       <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+    </div>
+  );
+}
+
+function ProfessorBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: ProfessorClaim;
+  onChange: (c: Claim) => void;
+}) {
+  return (
+    <div className="field-grid">
+      <span>Resurrection target</span>
+      <PlayerSelect
+        players={doc.players}
+        value={claim.target}
+        onChange={(target) => onChange({ ...claim, target: target || undefined })}
+      />
+      <span>Action timing</span>
+      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="night_2" />
+    </div>
+  );
+}
+
+function MoonchildBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: MoonchildClaim;
+  onChange: (c: Claim) => void;
+}) {
+  return (
+    <div className="field-grid">
+      <span>Chosen player</span>
+      <PlayerSelect
+        players={doc.players}
+        value={claim.chosen}
+        onChange={(chosen) => onChange({ ...claim, chosen: chosen || undefined })}
+      />
+      <span>Choice timing</span>
+      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="day_1" />
     </div>
   );
 }

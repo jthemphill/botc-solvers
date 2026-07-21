@@ -2,6 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { claimSummary } from "./claimSummary";
 
 describe("claimSummary", () => {
+  test("summarizes Professor actions with target and timing", () => {
+    expect(claimSummary({ type: "Professor", name: "Ann", timing: "night_3", target: "Eve" })).toBe(
+      "I chose to resurrect Eve on night 3.",
+    );
+    expect(claimSummary({ type: "Professor", name: "Ann" })).toBe("I did not use my ability.");
+  });
+
   test("summarizes Slayer no-kill shots with target and timing", () => {
     expect(claimSummary({ type: "Slayer", name: "Adam", timing: "day_3", target: "Matthew", killed: false })).toBe(
       "I shot Matthew on day 3 and nothing happened.",
@@ -63,6 +70,35 @@ describe("claimSummary", () => {
         nominations: [{ player: "You", timing: "day_1" }],
       }),
     ).toBe("Nominated You on day 1");
+  });
+
+  test("summarizes Innkeeper choices", () => {
+    expect(
+      claimSummary({
+        type: "Innkeeper",
+        name: "Cara",
+        choices: [
+          { players: ["Ann", "Bob"], timing: "night_2" },
+          { players: ["Drew", "Eve"], timing: "night_3" },
+        ],
+      }),
+    ).toBe("N2: protected Ann or Bob; one drunk; N3: protected Drew or Eve; one drunk");
+  });
+
+  test("summarizes Bad Moon Rising actions and on-death choices", () => {
+    expect(claimSummary({ type: "Assassin", name: "Ada", target: "Gia", timing: "night_2" })).toBe("N2: killed Gia");
+    expect(
+      claimSummary({
+        type: "Godfather",
+        name: "Cara",
+        outsiderRoles: ["Moonchild", "Tinker"],
+        choices: [{ player: "Gia", timing: "night_3" }],
+      }),
+    ).toBe("Known Outsiders: Moonchild or Tinker; N3: targeted Gia");
+    expect(claimSummary({ type: "Grandmother", name: "Drew", grandchild: "Eve", role: "Chef" })).toBe(
+      "Eve is the Chef",
+    );
+    expect(claimSummary({ type: "Moonchild", name: "Finn", chosen: "Gia", timing: "day_2" })).toBe("D2: chose Gia");
   });
 
   test("uses consistent role-info wording for top-three claims", () => {

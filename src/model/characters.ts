@@ -181,6 +181,17 @@ export const Wakes = {
   secondNight: wakeRule((game, _player, timing, name) =>
     game.constantBool(nightNumber(timing) === 2, `${name}_wakes_second_night`),
   ),
+  firstNightOrConditional(role: RoleRef): WakeRule {
+    return wakeRule((game, player, timing, name) =>
+      game.anyOf(
+        [
+          game.constantBool(nightNumber(timing) === 1, `${name}_wakes_first_night`),
+          game.conditionalWakeAt(player, role, timing, `${name}_${slug(roleName(role))}_conditional_wake`),
+        ],
+        `${name}_${slug(roleName(role))}_first_night_or_conditional_wake`,
+      ),
+    );
+  },
   untilAbilityUsed(role: RoleRef, schedule: WakeRule): WakeRule {
     return wakeRule((game, player, timing, name) =>
       game.allOf(
@@ -293,6 +304,8 @@ export abstract class Role {
         Balloonist.roleName,
         Chef.roleName,
         Clockmaker.roleName,
+        Godfather.roleName,
+        Grandmother.roleName,
         Investigator.roleName,
         Knight.roleName,
         Librarian.roleName,
@@ -397,6 +410,18 @@ export class Pukka extends Role {
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Demon;
 }
+export class Shabaloth extends Role {
+  static readonly roleName = "Shabaloth";
+  static readonly wake = Wakes.unlessPrevented(Wakes.everyNightExceptFirst);
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
+export class Zombuul extends Role {
+  static readonly roleName = "Zombuul";
+  static readonly wake = Wakes.unlessPrevented(Wakes.everyNightExceptFirst);
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
 export class Po extends Role {
   static readonly roleName = "Po";
   static readonly wake = Wakes.unlessPrevented(Wakes.everyNightExceptFirst);
@@ -435,7 +460,56 @@ export class Goblin extends Role {
 }
 export class Godfather extends Role {
   static readonly roleName = "Godfather";
-  static readonly wake = Wakes.firstNight;
+  static readonly wake = Wakes.firstNightOrConditional("Godfather");
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+  readonly outsiderRoles: readonly RoleRef[];
+
+  constructor(options: RoleBaseOptions & { readonly outsiderRoles?: readonly RoleRef[] }) {
+    super(options);
+    this.outsiderRoles = options.outsiderRoles ?? [];
+  }
+
+  override learnedInfo(game: BOTCModel): BoolLike | undefined {
+    if (this.outsiderRoles.length === 0) return undefined;
+    const claimed = new Set(this.outsiderRoles.map(roleName));
+    const outsiderRoles = [...game.characters.entries()]
+      .filter(([, role]) => roleCharacterType(role) === CharacterType.Outsider)
+      .map(([role]) => role);
+    return game.allOf(
+      outsiderRoles.map((role) =>
+        claimed.has(role)
+          ? game.roleInPlay(role)
+          : game.not(game.roleInPlay(role), claimName(this.name, Godfather, `${role}_not_in_play`)),
+      ),
+      claimName(this.name, Godfather, "outsider_knowledge"),
+    );
+  }
+}
+export class Assassin extends Role {
+  static readonly roleName = "Assassin";
+  static readonly wake = Wakes.untilAbilityUsed("Assassin", Wakes.everyNightExceptFirst);
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+  readonly target?: string;
+
+  constructor(options: RoleBaseOptions & { readonly target?: string }) {
+    super(options);
+    this.target = options.target;
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Assassin, options);
+    if (this.target !== undefined) {
+      const timing = this.claimTiming(explicitTiming(options));
+      game.registerAbilityUse(this.name, Assassin, timing, game.hasRoleAt(this.name, Assassin, timing));
+    }
+    this.applyInfoClaimBuilders(game, Assassin, this.infoClaims, options);
+  }
+}
+export class Mastermind extends Role {
+  static readonly roleName = "Mastermind";
+  static readonly wake = Wakes.never;
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Minion;
 }
@@ -522,6 +596,24 @@ export class Witch extends Role {
 export class Lunatic extends Role {
   static readonly roleName = "Lunatic";
   static readonly wake = Wakes.everyNightExceptFirst;
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
+export class Goon extends Role {
+  static readonly roleName = "Goon";
+  static readonly wake = Wakes.never;
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
+export class Moonchild extends Role {
+  static readonly roleName = "Moonchild";
+  static readonly wake = Wakes.never;
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
+export class Tinker extends Role {
+  static readonly roleName = "Tinker";
+  static readonly wake = Wakes.never;
   static readonly alignment = Alignment.Good;
   static readonly characterType = CharacterType.Outsider;
 }
@@ -918,6 +1010,145 @@ export class Acrobat extends Role {
     });
     this.applyInfoClaimBuilders(game, Acrobat, this.infoClaims, options);
   }
+}
+
+export class Grandmother extends Role {
+  static readonly roleName = "Grandmother";
+  static readonly wake = Wakes.firstNight;
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+  readonly grandchild?: string;
+  readonly role?: RoleRef;
+
+  constructor(options: RoleBaseOptions & { readonly grandchild?: string; readonly role?: RoleRef }) {
+    super(options);
+    this.grandchild = options.grandchild;
+    this.role = options.role;
+  }
+
+  override learnedInfo(game: BOTCModel): BoolLike | undefined {
+    if (this.grandchild === undefined || this.role === undefined) return undefined;
+    return game.allOf(
+      [
+        game.isGood(this.grandchild),
+        game.registersAsRole(
+          this.grandchild,
+          this.role,
+          claimName(this.name, Grandmother, `${this.grandchild}_${roleName(this.role)}`),
+        ),
+      ],
+      claimName(this.name, Grandmother, "grandchild_info"),
+    );
+  }
+}
+
+export interface SailorChoice {
+  readonly player: string;
+  readonly timing?: Timing;
+}
+
+export class Sailor extends Role {
+  static readonly roleName = "Sailor";
+  static readonly wake = Wakes.everyNight;
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+  readonly choices: readonly SailorChoice[];
+
+  constructor(options: RoleBaseOptions & { readonly choices?: readonly SailorChoice[] }) {
+    super(options);
+    this.choices = options.choices ?? [];
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Sailor, options);
+    this.choices.forEach((choice, index) => {
+      const timing = this.claimTiming(choice.timing, index);
+      const match = /^night_(\d+)$/.exec(timing);
+      const affectedTimings: Timing[] = [timing];
+      if (match !== null) affectedTimings.push(`day_${match[1]}` as Timing);
+      game.addNightlyChoiceDrunking(
+        this.name,
+        Sailor,
+        timing,
+        [this.name, choice.player],
+        affectedTimings,
+        claimName(this.name, Sailor, `choice_${index + 1}`),
+      );
+    });
+    this.applyInfoClaimBuilders(game, Sailor, this.infoClaims, options);
+  }
+}
+
+export interface InnkeeperChoice {
+  readonly players: readonly string[];
+  readonly timing?: Timing;
+}
+
+export class Innkeeper extends Role {
+  static readonly roleName = "Innkeeper";
+  static readonly wake = Wakes.everyNightExceptFirst;
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+  readonly choices: readonly InnkeeperChoice[];
+
+  constructor(
+    options: RoleBaseOptions & {
+      readonly choices?: readonly InnkeeperChoice[];
+    },
+  ) {
+    super(options);
+    this.choices = options.choices ?? [];
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Innkeeper, options);
+    this.choices.forEach((choice, index) => {
+      if (choice.players.length !== 2 || new Set(choice.players).size !== 2 || choice.players.includes(this.name))
+        return;
+      const timing = this.claimTiming(choice.timing, index);
+      const activeHealthy = game.allOf(
+        [game.hasRoleAt(this.name, Innkeeper, timing), game.soberAndHealthy(this.name, timing)],
+        claimName(this.name, Innkeeper, `choice_${index + 1}_active`),
+      );
+      const match = /^night_(\d+)$/.exec(timing);
+      const affectedTimings: Timing[] = [timing];
+      if (match !== null) affectedTimings.push(`day_${match[1]}` as Timing);
+      game.addPersistentDrunking(affectedTimings, {
+        activeIf: activeHealthy,
+        excludedPlayers: game.players.filter((player) => !choice.players.includes(player)),
+        sourceName: claimName(this.name, Innkeeper, `choice_${index + 1}`),
+      });
+    });
+    this.applyInfoClaimBuilders(game, Innkeeper, this.infoClaims, options);
+  }
+}
+
+export class Professor extends Role {
+  static readonly roleName = "Professor";
+  static readonly wake = Wakes.untilAbilityUsed("Professor", Wakes.everyNightExceptFirst);
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Minstrel extends Role {
+  static readonly roleName = "Minstrel";
+  static readonly wake = Wakes.never;
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Pacifist extends Role {
+  static readonly roleName = "Pacifist";
+  static readonly wake = Wakes.never;
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Fool extends Role {
+  static readonly roleName = "Fool";
+  static readonly wake = Wakes.never;
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
 }
 
 export interface AcrobatChoice {
@@ -2279,9 +2510,18 @@ export class Seamstress extends Role {
   }
 
   override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
-    super.apply(game, options);
-    if (this.aligned === undefined) return;
+    this.applyRoleClaim(game, Seamstress, options);
+    if (this.aligned === undefined) {
+      this.applyInfoClaimBuilders(game, Seamstress, this.infoClaims, options);
+      return;
+    }
     const timing = this.claimTiming(explicitTiming(options));
+    const [left, right] = this.among;
+    if (left === undefined || right === undefined) throw new Error("Seamstress needs two players.");
+    const learned = this.aligned
+      ? predicates.sameAlignmentAt(game, left, right, timing)
+      : predicates.differentAlignmentsAt(game, left, right, timing);
+    this.applyInfoClaimBuilders(game, Seamstress, [{ learned, timing }, ...this.infoClaims], options);
     game.registerAbilityUse(this.name, Seamstress, timing, game.hasRoleAt(this.name, Seamstress, timing));
   }
 }
