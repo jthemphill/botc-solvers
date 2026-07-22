@@ -3963,7 +3963,7 @@ describe("buildFromDoc", () => {
     const worlds = await buildFromDoc(doc, backend).solveAll();
     expect(worlds.length).toBeGreaterThan(0);
   });
-  test("a-clean-sweep leaves Gambler death causality to the night-death model", async () => {
+  test("a-clean-sweep uses Chambermaid info without asserting a Gambler outcome", async () => {
     const doc = loadDoc("a-clean-sweep.json");
     const bmrEvilRoles = ["Godfather", "Zombuul", "Pukka", "Shabaloth", "Po"];
     expect(doc.script).toEqual(expect.arrayContaining(bmrEvilRoles));
@@ -3987,33 +3987,21 @@ describe("buildFromDoc", () => {
 
     const worlds = await buildFromDoc(doc, backend).solveAll();
 
-    expect(worlds).toHaveLength(3);
-    const commonRoles: Record<string, string> = {
+    expect(worlds).toHaveLength(1);
+    const expectedRoles: Record<string, string> = {
+      Ada: "Godfather",
       Cora: "Moonchild",
       Drew: "Sailor",
+      Eve: "Gambler",
       Finn: "Gossip",
       Gia: "Tinker",
+      Hugo: "Pukka",
+      Iris: "Goon",
       You: "Chambermaid",
     };
-    for (const world of worlds) {
-      for (const [player, role] of Object.entries(commonRoles)) expect(world.actualRole(player)).toBe(role);
-      const goon = world.holder("Goon");
-      expect(goon).toBeDefined();
-      expect(world.apparent.get("Ada")).toBe("Exorcist");
-    }
-    expect(
-      new Set(
-        worlds.map((world) =>
-          ["Ada", "Eve", "Hugo", "Iris"].map((player) => `${player}=${world.actualRole(player)}`).join(","),
-        ),
-      ),
-    ).toEqual(
-      new Set([
-        "Ada=Godfather,Eve=Gambler,Hugo=Pukka,Iris=Goon",
-        "Ada=Goon,Eve=Godfather,Hugo=Po,Iris=Minstrel",
-        "Ada=Po,Eve=Godfather,Hugo=Professor,Iris=Goon",
-      ]),
-    );
+    for (const [player, role] of Object.entries(expectedRoles)) expect(worlds[0]?.actualRole(player)).toBe(role);
+    expect(worlds[0]?.apparent.get("Ada")).toBe("Exorcist");
+    expect(worlds[0]?.apparent.get("Iris")).toBe("Minstrel");
     expect(new Set(doc.claims.map((claim) => claim.type)).size).toBe(doc.claims.length);
     expect(doc.claims.filter((claim) => claim.type === "Sailor")).toEqual([
       {
@@ -4046,7 +4034,7 @@ describe("buildFromDoc", () => {
         checks: [
           { left: "Finn", right: "Drew", count: 1, timing: "night_1" },
           { left: "Ada", right: "Hugo", count: 2, timing: "night_2" },
-          { left: "Cora", right: "Hugo", count: 1, timing: "night_3" },
+          { left: "Hugo", right: "Eve", count: 2, timing: "night_3" },
           { left: "Drew", right: "Hugo", count: 2, timing: "night_4" },
         ],
       },

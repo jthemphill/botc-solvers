@@ -32,52 +32,6 @@
         "night_4": ["Hugo"],
         "day_4": ["Hugo"]
       }
-    },
-    {
-      "roles": {
-        "Ada": "Goon",
-        "Cora": "Moonchild",
-        "Drew": "Sailor",
-        "Eve": "Godfather",
-        "Finn": "Gossip",
-        "Gia": "Tinker",
-        "Hugo": "Po",
-        "Iris": "Minstrel",
-        "You": "Chambermaid"
-      },
-      "drunkByTiming": {
-        "night_1": ["Drew"],
-        "day_1": ["Drew"],
-        "night_2": ["Eve", "You"],
-        "day_2": ["Eve", "You"],
-        "night_3": ["Drew"],
-        "day_3": ["Drew"],
-        "night_4": ["Hugo"],
-        "day_4": ["Hugo"]
-      }
-    },
-    {
-      "roles": {
-        "Ada": "Po",
-        "Cora": "Moonchild",
-        "Drew": "Sailor",
-        "Eve": "Godfather",
-        "Finn": "Gossip",
-        "Gia": "Tinker",
-        "Hugo": "Professor",
-        "Iris": "Goon",
-        "You": "Chambermaid"
-      },
-      "drunkByTiming": {
-        "night_1": ["Drew"],
-        "day_1": ["Drew"],
-        "night_2": ["Eve"],
-        "day_2": ["Eve"],
-        "night_3": ["Drew"],
-        "day_3": ["Drew"],
-        "night_4": ["Hugo"],
-        "day_4": ["Hugo"]
-      }
     }
   ]
 }

@@ -29,7 +29,7 @@ test("solves puzzle 83 with the Mathematician-Drunk jinx", async ({ page }) => {
   await expect(solvePanel.getByLabel("Aoife: Drunk, claimed Town Crier")).toBeVisible();
 });
 
-test("solves A Clean Sweep with three possible Gambler-death interpretations", async ({ page }) => {
+test("solves A Clean Sweep without asserting the Gambler's death cause", async ({ page }) => {
   await page.goto("/");
 
   await page.getByLabel("Load example puzzle").selectOption("a-clean-sweep");
@@ -42,14 +42,14 @@ test("solves A Clean Sweep with three possible Gambler-death interpretations", a
   for (const role of ["Godfather", "Zombuul", "Pukka", "Shabaloth", "Po"]) {
     await expect(hiddenRoles).toContainText(role);
   }
-  await expect(page.locator(".solve-panel").getByText("Satisfying worlds:").locator("strong")).toHaveText("3");
-  await expect(page.getByLabel("Ada: Godfather, claimed Exorcist").first()).toBeVisible();
-  await expect(page.getByLabel("Ada: Po, claimed Exorcist").first()).toBeVisible();
-  await expect(page.getByLabel("Cora: Moonchild").first()).toBeVisible();
-  await expect(page.getByLabel("Drew: Sailor").first()).toBeVisible();
-  await expect(page.getByLabel("Gia: Tinker").first()).toBeVisible();
-  await expect(page.getByLabel("Hugo: Pukka, claimed Professor").first()).toBeVisible();
-  await expect(page.getByLabel("Iris: Goon, claimed Minstrel").first()).toBeVisible();
+  await expect(page.locator(".solve-panel").getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(page.getByLabel("Ada: Godfather, claimed Exorcist")).toBeVisible();
+  await expect(page.getByLabel("Cora: Moonchild")).toBeVisible();
+  await expect(page.getByLabel("Drew: Sailor")).toBeVisible();
+  await expect(page.getByLabel("Eve: Gambler")).toBeVisible();
+  await expect(page.getByLabel("Gia: Tinker")).toBeVisible();
+  await expect(page.getByLabel("Hugo: Pukka, claimed Professor")).toBeVisible();
+  await expect(page.getByLabel("Iris: Goon, claimed Minstrel")).toBeVisible();
 });
 
 test("loads puzzle 34 with structured role clues", async ({ page }) => {
