@@ -38,6 +38,9 @@ test("solves A Clean Sweep without asserting the Gambler's death cause", async (
   const timeline = page.getByLabel("Puzzle timeline");
   await expect(timeline).toContainText("N2 Night Death");
   await expect(timeline).toContainText("N3 Night Death");
+  const claims = page.getByLabel("Player claim summaries");
+  await expect(claims).toContainText("N4: drank with Hugo");
+  await expect(claims).toContainText("I chose to resurrect Finn on night 4.");
   const hiddenRoles = page.getByLabel("Potential hidden roles");
   for (const role of ["Godfather", "Zombuul", "Pukka", "Shabaloth", "Po"]) {
     await expect(hiddenRoles).toContainText(role);

@@ -4050,7 +4050,7 @@ describe("buildFromDoc", () => {
           { player: "Ada", timing: "night_1" },
           { player: "Eve", timing: "night_2" },
           { player: "Hugo", timing: "night_3" },
-          { player: "You", timing: "night_4" },
+          { player: "Hugo", timing: "night_4" },
         ],
       },
     ]);
