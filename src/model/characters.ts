@@ -1175,24 +1175,6 @@ export class Gambler extends Role {
 
   override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
     this.applyRoleClaim(game, Gambler, options);
-    this.guesses.forEach((guess, index) => {
-      if (guess.survived === undefined) return;
-      const timing = this.claimTiming(guess.timing, index);
-      const activeHealthy = game.allOf(
-        [game.hasRoleAt(this.name, Gambler, timing), game.soberAndHealthy(this.name, timing)],
-        claimName(this.name, Gambler, `guess_${index + 1}_active`),
-      );
-      const correct = game.registersAsRole(
-        guess.player,
-        guess.role,
-        claimName(this.name, Gambler, `guess_${index + 1}_correct`),
-      );
-      if (!guess.survived) game.addTruth(activeHealthy);
-      game.addImplication(
-        activeHealthy,
-        guess.survived ? correct : game.not(correct, claimName(this.name, Gambler, `guess_${index + 1}_wrong`)),
-      );
-    });
     this.applyInfoClaimBuilders(game, Gambler, this.infoClaims, options);
   }
 }
@@ -1239,7 +1221,6 @@ export interface GamblerGuess {
   readonly player: string;
   readonly role: RoleRef;
   readonly timing?: Timing;
-  readonly survived?: boolean;
 }
 
 export interface GossipStatement {

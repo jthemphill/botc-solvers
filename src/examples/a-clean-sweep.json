@@ -58,7 +58,7 @@
       "type": "Exorcist",
       "choices": [
         {
-          "player": "Iris",
+          "player": "Drew",
           "timing": "night_2"
         },
         {
@@ -81,26 +81,26 @@
       "type": "Chambermaid",
       "checks": [
         {
-          "left": "Finn",
-          "right": "Drew",
-          "count": 1,
-          "timing": "night_1"
-        },
-        {
           "left": "Ada",
           "right": "Hugo",
           "count": 2,
-          "timing": "night_2"
+          "timing": "night_1"
         },
         {
           "left": "Cora",
           "right": "Hugo",
           "count": 1,
+          "timing": "night_2"
+        },
+        {
+          "left": "Hugo",
+          "right": "Finn",
+          "count": 1,
           "timing": "night_3"
         },
         {
-          "left": "Drew",
-          "right": "Hugo",
+          "left": "Hugo",
+          "right": "Ada",
           "count": 2,
           "timing": "night_4"
         }
@@ -113,14 +113,12 @@
         {
           "player": "Hugo",
           "role": "Professor",
-          "timing": "night_2",
-          "survived": true
+          "timing": "night_2"
         },
         {
           "player": "Hugo",
           "role": "Professor",
-          "timing": "night_3",
-          "survived": false
+          "timing": "night_3"
         }
       ]
     },
@@ -129,7 +127,7 @@
       "type": "Sailor",
       "choices": [
         {
-          "player": "Eve",
+          "player": "Ada",
           "timing": "night_1"
         },
         {
@@ -137,7 +135,7 @@
           "timing": "night_2"
         },
         {
-          "player": "Eve",
+          "player": "Hugo",
           "timing": "night_3"
         },
         {
@@ -173,7 +171,7 @@
       "name": "Hugo",
       "timing": "night_4",
       "type": "Professor",
-      "target": "Eve"
+      "target": "Finn"
     },
     {
       "name": "Iris",

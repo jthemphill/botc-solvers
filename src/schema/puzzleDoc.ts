@@ -300,7 +300,6 @@ export interface GamblerGuessDoc {
   readonly player: string;
   readonly role: string;
   readonly timing?: string;
-  readonly survived?: boolean;
 }
 
 export interface GamblerClaim extends BaseClaim {

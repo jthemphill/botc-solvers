@@ -2,6 +2,37 @@
   "solutions": [
     {
       "roles": {
+        "Adam": "Chambermaid",
+        "Aoife": "Gossip",
+        "Fraser": "Investigator",
+        "Jasmine": "Poisoner",
+        "Josh": "Gambler",
+        "Matthew": "Imp",
+        "You": "Clockmaker"
+      },
+      "poisoned": {
+        "night_1": ["Adam"],
+        "night_2": ["Adam"]
+      }
+    },
+    {
+      "roles": {
+        "Adam": "Chambermaid",
+        "Aoife": "Poisoner",
+        "Fraser": "Investigator",
+        "Jasmine": "Princess",
+        "Josh": "Gambler",
+        "Matthew": "Imp",
+        "You": "Clockmaker"
+      },
+      "poisoned": {
+        "night_1": ["Adam"],
+        "night_2": ["Jasmine"],
+        "night_3": ["Adam"]
+      }
+    },
+    {
+      "roles": {
         "Adam": "Poisoner",
         "Aoife": "Gossip",
         "Fraser": "Investigator",

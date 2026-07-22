@@ -265,6 +265,22 @@ describe("validatePuzzleDoc", () => {
     ).toThrow("Unsupported legacy field 'extraPossibleActualRoles'");
   });
 
+  test("rejects legacy Gambler survival outcomes", () => {
+    expect(() =>
+      validatePuzzleDoc({
+        ...baseDoc,
+        script: ["Gambler", "Chef"],
+        claims: [
+          {
+            type: "Gambler",
+            name: "You",
+            guesses: [{ player: "A", role: "Chef", timing: "night_2", survived: true }],
+          },
+        ],
+      }),
+    ).toThrow("Unsupported legacy field 'survived'");
+  });
+
   test("rejects unknown timeline event types", () => {
     expect(() =>
       validatePuzzleDoc({

@@ -84,14 +84,12 @@
         {
           "timing": "night_2",
           "player": "Aoife",
-          "role": "Gossip",
-          "survived": true
+          "role": "Gossip"
         },
         {
           "timing": "night_3",
           "player": "Matthew",
-          "role": "Imp",
-          "survived": true
+          "role": "Imp"
         }
       ]
     },

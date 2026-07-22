@@ -429,8 +429,7 @@ function gamblerSummary(claim: Extract<Claim, { readonly type: "Gambler" }>): st
     .filter((guess) => guess.player.trim() !== "" && guess.role.trim() !== "")
     .map((guess, index) => {
       const timing = guess.timing === undefined ? defaultNightLabel(index) : compactTimingLabel(guess.timing);
-      const outcome = guess.survived === undefined ? "" : `, ${guess.survived ? "survived" : "died"}`;
-      return `${timing}: ${guess.player}=${guess.role}${outcome}`;
+      return `${timing}: ${guess.player}=${guess.role}`;
     });
   return guesses.length === 0 ? "No Gambler guesses" : guesses.join("; ");
 }

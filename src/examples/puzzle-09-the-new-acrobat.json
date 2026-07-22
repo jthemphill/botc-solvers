@@ -39,8 +39,7 @@
         {
           "timing": "night_2",
           "player": "Sula",
-          "role": "Goblin",
-          "survived": true
+          "role": "Goblin"
         },
         {
           "timing": "night_3",
