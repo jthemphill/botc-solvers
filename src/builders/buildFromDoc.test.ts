@@ -2109,7 +2109,7 @@ describe("buildFromDoc", () => {
     expect(poWorlds).toHaveLength(1);
     expect(unchargedPoWorlds).toEqual([]);
   });
-  test("a charged Po cannot contribute only two deaths without a protected third target", async () => {
+  test("a charged Po may target a player who died earlier that night", async () => {
     const base = {
       players: ["A", "B", "C", "D", "E"],
       script: ["Po", "Chef", "Empath", "Gambler", "Steward"],
@@ -2154,8 +2154,71 @@ describe("buildFromDoc", () => {
       backend,
     ).solveAll();
 
-    expect(shortPoWorlds).toEqual([]);
+    expect(shortPoWorlds).toHaveLength(1);
     expect(protectedThirdTargetWorlds).toHaveLength(1);
+  });
+  test("a Po can target an already-dead player without charging", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Po", "Chef", "Empath", "Steward"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Po"] },
+            { name: "B", roles: ["Chef"] },
+            { name: "C", roles: ["Empath"] },
+            { name: "D", roles: ["Steward"] },
+          ],
+        }),
+        timeline: [
+          { timing: "day_1", type: "execution", players: ["B"] },
+          { timing: "night_2", type: "nightDeath", players: [] },
+          { timing: "night_3", type: "nightDeath", players: ["C"] },
+        ],
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
+  test("a Demon may sink a kill into a dead player, but not an unprotected living player", async () => {
+    const base = {
+      players: ["A", "B", "C"],
+      script: ["Imp", "Chef", "Empath"],
+      setup: "none" as const,
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Imp"] },
+          { name: "B", roles: ["Chef"] },
+          { name: "C", roles: ["Empath"] },
+        ],
+      }),
+      claims: [],
+    };
+    const deadTargetWorlds = await buildFromDoc(
+      {
+        ...base,
+        timeline: [
+          { timing: "day_1", type: "execution" as const, players: ["B"] },
+          { timing: "night_2", type: "nightDeath" as const, players: [] },
+        ],
+      },
+      backend,
+    ).solveAll();
+    const noTargetWorlds = await buildFromDoc(
+      {
+        ...base,
+        timeline: [{ timing: "night_2", type: "nightDeath" as const, players: [] }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(deadTargetWorlds).toHaveLength(1);
+    expect(noTargetWorlds).toEqual([]);
   });
   test("Demon-sourced night deaths cannot kill sober healthy Soldiers", async () => {
     const worlds = await buildFromDoc(
@@ -3909,7 +3972,7 @@ describe("buildFromDoc", () => {
         type: "Exorcist",
         name: "Ada",
         choices: [
-          { player: "Iris", timing: "night_2" },
+          { player: "Drew", timing: "night_2" },
           { player: "Hugo", timing: "night_3" },
           { player: "Drew", timing: "night_4" },
         ],

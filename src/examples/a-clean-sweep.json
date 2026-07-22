@@ -58,7 +58,7 @@
       "type": "Exorcist",
       "choices": [
         {
-          "player": "Iris",
+          "player": "Drew",
           "timing": "night_2"
         },
         {
@@ -173,7 +173,7 @@
       "name": "Hugo",
       "timing": "night_4",
       "type": "Professor",
-      "target": "Eve"
+      "target": "Finn"
     },
     {
       "name": "Iris",

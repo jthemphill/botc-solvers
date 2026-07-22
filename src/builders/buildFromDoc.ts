@@ -1547,7 +1547,7 @@ interface NightDeathSource {
   readonly available: BoolLike;
   readonly players?: readonly string[];
   readonly maxAssignments?: number;
-  readonly fillMaximumWhenAnyAssignedUnless?: BoolLike;
+  readonly targetCountWhenAvailable?: number;
   readonly requiredWhenAvailable?: boolean;
   readonly poKill?: boolean;
   readonly demonKill?: boolean;
@@ -1582,16 +1582,16 @@ function applyNightDeathSourceConstraints(
   const roleTimings = collectTimings(doc);
   const beforeInfoAssignments = new Map<Timing, Map<string, BoolLike[]>>();
   const demonKillAssignments = new Map<string, BoolLike[]>();
-  const poKillAssignmentsByTiming = new Map<Timing, BoolLike>();
+  const poChosePlayerByTiming = new Map<Timing, BoolLike>();
   for (const [eventIndex, event] of (doc.timeline ?? []).entries()) {
     if (event.type !== "nightDeath") continue;
     const timing = event.timing as Timing;
     const priorNight = previousNight(timing);
-    const priorPoKill = priorNight === undefined ? undefined : poKillAssignmentsByTiming.get(priorNight);
+    const priorPoChoice = priorNight === undefined ? undefined : poChosePlayerByTiming.get(priorNight);
     const poCharged =
       priorNight === undefined || priorNight === "night_1"
         ? game.constantBool(false, `${timing}_po_cannot_be_charged`)
-        : game.not(priorPoKill ?? game.constantBool(false, `${timing}_no_prior_po_kill`), `${timing}_po_charged`);
+        : game.not(priorPoChoice ?? game.constantBool(false, `${timing}_no_prior_po_choice`), `${timing}_po_charged`);
     const sources = nightDeathSources(
       game,
       doc,
@@ -1691,6 +1691,7 @@ function applyNightDeathSourceConstraints(
     applyRequiredGrandmotherDeaths(game, doc, event, demonAssignmentsByPlayer);
 
     const sourceCapacityActive = game.constantBool(true, `${event.timing}_night_death_source_capacity_active`);
+    const effectiveAvailabilityBySource = new Map<NightDeathSource, BoolLike>();
     for (const [source, assignments] of assignmentsBySource) {
       game.addEnforcedAtMostN(assignments, source.maxAssignments ?? 1, sourceCapacityActive);
       const sourceAssigned =
@@ -1725,26 +1726,90 @@ function applyNightDeathSourceConstraints(
         );
         for (const assignment of assignments) game.addImplication(assignment, effectiveAvailability);
       }
+      effectiveAvailabilityBySource.set(source, effectiveAvailability);
       if (source.requiredWhenAvailable !== false) game.addImplication(effectiveAvailability, sourceAssigned);
-      if (source.maxAssignments !== undefined && source.fillMaximumWhenAnyAssignedUnless !== undefined) {
-        const mustFillMaximum = game.allOf(
-          [
-            effectiveAvailability,
-            sourceAssigned,
-            game.not(
-              source.fillMaximumWhenAnyAssignedUnless,
-              `${event.timing}_${slug(source.id)}_no_surviving_target_explains_shortfall`,
-            ),
-          ],
-          `${event.timing}_${slug(source.id)}_must_fill_maximum`,
+    }
+
+    const deadAtPhaseStart = deadPlayersBefore(doc, timing);
+    const nonDeathTargetsBySource = new Map<NightDeathSource, readonly BoolLike[]>();
+    for (const [source, assignments] of assignmentsBySource) {
+      if (source.demonKill !== true) continue;
+      const nonDeathTargets = doc.players.map((player) => {
+        const killedBySource = game.anyOf(
+          assignedDeaths
+            .filter((death) => death.player === player && death.source === source)
+            .map((death) => death.value),
+          `${timing}_${slug(source.id)}_does_not_kill_${slug(player)}`,
         );
-        game.addEnforcedExactlyN(assignments, source.maxAssignments, mustFillMaximum);
+        const diesEarlier = game.anyOf(
+          assignedDeaths
+            .filter(
+              (death) =>
+                death.player === player &&
+                (death.source.resolutionOrder ?? Number.POSITIVE_INFINITY) <
+                  (source.resolutionOrder ?? Number.POSITIVE_INFINITY),
+            )
+            .map((death) => death.value),
+          `${timing}_${slug(player)}_dies_before_${slug(source.id)}_targets`,
+        );
+        const survivesDemonTarget = game.anyOf(
+          [
+            game.constantBool(
+              deadAtPhaseStart.has(player),
+              `${timing}_${slug(player)}_dead_before_${slug(source.id)}_targets`,
+            ),
+            diesEarlier,
+            demonKillProtectionAt(game, doc, player, timing),
+          ],
+          `${timing}_${slug(player)}_can_survive_${slug(source.id)}_target`,
+        );
+        return game.allOf(
+          [
+            survivesDemonTarget,
+            game.not(killedBySource, `${timing}_${slug(source.id)}_does_not_also_target_${slug(player)}`),
+          ],
+          `${timing}_${slug(player)}_non_death_target_for_${slug(source.id)}`,
+        );
+      });
+      nonDeathTargetsBySource.set(source, nonDeathTargets);
+      if (source.targetCountWhenAvailable !== undefined) {
+        game.addEnforcedAtLeastN(
+          [...assignments, ...nonDeathTargets],
+          source.targetCountWhenAvailable,
+          effectiveAvailabilityBySource.get(source) as BoolLike,
+        );
       }
     }
-    const poKillAssignments = [...assignmentsBySource.entries()].flatMap(([source, assignments]) =>
-      source.poKill === true ? assignments : [],
+
+    const poSources = [...assignmentsBySource.keys()].filter((source) => source.poKill === true);
+    const poKillAssignments = poSources.flatMap((source) => assignmentsBySource.get(source) ?? []);
+    const poDeathAssigned = game.anyOf(poKillAssignments, `${timing}_po_death_assigned`);
+    const poSourceAvailable = game.anyOf(
+      poSources.map((source) => effectiveAvailabilityBySource.get(source) as BoolLike),
+      `${timing}_po_source_available`,
     );
-    poKillAssignmentsByTiming.set(timing, game.anyOf(poKillAssignments, `${timing}_po_kill_assigned`));
+    const chargedPoAvailable = game.anyOf(
+      poSources
+        .filter((source) => source.targetCountWhenAvailable === 3)
+        .map((source) => effectiveAvailabilityBySource.get(source) as BoolLike),
+      `${timing}_charged_po_available`,
+    );
+    const poNonDeathTargetAvailable = game.anyOf(
+      poSources.flatMap((source) => nonDeathTargetsBySource.get(source) ?? []),
+      `${timing}_po_non_death_target_available`,
+    );
+    const poChosePlayer = game.newBool(`${timing}_po_chose_player`);
+    game.addImplication(poChosePlayer, poSourceAvailable);
+    game.addImplication(poDeathAssigned, poChosePlayer);
+    game.addImplication(chargedPoAvailable, poChosePlayer);
+    game.addImplication(
+      game.allOf(
+        [poChosePlayer, game.not(poDeathAssigned, `${timing}_po_choice_caused_no_death`)],
+        `${timing}_po_chose_without_a_death`,
+      ),
+      poNonDeathTargetAvailable,
+    );
+    poChosePlayerByTiming.set(timing, poChosePlayer);
   }
 
   const beforeInfoDeathsByTiming = new Map<Timing, ReadonlyMap<string, BoolLike>>();
@@ -2049,6 +2114,7 @@ function demonKillDeathSources(
     readonly demonPath?: BoolLike;
     readonly maxAssignments: number;
     readonly requiredWhenAvailable: boolean;
+    readonly targetCountWhenAvailable?: number;
     readonly poKill?: boolean;
   }[] = [
     {
@@ -2058,13 +2124,15 @@ function demonKillDeathSources(
           role !== "Leviathan" && role !== "Po" && role !== "Pukka" && role !== "Shabaloth" && role !== "Zombuul",
       ),
       maxAssignments: 1,
-      requiredWhenAvailable: true,
+      requiredWhenAvailable: false,
+      targetCountWhenAvailable: 1,
     },
     {
       id: "shabaloth_kill",
       roles: demonRoleNames.filter((role) => role === "Shabaloth"),
       maxAssignments: 2,
-      requiredWhenAvailable: shabalothContext.choices.length > 0,
+      requiredWhenAvailable: false,
+      targetCountWhenAvailable: shabalothContext.choices.length > 0 ? 2 : undefined,
     },
     {
       id: "zombuul_kill",
@@ -2082,7 +2150,8 @@ function demonKillDeathSources(
           )
         : game.constantBool(false, `${timing}_no_zombuul_on_script`),
       maxAssignments: 1,
-      requiredWhenAvailable: true,
+      requiredWhenAvailable: false,
+      targetCountWhenAvailable: 1,
     },
     {
       id: "po_regular_kill",
@@ -2098,6 +2167,7 @@ function demonKillDeathSources(
       activeIf: poCharged,
       maxAssignments: 3,
       requiredWhenAvailable: false,
+      targetCountWhenAvailable: 3,
       poKill: true,
     },
   ].filter((source) => source.roles.length > 0);
@@ -2113,15 +2183,7 @@ function demonKillDeathSources(
       `${timing}_${source.id}_source_available`,
     ),
     maxAssignments: source.maxAssignments,
-    fillMaximumWhenAnyAssignedUnless:
-      source.id === "po_charged_kill"
-        ? game.anyOf(
-            livingPlayersAt(doc, timing)
-              .filter((player) => !event.players.includes(player))
-              .map((player) => demonKillProtectionAt(game, doc, player, timing)),
-            `${timing}_charged_po_has_a_protected_non_death_target`,
-          )
-        : undefined,
+    targetCountWhenAvailable: source.targetCountWhenAvailable,
     requiredWhenAvailable: source.requiredWhenAvailable,
     poKill: source.poKill,
     demonKill: true,

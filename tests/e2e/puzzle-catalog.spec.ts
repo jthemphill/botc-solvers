@@ -249,10 +249,12 @@ test("solves puzzle 46 with the Princess and Gossip timing rules", async ({ page
   const solvePanel = page.locator(".solve-panel");
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
-  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("2");
   await expect(solvePanel.getByLabel("Josh: Imp, claimed Gambler")).toBeVisible();
   await expect(solvePanel.getByLabel("Adam: Poisoner, claimed Chambermaid")).toBeVisible();
-  await expect(solvePanel.getByLabel("Fraser: Investigator")).toBeVisible();
+  await expect(solvePanel.getByLabel("Matthew: Imp, claimed Exorcist")).toBeVisible();
+  await expect(solvePanel.getByLabel("Jasmine: Poisoner, claimed Princess")).toBeVisible();
+  await expect(solvePanel.getByLabel("Fraser: Investigator").first()).toBeVisible();
 });
 
 test("solves puzzle 47 with the Baron starpass solution", async ({ page }) => {
