@@ -2148,11 +2148,6 @@ function GamblerBody({
             allowEmpty
             ariaLabel="Gambler guessed role"
           />
-          <span>Survived</span>
-          <OptionalBooleanSelect
-            value={guess.survived}
-            onChange={(survived) => setGuess(index, { ...guess, survived })}
-          />
           <span>Timing</span>
           <TimingField value={guess.timing} onChange={(timing) => setGuess(index, { ...guess, timing })} />
           <span />

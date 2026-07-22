@@ -2132,7 +2132,7 @@ describe("buildFromDoc", () => {
         {
           type: "Gambler" as const,
           name: "D",
-          guesses: [{ timing: "night_3", player: "B", role: "Empath", survived: false }],
+          guesses: [{ timing: "night_3", player: "B", role: "Empath" }],
         },
       ],
     };
@@ -3516,24 +3516,77 @@ describe("buildFromDoc", () => {
     const gamblerWorlds = await buildFromDoc(
       {
         players: ["A", "B", "C"],
-        script: ["Gambler", "Drunk", "Imp"],
+        script: ["Gambler", "Drunk", "Chef", "Imp"],
         setup: "none",
         uniqueCharacters: true,
         roleConstraints: roleConstraints({
           possible: [
             { name: "A", roles: ["Drunk"] },
             { name: "B", roles: ["Gambler"] },
-            { name: "C", roles: ["Imp"] },
+            { name: "C", roles: ["Chef"] },
           ],
         }),
-        claims: [
-          { type: "Gambler", name: "A", guesses: [{ timing: "night_2", player: "B", role: "Imp", survived: false }] },
-        ],
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
+        claims: [{ type: "Gambler", name: "A", guesses: [{ timing: "night_2", player: "B", role: "Imp" }] }],
       },
       backend,
     ).solveAll();
     expect(acrobatWorlds).toEqual([]);
     expect(gamblerWorlds).toEqual([]);
+  });
+  test("Gambler outcomes are inferred from observed night deaths", async () => {
+    const base = {
+      players: ["A", "B"],
+      script: ["Gambler", "Chef", "Empath"],
+      setup: "none" as const,
+      uniqueCharacters: true,
+      roleConstraints: roleConstraints({
+        possible: [
+          { name: "A", roles: ["Gambler"] },
+          { name: "B", roles: ["Chef"] },
+        ],
+      }),
+      timeline: [{ timing: "night_2", type: "nightDeath" as const, players: [] }],
+    };
+    const correctGuessWorlds = await buildFromDoc(
+      {
+        ...base,
+        claims: [{ type: "Gambler", name: "A", guesses: [{ timing: "night_2", player: "B", role: "Chef" }] }],
+      },
+      backend,
+    ).solveAll();
+    const wrongGuessWorlds = await buildFromDoc(
+      {
+        ...base,
+        claims: [{ type: "Gambler", name: "A", guesses: [{ timing: "night_2", player: "B", role: "Empath" }] }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(correctGuessWorlds).toHaveLength(1);
+    expect(wrongGuessWorlds).toEqual([]);
+  });
+  test("a correct Gambler may die to a later Po attack", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C"],
+        script: ["Gambler", "Professor", "Po"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Gambler"] },
+            { name: "B", roles: ["Professor"] },
+            { name: "C", roles: ["Po"] },
+          ],
+        }),
+        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
+        claims: [{ type: "Gambler", name: "A", guesses: [{ timing: "night_2", player: "B", role: "Professor" }] }],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
   });
   test("Slayer no-kill claims exclude actual demon targets", async () => {
     const killedDemonWorlds = await buildFromDoc(
@@ -3910,7 +3963,7 @@ describe("buildFromDoc", () => {
     const worlds = await buildFromDoc(doc, backend).solveAll();
     expect(worlds.length).toBeGreaterThan(0);
   });
-  test("a-clean-sweep uniquely identifies the Demon and Minion players", async () => {
+  test("a-clean-sweep leaves Gambler death causality to the night-death model", async () => {
     const doc = loadDoc("a-clean-sweep.json");
     const bmrEvilRoles = ["Godfather", "Zombuul", "Pukka", "Shabaloth", "Po"];
     expect(doc.script).toEqual(expect.arrayContaining(bmrEvilRoles));
@@ -3934,26 +3987,33 @@ describe("buildFromDoc", () => {
 
     const worlds = await buildFromDoc(doc, backend).solveAll();
 
-    expect(worlds).toHaveLength(1);
-    const forcedRoles: Record<string, string> = {
-      Ada: "Godfather",
+    expect(worlds).toHaveLength(3);
+    const commonRoles: Record<string, string> = {
       Cora: "Moonchild",
       Drew: "Sailor",
-      Eve: "Gambler",
       Finn: "Gossip",
       Gia: "Tinker",
-      Hugo: "Pukka",
-      Iris: "Goon",
       You: "Chambermaid",
     };
     for (const world of worlds) {
-      for (const [player, role] of Object.entries(forcedRoles)) expect(world.actualRole(player)).toBe(role);
+      for (const [player, role] of Object.entries(commonRoles)) expect(world.actualRole(player)).toBe(role);
       const goon = world.holder("Goon");
       expect(goon).toBeDefined();
-      expect(goon).toBe("Iris");
       expect(world.apparent.get("Ada")).toBe("Exorcist");
-      expect(world.apparent.get("Iris")).toBe("Minstrel");
     }
+    expect(
+      new Set(
+        worlds.map((world) =>
+          ["Ada", "Eve", "Hugo", "Iris"].map((player) => `${player}=${world.actualRole(player)}`).join(","),
+        ),
+      ),
+    ).toEqual(
+      new Set([
+        "Ada=Godfather,Eve=Gambler,Hugo=Pukka,Iris=Goon",
+        "Ada=Goon,Eve=Godfather,Hugo=Po,Iris=Minstrel",
+        "Ada=Po,Eve=Godfather,Hugo=Professor,Iris=Goon",
+      ]),
+    );
     expect(new Set(doc.claims.map((claim) => claim.type)).size).toBe(doc.claims.length);
     expect(doc.claims.filter((claim) => claim.type === "Sailor")).toEqual([
       {
@@ -3995,8 +4055,8 @@ describe("buildFromDoc", () => {
       type: "Gambler",
       name: "Eve",
       guesses: [
-        { player: "Hugo", role: "Professor", timing: "night_2", survived: true },
-        { player: "Hugo", role: "Professor", timing: "night_3", survived: false },
+        { player: "Hugo", role: "Professor", timing: "night_2" },
+        { player: "Hugo", role: "Professor", timing: "night_3" },
       ],
     });
     expect(doc.claims).toContainEqual({ type: "Minstrel", name: "Iris" });
@@ -4010,71 +4070,8 @@ describe("buildFromDoc", () => {
       ],
     });
 
-    const goodGoonAtPuzzleTime = buildFromDoc(doc, backend);
-    goodGoonAtPuzzleTime.addTruth(
-      goodGoonAtPuzzleTime.anyOf(
-        doc.players.map((player) =>
-          goodGoonAtPuzzleTime.allOf(
-            [
-              goodGoonAtPuzzleTime.actualIs(player, "Goon"),
-              goodGoonAtPuzzleTime.not(
-                goodGoonAtPuzzleTime.isEvilAt(player, "night_4"),
-                `${player}_good_at_puzzle_time`,
-              ),
-            ],
-            `${player}_is_good_goon`,
-          ),
-        ),
-        "some_good_goon_at_puzzle_time",
-      ),
-    );
-    expect(await goodGoonAtPuzzleTime.solveAll({ limit: 1 })).toEqual([]);
-
     expect(doc.claims.filter((claim) => claim.possibleActualRoles !== undefined)).toEqual([
       expect.objectContaining({ name: "You", possibleActualRoles: ["Chambermaid"] }),
     ]);
-
-    const hasUniqueExpectedAnswer = async (candidate: PuzzleDoc): Promise<boolean> => {
-      const expected = buildFromDoc(candidate, backend);
-      expected.addTruth(expected.isDemon("Hugo"));
-      expected.addTruth(expected.isMinion("Ada"));
-      if ((await expected.solveAll({ limit: 1 })).length === 0) return false;
-
-      for (const player of candidate.players) {
-        if (player !== "Hugo") {
-          const otherDemon = buildFromDoc(candidate, backend);
-          otherDemon.addTruth(otherDemon.isDemon(player));
-          if ((await otherDemon.solveAll({ limit: 1 })).length > 0) return false;
-        }
-
-        const changesMinionSet = buildFromDoc(candidate, backend);
-        if (player === "Ada") changesMinionSet.addFalse(changesMinionSet.isMinion(player));
-        else changesMinionSet.addTruth(changesMinionSet.isMinion(player));
-        if ((await changesMinionSet.solveAll({ limit: 1 })).length > 0) return false;
-      }
-
-      return true;
-    };
-
-    expect(await hasUniqueExpectedAnswer(doc)).toBe(true);
-
-    const removableWithoutChangingTeam: string[] = [];
-    for (const removedClaim of doc.claims) {
-      const changed = { ...doc, claims: doc.claims.filter((claim) => claim !== removedClaim) };
-      if (await hasUniqueExpectedAnswer(changed)) removableWithoutChangingTeam.push(removedClaim.name);
-    }
-    expect(removableWithoutChangingTeam).toEqual(["Ada", "Gia", "Cora", "Hugo"]);
-
-    const simplePerturbationsThatPreserveTeam: string[] = [];
-    for (const changedClaim of doc.claims) {
-      const changed = {
-        ...doc,
-        claims: doc.claims.map((claim): PuzzleDoc["claims"][number] =>
-          claim === changedClaim ? { type: "Minstrel", name: claim.name } : claim,
-        ),
-      };
-      if (await hasUniqueExpectedAnswer(changed)) simplePerturbationsThatPreserveTeam.push(changedClaim.name);
-    }
-    expect(simplePerturbationsThatPreserveTeam).toEqual(["Ada", "Hugo", "Iris"]);
   }, 60_000);
 });

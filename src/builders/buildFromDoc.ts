@@ -2598,7 +2598,7 @@ function gamblerDeathSources(game: BOTCModel, doc: PuzzleDoc, timing: Timing): r
   return doc.claims.flatMap((claim) => {
     if (claim.type !== "Gambler") return [];
     return (claim.guesses ?? []).flatMap((guess, index): NightDeathSource[] => {
-      if (guess.timing !== timing || guess.survived === true) return [];
+      if (guess.timing !== timing) return [];
       const correct = game.registersAsRole(
         guess.player,
         resolveRoleRef(guess.role),

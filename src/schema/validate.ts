@@ -402,6 +402,7 @@ function validateClaim(input: unknown, path: string): Claim {
             ? undefined
             : expectArray(guesses, `${path}.guesses`).map((entry, index) => {
                 if (!isObject(entry)) throw new ValidationError(`Expected object`, `${path}.guesses[${index}]`);
+                rejectLegacyField(entry, "survived", `${path}.guesses[${index}].survived`);
                 return {
                   player: expectString(entry["player"], `${path}.guesses[${index}].player`),
                   role: expectString(entry["role"], `${path}.guesses[${index}].role`),
@@ -409,10 +410,6 @@ function validateClaim(input: unknown, path: string): Claim {
                     entry["timing"] === undefined
                       ? undefined
                       : expectString(entry["timing"], `${path}.guesses[${index}].timing`),
-                  survived:
-                    entry["survived"] === undefined
-                      ? undefined
-                      : expectBool(entry["survived"], `${path}.guesses[${index}].survived`),
                 };
               }),
       };

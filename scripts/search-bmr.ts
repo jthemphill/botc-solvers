@@ -696,15 +696,20 @@ function assertRequestedShape(doc: PuzzleDoc): void {
   }
   if (livingAt(doc, "day_4").size !== 4) throw new Error("Expected four living players at puzzle time.");
   const gambler = doc.claims.find((claim) => claim.type === "Gambler");
+  const nightThreeDeaths = new Set(
+    (doc.timeline ?? [])
+      .filter((event) => event.type === "nightDeath" && event.timing === "night_3")
+      .flatMap((event) => event.players),
+  );
   if (
     gambler?.guesses?.some(
       (guess) =>
         guess.timing === "night_3" &&
-        guess.survived === false &&
         doc.claims.some((claim) => claim.name === guess.player && claim.type === guess.role),
-    ) !== true
+    ) !== true ||
+    !nightThreeDeaths.has(gambler.name)
   ) {
-    throw new Error("Expected the night-3 Gambler guess to name a player's claimed role and be fatal.");
+    throw new Error("Expected the night-3 Gambler to guess a player's claimed role and die that night.");
   }
 }
 

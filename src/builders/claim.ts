@@ -220,7 +220,6 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
           player: guess.player,
           role: resolveRoleRef(guess.role),
           timing: timingOf(guess.timing),
-          survived: guess.survived,
         })),
       });
     case "Gossip":

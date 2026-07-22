@@ -439,8 +439,6 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
         await block.getByRole("button", { name: "+ Add guess" }).click();
         await selectField(block, "Player", guess.player, index);
         await fillRoleField(block, "Role", guess.role, index);
-        if (guess.survived !== undefined)
-          await selectField(block, "Survived", guess.survived ? "true" : "false", index);
         if (guess.timing !== undefined) await selectField(block, "Timing", guess.timing, index);
       }
       break;

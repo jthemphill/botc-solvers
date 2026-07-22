@@ -113,14 +113,12 @@
         {
           "player": "Hugo",
           "role": "Professor",
-          "timing": "night_2",
-          "survived": true
+          "timing": "night_2"
         },
         {
           "player": "Hugo",
           "role": "Professor",
-          "timing": "night_3",
-          "survived": false
+          "timing": "night_3"
         }
       ]
     },
