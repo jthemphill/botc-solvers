@@ -560,6 +560,45 @@ describe("buildFromDoc", () => {
       ).solveAll(),
     ).toEqual([]);
   });
+  test("a Godfather kill can fail against a protected target", async () => {
+    const game = buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Godfather", "Moonchild", "Sailor", "Chef"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Godfather"] },
+            { name: "B", roles: ["Moonchild"] },
+            { name: "C", roles: ["Sailor"] },
+            { name: "D", roles: ["Chef"] },
+          ],
+        }),
+        timeline: [
+          { timing: "day_1", type: "execution", players: ["B"] },
+          { timing: "night_2", type: "nightDeath", players: [] },
+        ],
+        claims: [
+          {
+            type: "Godfather",
+            name: "A",
+            choices: [{ player: "C", timing: "night_2" }],
+            possibleActualRoles: ["Godfather"],
+          },
+          {
+            type: "Sailor",
+            name: "C",
+            choices: [{ player: "D", timing: "night_2" }],
+          },
+        ],
+      },
+      backend,
+    );
+    game.addTruth(game.soberAndHealthy("C", "night_2"));
+
+    expect(await game.solveAll()).toHaveLength(1);
+  });
   test("a healthy Tinker can die at night without another death source", async () => {
     const worlds = await buildFromDoc(
       {
@@ -4008,10 +4047,10 @@ describe("buildFromDoc", () => {
         type: "Sailor",
         name: "Drew",
         choices: [
-          { player: "Eve", timing: "night_1" },
+          { player: "Ada", timing: "night_1" },
           { player: "Eve", timing: "night_2" },
-          { player: "Eve", timing: "night_3" },
-          { player: "Hugo", timing: "night_4" },
+          { player: "Hugo", timing: "night_3" },
+          { player: "You", timing: "night_4" },
         ],
       },
     ]);
@@ -4032,10 +4071,10 @@ describe("buildFromDoc", () => {
         name: "You",
         possibleActualRoles: ["Chambermaid"],
         checks: [
-          { left: "Finn", right: "Drew", count: 1, timing: "night_1" },
-          { left: "Ada", right: "Hugo", count: 2, timing: "night_2" },
-          { left: "Hugo", right: "Eve", count: 2, timing: "night_3" },
-          { left: "Drew", right: "Hugo", count: 2, timing: "night_4" },
+          { left: "Ada", right: "Hugo", count: 2, timing: "night_1" },
+          { left: "Cora", right: "Hugo", count: 1, timing: "night_2" },
+          { left: "Hugo", right: "Finn", count: 1, timing: "night_3" },
+          { left: "Hugo", right: "Ada", count: 2, timing: "night_4" },
         ],
       },
     ]);

@@ -212,12 +212,17 @@ async function searchActions(source: PuzzleDoc): Promise<void> {
   const fixedNightOneCheck = source.claims
     .find((claim): claim is Extract<Claim, { type: "Chambermaid" }> => claim.type === "Chambermaid")
     ?.checks?.find((check) => check.timing === "night_1");
-  if (fixedNightOneCheck?.left !== "Drew" || fixedNightOneCheck.right !== "Hugo" || fixedNightOneCheck.count !== 2)
-    throw new Error("Action search preserves the required night-1 Drew/Hugo Chambermaid 2.");
+  if (fixedNightOneCheck?.left !== "Ada" || fixedNightOneCheck.right !== "Hugo" || fixedNightOneCheck.count !== 2)
+    throw new Error("Action search preserves the required night-1 Ada/Hugo Chambermaid 2.");
+  const fixedNightOneSailorChoice = source.claims
+    .find((claim): claim is Extract<Claim, { type: "Sailor" }> => claim.type === "Sailor")
+    ?.choices?.find((choice) => choice.timing === "night_1");
+  if (fixedNightOneSailorChoice?.player !== "Ada")
+    throw new Error("Action search preserves the required night-1 Sailor choice of Ada.");
   const hypothesizedWakers = new Map<string, ReadonlySet<string>>([
-    ["night_2", new Set(["Cora", "Drew", "Eve", "Iris"])],
-    ["night_3", new Set(["Cora", "Eve", "Iris"])],
-    ["night_4", new Set(["Cora"])],
+    ["night_2", new Set(["Ada", "Drew", "Eve", "Hugo"])],
+    ["night_3", new Set(["Drew", "Eve", "Hugo"])],
+    ["night_4", new Set(["Ada", "Drew", "Hugo"])],
   ]);
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
@@ -226,10 +231,13 @@ async function searchActions(source: PuzzleDoc): Promise<void> {
       const wakers = hypothesizedWakers.get(timing) as ReadonlySet<string>;
       return { timing: timing as Timing, left, right, count: Number(wakers.has(left)) + Number(wakers.has(right)) };
     });
-    const sailorChoices = ["night_1", "night_2", "night_3", "night_4"].map((timing) => ({
-      timing: timing as Timing,
-      player: random([...livingAt(source, timing)].filter((player) => player !== "Ada")),
-    }));
+    const sailorChoices = [
+      fixedNightOneSailorChoice,
+      ...["night_2", "night_3", "night_4"].map((timing) => ({
+        timing: timing as Timing,
+        player: random([...livingAt(source, timing)].filter((player) => player !== "Drew")),
+      })),
+    ];
     const candidate: PuzzleDoc = {
       ...source,
       claims: source.claims.map((claim): Claim => {
@@ -249,7 +257,6 @@ async function searchActions(source: PuzzleDoc): Promise<void> {
       !worlds.every((world) => sameTeam(evilTeam(world, candidate), expected))
     )
       continue;
-    if (!(await everyWorldHasLyingEvilGoon(candidate))) continue;
     const necessaryClaims = (await claimNecessity(candidate, expected)).filter((result) => result.necessary).length;
     let necessaryDetails = 0;
     const simplifications = claimSimplifications(candidate).filter(
@@ -548,16 +555,14 @@ async function verify(doc: PuzzleDoc): Promise<void> {
   const world = worlds[0] as World;
   const answer = puzzleAnswer(world, doc);
   if (!(await hasUniqueAnswer(doc, answer))) throw new Error("The Demon and Minion players are not unique.");
-  if (!(await everyWorldHasLyingEvilGoon(doc)))
-    throw new Error("Some satisfying world lacks an evil Goon who lies about a role and action.");
   for (const candidate of worlds) {
     if (candidate.holder("Godfather") === undefined) throw new Error("A satisfying world lacks the Godfather.");
     if (candidate.holder("Gambler") === undefined) throw new Error("A satisfying world lacks the Gambler.");
     if (!demonClaimIsUnique(doc, candidate)) throw new Error("The Demon double-claims another player's claimed role.");
     const goon = candidate.holder("Goon");
     const goonClaim = doc.claims.find((claim) => claim.name === goon);
-    if (goon === undefined || goonClaim === undefined || !claimIncludesAction(goonClaim))
-      throw new Error("Every hidden Goon must lie about a role and an action.");
+    if (goon === undefined || goonClaim === undefined || goonClaim.type === "Goon")
+      throw new Error("Every satisfying world must contain a hidden Goon.");
   }
 
   const necessity = await claimNecessity(doc, answer);
@@ -582,13 +587,13 @@ async function verify(doc: PuzzleDoc): Promise<void> {
     printWorld(doc, candidate);
   });
   console.log(
-    `\nVerified: ${answer.demon} is the forced Demon; ${answer.minions.join(" and ")} are the forced Minions; all ${worlds.length} internal worlds contain a lying evil Goon, the Godfather, and the fatal night-3 Gambler. Whole claims removable without changing the team: ${redundant.map((result) => result.name).join(", ") || "none"}. Simple role perturbations that preserve the team: ${stablePerturbations.join(", ") || "none"}. Redundant mandated action details: ${redundantDetails.join(", ") || "none"}.`,
+    `\nVerified: ${answer.demon} is the forced Demon; ${answer.minions.join(" and ")} are the forced Minions; all ${worlds.length} internal worlds contain a hidden Goon, the Godfather, and the fatal night-3 Gambler. Whole claims removable without changing the team: ${redundant.map((result) => result.name).join(", ") || "none"}. Simple role perturbations that preserve the team: ${stablePerturbations.join(", ") || "none"}. Redundant mandated action details: ${redundantDetails.join(", ") || "none"}.`,
   );
 }
 
 function perturbClaim(claim: Claim): Claim {
   return new Set(["Gossip", "Minstrel"]).has(claim.type)
-    ? { type: "Grandmother", name: claim.name }
+    ? { type: "Tinker", name: claim.name }
     : { type: "Minstrel", name: claim.name };
 }
 

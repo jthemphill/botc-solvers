@@ -1955,6 +1955,7 @@ function godfatherDeathSources(
       id: `${timing}_${slug(choice.actor)}_godfather_kills_${slug(target)}`,
       players: [target],
       available: selected,
+      requiredWhenAvailable: false,
       deathTiming: "beforeInfo",
     }));
   });

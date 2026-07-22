@@ -81,26 +81,26 @@
       "type": "Chambermaid",
       "checks": [
         {
-          "left": "Finn",
-          "right": "Drew",
-          "count": 1,
-          "timing": "night_1"
-        },
-        {
           "left": "Ada",
           "right": "Hugo",
           "count": 2,
+          "timing": "night_1"
+        },
+        {
+          "left": "Cora",
+          "right": "Hugo",
+          "count": 1,
           "timing": "night_2"
         },
         {
           "left": "Hugo",
-          "right": "Eve",
-          "count": 2,
+          "right": "Finn",
+          "count": 1,
           "timing": "night_3"
         },
         {
-          "left": "Drew",
-          "right": "Hugo",
+          "left": "Hugo",
+          "right": "Ada",
           "count": 2,
           "timing": "night_4"
         }
@@ -127,7 +127,7 @@
       "type": "Sailor",
       "choices": [
         {
-          "player": "Eve",
+          "player": "Ada",
           "timing": "night_1"
         },
         {
@@ -135,11 +135,11 @@
           "timing": "night_2"
         },
         {
-          "player": "Eve",
+          "player": "Hugo",
           "timing": "night_3"
         },
         {
-          "player": "Hugo",
+          "player": "You",
           "timing": "night_4"
         }
       ]
