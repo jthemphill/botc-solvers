@@ -242,7 +242,7 @@ test("adds and refines deaths from the timeline panel", async ({ page }) => {
   await details.getByLabel("Player 1").uncheck();
 
   await expect(timeline).toContainText("N2 Night Deaths");
-  await expect(timeline).toContainText("Player 2 or Player 3");
+  await expect(timeline).toContainText("Player 2 and Player 3");
   await expect(page.getByRole("button", { name: /Seat 2: Player 2, killed at night/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Seat 3: Player 3, killed at night/ })).toBeVisible();
 });

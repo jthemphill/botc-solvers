@@ -82,7 +82,7 @@ describe("claimSummary", () => {
           { players: ["Drew", "Eve"], timing: "night_3" },
         ],
       }),
-    ).toBe("N2: protected Ann or Bob; one drunk; N3: protected Drew or Eve; one drunk");
+    ).toBe("N2: protected Ann and Bob; one drunk; N3: protected Drew and Eve; one drunk");
   });
 
   test("summarizes Bad Moon Rising actions and on-death choices", () => {
@@ -94,11 +94,28 @@ describe("claimSummary", () => {
         outsiderRoles: ["Moonchild", "Tinker"],
         choices: [{ player: "Gia", timing: "night_3" }],
       }),
-    ).toBe("Known Outsiders: Moonchild or Tinker; N3: targeted Gia");
+    ).toBe("Known Outsiders: Moonchild and Tinker; N3: targeted Gia");
     expect(claimSummary({ type: "Grandmother", name: "Drew", grandchild: "Eve", role: "Chef" })).toBe(
       "Eve is the Chef",
     );
     expect(claimSummary({ type: "Moonchild", name: "Finn", chosen: "Gia", timing: "day_2" })).toBe("D2: chose Gia");
+  });
+
+  test("uses conjunctions for collective player lists", () => {
+    expect(
+      claimSummary({
+        type: "Town Crier",
+        name: "Ann",
+        checks: [{ timing: "night_2", nominators: ["Bob", "Cara"], minionNominated: false }],
+      }),
+    ).toBe("Night 2: Bob and Cara -> no");
+    expect(
+      claimSummary({
+        type: "Flowergirl",
+        name: "Ann",
+        votes: [{ timing: "night_2", voters: ["Bob", "Cara", "Drew"], demonVoted: true }],
+      }),
+    ).toBe("N2: Bob, Cara, and Drew voted -> yes");
   });
 
   test("uses consistent role-info wording for top-three claims", () => {
