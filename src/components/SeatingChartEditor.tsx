@@ -20,7 +20,7 @@ import {
 } from "../schema/puzzleDoc";
 import { sortTimelineEvents, type PuzzleAction } from "../state/puzzleDoc";
 import { ClaimBody, ClaimTypeahead, makeEmptyClaim } from "./ClaimsEditor";
-import { claimSummary, compactTimingLabel, formatList, timingLabel } from "./claimSummary";
+import { claimSummary, compactTimingLabel, formatAndList, timingLabel } from "./claimSummary";
 
 interface Props {
   doc: PuzzleDoc;
@@ -1066,7 +1066,7 @@ function TimelineStrip({
                     type="button"
                     className={selected ? "selected" : undefined}
                     aria-pressed={selected}
-                    aria-label={`${timingLabel(event.timing)} ${timelineEventAction(event)}: ${event.players.join(", ")}`}
+                    aria-label={`${timingLabel(event.timing)} ${timelineEventAction(event)}: ${formatAndList(event.players, "Nobody")}`}
                     onClick={() => onSelect(selected ? undefined : index)}
                   >
                     <span className={`timeline-node ${deathClass}`} aria-hidden="true">
@@ -1076,7 +1076,7 @@ function TimelineStrip({
                       <strong>
                         {compactTimingLabel(event.timing)} {timelineEventAction(event)}
                       </strong>
-                      <span>{formatList(event.players)}</span>
+                      <span>{formatAndList(event.players, "Nobody")}</span>
                     </span>
                   </button>
                 </li>

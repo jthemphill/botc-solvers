@@ -7,7 +7,7 @@ test("solves puzzle 82 with the Vigormortis-killed Witch world", async ({ page }
 
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 82 - Shoot the Messenger");
   await expect(page.getByLabel("Puzzle timeline")).toContainText("D2 Witch Curse");
-  await expect(page.getByLabel("Player claim summaries")).toContainText("Night 2: Dan or Hannah -> no");
+  await expect(page.getByLabel("Player claim summaries")).toContainText("Night 2: Dan and Hannah -> no");
   const solvePanel = page.locator(".solve-panel");
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
   await expect(solvePanel.getByLabel("Sarah: Vigormortis, claimed Snake Charmer")).toBeVisible();
@@ -38,6 +38,9 @@ test("solves A Clean Sweep without asserting the Gambler's death cause", async (
   const timeline = page.getByLabel("Puzzle timeline");
   await expect(timeline).toContainText("N2 Night Death");
   await expect(timeline).toContainText("N3 Night Death");
+  await expect(timeline.getByText("Nobody", { exact: true })).toHaveCount(2);
+  await expect(timeline).toContainText("Cora, Finn, and Eve");
+  await expect(timeline).not.toContainText("Someone");
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("N4: drank with Hugo");
   await expect(claims).toContainText("I chose to resurrect Finn on night 4.");
@@ -439,7 +442,7 @@ test("solves puzzle 55 with the Flowergirl Demon worlds", async ({ page }) => {
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 55 - The Life of a Flowergirl");
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("I learned that Aoife is not the Artist.");
-  await expect(claims).toContainText("N2: You, Fraser, Steph, Aoife, or Jasmine voted -> yes");
+  await expect(claims).toContainText("N2: You, Fraser, Steph, Aoife, and Jasmine voted -> yes");
   await expect(claims).toContainText("Sarah and Jasmine are same");
 
   const timeline = page.getByLabel("Puzzle timeline");

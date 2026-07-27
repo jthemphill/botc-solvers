@@ -31,9 +31,9 @@ export function claimSummary(claim: Claim): string {
     case "Sailor":
       return nightlyChoiceSummary(claim.choices, "drank with");
     case "Godfather": {
-      const known = formatList(claim.outsiderRoles ?? []);
+      const known = formatAndList(claim.outsiderRoles ?? [], "none");
       const choices = nightlyChoiceSummary(claim.choices, "targeted");
-      return `Known Outsiders: ${known || "none"}; ${choices}`;
+      return `Known Outsiders: ${known}; ${choices}`;
     }
     case "Grandmother":
       return claim.grandchild === undefined
@@ -95,7 +95,7 @@ export function claimSummary(claim: Claim): string {
       return claim.checks
         .map(
           (check) =>
-            `${timingLabel(check.timing)}: ${formatList(check.nominators)} -> ${check.minionNominated ? "yes" : "no"}`,
+            `${timingLabel(check.timing)}: ${formatAndList(check.nominators, "Nobody")} -> ${check.minionNominated ? "yes" : "no"}`,
         )
         .join("; ");
     case "Oracle":
@@ -409,7 +409,7 @@ function exorcistSummary(claim: Extract<Claim, { readonly type: "Exorcist" }>): 
 function flowergirlSummary(claim: Extract<Claim, { readonly type: "Flowergirl" }>): string {
   const votes = (claim.votes ?? []).map(
     (vote) =>
-      `${compactTimingLabel(vote.timing)}: ${formatList(vote.voters)} voted -> ${vote.demonVoted ? "yes" : "no"}`,
+      `${compactTimingLabel(vote.timing)}: ${formatAndList(vote.voters, "Nobody")} voted -> ${vote.demonVoted ? "yes" : "no"}`,
   );
   return votes.length === 0 ? "No Flowergirl votes" : votes.join("; ");
 }
@@ -528,7 +528,7 @@ function innkeeperSummary(claim: Extract<Claim, { readonly type: "Innkeeper" }>)
     .filter((choice) => choice.players.length > 0)
     .map((choice, index) => {
       const timing = choice.timing === undefined ? defaultNightLabel(index + 1) : compactTimingLabel(choice.timing);
-      return `${timing}: protected ${formatList(choice.players)}; one drunk`;
+      return `${timing}: protected ${formatAndList(choice.players)}; one drunk`;
     });
   return choices.length === 0 ? "No Innkeeper choices" : choices.join("; ");
 }
@@ -570,17 +570,23 @@ function savantSummary(options: readonly string[]): string {
 }
 
 export function formatList(values: readonly string[]): string {
+  return formatJoinedList(values, "or", "Someone");
+}
+
+export function formatAndList(values: readonly string[], empty = "Someone"): string {
+  return formatJoinedList(values, "and", empty);
+}
+
+function formatJoinedList(values: readonly string[], conjunction: "and" | "or", empty: string): string {
   const visible = values.filter(Boolean);
-  if (visible.length === 0) return "Someone";
+  if (visible.length === 0) return empty;
   if (visible.length === 1) return visible[0] as string;
-  if (visible.length === 2) return `${visible[0]} or ${visible[1]}`;
-  return `${visible.slice(0, -1).join(", ")}, or ${visible[visible.length - 1]}`;
+  if (visible.length === 2) return `${visible[0]} ${conjunction} ${visible[1]}`;
+  return `${visible.slice(0, -1).join(", ")}, ${conjunction} ${visible[visible.length - 1]}`;
 }
 
 function formatPair(values: readonly string[]): string {
-  const visible = values.filter(Boolean);
-  if (visible.length === 2) return `${visible[0]} and ${visible[1]}`;
-  return formatList(values);
+  return formatAndList(values);
 }
 
 export function timingLabel(timing: string): string {
