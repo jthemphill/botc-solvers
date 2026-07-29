@@ -2067,6 +2067,32 @@ describe("buildFromDoc", () => {
     expect(validWorlds).toHaveLength(1);
     expect(invalidWorlds).toEqual([]);
   });
+  test("Mathematician detects an Oracle's Recluse misregistration", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D"],
+        script: ["Mathematician", "Oracle", "Recluse", "Imp"],
+        setup: "none",
+        uniqueCharacters: true,
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Mathematician"] },
+            { name: "B", roles: ["Oracle"] },
+            { name: "C", roles: ["Recluse"] },
+            { name: "D", roles: ["Imp"] },
+          ],
+        }),
+        timeline: [{ timing: "day_1", type: "execution", players: ["C"] }],
+        claims: [
+          { type: "Oracle", name: "B", timing: "night_2", count: 1 },
+          { type: "Mathematician", name: "A", malfunctions: [{ timing: "night_2", count: 1 }] },
+        ],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+  });
   test("night deaths without a catch exclude actual Imp deaths", async () => {
     const worlds = await buildFromDoc(
       {
@@ -3996,6 +4022,32 @@ describe("buildFromDoc", () => {
     ).solveAll();
     expect(validWorlds).toHaveLength(1);
     expect(invalidWorlds).toEqual([]);
+  });
+  test("Lleech host choices persistently poison a different player", async () => {
+    const worlds = await buildFromDoc(
+      {
+        players: ["A", "B", "C", "D", "E"],
+        script: ["Artist", "Clockmaker", "Chef", "Godfather", "Lleech"],
+        setup: "none",
+        uniqueCharacters: true,
+        constraints: [{ expression: "lleech_host(C) && poisoned(C, night_1)" }],
+        roleConstraints: roleConstraints({
+          possible: [
+            { name: "A", roles: ["Artist"] },
+            { name: "B", roles: ["Clockmaker"] },
+            { name: "C", roles: ["Chef"] },
+            { name: "D", roles: ["Godfather"] },
+            { name: "E", roles: ["Lleech"] },
+          ],
+        }),
+        claims: [],
+      },
+      backend,
+    ).solveAll();
+
+    expect(worlds).toHaveLength(1);
+    expect(worlds[0]?.actualRole("E")).toBe("Lleech");
+    expect(worlds[0]?.poisonedByTiming.get("night_1")).toEqual(new Set(["C"]));
   });
   test("puzzle-34-the-vortox-conjecture.json parses and solves", async () => {
     const doc = loadDoc("puzzle-34-the-vortox-conjecture.json");

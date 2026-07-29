@@ -881,6 +881,18 @@ class Compiler {
       if (player.kind !== "player") throw new DslError(`poisoned expected a player first`, player.span);
       return { kind: "bool", value: this.game.poisoned(player.name, timing), span: node.span };
     }
+    if (node.name === "lleech_host") {
+      if (node.args.length !== 1) throw new DslError(`lleech_host() takes (player)`, node.span);
+      const playerArg = node.args[0] as AstCall["args"][number];
+      if (playerArg.name !== undefined) throw new DslError(`lleech_host argument is positional`, node.span);
+      const player = this.evalNode(playerArg.value, env);
+      if (player.kind !== "player") throw new DslError(`lleech_host expected a player`, player.span);
+      return {
+        kind: "bool",
+        value: this.game.lleechHost(player.name, this.freshName("lleech_host")),
+        span: node.span,
+      };
+    }
     if (node.name === "chef") {
       if (node.args.length !== 1) throw new DslError(`chef() takes (n)`, node.span);
       const countArg = node.args[0] as AstCall["args"][number];

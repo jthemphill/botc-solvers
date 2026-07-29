@@ -17,6 +17,7 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
   };
   const game = buildPuzzleModel(spec, backend);
   const ctx = { players: doc.players, script: doc.script };
+  applyLleechHostChoice(game, doc);
   applyGlobalConstraints(game, doc, ctx);
   if (doc.setup === "atheist") applyAtheistSetup(game, doc);
   applyTimelineConstraints(game, doc);
@@ -64,6 +65,7 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
   }
   applyClaims(game, ordinaryClaims, claimOptions);
   applyClaims(game, malfunctionCountClaims, claimOptions);
+  applyLleechHostPoisoning(game, doc);
   if (doc.script.includes("Assassin")) game.enforceAbilityUseLimit("Assassin", 1);
   if (doc.setup !== "atheist") {
     applyPhilosopherDrunking(game, doc);
@@ -3243,6 +3245,23 @@ function applyPuzzlemasterSources(game: BOTCModel, doc: PuzzleDoc): void {
       sourceName: `${slug(claim.name)}_puzzlemaster`,
     });
   }
+}
+
+function applyLleechHostChoice(game: BOTCModel, doc: PuzzleDoc): void {
+  if (!doc.script.includes("Lleech")) return;
+  game.addLleechHostChoice();
+  const finalLivingPlayers = new Set(livingPlayersAfterTimeline(doc));
+  for (const player of doc.players) {
+    if (!finalLivingPlayers.has(player)) {
+      game.addFalse(game.lleechHost(player, `${slug(player)}_dead_player_cannot_be_lleech_host`));
+    }
+  }
+}
+
+function applyLleechHostPoisoning(game: BOTCModel, doc: PuzzleDoc): void {
+  if (!doc.script.includes("Lleech")) return;
+  const timings = [...game.droisonTimingKeys].filter((timing): timing is Timing => timing !== "default");
+  game.addLleechHostPoisoning(timings);
 }
 
 function applySweetheartSources(game: BOTCModel, doc: PuzzleDoc): void {

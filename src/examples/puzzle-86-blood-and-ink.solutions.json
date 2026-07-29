@@ -1,0 +1,22 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Fraser": "Empath",
+        "Hannah": "Lleech",
+        "Jasmine": "Town Crier",
+        "Josh": "Juggler",
+        "Oscar": "Steward",
+        "Sarah": "Knight",
+        "Steph": "Godfather",
+        "You": "Undertaker"
+      },
+      "poisoned": {
+        "night_1": ["Fraser"],
+        "day_1": ["Fraser"],
+        "night_2": ["Fraser"],
+        "night_3": ["Fraser"]
+      }
+    }
+  ]
+}

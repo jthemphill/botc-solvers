@@ -1,0 +1,73 @@
+{
+  "title": "Puzzle 85 - Trust is a Two-Way Street",
+  "players": ["Anna", "Olivia", "Matthew", "Josh", "Sarah", "You", "Dan", "Tom", "Charlotte"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Spy",
+    "Baron",
+    "Scarlet Woman",
+    "Drunk",
+    "Recluse",
+    "Saint",
+    "Butler",
+    "Fortune Teller",
+    "Chef",
+    "Ravenkeeper",
+    "Investigator",
+    "Washerwoman",
+    "Librarian"
+  ],
+  "timeline": [
+    { "timing": "day_1", "type": "execution", "players": ["Josh"] },
+    { "timing": "night_2", "type": "nightDeath", "players": ["Dan"] },
+    { "timing": "day_2", "type": "execution", "players": ["Sarah"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["Tom"] },
+    { "timing": "day_3", "type": "execution", "players": ["Olivia"] },
+    { "timing": "night_4", "type": "nightDeath", "players": ["You"] }
+  ],
+  "claims": [
+    { "type": "Saint", "name": "Anna" },
+    {
+      "type": "Investigator",
+      "name": "Olivia",
+      "timing": "night_1",
+      "role": "Baron",
+      "among": ["Anna", "Matthew"]
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Matthew",
+      "timing": "night_1",
+      "role": "Investigator",
+      "among": ["Charlotte", "Olivia"]
+    },
+    { "type": "Butler", "name": "Josh" },
+    {
+      "type": "Librarian",
+      "name": "Sarah",
+      "timing": "night_1",
+      "role": "Saint",
+      "among": ["Tom", "Anna"]
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "You",
+      "possibleActualRoles": ["Fortune Teller", "Drunk"],
+      "checks": [
+        { "timing": "night_1", "left": "Charlotte", "right": "You", "yes": false },
+        { "timing": "night_2", "left": "Tom", "right": "Charlotte", "yes": false },
+        { "timing": "night_3", "left": "Matthew", "right": "You", "yes": false }
+      ]
+    },
+    { "type": "Chef", "name": "Dan", "timing": "night_1", "count": 0 },
+    {
+      "type": "Ravenkeeper",
+      "name": "Tom",
+      "timing": "night_3",
+      "player": "Olivia",
+      "role": "Scarlet Woman"
+    },
+    { "type": "Recluse", "name": "Charlotte" }
+  ]
+}
