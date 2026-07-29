@@ -58,6 +58,7 @@ export interface InfoClaimConstraint {
   readonly player: string;
   readonly role: RoleRef;
   readonly learned: BoolLike;
+  readonly malfunctionLearned?: BoolLike;
   readonly timing: Timing;
   readonly vortoxAffected?: boolean;
 }
@@ -145,6 +146,7 @@ export class BOTCModel {
   private readonly globalDrunkVars = new Map<string, BoolVar>();
   private readonly globalDrunkSourceTargetsByPlayer = new Map<string, BoolLike[]>();
   private readonly puzzlemasterDrunkSourceTargetsByPlayer = new Map<string, BoolLike[]>();
+  private readonly lleechHostTargetsByPlayer = new Map<string, BoolLike[]>();
   private readonly roleAtVars = new Map<string, BoolVar>();
   private readonly roleAtSources = new Map<string, BoolLike[]>();
   private readonly roleAtRemovals = new Map<string, BoolLike[]>();
@@ -642,6 +644,41 @@ export class BOTCModel {
     this.checkPlayer(player);
     const sources = this.puzzlemasterDrunkSourceTargetsByPlayer.get(player) ?? [];
     return this.anyOf(sources, name);
+  }
+
+  addLleechHostChoice(options: { readonly role?: RoleRef; readonly sourceName?: string } = {}): void {
+    const role = roleName(options.role ?? "Lleech");
+    const sourceName = options.sourceName ?? "lleech_host";
+    this.checkRole(role);
+    const active = this.roleInPlay(role);
+    const targets = this.players.map((player) => {
+      const target = this.newBool(`${sourceName}_${slug(player)}`);
+      this.addImplication(target, active);
+      this.addImplication(target, this.actualIs(player, role).not());
+      addMapValue(this.lleechHostTargetsByPlayer, player, target);
+      return target;
+    });
+    this.addEnforcedExactlyN(targets, 1, active);
+    this.addEnforcedExactlyN(targets, 0, active.not());
+  }
+
+  lleechHost(player: string, name: string): BoolVar {
+    this.checkPlayer(player);
+    return this.anyOf(this.lleechHostTargetsByPlayer.get(player) ?? [], name);
+  }
+
+  addLleechHostPoisoning(timings: readonly Timing[], options: { readonly role?: RoleRef } = {}): void {
+    const role = roleName(options.role ?? "Lleech");
+    this.checkRole(role);
+    const active = this.roleInPlay(role);
+    for (const timing of timings) {
+      this.registerActivePoisonSource(timing, active);
+      for (const player of this.players) {
+        for (const target of this.lleechHostTargetsByPlayer.get(player) ?? []) {
+          this.registerPoisonSourceTarget(player, timing, target);
+        }
+      }
+    }
   }
 
   addRoleDrunking(
@@ -1416,7 +1453,16 @@ export class BOTCModel {
         : `${claim.player}_${roleRef}_${claimTimingName}_sober_healthy_honest_claim`,
     );
     const vortoxAffected = this.infoClaimAffectedByVortox(roleRef) || (claim.vortoxAffected ?? false);
-    this.recordInfoMalfunctions(claim.player, roleRef, claimTiming, activeRole, honest, claim.learned, vortoxAffected);
+    this.recordInfoMalfunctions(
+      claim.player,
+      roleRef,
+      claimTiming,
+      activeRole,
+      honest,
+      claim.learned,
+      vortoxAffected,
+      claim.malfunctionLearned,
+    );
 
     if (!vortoxAffected || !this.characters.has(roleName("Vortox"))) {
       this.addImplication(activeHealthy, claim.learned);
@@ -1786,10 +1832,14 @@ export class BOTCModel {
     honest: BoolVar | undefined,
     reportedInfo: BoolLike,
     vortoxAffected: boolean,
+    registrationIndependentInfo?: BoolLike,
   ): void {
     const timingName = timing;
     const honesty = honest === undefined ? [] : [honest];
-    const falseInfo = this.not(reportedInfo, `${player}_${role}_${timingName}_reported_info_false`);
+    const falseInfo = this.not(
+      registrationIndependentInfo ?? reportedInfo,
+      `${player}_${role}_${timingName}_reported_info_false`,
+    );
     const actualDrunkUsingClaimedAbility =
       this.characters.has("Drunk") && this.characters.has("Mathematician")
         ? this.actualIs(player, "Drunk")
@@ -1808,6 +1858,22 @@ export class BOTCModel {
         `${player}_${role}_${timingName}_drunk_role_malfunction`,
       ),
     ];
+    if (registrationIndependentInfo !== undefined) {
+      causes.push(
+        this.allOf(
+          [
+            activeRole,
+            ...honesty,
+            reportedInfo,
+            this.not(
+              registrationIndependentInfo,
+              `${player}_${role}_${timingName}_registration_independent_info_false`,
+            ),
+          ],
+          `${player}_${role}_${timingName}_registration_malfunction`,
+        ),
+      );
+    }
     if (vortoxAffected && this.characters.has(roleName("Vortox"))) {
       causes.push(
         this.allOf(

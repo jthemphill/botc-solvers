@@ -1,0 +1,73 @@
+{
+  "title": "Puzzle 86 - Blood and Ink",
+  "players": ["Steph", "Oscar", "Josh", "Fraser", "You", "Hannah", "Sarah", "Jasmine"],
+  "script": [
+    "No Dashii",
+    "Lleech",
+    "Godfather",
+    "Clockmaker",
+    "Steward",
+    "Juggler",
+    "Empath",
+    "Undertaker",
+    "Artist",
+    "Knight",
+    "Town Crier"
+  ],
+  "setup": "none",
+  "constraints": [
+    { "expression": "#{p : players | p.type == Demon} == 1" },
+    { "expression": "#{p : players | p.type == Minion} == 1" },
+    { "expression": "some p : {Steph, Josh, Fraser, Hannah} | p.type == Demon" }
+  ],
+  "timeline": [
+    { "timing": "day_1", "type": "execution", "players": ["Oscar"] },
+    { "timing": "night_2", "type": "nightDeath", "players": ["Sarah"] },
+    { "timing": "day_2", "type": "execution", "players": ["You"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["Jasmine"] }
+  ],
+  "claims": [
+    { "type": "Clockmaker", "name": "Steph", "distance": 1 },
+    { "type": "Steward", "name": "Oscar", "goodPlayer": "Fraser" },
+    {
+      "type": "Juggler",
+      "name": "Josh",
+      "timing": "night_2",
+      "guesses": {
+        "Hannah": "Artist",
+        "Steph": "Lleech",
+        "Oscar": "Steward",
+        "Fraser": "Lleech"
+      },
+      "correctCount": 1
+    },
+    { "type": "Empath", "name": "Fraser", "timing": "night_1", "count": 0 },
+    { "type": "Empath", "name": "Fraser", "timing": "night_2", "count": 0 },
+    { "type": "Empath", "name": "Fraser", "timing": "night_3", "count": 0 },
+    {
+      "type": "Undertaker",
+      "name": "You",
+      "timing": "night_2",
+      "player": "Oscar",
+      "role": "Steward",
+      "possibleActualRoles": ["Undertaker"]
+    },
+    {
+      "type": "Artist",
+      "name": "Hannah",
+      "timing": "day_1",
+      "info": [
+        {
+          "timing": "day_1",
+          "expression": "no p : {Jasmine, Oscar, Josh} | lleech_host(p)"
+        }
+      ]
+    },
+    { "type": "Knight", "name": "Sarah", "noDemonAmong": ["You", "Josh"] },
+    {
+      "type": "Town Crier",
+      "name": "Jasmine",
+      "checks": [{ "timing": "night_2", "nominators": ["Sarah", "Josh"], "minionNominated": false }]
+    }
+  ]
+}

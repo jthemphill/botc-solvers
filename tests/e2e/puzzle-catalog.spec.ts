@@ -29,6 +29,49 @@ test("solves puzzle 83 with the Mathematician-Drunk jinx", async ({ page }) => {
   await expect(solvePanel.getByLabel("Aoife: Drunk, claimed Town Crier")).toBeVisible();
 });
 
+test("solves puzzle 84 with the Puzzlemaster-drunk Dreamer", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-84-mech4an4ion-is-inver10d");
+
+  await expect(page.locator("input.title-input")).toHaveValue("Puzzle 84 - Mech4an4ion is iNver10d");
+  await expect(page.getByLabel("Puzzle timeline")).toContainText("D1 Witch Curse");
+  await expect(page.getByLabel("Player claim summaries")).toContainText("1 malfunction (Night 2)");
+  const solvePanel = page.locator(".solve-panel");
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Josh: Kazali, claimed Town Crier")).toBeVisible();
+  await expect(solvePanel.getByLabel("Charlotte: Witch, claimed Librarian")).toBeVisible();
+  await expect(solvePanel.getByLabel("Aoife: Dreamer")).toBeVisible();
+});
+
+test("solves puzzle 85 with the Baron catching the Imp starpass", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-85-trust-is-a-two-way-street");
+
+  await expect(page.locator("input.title-input")).toHaveValue("Puzzle 85 - Trust is a Two-Way Street");
+  await expect(page.getByLabel("Player claim summaries")).toContainText("Olivia is the Scarlet Woman.");
+  const solvePanel = page.locator(".solve-panel");
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Tom: Imp, claimed Ravenkeeper")).toBeVisible();
+  await expect(solvePanel.getByLabel("Matthew: Baron, claimed Washerwoman")).toBeVisible();
+  await expect(solvePanel.getByLabel("You: Drunk, claimed Fortune Teller")).toBeVisible();
+});
+
+test("solves puzzle 86 with the Lleech host", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-86-blood-and-ink");
+
+  await expect(page.locator("input.title-input")).toHaveValue("Puzzle 86 - Blood and Ink");
+  await expect(page.getByLabel("Player claim summaries")).toContainText("Demon 1 step from Minion");
+  const solvePanel = page.locator(".solve-panel");
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Hannah: Lleech, claimed Artist")).toBeVisible();
+  await expect(solvePanel.getByLabel("Steph: Godfather, claimed Clockmaker")).toBeVisible();
+  await expect(solvePanel.getByLabel("Fraser: Empath")).toBeVisible();
+});
+
 test("solves A Clean Sweep without asserting the Gambler's death cause", async ({ page }) => {
   await page.goto("/");
 

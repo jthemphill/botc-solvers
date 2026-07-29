@@ -1,0 +1,17 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Saint",
+        "Charlotte": "Recluse",
+        "Dan": "Chef",
+        "Josh": "Butler",
+        "Matthew": "Baron",
+        "Olivia": "Investigator",
+        "Sarah": "Librarian",
+        "Tom": "Imp",
+        "You": "Drunk"
+      }
+    }
+  ]
+}

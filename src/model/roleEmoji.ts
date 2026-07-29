@@ -45,6 +45,7 @@ const ROLE_EMOJI_ENTRIES = [
   ["Legion", "✋"],
   ["Leviathan", "🐋"],
   ["Librarian", "📖"],
+  ["Lleech", "🪱"],
   ["Lord of Typhon", "🌋"],
   ["Lunar Prodigy", "🌙"],
   ["Lunatic", "😵‍💫"],

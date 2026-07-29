@@ -46,6 +46,7 @@ const ROLE_CLASS_LIST: readonly RoleClass[] = [
   characters.Legion,
   characters.Leviathan,
   characters.Librarian,
+  characters.Lleech,
   characters.LordOfTyphon,
   characters.LunarProdigy,
   characters.Lunatic,

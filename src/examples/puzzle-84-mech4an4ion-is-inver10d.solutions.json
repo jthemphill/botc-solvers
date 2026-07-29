@@ -1,0 +1,17 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Dreamer",
+        "Charlotte": "Witch",
+        "Fraser": "Seamstress",
+        "Josh": "Kazali",
+        "Matt": "Puzzlemaster",
+        "Sarah": "Recluse",
+        "Tim": "Oracle",
+        "You": "Mathematician"
+      },
+      "drunk": ["Aoife"]
+    }
+  ]
+}

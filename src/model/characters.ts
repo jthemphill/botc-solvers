@@ -25,6 +25,7 @@ interface TimedOptions {
 export interface InfoClaim {
   readonly role?: RoleRef;
   readonly learned: BoolLike | ClaimPredicate;
+  readonly malfunctionLearned?: BoolLike | ClaimPredicate;
   readonly timing?: Timing;
   readonly vortoxAffected?: boolean;
 }
@@ -40,6 +41,7 @@ export interface AppliedInfoClaim {
   readonly player: string;
   readonly role: RoleRef;
   readonly learned: BoolLike;
+  readonly malfunctionLearned?: BoolLike;
   readonly timing: Timing;
   readonly vortoxAffected?: boolean;
   readonly context?: unknown;
@@ -123,6 +125,7 @@ function addDefaultInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
     player: claim.player,
     role: claim.role,
     learned: claim.learned,
+    malfunctionLearned: claim.malfunctionLearned,
     timing: claim.timing,
     vortoxAffected: claim.vortoxAffected,
   });
@@ -289,6 +292,12 @@ export abstract class Role {
         player: this.name,
         role: resolvedClaim.role ?? role,
         learned: resolveInfoClaim(game, options.context, resolvedClaim),
+        malfunctionLearned:
+          resolvedClaim.malfunctionLearned === undefined
+            ? undefined
+            : resolveInfoClaim(game, options.context, {
+                learned: resolvedClaim.malfunctionLearned,
+              }),
         timing,
         vortoxAffected: resolvedClaim.vortoxAffected,
         context: options.context,
@@ -382,6 +391,12 @@ export class Kazali extends Role {
 export class Leviathan extends Role {
   static readonly roleName = "Leviathan";
   static readonly wake = Wakes.never;
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
+export class Lleech extends Role {
+  static readonly roleName = "Lleech";
+  static readonly wake = Wakes.unlessPrevented(Wakes.everyNight);
   static readonly alignment = Alignment.Evil;
   static readonly characterType = CharacterType.Demon;
 }
@@ -2350,6 +2365,14 @@ export class Oracle extends Role {
     return game.registeredEvilCount(deadPlayers, count, `oracle_dead_evil_count_is_${count}`);
   }
 
+  static actualDeadEvilCount(game: BOTCModel, deadPlayers: readonly string[], count: number, name: string): BoolVar {
+    return game.boolSumEquals(
+      deadPlayers.map((player) => game.isEvil(player)),
+      count,
+      name,
+    );
+  }
+
   static learnsConditionalDeadEvilCount(
     game: BOTCModel,
     count: number,
@@ -2370,13 +2393,47 @@ export class Oracle extends Role {
     );
   }
 
-  override learnedInfo(game: BOTCModel): BoolLike | undefined {
-    if (this.count === undefined) return undefined;
-    const name = claimName(this.name, Oracle, "count");
-    if (this.deadPlayerOptions !== undefined) {
-      return Oracle.learnsConditionalDeadEvilCount(game, this.count, name, this.deadPlayerOptions);
+  static actualConditionalDeadEvilCount(
+    game: BOTCModel,
+    count: number,
+    name: string,
+    deadPlayerOptions: readonly OracleDeadPlayerOption[],
+  ): BoolVar {
+    return game.anyOf(
+      deadPlayerOptions.map((option, index) =>
+        game.allOf(
+          [
+            option.activeIf,
+            Oracle.actualDeadEvilCount(
+              game,
+              option.deadPlayers,
+              count,
+              `${name}_option_${index + 1}_actual_dead_evil_count`,
+            ),
+          ],
+          `${name}_option_${index + 1}_actual_active`,
+        ),
+      ),
+      `${name}_actual_conditional`,
+    );
+  }
+
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Oracle, options);
+    if (this.count === undefined) {
+      this.applyInfoClaimBuilders(game, Oracle, this.infoClaims, options);
+      return;
     }
-    return Oracle.learnsDeadEvilCount(game, this.deadPlayers, this.count);
+    const name = claimName(this.name, Oracle, "count");
+    const learned =
+      this.deadPlayerOptions === undefined
+        ? Oracle.learnsDeadEvilCount(game, this.deadPlayers, this.count)
+        : Oracle.learnsConditionalDeadEvilCount(game, this.count, name, this.deadPlayerOptions);
+    const malfunctionLearned =
+      this.deadPlayerOptions === undefined
+        ? Oracle.actualDeadEvilCount(game, this.deadPlayers, this.count, `${name}_actual`)
+        : Oracle.actualConditionalDeadEvilCount(game, this.count, name, this.deadPlayerOptions);
+    this.applyInfoClaimBuilders(game, Oracle, [{ learned, malfunctionLearned }, ...this.infoClaims], options);
   }
 }
 

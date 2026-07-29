@@ -1,0 +1,84 @@
+{
+  "title": "Puzzle 84 - Mech4an4ion is iNver10d",
+  "players": ["Josh", "Charlotte", "Tim", "Fraser", "You", "Matt", "Aoife", "Sarah"],
+  "script": [
+    "Kazali",
+    "Witch",
+    "Puzzlemaster",
+    "Recluse",
+    "Mathematician",
+    "Town Crier",
+    "Dreamer",
+    "Oracle",
+    "Seamstress",
+    "Librarian"
+  ],
+  "setup": "none",
+  "constraints": [
+    { "expression": "#{p : players | p.type == Demon} == 1" },
+    { "expression": "#{p : players | p.type == Minion} == 1" },
+    { "expression": "some p : {Josh, Charlotte, Tim} | p.type == Demon" }
+  ],
+  "timeline": [
+    { "timing": "day_1", "type": "witchCurse", "players": ["Sarah"], "caller": "Sarah" },
+    { "timing": "day_1", "type": "execution", "players": ["Matt"] },
+    { "timing": "night_2", "type": "nightDeath", "players": ["Fraser"] },
+    { "timing": "day_2", "type": "execution", "players": ["Aoife"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["You"] }
+  ],
+  "claims": [
+    {
+      "type": "Town Crier",
+      "name": "Josh",
+      "checks": [
+        { "timing": "night_2", "nominators": ["Sarah", "Aoife"], "minionNominated": true },
+        { "timing": "night_3", "nominators": ["You", "Charlotte"], "minionNominated": false }
+      ]
+    },
+    {
+      "type": "Librarian",
+      "name": "Charlotte",
+      "timing": "night_1",
+      "role": "Recluse",
+      "among": ["You", "Matt"]
+    },
+    { "type": "Oracle", "name": "Tim", "timing": "night_2", "count": 0 },
+    { "type": "Oracle", "name": "Tim", "timing": "night_3", "count": 1 },
+    {
+      "type": "Seamstress",
+      "name": "Fraser",
+      "timing": "night_1",
+      "among": ["Matt", "Sarah"],
+      "aligned": true
+    },
+    {
+      "type": "Mathematician",
+      "name": "You",
+      "malfunctions": [
+        { "timing": "night_1", "count": 0 },
+        { "timing": "night_2", "count": 1 }
+      ],
+      "possibleActualRoles": ["Mathematician"]
+    },
+    {
+      "type": "Puzzlemaster",
+      "name": "Matt",
+      "guesses": [{ "timing": "day_1", "player": "You", "learnedDemon": "Fraser" }]
+    },
+    {
+      "type": "Dreamer",
+      "name": "Aoife",
+      "timing": "night_1",
+      "player": "Tim",
+      "roles": ["Oracle", "Kazali"]
+    },
+    {
+      "type": "Dreamer",
+      "name": "Aoife",
+      "timing": "night_2",
+      "player": "Charlotte",
+      "roles": ["Librarian", "Kazali"]
+    },
+    { "type": "Recluse", "name": "Sarah" }
+  ]
+}
