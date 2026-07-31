@@ -3,6 +3,7 @@ export interface PuzzleDoc {
   readonly players: readonly string[];
   readonly script: readonly string[];
   readonly setup?: "standard" | "none" | "atheist";
+  readonly ongoingGame?: boolean;
   readonly uniqueCharacters?: boolean;
   readonly constraints?: readonly PuzzleConstraintDoc[];
   readonly timeline?: readonly TimelineEventDoc[];
@@ -109,6 +110,7 @@ interface BaseClaim {
   readonly name: string;
   readonly timing?: string;
   readonly possibleActualRoles?: readonly string[];
+  readonly previousRole?: string;
   readonly heardWidowCall?: boolean;
   readonly knownEvilTwin?: string;
   readonly info?: readonly CustomInfoStatementDoc[];

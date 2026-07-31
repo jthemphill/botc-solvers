@@ -78,6 +78,7 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
     applyEvilTwinKnowledgeClaims(game, doc);
     applyVillageIdiotSources(game, doc);
   }
+  applyPreviousRoleClaims(game, doc);
   return game;
 }
 
@@ -840,6 +841,18 @@ function resolveClaimTypeRoleRef(type: string): RoleRef | undefined {
   }
 }
 
+function applyPreviousRoleClaims(game: BOTCModel, doc: PuzzleDoc): void {
+  for (const claim of doc.claims) {
+    if (claim.previousRole === undefined || claim.timing === undefined) continue;
+    const claimedRole = claimRoleRef(claim);
+    if (claimedRole === undefined) continue;
+    game.addImplication(
+      game.actualIs(claim.name, resolveRoleRef(claim.previousRole)),
+      game.hasRoleAt(claim.name, claimedRole, claim.timing as Timing),
+    );
+  }
+}
+
 function roleChangeSourceTiming(timing: Timing): Timing {
   const match = /^(night|day)_(\d+)$/.exec(timing);
   if (match === null || match[2] === undefined) throw new Error(`Invalid timing '${timing}'.`);
@@ -1392,7 +1405,12 @@ function livingPlayersAfterDeathEvent(
 }
 
 function applyOngoingGameConstraint(game: BOTCModel, doc: PuzzleDoc): void {
-  if (doc.setup === "none" || doc.setup === "atheist" || (doc.timeline?.length ?? 0) === 0) return;
+  if (
+    doc.setup === "atheist" ||
+    (doc.timeline?.length ?? 0) === 0 ||
+    (doc.setup === "none" && doc.ongoingGame !== true)
+  )
+    return;
 
   const finalLivingPlayers = livingPlayersAfterTimeline(doc);
   const finalDeadPlayers = doc.players.filter((player) => !finalLivingPlayers.includes(player));

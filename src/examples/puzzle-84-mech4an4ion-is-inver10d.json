@@ -14,10 +14,10 @@
     "Librarian"
   ],
   "setup": "none",
+  "ongoingGame": true,
   "constraints": [
     { "expression": "#{p : players | p.type == Demon} == 1" },
-    { "expression": "#{p : players | p.type == Minion} == 1" },
-    { "expression": "some p : {Josh, Charlotte, Tim} | p.type == Demon" }
+    { "expression": "#{p : players | p.type == Minion} == 1" }
   ],
   "timeline": [
     { "timing": "day_1", "type": "witchCurse", "players": ["Sarah"], "caller": "Sarah" },

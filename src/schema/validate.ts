@@ -63,6 +63,8 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
     throw new ValidationError(`setup must be "standard", "none", or "atheist"`, "$.setup");
 
   const title = input["title"] === undefined ? undefined : expectString(input["title"], "$.title");
+  const ongoingGame =
+    input["ongoingGame"] === undefined ? undefined : expectBool(input["ongoingGame"], "$.ongoingGame");
   const uniqueCharacters =
     input["uniqueCharacters"] === undefined ? undefined : expectBool(input["uniqueCharacters"], "$.uniqueCharacters");
   const constraints =
@@ -74,6 +76,7 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
     players,
     script,
     setup,
+    ongoingGame,
     uniqueCharacters,
     constraints,
     timeline,
@@ -127,12 +130,14 @@ function validateClaim(input: unknown, path: string): Claim {
     input["possibleActualRoles"] === undefined
       ? undefined
       : expectStringArray(input["possibleActualRoles"], `${path}.possibleActualRoles`);
+  const previousRole =
+    input["previousRole"] === undefined ? undefined : expectString(input["previousRole"], `${path}.previousRole`);
   const heardWidowCall =
     input["heardWidowCall"] === undefined ? undefined : expectBool(input["heardWidowCall"], `${path}.heardWidowCall`);
   const knownEvilTwin =
     input["knownEvilTwin"] === undefined ? undefined : expectString(input["knownEvilTwin"], `${path}.knownEvilTwin`);
   const info = input["info"] === undefined ? undefined : validateCustomInfo(input["info"], `${path}.info`, type);
-  const base = { name, timing, possibleActualRoles, heardWidowCall, knownEvilTwin, info };
+  const base = { name, timing, possibleActualRoles, previousRole, heardWidowCall, knownEvilTwin, info };
 
   switch (type as Claim["type"]) {
     case "Assassin":

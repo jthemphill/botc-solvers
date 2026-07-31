@@ -34,6 +34,35 @@ describe("puzzle catalog", () => {
     }
   });
 
+  test("reserves custom constraints for rules specified by the source image", () => {
+    const expected = new Set([
+      "puzzle-51-weird-science", // Flexible Outsider count.
+      "puzzle-56-meanwhile-at-the-legion-of-doom", // Standard-game and Legion setup branches.
+      "puzzle-62-have-you-ever-seen-the-rain", // Storm Catcher protects the Drunk from non-execution deaths.
+      "puzzle-64-copycatholic", // Pope requires a duplicate good character.
+      "puzzle-72-one-digit-too-many", // Standard-game and Legion setup branches.
+      "puzzle-76-three-for-three", // Custom three-role deduction setup.
+      "puzzle-84-mech4an4ion-is-inver10d", // Flexible Outsider count.
+      "puzzle-86-blood-and-ink", // No Outsiders in an eight-player setup.
+    ]);
+    const actual = new Set(
+      PUZZLE_EXAMPLES.filter((example) => (validatePuzzleDoc(example.data).constraints?.length ?? 0) > 0).map(
+        (example) => example.id,
+      ),
+    );
+
+    expect(actual).toEqual(expected);
+  });
+
+  test("uses structured role history for puzzle 77's Recluse starpass claim", () => {
+    const puzzle77 = PUZZLE_EXAMPLES.find((example) => example.id === "puzzle-77-yes-but-dont");
+    const doc = validatePuzzleDoc(puzzle77?.data);
+    const matt = doc.claims.find((claim) => claim.name === "Matt" && claim.type === "Imp");
+
+    expect(matt).toMatchObject({ timing: "night_4", previousRole: "Recluse" });
+    expect(doc.constraints).toBeUndefined();
+  });
+
   test("uses structured info for puzzle 34", () => {
     const puzzle34 = PUZZLE_EXAMPLES.find((example) => example.id === "puzzle-34-the-vortox-conjecture");
     const doc = validatePuzzleDoc(puzzle34?.data);

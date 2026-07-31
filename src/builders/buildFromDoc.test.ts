@@ -2798,7 +2798,7 @@ describe("buildFromDoc", () => {
     ).solveAll();
     expect(worlds).toEqual([]);
   });
-  test("standard puzzle docs require the final observed state to have a living demon path", async () => {
+  test("standard and custom-setup puzzle docs require the final observed state to have a living demon path", async () => {
     const baseDoc = {
       players: ["A", "B", "C", "D", "E"],
       script: ["Imp", "Goblin", "Chef", "Empath", "Ravenkeeper"],
@@ -2813,25 +2813,31 @@ describe("buildFromDoc", () => {
       }),
       claims: [],
     } as const;
-    const ongoingWorlds = await buildFromDoc(
-      {
-        ...baseDoc,
-        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
-      },
-      backend,
-    ).solveAll();
-    const endedWorlds = await buildFromDoc(
-      {
-        ...baseDoc,
-        timeline: [
-          { timing: "night_2", type: "nightDeath", players: ["A"] },
-          { timing: "night_3", type: "nightDeath", players: ["B"] },
-        ],
-      },
-      backend,
-    ).solveAll();
-    expect(ongoingWorlds).toHaveLength(1);
-    expect(endedWorlds).toEqual([]);
+    for (const setup of ["standard", "none"] as const) {
+      const ongoingWorlds = await buildFromDoc(
+        {
+          ...baseDoc,
+          setup,
+          ongoingGame: setup === "none" ? true : undefined,
+          timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
+        },
+        backend,
+      ).solveAll();
+      const endedWorlds = await buildFromDoc(
+        {
+          ...baseDoc,
+          setup,
+          ongoingGame: setup === "none" ? true : undefined,
+          timeline: [
+            { timing: "night_2", type: "nightDeath", players: ["A"] },
+            { timing: "night_3", type: "nightDeath", players: ["B"] },
+          ],
+        },
+        backend,
+      ).solveAll();
+      expect(ongoingWorlds).toHaveLength(1);
+      expect(endedWorlds).toEqual([]);
+    }
   });
   test("a healthy Mastermind keeps the game going for the extra night and day after an executed Demon", async () => {
     const baseDoc: TestPuzzleDoc = {

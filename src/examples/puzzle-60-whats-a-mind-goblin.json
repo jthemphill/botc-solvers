@@ -95,11 +95,11 @@
       "type": "Poppy Grower",
       "name": "Olivia",
       "possibleActualRoles": ["Poppy Grower"]
-    }
-  ],
-  "constraints": [
+    },
     {
-      "expression": "You.role == Goblin"
+      "type": "Goblin",
+      "name": "You",
+      "possibleActualRoles": ["Goblin"]
     }
   ]
 }
