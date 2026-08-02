@@ -17,15 +17,8 @@
     "Slayer"
   ],
   "setup": "none",
+  "characterTypeCounts": { "minion": 1, "demon": 1 },
   "ongoingGame": true,
-  "constraints": [
-    {
-      "expression": "#{p : players | p.role == Kazali} == 1"
-    },
-    {
-      "expression": "one minions.~role"
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",

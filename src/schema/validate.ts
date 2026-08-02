@@ -63,6 +63,10 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
     throw new ValidationError(`setup must be "standard", "none", or "atheist"`, "$.setup");
 
   const title = input["title"] === undefined ? undefined : expectString(input["title"], "$.title");
+  const characterTypeCounts =
+    input["characterTypeCounts"] === undefined
+      ? undefined
+      : validateCharacterTypeCounts(input["characterTypeCounts"], "$.characterTypeCounts");
   const ongoingGame =
     input["ongoingGame"] === undefined ? undefined : expectBool(input["ongoingGame"], "$.ongoingGame");
   const uniqueCharacters =
@@ -76,12 +80,31 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
     players,
     script,
     setup,
+    characterTypeCounts,
     ongoingGame,
     uniqueCharacters,
     constraints,
     timeline,
     claims: validatedClaims,
   };
+}
+
+function validateCharacterTypeCounts(v: unknown, pathRoot: string): NonNullable<PuzzleDoc["characterTypeCounts"]> {
+  if (!isObject(v)) throw new ValidationError(`Expected object`, pathRoot);
+  const supportedTypes = ["townsfolk", "outsider", "minion", "demon"] as const;
+  for (const type of Object.keys(v)) {
+    if (!(supportedTypes as readonly string[]).includes(type))
+      throw new ValidationError(`Unsupported character type '${type}'`, `${pathRoot}.${type}`);
+  }
+
+  return Object.fromEntries(
+    supportedTypes.flatMap((type) => {
+      if (v[type] === undefined) return [];
+      const count = expectNumber(v[type], `${pathRoot}.${type}`);
+      if (count < 0) throw new ValidationError(`Expected non-negative integer`, `${pathRoot}.${type}`);
+      return [[type, count]];
+    }),
+  );
 }
 
 function validateConstraints(v: unknown, pathRoot: string): NonNullable<PuzzleDoc["constraints"]> {

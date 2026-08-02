@@ -36,14 +36,11 @@ describe("puzzle catalog", () => {
 
   test("reserves custom constraints for rules specified by the source image", () => {
     const expected = new Set([
-      "puzzle-51-weird-science", // Flexible Outsider count.
       "puzzle-56-meanwhile-at-the-legion-of-doom", // Standard-game and Legion setup branches.
       "puzzle-62-have-you-ever-seen-the-rain", // Storm Catcher protects the Drunk from non-execution deaths.
       "puzzle-64-copycatholic", // Pope requires a duplicate good character.
       "puzzle-72-one-digit-too-many", // Standard-game and Legion setup branches.
       "puzzle-76-three-for-three", // Custom three-role deduction setup.
-      "puzzle-84-mech4an4ion-is-inver10d", // Flexible Outsider count.
-      "puzzle-86-blood-and-ink", // No Outsiders in an eight-player setup.
     ]);
     const actual = new Set(
       PUZZLE_EXAMPLES.filter((example) => (validatePuzzleDoc(example.data).constraints?.length ?? 0) > 0).map(
@@ -52,6 +49,16 @@ describe("puzzle catalog", () => {
     );
 
     expect(actual).toEqual(expected);
+  });
+
+  test("uses structured character counts for source-specified characters in play", () => {
+    for (const id of ["puzzle-51-weird-science", "puzzle-84-mech4an4ion-is-inver10d", "puzzle-86-blood-and-ink"]) {
+      const example = PUZZLE_EXAMPLES.find((candidate) => candidate.id === id);
+      const doc = validatePuzzleDoc(example?.data);
+
+      expect(doc.characterTypeCounts, id).toEqual({ minion: 1, demon: 1 });
+      expect(doc.constraints, id).toBeUndefined();
+    }
   });
 
   test("uses structured role history for puzzle 77's Recluse starpass claim", () => {

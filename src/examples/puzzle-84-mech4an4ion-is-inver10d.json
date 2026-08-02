@@ -14,11 +14,8 @@
     "Librarian"
   ],
   "setup": "none",
+  "characterTypeCounts": { "minion": 1, "demon": 1 },
   "ongoingGame": true,
-  "constraints": [
-    { "expression": "#{p : players | p.type == Demon} == 1" },
-    { "expression": "#{p : players | p.type == Minion} == 1" }
-  ],
   "timeline": [
     { "timing": "day_1", "type": "witchCurse", "players": ["Sarah"], "caller": "Sarah" },
     { "timing": "day_1", "type": "execution", "players": ["Matt"] },

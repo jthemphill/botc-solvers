@@ -18,6 +18,7 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
   const game = buildPuzzleModel(spec, backend);
   const ctx = { players: doc.players, script: doc.script };
   applyLleechHostChoice(game, doc);
+  applyCharacterTypeCounts(game, doc);
   applyGlobalConstraints(game, doc, ctx);
   if (doc.setup === "atheist") applyAtheistSetup(game, doc);
   applyTimelineConstraints(game, doc);
@@ -741,6 +742,25 @@ function applyGlobalConstraints(game: BOTCModel, doc: PuzzleDoc, ctx: Omit<Compi
         ...ctx,
         nameRoot: `global_constraint_${index + 1}`,
       }) as BoolLike,
+    );
+  }
+}
+
+function applyCharacterTypeCounts(game: BOTCModel, doc: PuzzleDoc): void {
+  const counts = doc.characterTypeCounts;
+  if (counts === undefined) return;
+  const characterTypes = [
+    CharacterType.Townsfolk,
+    CharacterType.Outsider,
+    CharacterType.Minion,
+    CharacterType.Demon,
+  ] as const;
+  for (const characterType of characterTypes) {
+    const count = counts[characterType];
+    if (count === undefined) continue;
+    game.addExactlyN(
+      doc.players.map((player) => game.hasCharacterType(player, characterType)),
+      count,
     );
   }
 }

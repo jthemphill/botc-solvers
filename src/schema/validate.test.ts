@@ -7,6 +7,25 @@ const baseDoc = {
 };
 
 describe("validatePuzzleDoc", () => {
+  test("accepts partial structured character type counts", () => {
+    const doc = validatePuzzleDoc({
+      ...baseDoc,
+      characterTypeCounts: { minion: 1, demon: 1 },
+      claims: [],
+    });
+
+    expect(doc.characterTypeCounts).toEqual({ minion: 1, demon: 1 });
+  });
+
+  test("rejects invalid structured character type counts", () => {
+    expect(() => validatePuzzleDoc({ ...baseDoc, characterTypeCounts: { traveler: 1 }, claims: [] })).toThrow(
+      "Unsupported character type 'traveler'",
+    );
+    expect(() => validatePuzzleDoc({ ...baseDoc, characterTypeCounts: { demon: -1 }, claims: [] })).toThrow(
+      "Expected non-negative integer",
+    );
+  });
+
   test("accepts one statement per Savant claim", () => {
     const doc = validatePuzzleDoc({
       ...baseDoc,
