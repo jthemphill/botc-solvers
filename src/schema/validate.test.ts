@@ -7,25 +7,6 @@ const baseDoc = {
 };
 
 describe("validatePuzzleDoc", () => {
-  test("accepts partial structured character type counts", () => {
-    const doc = validatePuzzleDoc({
-      ...baseDoc,
-      characterTypeCounts: { minion: 1, demon: 1 },
-      claims: [],
-    });
-
-    expect(doc.characterTypeCounts).toEqual({ minion: 1, demon: 1 });
-  });
-
-  test("rejects invalid structured character type counts", () => {
-    expect(() => validatePuzzleDoc({ ...baseDoc, characterTypeCounts: { traveler: 1 }, claims: [] })).toThrow(
-      "Unsupported character type 'traveler'",
-    );
-    expect(() => validatePuzzleDoc({ ...baseDoc, characterTypeCounts: { demon: -1 }, claims: [] })).toThrow(
-      "Expected non-negative integer",
-    );
-  });
-
   test("accepts one statement per Savant claim", () => {
     const doc = validatePuzzleDoc({
       ...baseDoc,
@@ -163,6 +144,7 @@ describe("validatePuzzleDoc", () => {
           type: "Chef",
           name: "You",
           count: 0,
+          alignment: "good",
           possibleActualRoles: ["Chef", "Drunk"],
           heardWidowCall: true,
           knownEvilTwin: "A",
@@ -174,10 +156,20 @@ describe("validatePuzzleDoc", () => {
       type: "Chef",
       name: "You",
       count: 0,
+      alignment: "good",
       possibleActualRoles: ["Chef", "Drunk"],
       heardWidowCall: true,
       knownEvilTwin: "A",
     });
+  });
+
+  test("rejects invalid claimed alignments", () => {
+    expect(() =>
+      validatePuzzleDoc({
+        ...baseDoc,
+        claims: [{ type: "Imp", name: "You", alignment: "neutral" }],
+      }),
+    ).toThrow('alignment must be "good" or "evil"');
   });
 
   test("accepts Prodigy checks", () => {

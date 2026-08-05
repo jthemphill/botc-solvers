@@ -18,7 +18,6 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
   const game = buildPuzzleModel(spec, backend);
   const ctx = { players: doc.players, script: doc.script };
   applyLleechHostChoice(game, doc);
-  applyCharacterTypeCounts(game, doc);
   applyGlobalConstraints(game, doc, ctx);
   if (doc.setup === "atheist") applyAtheistSetup(game, doc);
   applyTimelineConstraints(game, doc);
@@ -79,7 +78,6 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
     applyEvilTwinKnowledgeClaims(game, doc);
     applyVillageIdiotSources(game, doc);
   }
-  applyPreviousRoleClaims(game, doc);
   return game;
 }
 
@@ -746,25 +744,6 @@ function applyGlobalConstraints(game: BOTCModel, doc: PuzzleDoc, ctx: Omit<Compi
   }
 }
 
-function applyCharacterTypeCounts(game: BOTCModel, doc: PuzzleDoc): void {
-  const counts = doc.characterTypeCounts;
-  if (counts === undefined) return;
-  const characterTypes = [
-    CharacterType.Townsfolk,
-    CharacterType.Outsider,
-    CharacterType.Minion,
-    CharacterType.Demon,
-  ] as const;
-  for (const characterType of characterTypes) {
-    const count = counts[characterType];
-    if (count === undefined) continue;
-    game.addExactlyN(
-      doc.players.map((player) => game.hasCharacterType(player, characterType)),
-      count,
-    );
-  }
-}
-
 function applyChangedRoleClaimExplanations(game: BOTCModel, doc: PuzzleDoc): void {
   const claimsByPlayer = new Map<
     string,
@@ -789,10 +768,10 @@ function applyChangedRoleClaimExplanations(game: BOTCModel, doc: PuzzleDoc): voi
     for (let index = 1; index < timedClaims.length; index += 1) {
       const previous = timedClaims[index - 1] as (typeof timedClaims)[number];
       const current = timedClaims[index] as (typeof timedClaims)[number];
-      const previousRole = claimRoleRef(previous.claim);
+      const priorClaimRole = claimRoleRef(previous.claim);
       const currentRole = claimRoleRef(current.claim);
-      if (previousRole === undefined || currentRole === undefined) continue;
-      if (roleName(previousRole) === roleName(currentRole)) continue;
+      if (priorClaimRole === undefined || currentRole === undefined) continue;
+      if (roleName(priorClaimRole) === roleName(currentRole)) continue;
       if (phaseStartOrder(current.claim.timing as Timing) <= phaseStartOrder(previous.claim.timing as Timing)) continue;
 
       explainChangedRoleClaim(game, doc, current.claim, currentRole);
@@ -814,7 +793,19 @@ function explainChangedRoleClaim(
   const claimantEvil = game.hasAlignmentOverrideAt(claim.name, claimTiming)
     ? game.isEvilAt(claim.name, claimTiming)
     : game.isEvil(claim.name);
-  const explanations: BoolLike[] = [claimedRoleAtTiming, claimantEvil];
+  const claimantGood = game.hasAlignmentOverrideAt(claim.name, claimTiming)
+    ? game.isGoodAt(claim.name, claimTiming)
+    : game.isGood(claim.name);
+  const claimedAlignmentMatches =
+    claim.alignment === undefined ? undefined : claim.alignment === "good" ? claimantGood : claimantEvil;
+  const truthfulClaim =
+    claimedAlignmentMatches === undefined
+      ? claimedRoleAtTiming
+      : game.allOf(
+          [claimedRoleAtTiming, claimedAlignmentMatches],
+          `${claimTiming}_${slug(claim.name)}_${slug(claimedRoleName)}_claimed_alignment_matches`,
+        );
+  const explanations: BoolLike[] = [truthfulClaim, claimantEvil];
 
   if (doc.script.includes("Pit-Hag")) {
     const activePitHag = game.roleSoberAndHealthyAt(
@@ -858,18 +849,6 @@ function resolveClaimTypeRoleRef(type: string): RoleRef | undefined {
     } catch {
       return undefined;
     }
-  }
-}
-
-function applyPreviousRoleClaims(game: BOTCModel, doc: PuzzleDoc): void {
-  for (const claim of doc.claims) {
-    if (claim.previousRole === undefined || claim.timing === undefined) continue;
-    const claimedRole = claimRoleRef(claim);
-    if (claimedRole === undefined) continue;
-    game.addImplication(
-      game.actualIs(claim.name, resolveRoleRef(claim.previousRole)),
-      game.hasRoleAt(claim.name, claimedRole, claim.timing as Timing),
-    );
   }
 }
 

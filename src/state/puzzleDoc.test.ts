@@ -33,7 +33,8 @@ describe("puzzle document reducer", () => {
       constraints: [{ expression: "A.role == Savant" }, { expression: "C.role != Vortox" }],
       claims: [
         { type: "Juggler", name: "B", possibleActualRoles: ["Juggler", "Drunk"], guesses: { A: "Imp" } },
-        { type: "Imp", name: "C", timing: "night_2", previousRole: "Recluse" },
+        { type: "Recluse", name: "C", timing: "night_1" },
+        { type: "Imp", name: "C", timing: "night_2", alignment: "good" },
       ],
     };
 

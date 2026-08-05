@@ -49,6 +49,7 @@ import {
   type InfoClaimBuilder,
   type Role,
 } from "../model/characters";
+import { Alignment } from "../model/core";
 import type { Timing } from "../model/model";
 import { compile, type CompileCtx } from "../dsl/compile";
 import type { Claim } from "../schema/puzzleDoc";
@@ -72,6 +73,8 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
   const base = {
     name: claim.name,
     timing,
+    claimAlignment:
+      claim.alignment === undefined ? undefined : claim.alignment === "good" ? Alignment.Good : Alignment.Evil,
     possibleActualRoles: claim.possibleActualRoles?.map(resolveRoleRef),
     infoClaims: customInfoClaims(claim, ctx),
   };

@@ -3,18 +3,10 @@ export interface PuzzleDoc {
   readonly players: readonly string[];
   readonly script: readonly string[];
   readonly setup?: "standard" | "none" | "atheist";
-  readonly characterTypeCounts?: CharacterTypeCountsDoc;
   readonly uniqueCharacters?: boolean;
   readonly constraints?: readonly PuzzleConstraintDoc[];
   readonly timeline?: readonly TimelineEventDoc[];
   readonly claims: readonly Claim[];
-}
-
-export interface CharacterTypeCountsDoc {
-  readonly townsfolk?: number;
-  readonly outsider?: number;
-  readonly minion?: number;
-  readonly demon?: number;
 }
 
 export const KNIGHT_NO_DEMON_AMONG_MAX = 2;
@@ -116,8 +108,8 @@ export type Claim =
 interface BaseClaim {
   readonly name: string;
   readonly timing?: string;
+  readonly alignment?: "good" | "evil";
   readonly possibleActualRoles?: readonly string[];
-  readonly previousRole?: string;
   readonly heardWidowCall?: boolean;
   readonly knownEvilTwin?: string;
   readonly info?: readonly CustomInfoStatementDoc[];

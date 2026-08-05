@@ -16,8 +16,6 @@
     "Washerwoman",
     "Slayer"
   ],
-  "setup": "none",
-  "characterTypeCounts": { "minion": 1, "demon": 1 },
   "timeline": [
     {
       "timing": "day_1",

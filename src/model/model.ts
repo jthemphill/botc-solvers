@@ -386,9 +386,16 @@ export class BOTCModel {
         .filter(([, character]) => roleAlignment(character) === Alignment.Evil)
         .map(([role]) => role);
     const claimedRole = this.characters.get(apparentRole) as RoleRef;
-    const claimedEvil = roleAlignment(claimedRole) === Alignment.Evil;
+    const roleClaimAlignment = claim.alignment ?? roleAlignment(claimedRole);
+    const claimedEvil = roleClaimAlignment === Alignment.Evil;
+    const truthfulRoles =
+      claim.alignment !== undefined && claim.alignment !== roleAlignment(claimedRole)
+        ? [...this.characters.entries()]
+            .filter(([, character]) => roleAlignment(character) === claim.alignment)
+            .map(([role]) => role)
+        : [apparentRole];
     const possibleRoles = options.possibleActualRoles?.map(roleName) ?? [
-      ...(claimedEvil ? [] : [apparentRole]),
+      ...(claimedEvil ? [] : truthfulRoles),
       ...evilRoles.map(roleName).filter((role) => !claimedEvil || role !== apparentRole),
     ];
     const drunkRole = roleName(options.drunkRole ?? "Drunk");

@@ -13,8 +13,6 @@
     "Seamstress",
     "Librarian"
   ],
-  "setup": "none",
-  "characterTypeCounts": { "minion": 1, "demon": 1 },
   "timeline": [
     { "timing": "day_1", "type": "witchCurse", "players": ["Sarah"], "caller": "Sarah" },
     { "timing": "day_1", "type": "execution", "players": ["Matt"] },

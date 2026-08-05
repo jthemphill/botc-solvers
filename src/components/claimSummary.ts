@@ -157,7 +157,7 @@ export function claimSummary(claim: Claim): string {
     case "Nightwatchman":
       return nightwatchmanSummary(claim);
     default:
-      return `I am the ${claim.type}`;
+      return `I am the ${claim.type}${claim.alignment === undefined ? "" : ` (${claim.alignment})`}`;
   }
 }
 

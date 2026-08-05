@@ -100,11 +100,15 @@
       "among": ["Fraser", "Tom"]
     },
     {
+      "type": "Recluse",
+      "name": "Matt",
+      "timing": "night_1"
+    },
+    {
       "type": "Imp",
       "name": "Matt",
       "timing": "night_4",
-      "previousRole": "Recluse",
-      "possibleActualRoles": ["Poisoner", "Spy", "Baron", "Scarlet Woman", "Recluse"]
+      "alignment": "good"
     },
     {
       "type": "Undertaker",

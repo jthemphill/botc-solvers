@@ -51,22 +51,25 @@ describe("puzzle catalog", () => {
     expect(actual).toEqual(expected);
   });
 
-  test("uses structured character counts for source-specified characters in play", () => {
+  test("uses standard setup modifiers for source-specified character counts", () => {
     for (const id of ["puzzle-51-weird-science", "puzzle-84-mech4an4ion-is-inver10d", "puzzle-86-blood-and-ink"]) {
       const example = PUZZLE_EXAMPLES.find((candidate) => candidate.id === id);
       const doc = validatePuzzleDoc(example?.data);
 
-      expect(doc.characterTypeCounts, id).toEqual({ minion: 1, demon: 1 });
+      expect(doc.setup, id).toBeUndefined();
       expect(doc.constraints, id).toBeUndefined();
     }
   });
 
-  test("uses structured role history for puzzle 77's Recluse starpass claim", () => {
+  test("uses timed claims for puzzle 77's Recluse starpass claim", () => {
     const puzzle77 = PUZZLE_EXAMPLES.find((example) => example.id === "puzzle-77-yes-but-dont");
     const doc = validatePuzzleDoc(puzzle77?.data);
-    const matt = doc.claims.find((claim) => claim.name === "Matt" && claim.type === "Imp");
+    const matt = doc.claims.filter((claim) => claim.name === "Matt");
 
-    expect(matt).toMatchObject({ timing: "night_4", previousRole: "Recluse" });
+    expect(matt).toEqual([
+      { type: "Recluse", name: "Matt", timing: "night_1" },
+      { type: "Imp", name: "Matt", timing: "night_4", alignment: "good" },
+    ]);
     expect(doc.constraints).toBeUndefined();
   });
 

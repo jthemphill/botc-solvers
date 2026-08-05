@@ -1252,25 +1252,6 @@ describe("buildFromDoc", () => {
       worlds.every((world) => ["A", "B", "C"].filter((player) => world.actualRole(player) === "Imp").length === 1),
     ).toBe(true);
   });
-  test("structured character type counts constrain only the specified types", async () => {
-    const worlds = await buildFromDoc(
-      {
-        players: ["A", "B", "C"],
-        script: ["Imp", "Poisoner", "Chef"],
-        setup: "none",
-        uniqueCharacters: false,
-        characterTypeCounts: { demon: 1, minion: 1 },
-        claims: [],
-      },
-      backend,
-    ).solveAll();
-
-    expect(worlds).toHaveLength(6);
-    for (const world of worlds) {
-      expect(["A", "B", "C"].filter((player) => world.actualRole(player) === "Imp")).toHaveLength(1);
-      expect(["A", "B", "C"].filter((player) => world.actualRole(player) === "Poisoner")).toHaveLength(1);
-    }
-  });
   test("Clockmaker uses the puzzle seating order", async () => {
     const worlds = await buildFromDoc(
       {

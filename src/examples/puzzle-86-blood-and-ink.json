@@ -14,8 +14,6 @@
     "Knight",
     "Town Crier"
   ],
-  "setup": "none",
-  "characterTypeCounts": { "minion": 1, "demon": 1 },
   "timeline": [
     { "timing": "day_1", "type": "execution", "players": ["Oscar"] },
     { "timing": "night_2", "type": "nightDeath", "players": ["Sarah"] },

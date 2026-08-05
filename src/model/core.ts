@@ -47,6 +47,7 @@ export interface Character {
 export interface RoleClaim {
   readonly player: string;
   readonly apparentRole: RoleRef;
+  readonly alignment?: Alignment;
 }
 
 function hasRoleName(value: unknown): value is { readonly roleName: string } {

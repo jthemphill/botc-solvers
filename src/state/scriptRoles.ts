@@ -45,7 +45,6 @@ export function claimScriptRoles(claim: Claim): string[] {
   const roles = [
     claimTypeRoleName(claim.type),
     ...(claim.possibleActualRoles ?? []),
-    claim.previousRole,
     ...(claim.info ?? []).flatMap((info) => extractDslRoleNames(info.expression ?? "")),
   ];
 
