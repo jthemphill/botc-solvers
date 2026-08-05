@@ -1,6 +1,6 @@
 import { day } from "./model";
 import { beforeAll, describe, expect, test } from "bun:test";
-import { CharacterType } from "./core";
+import { Alignment, CharacterType } from "./core";
 import { formatSolution, forcedRole } from "./display";
 import { BOTCModel } from "./model";
 import {
@@ -96,6 +96,15 @@ describe("predicates and helpers", () => {
     game.fixActual("A", Goon);
     game.fixActual("B", Imp);
     game.fixActual("C", Chef);
+
+    expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
+  });
+
+  test("claimed alignment lets a good player claim an evil role", async () => {
+    const game = new BOTCModel(["A", "B"], { characters: script(Imp, Recluse), backend });
+    game.addRoleClaim({ player: "A", apparentRole: Imp, alignment: Alignment.Good });
+    game.fixActual("A", Recluse);
+    game.fixActual("B", Imp);
 
     expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
   });

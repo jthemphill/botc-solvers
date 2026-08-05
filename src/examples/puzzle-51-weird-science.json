@@ -16,18 +16,6 @@
     "Washerwoman",
     "Slayer"
   ],
-  "setup": "none",
-  "constraints": [
-    {
-      "expression": "#{p : players | p.role == Kazali} == 1"
-    },
-    {
-      "expression": "some p : {Dan, Josh, Oscar, Fraser} | p.role == Kazali"
-    },
-    {
-      "expression": "one minions.~role"
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",

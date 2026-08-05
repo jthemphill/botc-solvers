@@ -16,21 +16,6 @@
     "Seamstress",
     "Mathematician"
   ],
-  "setup": "none",
-  "constraints": [
-    {
-      "expression": "one demons.~role"
-    },
-    {
-      "expression": "one Witch.~role"
-    },
-    {
-      "expression": "some `Fang Gu`.~role => #outsiders.~role = 2"
-    },
-    {
-      "expression": "no `Fang Gu`.~role => #outsiders.~role = 1"
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",

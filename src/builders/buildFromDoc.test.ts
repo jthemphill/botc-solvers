@@ -2478,14 +2478,17 @@ describe("buildFromDoc", () => {
   test("Doomsayer deaths do not exclude players from script demon roles", async () => {
     const worlds = await buildFromDoc(
       {
-        players: ["A", "B"],
-        script: ["Imp", "Sage"],
+        players: ["A", "B", "C", "D", "E"],
+        script: ["Imp", "Scarlet Woman", "Sage", "Chef", "Empath"],
         setup: "none",
         uniqueCharacters: true,
         roleConstraints: roleConstraints({
           possible: [
             { name: "A", roles: ["Sage"] },
             { name: "B", roles: ["Imp"] },
+            { name: "C", roles: ["Scarlet Woman"] },
+            { name: "D", roles: ["Chef"] },
+            { name: "E", roles: ["Empath"] },
           ],
         }),
         timeline: [{ timing: "day_1", type: "doomsayerDeath", players: ["B"] }],
@@ -2798,7 +2801,7 @@ describe("buildFromDoc", () => {
     ).solveAll();
     expect(worlds).toEqual([]);
   });
-  test("standard puzzle docs require the final observed state to have a living demon path", async () => {
+  test("puzzle timelines require the final observed state to have a living demon path", async () => {
     const baseDoc = {
       players: ["A", "B", "C", "D", "E"],
       script: ["Imp", "Goblin", "Chef", "Empath", "Ravenkeeper"],
@@ -2813,25 +2816,29 @@ describe("buildFromDoc", () => {
       }),
       claims: [],
     } as const;
-    const ongoingWorlds = await buildFromDoc(
-      {
-        ...baseDoc,
-        timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
-      },
-      backend,
-    ).solveAll();
-    const endedWorlds = await buildFromDoc(
-      {
-        ...baseDoc,
-        timeline: [
-          { timing: "night_2", type: "nightDeath", players: ["A"] },
-          { timing: "night_3", type: "nightDeath", players: ["B"] },
-        ],
-      },
-      backend,
-    ).solveAll();
-    expect(ongoingWorlds).toHaveLength(1);
-    expect(endedWorlds).toEqual([]);
+    for (const setup of ["standard", "none"] as const) {
+      const ongoingWorlds = await buildFromDoc(
+        {
+          ...baseDoc,
+          setup,
+          timeline: [{ timing: "night_2", type: "nightDeath", players: ["A"] }],
+        },
+        backend,
+      ).solveAll();
+      const endedWorlds = await buildFromDoc(
+        {
+          ...baseDoc,
+          setup,
+          timeline: [
+            { timing: "night_2", type: "nightDeath", players: ["A"] },
+            { timing: "night_3", type: "nightDeath", players: ["B"] },
+          ],
+        },
+        backend,
+      ).solveAll();
+      expect(ongoingWorlds).toHaveLength(1);
+      expect(endedWorlds).toEqual([]);
+    }
   });
   test("a healthy Mastermind keeps the game going for the extra night and day after an executed Demon", async () => {
     const baseDoc: TestPuzzleDoc = {
@@ -3731,7 +3738,7 @@ describe("buildFromDoc", () => {
     ).solveAll();
     expect(worlds).toEqual([]);
   });
-  test("Slayer kill claims require Scarlet Woman for actual demon targets in ongoing games", async () => {
+  test("Slayer kill claims require Scarlet Woman when an actual Demon dies and play continues", async () => {
     const noCatchWorlds = await buildFromDoc(
       {
         players: ["A", "B"],

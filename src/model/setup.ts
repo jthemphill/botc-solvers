@@ -116,49 +116,63 @@ export const STANDARD_SETUP_COUNTS = new Map<number, StandardSetupCounts>([
 interface SetupModifier {
   readonly roleName: string;
   readonly activeWhenInPlay: boolean;
-  readonly delta: Partial<Record<CharacterType, number>>;
+  readonly deltas: readonly Partial<Record<CharacterType, number>>[];
 }
 
 const STANDARD_SETUP_MODIFIERS: readonly SetupModifier[] = [
   {
     roleName: "Baron",
     activeWhenInPlay: true,
-    delta: {
-      [CharacterType.Townsfolk]: -2,
-      [CharacterType.Outsider]: 2,
-    },
+    deltas: [
+      {
+        [CharacterType.Townsfolk]: -2,
+        [CharacterType.Outsider]: 2,
+      },
+    ],
   },
   {
     roleName: "Fang Gu",
     activeWhenInPlay: true,
-    delta: {
-      [CharacterType.Townsfolk]: -1,
-      [CharacterType.Outsider]: 1,
-    },
+    deltas: [
+      {
+        [CharacterType.Townsfolk]: -1,
+        [CharacterType.Outsider]: 1,
+      },
+    ],
   },
   {
     roleName: "Vigormortis",
     activeWhenInPlay: true,
-    delta: {
-      [CharacterType.Townsfolk]: 1,
-      [CharacterType.Outsider]: -1,
-    },
+    deltas: [
+      {
+        [CharacterType.Townsfolk]: 1,
+        [CharacterType.Outsider]: -1,
+      },
+    ],
   },
   {
     roleName: "Godfather",
     activeWhenInPlay: true,
-    delta: {
-      [CharacterType.Townsfolk]: -1,
-      [CharacterType.Outsider]: 1,
-    },
+    deltas: [
+      {
+        [CharacterType.Townsfolk]: 1,
+        [CharacterType.Outsider]: -1,
+      },
+      {
+        [CharacterType.Townsfolk]: -1,
+        [CharacterType.Outsider]: 1,
+      },
+    ],
   },
   {
     roleName: "Balloonist",
     activeWhenInPlay: false,
-    delta: {
-      [CharacterType.Townsfolk]: -1,
-      [CharacterType.Outsider]: 1,
-    },
+    deltas: [
+      {
+        [CharacterType.Townsfolk]: -1,
+        [CharacterType.Outsider]: 1,
+      },
+    ],
   },
 ];
 
@@ -191,25 +205,30 @@ export function applyStandardSetup(game: BOTCModel): void {
   const baseCounts = standardSetupCounts(game.players.length);
   const scriptRoleNames = new Set([...game.characters.keys()]);
   const modifiers = STANDARD_SETUP_MODIFIERS.filter((modifier) => scriptRoleNames.has(modifier.roleName));
-  const lordOfTyphonInScript = scriptRoleNames.has("Lord of Typhon");
-  const xaanInScript = scriptRoleNames.has("Xaan");
   if (scriptRoleNames.has("Marionette")) enforceMarionetteNeighborsDemon(game);
 
-  if (!lordOfTyphonInScript && !xaanInScript) return applyStandardSetupBranches(game, baseCounts, modifiers);
+  const kazaliInPlay = scriptRoleNames.has("Kazali") ? game.roleInPlay("Kazali") : undefined;
+  const xaanInPlay = scriptRoleNames.has("Xaan") ? game.roleInPlay("Xaan") : undefined;
+  const lordOfTyphonInPlay = scriptRoleNames.has("Lord of Typhon") ? game.roleInPlay("Lord of Typhon") : undefined;
+  const specialDemonConditions: BoolLike[] = [];
+  if (kazaliInPlay !== undefined) specialDemonConditions.push(kazaliInPlay);
+  if (xaanInPlay !== undefined) specialDemonConditions.push(xaanInPlay);
+  if (lordOfTyphonInPlay !== undefined) specialDemonConditions.push(lordOfTyphonInPlay);
+  const ordinarySetup =
+    specialDemonConditions.length === 0
+      ? undefined
+      : game.allOf(
+          specialDemonConditions.map((condition) => negateBoolLike(condition)),
+          "standard_setup_without_special_demon",
+        );
 
-  if (xaanInScript && !lordOfTyphonInScript) {
-    const xaanInPlay = game.roleInPlay("Xaan");
-    applyStandardSetupBranches(game, baseCounts, modifiers, xaanInPlay.not());
-    enforceXaanSetup(game, baseCounts, xaanInPlay);
-    return;
-  }
-
-  const lordOfTyphonInPlay = game.roleInPlay("Lord of Typhon");
-  applyStandardSetupBranches(game, baseCounts, modifiers, lordOfTyphonInPlay.not());
-  enforceLordOfTyphonSetup(game, baseCounts, lordOfTyphonInPlay);
+  applyStandardSetupBranches(game, baseCounts, modifiers, ordinarySetup);
+  if (kazaliInPlay !== undefined) enforceVariableOutsiderSetup(game, baseCounts, kazaliInPlay);
+  if (xaanInPlay !== undefined) enforceVariableOutsiderSetup(game, baseCounts, xaanInPlay);
+  if (lordOfTyphonInPlay !== undefined) enforceLordOfTyphonSetup(game, baseCounts, lordOfTyphonInPlay);
 }
 
-function enforceXaanSetup(game: BOTCModel, baseCounts: StandardSetupCounts, condition: BoolLike): void {
+function enforceVariableOutsiderSetup(game: BOTCModel, baseCounts: StandardSetupCounts, condition: BoolLike): void {
   const demonPlayers = game.players.map((player) => game.hasCharacterType(player, CharacterType.Demon));
   const minionPlayers = game.players.map((player) => game.hasCharacterType(player, CharacterType.Minion));
 
@@ -244,7 +263,24 @@ function applyStandardSetupBranches(
       ],
       `standard_setup_${activeModifiers.map((modifier) => roleName(modifier.roleName)).join("_") || "base"}`,
     );
-    enforceSetupCounts(game, adjustedSetupCounts(baseCounts, activeModifiers), condition);
+    const countOptions = adjustedSetupCountOptions(baseCounts, activeModifiers).filter((counts) =>
+      SETUP_TYPES.every((type) => counts[type] >= 0 && counts[type] <= game.players.length),
+    );
+    if (countOptions.length === 0) {
+      game.addFalse(condition);
+      continue;
+    }
+    if (countOptions.length === 1) {
+      enforceSetupCounts(game, countOptions[0] as StandardSetupCounts, condition);
+      continue;
+    }
+    game.addImplication(
+      condition,
+      game.anyOf(
+        countOptions.map((counts, index) => setupCountsMatch(game, counts, `standard_setup_option_${mask}_${index}`)),
+        `standard_setup_options_${mask}`,
+      ),
+    );
   }
 }
 
@@ -308,17 +344,35 @@ function negateBoolLike(value: BoolLike): BoolLike {
   return typeof value === "number" ? -value : value.not();
 }
 
-function adjustedSetupCounts(
+function adjustedSetupCountOptions(
   baseCounts: StandardSetupCounts,
   modifiers: readonly SetupModifier[],
-): StandardSetupCounts {
-  const result = { ...baseCounts };
+): readonly StandardSetupCounts[] {
+  let options: StandardSetupCounts[] = [{ ...baseCounts }];
   for (const modifier of modifiers) {
-    for (const type of SETUP_TYPES) {
-      result[type] += modifier.delta[type] ?? 0;
-    }
+    options = options.flatMap((counts) =>
+      modifier.deltas.map(
+        (delta) =>
+          Object.fromEntries(
+            SETUP_TYPES.map((type) => [type, counts[type] + (delta[type] ?? 0)]),
+          ) as unknown as StandardSetupCounts,
+      ),
+    );
   }
-  return result;
+  return [...new Map(options.map((counts) => [SETUP_TYPES.map((type) => counts[type]).join(","), counts])).values()];
+}
+
+function setupCountsMatch(game: BOTCModel, counts: StandardSetupCounts, name: string): BoolLike {
+  return game.allOf(
+    SETUP_TYPES.map((type) =>
+      game.boolSumEquals(
+        game.players.map((player) => game.hasCharacterType(player, type)),
+        counts[type],
+        `${name}_${type}`,
+      ),
+    ),
+    name,
+  );
 }
 
 function enforceSetupCounts(game: BOTCModel, counts: StandardSetupCounts, condition?: BoolLike): void {

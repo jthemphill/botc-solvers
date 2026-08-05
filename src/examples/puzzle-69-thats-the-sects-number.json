@@ -18,21 +18,6 @@
     "Snake Charmer",
     "Oracle"
   ],
-  "setup": "none",
-  "constraints": [
-    {
-      "expression": "one demons.~role"
-    },
-    {
-      "expression": "one Witch.~role"
-    },
-    {
-      "expression": "some `Fang Gu`.~role => #outsiders.~role = 3"
-    },
-    {
-      "expression": "no `Fang Gu`.~role => #outsiders.~role = 2"
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",

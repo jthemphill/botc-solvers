@@ -33,6 +33,7 @@ export interface InfoClaim {
 export interface RoleBaseOptions {
   readonly name: string;
   readonly timing?: Timing;
+  readonly claimAlignment?: Alignment;
   readonly possibleActualRoles?: readonly RoleRef[];
   readonly infoClaims?: readonly InfoClaimBuilder[];
 }
@@ -230,6 +231,7 @@ export abstract class Role {
   readonly maxCopies?: number;
   readonly name: string;
   readonly timing?: Timing;
+  readonly claimAlignment?: Alignment;
   readonly possibleActualRoles?: readonly RoleRef[];
   readonly infoClaims: readonly InfoClaim[];
 
@@ -243,6 +245,7 @@ export abstract class Role {
     this.characterType = cls.characterType;
     this.maxCopies = cls.maxCopies;
     this.timing = resolvedTiming;
+    this.claimAlignment = typeof nameOrOptions === "string" ? undefined : nameOrOptions.claimAlignment;
     this.possibleActualRoles = typeof nameOrOptions === "string" ? undefined : nameOrOptions.possibleActualRoles;
     this.infoClaims = typeof nameOrOptions === "string" ? [] : (nameOrOptions.infoClaims ?? []).map(normalizeInfoClaim);
   }
@@ -269,7 +272,7 @@ export abstract class Role {
   protected applyRoleClaim(game: BOTCModel, role: RoleRef, options: ApplyClaimsOptions = {}): void {
     const drunkRole = options.drunkRole ?? "Drunk";
     game.addRoleClaim(
-      { player: this.name, apparentRole: role },
+      { player: this.name, apparentRole: role, alignment: this.claimAlignment },
       {
         drunkRole,
         evilRoles: options.evilRoles,

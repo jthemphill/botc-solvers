@@ -18,11 +18,6 @@
     "Recluse",
     "Undertaker"
   ],
-  "constraints": [
-    {
-      "expression": "Matt.role == Recluse => role_at(Matt, Imp, night_4)"
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -105,10 +100,15 @@
       "among": ["Fraser", "Tom"]
     },
     {
+      "type": "Recluse",
+      "name": "Matt",
+      "timing": "night_1"
+    },
+    {
       "type": "Imp",
       "name": "Matt",
       "timing": "night_4",
-      "possibleActualRoles": ["Poisoner", "Spy", "Baron", "Scarlet Woman", "Recluse"]
+      "alignment": "good"
     },
     {
       "type": "Undertaker",

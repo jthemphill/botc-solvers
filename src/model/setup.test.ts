@@ -16,6 +16,7 @@ import {
   Goon,
   Imp,
   Investigator,
+  Kazali,
   Klutz,
   Librarian,
   Leviathan,
@@ -181,7 +182,7 @@ describe("standard setup lowering", () => {
     });
   });
 
-  test("conditions Godfather outsider modification on Godfather being in play", async () => {
+  test("allows the Godfather to add or remove an Outsider", async () => {
     const characters = script(
       Imp,
       Godfather,
@@ -198,9 +199,20 @@ describe("standard setup lowering", () => {
       Washerwoman,
     );
 
-    const withGodfather = buildPuzzleModel({ players: players(8), characters }, backend);
-    withGodfather.fixActual("A", Godfather);
-    expect(characterTypeCounts((await withGodfather.solveAll({ limit: 1 }))[0] as World, characters)).toEqual({
+    const removesOutsider = buildPuzzleModel({ players: players(8), characters }, backend);
+    removesOutsider.fixActual("A", Godfather);
+    removesOutsider.addTruth(removesOutsider.outsiderCountIs(0));
+    expect(characterTypeCounts((await removesOutsider.solveAll({ limit: 1 }))[0] as World, characters)).toEqual({
+      [CharacterType.Townsfolk]: 6,
+      [CharacterType.Outsider]: 0,
+      [CharacterType.Minion]: 1,
+      [CharacterType.Demon]: 1,
+    });
+
+    const addsOutsider = buildPuzzleModel({ players: players(8), characters }, backend);
+    addsOutsider.fixActual("A", Godfather);
+    addsOutsider.addTruth(addsOutsider.outsiderCountIs(2));
+    expect(characterTypeCounts((await addsOutsider.solveAll({ limit: 1 }))[0] as World, characters)).toEqual({
       [CharacterType.Townsfolk]: 4,
       [CharacterType.Outsider]: 2,
       [CharacterType.Minion]: 1,
@@ -215,6 +227,36 @@ describe("standard setup lowering", () => {
       [CharacterType.Minion]: 1,
       [CharacterType.Demon]: 1,
     });
+  });
+
+  test("Kazali setup allows any Outsider count", async () => {
+    const characters = script(
+      Kazali,
+      Poisoner,
+      Drunk,
+      Recluse,
+      Saint,
+      Goon,
+      Chef,
+      Empath,
+      Investigator,
+      Librarian,
+      Slayer,
+      Washerwoman,
+    );
+
+    for (const outsiderCount of [0, 1, 2, 3, 4]) {
+      const game = buildPuzzleModel({ players: players(8), characters }, backend);
+      game.fixActual("A", Kazali);
+      game.addTruth(game.outsiderCountIs(outsiderCount));
+
+      expect(characterTypeCounts((await game.solveAll({ limit: 1 }))[0] as World, characters)).toEqual({
+        [CharacterType.Townsfolk]: 6 - outsiderCount,
+        [CharacterType.Outsider]: outsiderCount,
+        [CharacterType.Minion]: 1,
+        [CharacterType.Demon]: 1,
+      });
+    }
   });
 
   test("allows Balloonist in play with or without the outsider modification", async () => {

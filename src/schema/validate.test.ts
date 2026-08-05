@@ -144,6 +144,7 @@ describe("validatePuzzleDoc", () => {
           type: "Chef",
           name: "You",
           count: 0,
+          alignment: "good",
           possibleActualRoles: ["Chef", "Drunk"],
           heardWidowCall: true,
           knownEvilTwin: "A",
@@ -155,10 +156,20 @@ describe("validatePuzzleDoc", () => {
       type: "Chef",
       name: "You",
       count: 0,
+      alignment: "good",
       possibleActualRoles: ["Chef", "Drunk"],
       heardWidowCall: true,
       knownEvilTwin: "A",
     });
+  });
+
+  test("rejects invalid claimed alignments", () => {
+    expect(() =>
+      validatePuzzleDoc({
+        ...baseDoc,
+        claims: [{ type: "Imp", name: "You", alignment: "neutral" }],
+      }),
+    ).toThrow('alignment must be "good" or "evil"');
   });
 
   test("accepts Prodigy checks", () => {

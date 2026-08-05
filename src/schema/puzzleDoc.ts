@@ -108,6 +108,7 @@ export type Claim =
 interface BaseClaim {
   readonly name: string;
   readonly timing?: string;
+  readonly alignment?: "good" | "evil";
   readonly possibleActualRoles?: readonly string[];
   readonly heardWidowCall?: boolean;
   readonly knownEvilTwin?: string;

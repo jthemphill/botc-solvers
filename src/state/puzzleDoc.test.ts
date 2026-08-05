@@ -31,12 +31,16 @@ describe("puzzle document reducer", () => {
       players: ["A", "B", "C"],
       script: ["Imp", "Juggler", "Savant"],
       constraints: [{ expression: "A.role == Savant" }, { expression: "C.role != Vortox" }],
-      claims: [{ type: "Juggler", name: "B", possibleActualRoles: ["Juggler", "Drunk"], guesses: { A: "Imp" } }],
+      claims: [
+        { type: "Juggler", name: "B", possibleActualRoles: ["Juggler", "Drunk"], guesses: { A: "Imp" } },
+        { type: "Recluse", name: "C", timing: "night_1" },
+        { type: "Imp", name: "C", timing: "night_2", alignment: "good" },
+      ],
     };
 
     const next = reducer(doc, { type: "setScript", script: ["Drunk"] });
 
-    expect(next.script).toEqual(["Drunk", "Juggler", "Imp", "Savant", "Vortox"]);
+    expect(next.script).toEqual(["Drunk", "Juggler", "Imp", "Recluse", "Savant", "Vortox"]);
   });
 
   test("savant DSL role identifiers protect matching script roles", () => {

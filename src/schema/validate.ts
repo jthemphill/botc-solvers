@@ -52,6 +52,7 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
   if (!isObject(input)) throw new ValidationError(`Expected object`, "$");
   rejectLegacyField(input, "fixedRoles", "$.fixedRoles");
   rejectLegacyField(input, "forbiddenRoles", "$.forbiddenRoles");
+  rejectLegacyField(input, "characterTypeCounts", "$.characterTypeCounts");
   const players = expectStringArray(input["players"], "$.players");
   const script = expectStringArray(input["script"], "$.script");
   const claims = input["claims"];
@@ -118,11 +119,16 @@ function validateTimeline(v: unknown, pathRoot: string): TimelineEventDoc[] {
 function validateClaim(input: unknown, path: string): Claim {
   if (!isObject(input)) throw new ValidationError(`Expected object`, path);
   rejectLegacyField(input, "extraPossibleActualRoles", `${path}.extraPossibleActualRoles`);
+  rejectLegacyField(input, "previousRole", `${path}.previousRole`);
   const type = expectString(input["type"], `${path}.type`);
   if (!SUPPORTED_CLAIM_TYPES.has(type as Claim["type"]))
     throw new ValidationError(`Unsupported claim type '${type}'`, `${path}.type`);
   const name = expectString(input["name"], `${path}.name`);
   const timing = input["timing"] === undefined ? undefined : expectString(input["timing"], `${path}.timing`);
+  const alignmentInput = input["alignment"];
+  if (alignmentInput !== undefined && alignmentInput !== "good" && alignmentInput !== "evil")
+    throw new ValidationError(`alignment must be "good" or "evil"`, `${path}.alignment`);
+  const alignment = alignmentInput as "good" | "evil" | undefined;
   const possibleActualRoles =
     input["possibleActualRoles"] === undefined
       ? undefined
@@ -132,7 +138,7 @@ function validateClaim(input: unknown, path: string): Claim {
   const knownEvilTwin =
     input["knownEvilTwin"] === undefined ? undefined : expectString(input["knownEvilTwin"], `${path}.knownEvilTwin`);
   const info = input["info"] === undefined ? undefined : validateCustomInfo(input["info"], `${path}.info`, type);
-  const base = { name, timing, possibleActualRoles, heardWidowCall, knownEvilTwin, info };
+  const base = { name, timing, alignment, possibleActualRoles, heardWidowCall, knownEvilTwin, info };
 
   switch (type as Claim["type"]) {
     case "Assassin":

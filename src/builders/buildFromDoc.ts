@@ -48,7 +48,7 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
     );
     applyResurrectionConstraints(game, doc, nightDeathTiming);
   }
-  applyOngoingGameConstraint(game, doc);
+  applyFinalDemonPathConstraint(game, doc);
   const preNightDeathSnakeCharmerChecks = applyPreNightDeathSnakeCharmerChecks(game, doc);
   const timelineClaims = doc.claims.map((claim, index) =>
     removePreNightDeathSnakeCharmerChecks(claim, index, preNightDeathSnakeCharmerChecks),
@@ -768,10 +768,10 @@ function applyChangedRoleClaimExplanations(game: BOTCModel, doc: PuzzleDoc): voi
     for (let index = 1; index < timedClaims.length; index += 1) {
       const previous = timedClaims[index - 1] as (typeof timedClaims)[number];
       const current = timedClaims[index] as (typeof timedClaims)[number];
-      const previousRole = claimRoleRef(previous.claim);
+      const priorClaimRole = claimRoleRef(previous.claim);
       const currentRole = claimRoleRef(current.claim);
-      if (previousRole === undefined || currentRole === undefined) continue;
-      if (roleName(previousRole) === roleName(currentRole)) continue;
+      if (priorClaimRole === undefined || currentRole === undefined) continue;
+      if (roleName(priorClaimRole) === roleName(currentRole)) continue;
       if (phaseStartOrder(current.claim.timing as Timing) <= phaseStartOrder(previous.claim.timing as Timing)) continue;
 
       explainChangedRoleClaim(game, doc, current.claim, currentRole);
@@ -793,7 +793,19 @@ function explainChangedRoleClaim(
   const claimantEvil = game.hasAlignmentOverrideAt(claim.name, claimTiming)
     ? game.isEvilAt(claim.name, claimTiming)
     : game.isEvil(claim.name);
-  const explanations: BoolLike[] = [claimedRoleAtTiming, claimantEvil];
+  const claimantGood = game.hasAlignmentOverrideAt(claim.name, claimTiming)
+    ? game.isGoodAt(claim.name, claimTiming)
+    : game.isGood(claim.name);
+  const claimedAlignmentMatches =
+    claim.alignment === undefined ? undefined : claim.alignment === "good" ? claimantGood : claimantEvil;
+  const truthfulClaim =
+    claimedAlignmentMatches === undefined
+      ? claimedRoleAtTiming
+      : game.allOf(
+          [claimedRoleAtTiming, claimedAlignmentMatches],
+          `${claimTiming}_${slug(claim.name)}_${slug(claimedRoleName)}_claimed_alignment_matches`,
+        );
+  const explanations: BoolLike[] = [truthfulClaim, claimantEvil];
 
   if (doc.script.includes("Pit-Hag")) {
     const activePitHag = game.roleSoberAndHealthyAt(
@@ -1391,12 +1403,14 @@ function livingPlayersAfterDeathEvent(
   return doc.players.filter((player) => !deadPlayers.has(player) && !dyingPlayers.has(player));
 }
 
-function applyOngoingGameConstraint(game: BOTCModel, doc: PuzzleDoc): void {
-  if (doc.setup === "none" || doc.setup === "atheist" || (doc.timeline?.length ?? 0) === 0) return;
+function applyFinalDemonPathConstraint(game: BOTCModel, doc: PuzzleDoc): void {
+  if (doc.setup === "atheist" || (doc.timeline?.length ?? 0) === 0) return;
+
+  const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
+  if (demonRoles.length === 0) return;
 
   const finalLivingPlayers = livingPlayersAfterTimeline(doc);
   const finalDeadPlayers = doc.players.filter((player) => !finalLivingPlayers.includes(player));
-  const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
   const finalTiming = collectTimings(doc).at(-1);
   const finalLivingStartingDemon = finalLivingPlayers.flatMap((player) =>
     demonRoles.map((role) =>
@@ -1426,13 +1440,11 @@ function applyOngoingGameConstraint(game: BOTCModel, doc: PuzzleDoc): void {
   }
 
   if (doc.script.includes("Scarlet Woman")) {
-    const deadNonImpDemons = finalDeadPlayers.flatMap((player) =>
-      demonRoles.filter((role) => roleName(role) !== "Imp").map((role) => game.actualIs(player, role)),
-    );
+    const deadDemons = finalDeadPlayers.flatMap((player) => demonRoles.map((role) => game.actualIs(player, role)));
     possibleSuccessions.push(
       game.allOf(
         [
-          game.anyOf(deadNonImpDemons, "dead_non_imp_demon_before_current_state"),
+          game.anyOf(deadDemons, "dead_demon_before_current_state"),
           game.anyOf(
             finalLivingPlayers.map((player) => game.actualIs(player, "Scarlet Woman")),
             "final_living_scarlet_woman_can_be_demon",
@@ -1464,7 +1476,7 @@ function applyOngoingGameConstraint(game: BOTCModel, doc: PuzzleDoc): void {
   }
 
   game.addTruth(
-    game.anyOf([...finalLivingStartingDemon, ...possibleSuccessions], "ongoing_game_has_living_demon_or_successor"),
+    game.anyOf([...finalLivingStartingDemon, ...possibleSuccessions], "final_state_has_living_demon_or_successor"),
   );
 }
 

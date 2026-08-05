@@ -15,15 +15,6 @@
     "Knight",
     "Snake Charmer"
   ],
-  "setup": "none",
-  "constraints": [
-    {
-      "expression": "one demons.~role"
-    },
-    {
-      "expression": "one minions.~role"
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",

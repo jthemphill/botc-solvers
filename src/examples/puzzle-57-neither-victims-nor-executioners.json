@@ -14,15 +14,6 @@
     "Oracle",
     "Slayer"
   ],
-  "setup": "none",
-  "constraints": [
-    {
-      "expression": "one Vigormortis.~role"
-    },
-    {
-      "expression": "one minions.~role"
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",

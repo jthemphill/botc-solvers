@@ -615,9 +615,24 @@ function AdvancedClaimFields({ doc, claim, onChange }: BodyProps) {
   };
 
   return (
-    <details className="advanced-claim-fields" open={possibleActualRoles.length > 0}>
+    <details className="advanced-claim-fields" open={possibleActualRoles.length > 0 || claim.alignment !== undefined}>
       <summary>Advanced</summary>
       <div className="field-grid">
+        <span>Claimed alignment</span>
+        <select
+          aria-label="Claimed alignment"
+          value={claim.alignment ?? ""}
+          onChange={(event) =>
+            onChange({
+              ...claim,
+              alignment: event.target.value === "" ? undefined : (event.target.value as "good" | "evil"),
+            })
+          }
+        >
+          <option value="">-</option>
+          <option value="good">good</option>
+          <option value="evil">evil</option>
+        </select>
         <span>Possible actual roles</span>
         <RoleListEditor
           value={possibleActualRoles}

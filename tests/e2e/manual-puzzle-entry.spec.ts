@@ -521,6 +521,10 @@ async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
   }
 
   for (const role of claim.possibleActualRoles ?? []) await addAdvancedRole(block, role);
+  if (claim.alignment !== undefined) {
+    await openAdvancedFields(block);
+    await selectField(block, "Claimed alignment", claim.alignment);
+  }
   if (claim.heardWidowCall === true) await block.getByLabel("Heard the Widow's call").check();
   if (claim.knownEvilTwin !== undefined) await selectField(block, "Known Evil Twin", claim.knownEvilTwin);
   if (claim.type === "Artist") await fillArtistInfo(block, claim.info ?? []);
@@ -607,10 +611,14 @@ async function checkPlayers(scope: Locator, label: string, players: readonly str
 }
 
 async function addAdvancedRole(block: Locator, role: string) {
+  await openAdvancedFields(block);
+  await addRoleToList(block, "Possible actual roles", role);
+}
+
+async function openAdvancedFields(block: Locator) {
   const details = block.locator("details.advanced-claim-fields");
   const open = await details.evaluate((element) => (element as HTMLDetailsElement).open);
   if (!open) await details.locator("summary").click();
-  await addRoleToList(block, "Possible actual roles", role);
 }
 
 async function addRoleToList(scope: Locator, label: string, role: string) {
