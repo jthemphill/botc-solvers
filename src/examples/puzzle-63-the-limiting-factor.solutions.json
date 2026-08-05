@@ -14,8 +14,8 @@
       },
       "poisoned": {
         "night_1": ["Olivia"],
-        "night_2": ["Steph"],
-        "night_3": ["Anna"],
+        "night_2": ["Anna"],
+        "night_3": ["Steph"],
         "night_4": ["Dan"]
       }
     }

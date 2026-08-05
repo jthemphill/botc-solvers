@@ -4,7 +4,6 @@ export interface PuzzleDoc {
   readonly script: readonly string[];
   readonly setup?: "standard" | "none" | "atheist";
   readonly characterTypeCounts?: CharacterTypeCountsDoc;
-  readonly ongoingGame?: boolean;
   readonly uniqueCharacters?: boolean;
   readonly constraints?: readonly PuzzleConstraintDoc[];
   readonly timeline?: readonly TimelineEventDoc[];

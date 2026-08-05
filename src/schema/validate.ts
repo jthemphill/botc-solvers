@@ -67,8 +67,6 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
     input["characterTypeCounts"] === undefined
       ? undefined
       : validateCharacterTypeCounts(input["characterTypeCounts"], "$.characterTypeCounts");
-  const ongoingGame =
-    input["ongoingGame"] === undefined ? undefined : expectBool(input["ongoingGame"], "$.ongoingGame");
   const uniqueCharacters =
     input["uniqueCharacters"] === undefined ? undefined : expectBool(input["uniqueCharacters"], "$.uniqueCharacters");
   const constraints =
@@ -81,7 +79,6 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
     script,
     setup,
     characterTypeCounts,
-    ongoingGame,
     uniqueCharacters,
     constraints,
     timeline,

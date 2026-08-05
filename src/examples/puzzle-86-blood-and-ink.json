@@ -16,7 +16,6 @@
   ],
   "setup": "none",
   "characterTypeCounts": { "minion": 1, "demon": 1 },
-  "ongoingGame": true,
   "timeline": [
     { "timing": "day_1", "type": "execution", "players": ["Oscar"] },
     { "timing": "night_2", "type": "nightDeath", "players": ["Sarah"] },

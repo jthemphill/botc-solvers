@@ -49,7 +49,7 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
     );
     applyResurrectionConstraints(game, doc, nightDeathTiming);
   }
-  applyOngoingGameConstraint(game, doc);
+  applyFinalDemonPathConstraint(game, doc);
   const preNightDeathSnakeCharmerChecks = applyPreNightDeathSnakeCharmerChecks(game, doc);
   const timelineClaims = doc.claims.map((claim, index) =>
     removePreNightDeathSnakeCharmerChecks(claim, index, preNightDeathSnakeCharmerChecks),
@@ -1424,17 +1424,14 @@ function livingPlayersAfterDeathEvent(
   return doc.players.filter((player) => !deadPlayers.has(player) && !dyingPlayers.has(player));
 }
 
-function applyOngoingGameConstraint(game: BOTCModel, doc: PuzzleDoc): void {
-  if (
-    doc.setup === "atheist" ||
-    (doc.timeline?.length ?? 0) === 0 ||
-    (doc.setup === "none" && doc.ongoingGame !== true)
-  )
-    return;
+function applyFinalDemonPathConstraint(game: BOTCModel, doc: PuzzleDoc): void {
+  if (doc.setup === "atheist" || (doc.timeline?.length ?? 0) === 0) return;
+
+  const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
+  if (demonRoles.length === 0) return;
 
   const finalLivingPlayers = livingPlayersAfterTimeline(doc);
   const finalDeadPlayers = doc.players.filter((player) => !finalLivingPlayers.includes(player));
-  const demonRoles = doc.script.map(resolveRoleRef).filter((role) => roleCharacterType(role) === CharacterType.Demon);
   const finalTiming = collectTimings(doc).at(-1);
   const finalLivingStartingDemon = finalLivingPlayers.flatMap((player) =>
     demonRoles.map((role) =>
@@ -1464,13 +1461,11 @@ function applyOngoingGameConstraint(game: BOTCModel, doc: PuzzleDoc): void {
   }
 
   if (doc.script.includes("Scarlet Woman")) {
-    const deadNonImpDemons = finalDeadPlayers.flatMap((player) =>
-      demonRoles.filter((role) => roleName(role) !== "Imp").map((role) => game.actualIs(player, role)),
-    );
+    const deadDemons = finalDeadPlayers.flatMap((player) => demonRoles.map((role) => game.actualIs(player, role)));
     possibleSuccessions.push(
       game.allOf(
         [
-          game.anyOf(deadNonImpDemons, "dead_non_imp_demon_before_current_state"),
+          game.anyOf(deadDemons, "dead_demon_before_current_state"),
           game.anyOf(
             finalLivingPlayers.map((player) => game.actualIs(player, "Scarlet Woman")),
             "final_living_scarlet_woman_can_be_demon",
@@ -1502,7 +1497,7 @@ function applyOngoingGameConstraint(game: BOTCModel, doc: PuzzleDoc): void {
   }
 
   game.addTruth(
-    game.anyOf([...finalLivingStartingDemon, ...possibleSuccessions], "ongoing_game_has_living_demon_or_successor"),
+    game.anyOf([...finalLivingStartingDemon, ...possibleSuccessions], "final_state_has_living_demon_or_successor"),
   );
 }
 
