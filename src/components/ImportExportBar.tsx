@@ -1,3 +1,4 @@
+import styles from "./ImportExportBar.module.css";
 import { useRef, type Dispatch } from "react";
 import { PUZZLE_EXAMPLES } from "../examples/puzzleCatalog";
 import type { PuzzleDoc } from "../schema/puzzleDoc";
@@ -45,7 +46,7 @@ export function ImportExportBar({ doc, dispatch, onError }: Props) {
   };
 
   return (
-    <section className="import-export-bar" aria-label="Import, export, and examples">
+    <section className={`${styles.root} import-export-bar`} aria-label="Import, export, and examples">
       <div className="toolbar-button-row">
         <button onClick={() => fileRef.current?.click()}>Import JSON…</button>
         <input

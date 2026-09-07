@@ -1,3 +1,4 @@
+import styles from "./ConstraintsEditor.module.css";
 import type { Dispatch } from "react";
 import type { PuzzleConstraintDoc, PuzzleDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
@@ -15,7 +16,7 @@ export function ConstraintsEditor({ doc, dispatch }: Props) {
   };
 
   return (
-    <section className="panel">
+    <section className={`${styles.root} panel constraints-editor`}>
       <h3>Custom constraints</h3>
       <CustomConstraintList constraints={customConstraints} setConstraints={setCustomConstraints} />
       <details className="advanced-puzzle-rules">
@@ -91,7 +92,11 @@ function CustomConstraintList({
           </header>
           <div className="field-grid">
             <span>Expression</span>
-            <textarea value={constraint.expression} onChange={(event) => updateConstraint(index, event.target.value)} />
+            <textarea
+              aria-label={`Custom constraint ${index + 1} expression`}
+              value={constraint.expression}
+              onChange={(event) => updateConstraint(index, event.target.value)}
+            />
           </div>
         </div>
       ))}

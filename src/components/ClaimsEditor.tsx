@@ -1,4 +1,5 @@
-import { Fragment, useId, useState, type Dispatch } from "react";
+import styles from "./ClaimsEditor.module.css";
+import { Fragment, useId } from "react";
 import { DslError, lex } from "../dsl/lex";
 import { parse } from "../dsl/parse";
 import { Alignment, CharacterType } from "../model/core";
@@ -68,18 +69,18 @@ import type {
   WasherwomanClaim,
 } from "../schema/puzzleDoc";
 import { SUPPORTED_CLAIM_TYPES } from "../schema/puzzleDoc";
-import type { PuzzleAction } from "../state/puzzleDoc";
 import { RoleListEditor, RoleTypeahead, sortedRoleNames } from "./RolePicker";
-
-interface Props {
-  doc: PuzzleDoc;
-  dispatch: Dispatch<PuzzleAction>;
-}
 
 export const CLAIM_TYPES = [...SUPPORTED_CLAIM_TYPES];
 const CLAIM_ROLE_OPTIONS = sortedRoleNames(CLAIM_TYPES.map((type) => canonicalRoleName(type) ?? type));
 
-export function ClaimTypeahead({ value, onChange }: { value: Claim["type"]; onChange: (type: Claim["type"]) => void }) {
+export function ClaimTypeahead({
+  value,
+  onChange,
+}: {
+  value: Claim["type"] | undefined;
+  onChange: (type: Claim["type"]) => void;
+}) {
   return (
     <RoleTypeahead
       value={canonicalRoleName(value) ?? value}
@@ -89,7 +90,7 @@ export function ClaimTypeahead({ value, onChange }: { value: Claim["type"]; onCh
       }}
       options={CLAIM_ROLE_OPTIONS}
       ariaLabel="Claim type"
-      placeholder="Claim type"
+      placeholder="Choose character…"
     />
   );
 }
@@ -113,55 +114,6 @@ function timingLabel(timing: string): string {
   const [, period, number] = match;
   if (period === undefined || number === undefined) return timing;
   return `${period[0]?.toUpperCase()}${period.slice(1)} ${number}`;
-}
-
-export function ClaimsEditor({ doc, dispatch }: Props) {
-  const [newType, setNewType] = useState<Claim["type"]>("Investigator");
-  const [newName, setNewName] = useState<string>("");
-
-  const addClaim = () => {
-    const name = newName || doc.players[0] || "";
-    if (!name) return;
-    const claim = makeEmptyClaim(newType, name);
-    dispatch({ type: "addClaim", claim });
-  };
-
-  return (
-    <section className="panel">
-      <h3>Claims</h3>
-      <div className="row">
-        <ClaimTypeahead value={newType} onChange={setNewType} />
-        <select
-          id="claim-player"
-          name="claim-player"
-          aria-label="Claiming player"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-        >
-          <option value="">— player —</option>
-          {doc.players.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
-        <button onClick={addClaim} disabled={doc.players.length === 0}>
-          + Add claim
-        </button>
-      </div>
-      {doc.claims.map((c, i) => (
-        <div key={i} className="claim-block">
-          <header>
-            <strong>
-              {c.name} — {roleEmojiLabel(c.type)}
-            </strong>
-            <button onClick={() => dispatch({ type: "removeClaim", index: i })}>Remove</button>
-          </header>
-          <ClaimBody doc={doc} claim={c} onChange={(claim) => dispatch({ type: "updateClaim", index: i, claim })} />
-        </div>
-      ))}
-    </section>
-  );
 }
 
 export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
@@ -281,13 +233,15 @@ function TimingField({
   value,
   onChange,
   defaultValue = "night_1",
+  ariaLabel = "Timing",
 }: {
   value?: string;
   onChange: (v?: string) => void;
   defaultValue?: string;
+  ariaLabel?: string;
 }) {
   return (
-    <select value={value ?? defaultValue} onChange={(e) => onChange(e.target.value)}>
+    <select aria-label={ariaLabel} value={value ?? defaultValue} onChange={(e) => onChange(e.target.value)}>
       {TIMING_OPTIONS.map((t) => (
         <option key={t} value={t}>
           {timingLabel(t)}
@@ -378,13 +332,15 @@ function PlayerSelect({
   players,
   value,
   onChange,
+  ariaLabel = "Player",
 }: {
   players: readonly string[];
   value: string | undefined;
   onChange: (v: string) => void;
+  ariaLabel?: string;
 }) {
   return (
-    <select value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
+    <select aria-label={ariaLabel} value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
       <option value="">—</option>
       {players.map((p) => (
         <option key={p} value={p}>
@@ -500,14 +456,18 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         return (
           <div className="field-grid">
             <span>Timing</span>
-            <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t } as Claim)} />
+            <TimingField
+              ariaLabel="Timing"
+              value={claim.timing}
+              onChange={(t) => onChange({ ...claim, timing: t } as Claim)}
+            />
           </div>
         );
     }
   })();
 
   return (
-    <>
+    <div className={styles.root}>
       {body}
       <AdvancedClaimFields doc={doc} claim={claim} onChange={onChange} />
       {showWidowCall && (
@@ -529,6 +489,7 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         <div className="field-grid">
           <span>Known Evil Twin</span>
           <PlayerSelect
+            ariaLabel="Known Evil Twin"
             players={doc.players}
             value={claim.knownEvilTwin}
             onChange={(knownEvilTwin) => onChange({ ...claim, knownEvilTwin: knownEvilTwin || undefined } as Claim)}
@@ -536,7 +497,7 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         </div>
       )}
       {claim.type === "Artist" && <CustomInfoEditor claim={claim} onChange={onChange} />}
-    </>
+    </div>
   );
 }
 
@@ -585,7 +546,11 @@ function CustomInfoEditor({ claim, onChange }: { claim: Claim; onChange: (c: Cla
         return (
           <div key={index} className="field-grid">
             <span>Timing</span>
-            <TimingField value={entry.timing} onChange={(timing) => updateInfo(index, { ...entry, timing })} />
+            <TimingField
+              ariaLabel="Timing"
+              value={entry.timing}
+              onChange={(timing) => updateInfo(index, { ...entry, timing })}
+            />
             <span>Expression</span>
             <div>
               <textarea
@@ -696,12 +661,18 @@ function AssassinBody({
     <div className="field-grid">
       <span>Kill target</span>
       <PlayerSelect
+        ariaLabel="Kill target"
         players={doc.players}
         value={claim.target}
         onChange={(target) => onChange({ ...claim, target: target || undefined })}
       />
       <span>Action timing</span>
-      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="night_2" />
+      <TimingField
+        ariaLabel="Action timing"
+        value={claim.timing}
+        onChange={(timing) => onChange({ ...claim, timing })}
+        defaultValue="night_2"
+      />
     </div>
   );
 }
@@ -731,15 +702,21 @@ function AcrobatBody({
       {choices.map((choice, index) => (
         <div key={index} className="field-grid">
           <span>Choice timing</span>
-          <TimingField value={choice.timing} onChange={(timing) => setChoice(index, { ...choice, timing })} />
+          <TimingField
+            ariaLabel="Choice timing"
+            value={choice.timing}
+            onChange={(timing) => setChoice(index, { ...choice, timing })}
+          />
           <span>Chosen player</span>
           <PlayerSelect
+            ariaLabel="Chosen player"
             players={doc.players}
             value={choice.player}
             onChange={(player) => setChoice(index, { ...choice, player })}
           />
           <span>Died</span>
           <input
+            aria-label="Died"
             type="checkbox"
             checked={choice.died}
             onChange={(event) => setChoice(index, { ...choice, died: event.target.checked })}
@@ -785,7 +762,7 @@ function InvestigatorBody({
         maxSelections={2}
       />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <TimingField ariaLabel="Timing" value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
   );
 }
@@ -818,7 +795,7 @@ function LibrarianBody({
         maxSelections={2}
       />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <TimingField ariaLabel="Timing" value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
   );
 }
@@ -851,7 +828,7 @@ function WasherwomanBody({
         maxSelections={2}
       />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <TimingField ariaLabel="Timing" value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
   );
 }
@@ -882,25 +859,32 @@ function ChambermaidBody({
         <div key={index} className="field-grid">
           <span>Left</span>
           <PlayerSelect
+            ariaLabel="Left"
             players={doc.players}
             value={check.left}
             onChange={(left) => setCheck(index, { ...check, left })}
           />
           <span>Right</span>
           <PlayerSelect
+            ariaLabel="Right"
             players={doc.players}
             value={check.right}
             onChange={(right) => setCheck(index, { ...check, right })}
           />
           <span>Count</span>
           <input
+            aria-label="Count"
             type="number"
             min={0}
             value={check.count}
             onChange={(event) => setCheck(index, { ...check, count: Number(event.target.value) })}
           />
           <span>Timing</span>
-          <TimingField value={check.timing} onChange={(timing) => setCheck(index, { ...check, timing })} />
+          <TimingField
+            ariaLabel="Timing"
+            value={check.timing}
+            onChange={(timing) => setCheck(index, { ...check, timing })}
+          />
           <span />
           <button type="button" onClick={() => removeCheck(index)}>
             Remove check
@@ -919,12 +903,13 @@ function ChefBody({ claim, onChange }: { claim: ChefClaim; onChange: (c: Claim) 
     <div className="field-grid">
       <span>Count</span>
       <input
+        aria-label="Count"
         type="number"
         value={claim.count ?? ""}
         onChange={(e) => onChange({ ...claim, count: e.target.value === "" ? undefined : Number(e.target.value) })}
       />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <TimingField ariaLabel="Timing" value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
   );
 }
@@ -934,12 +919,13 @@ function EmpathBody({ claim, onChange }: { doc: PuzzleDoc; claim: EmpathClaim; o
     <div className="field-grid">
       <span>Count</span>
       <input
+        aria-label="Count"
         type="number"
         value={claim.count ?? ""}
         onChange={(e) => onChange({ ...claim, count: e.target.value === "" ? undefined : Number(e.target.value) })}
       />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <TimingField ariaLabel="Timing" value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
   );
 }
@@ -966,6 +952,7 @@ function FlowergirlBody({
         <div key={index} className="field-grid">
           <span>Vote timing</span>
           <TimingField
+            ariaLabel="Vote timing"
             value={vote.timing}
             onChange={(timing) => setVote(index, { ...vote, timing: timing ?? "day_1" })}
           />
@@ -1015,12 +1002,14 @@ function ExorcistBody({
         <div key={index} className="field-grid">
           <span>Choice timing</span>
           <TimingField
+            ariaLabel="Choice timing"
             value={choice.timing}
             onChange={(timing) => setChoice(index, { ...choice, timing })}
             defaultValue="night_2"
           />
           <span>Chosen player</span>
           <PlayerSelect
+            ariaLabel="Chosen player"
             players={doc.players}
             value={choice.player}
             onChange={(player) => setChoice(index, { ...choice, player })}
@@ -1065,6 +1054,7 @@ function InnkeeperBody({
         <div key={index} className="field-grid">
           <span>Choice timing</span>
           <TimingField
+            ariaLabel="Choice timing"
             value={choice.timing}
             onChange={(timing) => setChoice(index, { ...choice, timing })}
             defaultValue="night_2"
@@ -1119,7 +1109,11 @@ function NightlyPlayerChoicesBody({
       {choices.map((choice, index) => (
         <div key={index} className="field-grid">
           <span>Choice timing</span>
-          <TimingField value={choice.timing} onChange={(timing) => setChoice(index, { ...choice, timing })} />
+          <TimingField
+            ariaLabel="Choice timing"
+            value={choice.timing}
+            onChange={(timing) => setChoice(index, { ...choice, timing })}
+          />
           <span>{label}</span>
           <PlayerSelect
             players={doc.players}
@@ -1192,6 +1186,7 @@ function GrandmotherBody({
     <div className="field-grid">
       <span>Grandchild</span>
       <PlayerSelect
+        ariaLabel="Grandchild"
         players={doc.players.filter((player) => player !== claim.name)}
         value={claim.grandchild}
         onChange={(grandchild) => onChange({ ...claim, grandchild: grandchild || undefined })}
@@ -1223,13 +1218,28 @@ function FortuneTellerBody({
   return (
     <div className="field-grid">
       <span>Left</span>
-      <PlayerSelect players={doc.players} value={check.left} onChange={(v) => setCheck({ ...check, left: v })} />
+      <PlayerSelect
+        ariaLabel="Left"
+        players={doc.players}
+        value={check.left}
+        onChange={(v) => setCheck({ ...check, left: v })}
+      />
       <span>Right</span>
-      <PlayerSelect players={doc.players} value={check.right} onChange={(v) => setCheck({ ...check, right: v })} />
+      <PlayerSelect
+        ariaLabel="Right"
+        players={doc.players}
+        value={check.right}
+        onChange={(v) => setCheck({ ...check, right: v })}
+      />
       <span>Saw demon</span>
-      <input type="checkbox" checked={check.yes} onChange={(e) => setCheck({ ...check, yes: e.target.checked })} />
+      <input
+        aria-label="Saw demon"
+        type="checkbox"
+        checked={check.yes}
+        onChange={(e) => setCheck({ ...check, yes: e.target.checked })}
+      />
       <span>Timing</span>
-      <TimingField value={check.timing} onChange={(t) => setCheck({ ...check, timing: t })} />
+      <TimingField ariaLabel="Timing" value={check.timing} onChange={(t) => setCheck({ ...check, timing: t })} />
     </div>
   );
 }
@@ -1247,6 +1257,7 @@ function UndertakerBody({
     <div className="field-grid">
       <span>Executed player</span>
       <PlayerSelect
+        ariaLabel="Executed player"
         players={doc.players}
         value={claim.player}
         onChange={(v) => onChange({ ...claim, player: v || undefined })}
@@ -1260,7 +1271,12 @@ function UndertakerBody({
         ariaLabel="Undertaker learned role"
       />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} defaultValue="night_2" />
+      <TimingField
+        ariaLabel="Timing"
+        value={claim.timing}
+        onChange={(t) => onChange({ ...claim, timing: t })}
+        defaultValue="night_2"
+      />
     </div>
   );
 }
@@ -1279,13 +1295,18 @@ function LegionaryBody({ claim, onChange }: { claim: LegionaryClaim; onChange: (
         <div key={index} className="field-grid">
           <span>Living evil</span>
           <input
+            aria-label="Living evil"
             type="number"
             min={0}
             value={entry.count}
             onChange={(event) => setCount(index, { ...entry, count: Number(event.target.value) })}
           />
           <span>Timing</span>
-          <TimingField value={entry.timing} onChange={(timing) => setCount(index, { ...entry, timing })} />
+          <TimingField
+            ariaLabel="Timing"
+            value={entry.timing}
+            onChange={(timing) => setCount(index, { ...entry, timing })}
+          />
           <span />
           <button type="button" onClick={() => removeCount(index)}>
             Remove count
@@ -1318,6 +1339,7 @@ function OracleBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: OracleCla
     <div className="field-grid">
       <span>Dead evil count</span>
       <input
+        aria-label="Dead evil count"
         type="number"
         min={0}
         value={claim.count ?? ""}
@@ -1326,7 +1348,7 @@ function OracleBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: OracleCla
         }
       />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
+      <TimingField ariaLabel="Timing" value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
     </div>
   );
 }
@@ -1363,29 +1385,37 @@ function PhilosopherBody({
         ariaLabel="Philosopher chosen role"
       />
       <span>Choice timing</span>
-      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
+      <TimingField
+        ariaLabel="Choice timing"
+        value={claim.timing}
+        onChange={(timing) => onChange({ ...claim, timing })}
+      />
       {claim.role === "Seamstress" && (
         <>
           <span>Seamstress left</span>
           <PlayerSelect
+            ariaLabel="Seamstress left"
             players={doc.players}
             value={seamstress.among[0]}
             onChange={(left) => setSeamstress({ ...seamstress, among: [left, seamstress.among[1] ?? ""] })}
           />
           <span>Seamstress right</span>
           <PlayerSelect
+            ariaLabel="Seamstress right"
             players={doc.players}
             value={seamstress.among[1]}
             onChange={(right) => setSeamstress({ ...seamstress, among: [seamstress.among[0] ?? "", right] })}
           />
           <span>Aligned</span>
           <input
+            aria-label="Aligned"
             type="checkbox"
             checked={seamstress.aligned ?? false}
             onChange={(event) => setSeamstress({ ...seamstress, aligned: event.target.checked })}
           />
           <span>Info timing</span>
           <TimingField
+            ariaLabel="Info timing"
             value={seamstress.timing ?? claim.timing}
             onChange={(timing) => setSeamstress({ ...seamstress, timing })}
           />
@@ -1421,12 +1451,14 @@ function PrincessBody({
         <div key={index} className="field-grid">
           <span>Nomination timing</span>
           <TimingField
+            ariaLabel="Nomination timing"
             value={nomination.timing}
             onChange={(timing) => setNomination(index, { ...nomination, timing })}
             defaultValue="day_1"
           />
           <span>Nominated player</span>
           <PlayerSelect
+            ariaLabel="Nominated player"
             players={doc.players}
             value={nomination.player}
             onChange={(player) => setNomination(index, { ...nomination, player })}
@@ -1460,15 +1492,21 @@ function ProdigyBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: ProdigyC
       {claim.checks.map((check, index) => (
         <div key={index} className="field-grid">
           <span>Check timing</span>
-          <TimingField value={check.timing} onChange={(timing) => setCheck(index, { ...check, timing })} />
+          <TimingField
+            ariaLabel="Check timing"
+            value={check.timing}
+            onChange={(timing) => setCheck(index, { ...check, timing })}
+          />
           <span>Chosen player</span>
           <PlayerSelect
+            ariaLabel="Chosen player"
             players={doc.players}
             value={check.chosen}
             onChange={(chosen) => setCheck(index, { ...check, chosen })}
           />
           <span>Learned player</span>
           <PlayerSelect
+            ariaLabel="Learned player"
             players={doc.players}
             value={check.learned}
             onChange={(learned) => setCheck(index, { ...check, learned })}
@@ -1511,15 +1549,21 @@ function PuzzlemasterBody({
       {guesses.map((guess, index) => (
         <div key={index} className="field-grid">
           <span>Guess timing</span>
-          <TimingField value={guess.timing} onChange={(timing) => setGuess(index, { ...guess, timing })} />
+          <TimingField
+            ariaLabel="Guess timing"
+            value={guess.timing}
+            onChange={(timing) => setGuess(index, { ...guess, timing })}
+          />
           <span>Guessed drunk</span>
           <PlayerSelect
+            ariaLabel="Guessed drunk"
             players={doc.players}
             value={guess.player}
             onChange={(player) => setGuess(index, { ...guess, player })}
           />
           <span>Learned Demon</span>
           <PlayerSelect
+            ariaLabel="Learned Demon"
             players={doc.players}
             value={guess.learnedDemon}
             onChange={(learnedDemon) => setGuess(index, { ...guess, learnedDemon })}
@@ -1532,7 +1576,7 @@ function PuzzlemasterBody({
       ))}
       <div className="field-grid">
         <span>Timing</span>
-        <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
+        <TimingField ariaLabel="Timing" value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
       </div>
       <button type="button" onClick={addGuess}>
         + Add guess
@@ -1546,6 +1590,7 @@ function StewardBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: StewardC
     <div className="field-grid">
       <span>Good player</span>
       <PlayerSelect
+        ariaLabel="Good player"
         players={doc.players}
         value={claim.goodPlayer}
         onChange={(v) => onChange({ ...claim, goodPlayer: v || undefined })}
@@ -1581,18 +1626,21 @@ function SeamstressBody({
     <div className="field-grid">
       <span>Left</span>
       <PlayerSelect
+        ariaLabel="Left"
         players={doc.players}
         value={claim.among[0]}
         onChange={(v) => onChange({ ...claim, among: [v, claim.among[1] ?? ""] })}
       />
       <span>Right</span>
       <PlayerSelect
+        ariaLabel="Right"
         players={doc.players}
         value={claim.among[1]}
         onChange={(v) => onChange({ ...claim, among: [claim.among[0] ?? "", v] })}
       />
       <span>Same alignment</span>
       <select
+        aria-label="Same alignment"
         value={claim.aligned === undefined ? "" : claim.aligned ? "same" : "different"}
         onChange={(e) =>
           onChange({
@@ -1606,7 +1654,7 @@ function SeamstressBody({
         <option value="different">different</option>
       </select>
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <TimingField ariaLabel="Timing" value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
   );
 }
@@ -1621,6 +1669,7 @@ function JugglerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: JugglerC
     <div className="field-grid">
       <span>Correct count</span>
       <input
+        aria-label="Correct count"
         type="number"
         value={claim.correctCount ?? ""}
         onChange={(e) =>
@@ -1644,7 +1693,12 @@ function JugglerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: JugglerC
         ))}
       </div>
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} defaultValue="night_2" />
+      <TimingField
+        ariaLabel="Timing"
+        value={claim.timing}
+        onChange={(t) => onChange({ ...claim, timing: t })}
+        defaultValue="night_2"
+      />
     </div>
   );
 }
@@ -1653,7 +1707,12 @@ function DreamerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: DreamerC
   return (
     <div className="field-grid">
       <span>Player checked</span>
-      <PlayerSelect players={doc.players} value={claim.player} onChange={(v) => onChange({ ...claim, player: v })} />
+      <PlayerSelect
+        ariaLabel="Player checked"
+        players={doc.players}
+        value={claim.player}
+        onChange={(v) => onChange({ ...claim, player: v })}
+      />
       <span>Possible roles</span>
       <RoleListEditor
         value={claim.roles}
@@ -1663,7 +1722,7 @@ function DreamerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: DreamerC
         maxSelections={2}
       />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <TimingField ariaLabel="Timing" value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
   );
 }
@@ -1673,6 +1732,7 @@ function ShugenjaBody({ claim, onChange }: { claim: ShugenjaClaim; onChange: (c:
     <div className="field-grid">
       <span>Evil direction</span>
       <select
+        aria-label="Evil direction"
         value={claim.evilDirection ?? "clockwise"}
         onChange={(e) => onChange({ ...claim, evilDirection: e.target.value as ShugenjaClaim["evilDirection"] })}
       >
@@ -1680,7 +1740,7 @@ function ShugenjaBody({ claim, onChange }: { claim: ShugenjaClaim; onChange: (c:
         <option value="anticlockwise">anticlockwise</option>
       </select>
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <TimingField ariaLabel="Timing" value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
   );
 }
@@ -1690,13 +1750,14 @@ function ClockmakerBody({ claim, onChange }: { doc: PuzzleDoc; claim: Clockmaker
     <div className="field-grid">
       <span>Demon-minion distance</span>
       <input
+        aria-label="Demon-minion distance"
         type="number"
         min={1}
         value={claim.distance ?? ""}
         onChange={(e) => onChange({ ...claim, distance: e.target.value === "" ? undefined : Number(e.target.value) })}
       />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <TimingField ariaLabel="Timing" value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
   );
 }
@@ -1732,12 +1793,20 @@ function CourtierBody({
           ariaLabel="Courtier chosen role"
         />
         <span>Choice timing</span>
-        <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
+        <TimingField
+          ariaLabel="Choice timing"
+          value={claim.timing}
+          onChange={(timing) => onChange({ ...claim, timing })}
+        />
       </div>
       {drunkTimings.map((timing, index) => (
         <div key={index} className="field-grid">
           <span>Drunk timing</span>
-          <TimingField value={timing} onChange={(nextTiming) => setTiming(index, nextTiming ?? "night_1")} />
+          <TimingField
+            ariaLabel="Drunk timing"
+            value={timing}
+            onChange={(nextTiming) => setTiming(index, nextTiming ?? "night_1")}
+          />
           <span />
           <button type="button" onClick={() => removeTiming(index)}>
             Remove timing
@@ -1768,11 +1837,13 @@ function MathematicianBody({ claim, onChange }: { claim: MathematicianClaim; onC
         <div key={index} className="field-grid">
           <span>Timing</span>
           <TimingField
+            ariaLabel="Timing"
             value={entry.timing}
             onChange={(timing) => setCount(index, { ...entry, timing: timing ?? "night_1" })}
           />
           <span>Malfunctions</span>
           <input
+            aria-label="Malfunctions"
             type="number"
             min={0}
             value={entry.count}
@@ -1809,6 +1880,7 @@ function TownCrierBody({
         <div key={index} className="field-grid">
           <span>Timing</span>
           <TimingField
+            ariaLabel="Timing"
             value={check.timing}
             onChange={(timing) => setCheck(index, { ...check, timing: timing ?? "night_2" })}
           />
@@ -1865,6 +1937,7 @@ function RavenkeeperBody({
     <div className="field-grid">
       <span>Player seen</span>
       <PlayerSelect
+        ariaLabel="Player seen"
         players={doc.players}
         value={claim.player}
         onChange={(player) => onChange({ ...claim, player: player || undefined })}
@@ -1878,7 +1951,12 @@ function RavenkeeperBody({
         ariaLabel="Ravenkeeper seen role"
       />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="night_2" />
+      <TimingField
+        ariaLabel="Timing"
+        value={claim.timing}
+        onChange={(timing) => onChange({ ...claim, timing })}
+        defaultValue="night_2"
+      />
     </div>
   );
 }
@@ -1894,7 +1972,7 @@ function SageBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SageClaim; 
         onChange={(demonAmong) => onChange({ ...claim, demonAmong })}
       />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+      <TimingField ariaLabel="Timing" value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
     </div>
   );
 }
@@ -1912,12 +1990,18 @@ function ProfessorBody({
     <div className="field-grid">
       <span>Resurrection target</span>
       <PlayerSelect
+        ariaLabel="Resurrection target"
         players={doc.players}
         value={claim.target}
         onChange={(target) => onChange({ ...claim, target: target || undefined })}
       />
       <span>Action timing</span>
-      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="night_2" />
+      <TimingField
+        ariaLabel="Action timing"
+        value={claim.timing}
+        onChange={(timing) => onChange({ ...claim, timing })}
+        defaultValue="night_2"
+      />
     </div>
   );
 }
@@ -1935,12 +2019,18 @@ function MoonchildBody({
     <div className="field-grid">
       <span>Chosen player</span>
       <PlayerSelect
+        ariaLabel="Chosen player"
         players={doc.players}
         value={claim.chosen}
         onChange={(chosen) => onChange({ ...claim, chosen: chosen || undefined })}
       />
       <span>Choice timing</span>
-      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="day_1" />
+      <TimingField
+        ariaLabel="Choice timing"
+        value={claim.timing}
+        onChange={(timing) => onChange({ ...claim, timing })}
+        defaultValue="day_1"
+      />
     </div>
   );
 }
@@ -1950,14 +2040,21 @@ function SlayerBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SlayerCla
     <div className="field-grid">
       <span>Shot player</span>
       <PlayerSelect
+        ariaLabel="Shot player"
         players={doc.players}
         value={claim.target}
         onChange={(target) => onChange({ ...claim, target: target || undefined })}
       />
       <span>Shot timing</span>
-      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="day_1" />
+      <TimingField
+        ariaLabel="Shot timing"
+        value={claim.timing}
+        onChange={(timing) => onChange({ ...claim, timing })}
+        defaultValue="day_1"
+      />
       <span>Target died</span>
       <select
+        aria-label="Target died"
         value={claim.killed === undefined ? "" : claim.killed ? "yes" : "no"}
         onChange={(event) => {
           const killed = event.target.value === "" ? undefined : event.target.value === "yes";
@@ -1987,9 +2084,15 @@ function SnakeCharmerBody({
   return (
     <div className="field-grid">
       <span>Checked player</span>
-      <PlayerSelect players={doc.players} value={check.player} onChange={(player) => setCheck({ ...check, player })} />
+      <PlayerSelect
+        ariaLabel="Checked player"
+        players={doc.players}
+        value={check.player}
+        onChange={(player) => setCheck({ ...check, player })}
+      />
       <span>Is Demon</span>
       <select
+        aria-label="Is Demon"
         value={check.demon ? "yes" : "no"}
         onChange={(event) => setCheck({ ...check, demon: event.target.value === "yes" })}
       >
@@ -1997,7 +2100,11 @@ function SnakeCharmerBody({
         <option value="no">no</option>
       </select>
       <span>Timing</span>
-      <TimingField value={check.timing} onChange={(timing) => setCheck({ ...check, timing: timing ?? "night_1" })} />
+      <TimingField
+        ariaLabel="Timing"
+        value={check.timing}
+        onChange={(timing) => setCheck({ ...check, timing: timing ?? "night_1" })}
+      />
     </div>
   );
 }
@@ -2022,9 +2129,14 @@ function VillageIdiotBody({
       {claim.checks.map((chk, i) => (
         <div key={i} className="field-grid">
           <span>Timing</span>
-          <TimingField value={chk.timing} onChange={(timing) => setCheck(i, { ...chk, timing })} />
+          <TimingField ariaLabel="Timing" value={chk.timing} onChange={(timing) => setCheck(i, { ...chk, timing })} />
           <span>Checked player</span>
-          <PlayerSelect players={doc.players} value={chk.player} onChange={(v) => setCheck(i, { ...chk, player: v })} />
+          <PlayerSelect
+            ariaLabel="Checked player"
+            players={doc.players}
+            value={chk.player}
+            onChange={(v) => setCheck(i, { ...chk, player: v })}
+          />
           <span>Registers as</span>
           <div className="radio-tile-group" role="radiogroup" aria-label="Registers as">
             <label className="radio-tile good">
@@ -2066,12 +2178,18 @@ function KlutzBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: KlutzClaim
     <div className="field-grid">
       <span>Chosen player</span>
       <PlayerSelect
+        ariaLabel="Chosen player"
         players={doc.players}
         value={claim.chosen}
         onChange={(chosen) => onChange({ ...claim, chosen: chosen || undefined })}
       />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="day_1" />
+      <TimingField
+        ariaLabel="Timing"
+        value={claim.timing}
+        onChange={(timing) => onChange({ ...claim, timing })}
+        defaultValue="day_1"
+      />
     </div>
   );
 }
@@ -2081,6 +2199,7 @@ function VirginBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: VirginCla
     <div className="field-grid">
       <span>Nominator</span>
       <PlayerSelect
+        ariaLabel="Nominator"
         players={doc.players}
         value={claim.nominator}
         onChange={(nominator) => onChange({ ...claim, nominator: nominator || undefined })}
@@ -2088,7 +2207,12 @@ function VirginBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: VirginCla
       <span>Nominator executed</span>
       <OptionalBooleanSelect value={claim.executed} onChange={(executed) => onChange({ ...claim, executed })} />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} defaultValue="day_1" />
+      <TimingField
+        ariaLabel="Timing"
+        value={claim.timing}
+        onChange={(timing) => onChange({ ...claim, timing })}
+        defaultValue="day_1"
+      />
     </div>
   );
 }
@@ -2123,7 +2247,7 @@ function BalloonistBody({
         <div key={i} className="row">
           <PlayerSelect players={doc.players} value={p[0]} onChange={(v) => setPair(i, [v, p[1]])} />
           <span>→</span>
-          <PlayerSelect players={doc.players} value={p[1]} onChange={(v) => setPair(i, [p[0], v])} />
+          <PlayerSelect ariaLabel="→" players={doc.players} value={p[1]} onChange={(v) => setPair(i, [p[0], v])} />
           <button onClick={() => removePair(i)}>×</button>
         </div>
       ))}
@@ -2131,6 +2255,7 @@ function BalloonistBody({
       <div className="field-grid claim-footer-fields">
         <span>Timing</span>
         <TimingField
+          ariaLabel="Timing"
           value={claim.timing}
           onChange={(timing) => onChange({ ...claim, timing })}
           defaultValue="night_2"
@@ -2166,6 +2291,7 @@ function GamblerBody({
         <div key={index} className="field-grid">
           <span>Player</span>
           <PlayerSelect
+            ariaLabel="Player"
             players={doc.players}
             value={guess.player}
             onChange={(player) => setGuess(index, { ...guess, player })}
@@ -2179,7 +2305,11 @@ function GamblerBody({
             ariaLabel="Gambler guessed role"
           />
           <span>Timing</span>
-          <TimingField value={guess.timing} onChange={(timing) => setGuess(index, { ...guess, timing })} />
+          <TimingField
+            ariaLabel="Timing"
+            value={guess.timing}
+            onChange={(timing) => setGuess(index, { ...guess, timing })}
+          />
           <span />
           <button type="button" onClick={() => removeGuess(index)}>
             Remove guess
@@ -2215,6 +2345,7 @@ function GossipBody({
           <div key={index} className="field-grid">
             <span>Timing</span>
             <TimingField
+              ariaLabel="Timing"
               value={statement.timing}
               onChange={(timing) => setStatement(index, { ...statement, timing })}
               defaultValue="day_1"
@@ -2259,7 +2390,7 @@ function SavantBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SavantCla
     <div>
       <div className="field-grid">
         <span>Timing</span>
-        <TimingField value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
+        <TimingField ariaLabel="Timing" value={claim.timing} onChange={(t) => onChange({ ...claim, timing: t })} />
       </div>
       <div className="statement-block">
         <header className="row">
@@ -2308,6 +2439,7 @@ function NightwatchmanBody({
     <div className="field-grid">
       <span>Chosen player</span>
       <PlayerSelect
+        ariaLabel="Chosen player"
         players={doc.players}
         value={claim.chosen}
         onChange={(chosen) => onChange({ ...claim, chosen: chosen || undefined })}
@@ -2316,12 +2448,13 @@ function NightwatchmanBody({
       <OptionalBooleanSelect value={claim.learned} onChange={(learned) => onChange({ ...claim, learned })} />
       <span>Confirmed by chosen</span>
       <input
+        aria-label="Confirmed by chosen"
         type="checkbox"
         checked={claim.confirmedByChosen === true}
         onChange={(event) => onChange({ ...claim, confirmedByChosen: event.target.checked ? true : undefined })}
       />
       <span>Timing</span>
-      <TimingField value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
+      <TimingField ariaLabel="Timing" value={claim.timing} onChange={(timing) => onChange({ ...claim, timing })} />
     </div>
   );
 }

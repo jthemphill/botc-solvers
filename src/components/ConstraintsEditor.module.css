@@ -1,0 +1,47 @@
+:where(.root) :global(.advanced-puzzle-rules) {
+  display: grid;
+  gap: 0.6rem;
+  border-top: 1px solid var(--paper-soft-line);
+  padding-top: 0.75rem;
+}
+
+:where(.root) :global(.advanced-puzzle-rules[open] > * + *) {
+  margin-top: 0.6rem;
+}
+
+:where(.root) :global(.advanced-puzzle-rules p) {
+  color: var(--muted-ink);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+:global(.editor-redesign) :where(.root) :global(.advanced-puzzle-rules) {
+  border: 0;
+  border-radius: 5px;
+  background: #f7f9f3;
+  padding: 12px;
+  font-size: 11px;
+}
+
+:where(.root) :global(.advanced-puzzle-rules > p) {
+  margin: 10px 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+:global(.editor-redesign) :where(.root):global(.constraints-editor) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+:global(.editor-redesign) :where(.root):global(.constraints-editor > .claim-block),
+:global(.editor-redesign) :where(.root):global(.constraints-editor > details) {
+  grid-column: 1 / -1;
+}
+
+:global(.editor-redesign) :where(.root):global(.constraints-editor > button) {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 12px;
+}

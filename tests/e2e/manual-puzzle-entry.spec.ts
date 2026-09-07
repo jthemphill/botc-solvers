@@ -12,6 +12,7 @@ import {
   fillField,
   fillRoleField,
   selectField,
+  selectPlayerClaims,
   setCustomConstraints,
   setTimeline,
 } from "./editor-helpers";
@@ -59,7 +60,7 @@ for (const [layout, viewport] of [
       { timing: "night_2", type: "nightDeath", players: ["Ada"] },
     ];
     await setTimeline(page, timeline, doc.players);
-    await page.getByLabel("Claiming player").selectOption("Ada");
+    await selectPlayerClaims(page, "Ada");
     const chef = claimsPanel(page).locator(".claim-block");
     await fillField(chef, "Count", "0");
     await expect(count).toHaveText("0");
@@ -196,10 +197,10 @@ test("creates timeline events, including nobody dying and multiple deaths", asyn
 test("edits advanced puzzle rules and constraints and recovers from invalid expressions", async ({ page }) => {
   await enterPuzzle(page, {
     title: "Advanced controls",
-    players: ["Ada", "Ben", "Cara"],
+    players: ["Ada", "Ben", "Cara", "Drew", "Eve"],
     setup: "none",
     uniqueCharacters: false,
-    script: ["Artist", "Imp"],
+    script: ["Artist", "Chef", "Soldier", "Imp", "Scarlet Woman"],
     claims: [{ type: "Artist", name: "Ada" }],
     constraints: [{ expression: "Ben.initial_role == Imp" }],
   });
@@ -210,7 +211,7 @@ test("edits advanced puzzle rules and constraints and recovers from invalid expr
   await advanced.getByLabel("Unique actual characters").check();
   const constraint = page.locator("section.panel", { hasText: "Custom constraints" }).locator(".claim-block");
   await fillField(constraint, "Expression", "Ben.initial_role ==");
-  await expect(page.locator(".solve-panel .error")).toBeVisible();
+  await expect(page.locator(".solve-panel").getByRole("alert")).toHaveText("Unexpected eof");
   await fillField(constraint, "Expression", "Ben.initial_role == Imp");
   await expect(page.locator(".solve-panel .error")).toHaveCount(0);
   await constraint.getByRole("button", { name: "Remove", exact: true }).click();

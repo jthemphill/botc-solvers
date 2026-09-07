@@ -1,3 +1,4 @@
+import styles from "./RolePicker.module.css";
 import { useEffect, useId, useMemo, useState, type KeyboardEvent } from "react";
 import { roleEmojiLabel } from "../model/roleEmoji";
 import { canonicalRoleName } from "../state/scriptRoles";
@@ -134,7 +135,7 @@ export function RoleListEditor({
   };
 
   return (
-    <div className="role-list-editor">
+    <div className={`${styles.root} role-list-editor`}>
       <div className="role-chip-list" aria-label={label}>
         {selected.map((role) => (
           <button key={role} type="button" className="role-chip" onClick={() => removeRole(role)}>

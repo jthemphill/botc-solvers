@@ -1,11 +1,14 @@
+import styles from "./SeatingChartEditor.module.css";
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
   type Dispatch,
   type KeyboardEvent,
   type PointerEvent,
+  type ReactNode,
 } from "react";
 import { CharacterType } from "../model/core";
 import { ROLE_CLASSES } from "../model/roleRegistry";
@@ -19,8 +22,10 @@ import {
   type TimelineEventType,
 } from "../schema/puzzleDoc";
 import { sortTimelineEvents, type PuzzleAction } from "../state/puzzleDoc";
+import { canonicalRoleName } from "../state/scriptRoles";
 import { ClaimBody, ClaimTypeahead, makeEmptyClaim } from "./ClaimsEditor";
 import { claimSummary, compactTimingLabel, formatAndList, timingLabel } from "./claimSummary";
+import { PlayerName } from "./RosterEditor";
 
 interface Props {
   doc: PuzzleDoc;
@@ -30,9 +35,14 @@ interface Props {
 interface SharedProps extends Props {
   selectedIndex: number;
   onSelect: (index: number) => void;
+  onEdit?: (index: number) => void;
+  renderDetails?: (index: number) => ReactNode;
 }
 
-type DrawWorkbenchProps = SharedProps;
+interface DrawWorkbenchProps extends SharedProps {
+  inline?: boolean;
+  onClose?: () => void;
+}
 
 interface ClaimQuoteCard {
   readonly player: string;
@@ -78,17 +88,7 @@ const TIMELINE_EVENT_TYPE_OPTIONS: Array<{ type: TimelineEventType; label: strin
   { type: "doomsayerDeath", label: "Doomsayer Death" },
 ];
 
-export function SeatingChartEditor({ doc, dispatch }: Props) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  return (
-    <section className="seating-composer">
-      <PuzzleSheet doc={doc} dispatch={dispatch} selectedIndex={selectedIndex} onSelect={setSelectedIndex} />
-      <DrawWorkbench doc={doc} dispatch={dispatch} selectedIndex={selectedIndex} onSelect={setSelectedIndex} />
-    </section>
-  );
-}
-
-export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedProps) {
+export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect, onEdit = onSelect, renderDetails }: SharedProps) {
   const players = doc.players;
   const selectedName = players[selectedIndex];
   const setupCounts = countSetupRoles(doc);
@@ -115,6 +115,31 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
   const mergedQuoteCards = mergedQuoteCardsByPlayer(quoteCards);
   const chartQuoteCards = players.length <= 10 ? mergedQuoteCards : [];
   const quoteCardByPlayer = new Map(mergedQuoteCards.map((card) => [card.player, card] as const));
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [chartFooterSpace, setChartFooterSpace] = useState(18);
+
+  useLayoutEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    const measure = () => {
+      const bottom = chart.getBoundingClientRect().bottom;
+      const contentBottom = Math.max(
+        bottom,
+        ...[...chart.querySelectorAll(".claim-callout, .seat-player-name")].map(
+          (element) => element.getBoundingClientRect().bottom,
+        ),
+      );
+      setChartFooterSpace(Math.ceil(contentBottom - bottom) + 18);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(chart);
+    chart.addEventListener("transitionend", measure);
+    return () => {
+      observer.disconnect();
+      chart.removeEventListener("transitionend", measure);
+    };
+  }, [doc]);
 
   useEffect(() => {
     if (selectedIndex >= players.length) onSelect(Math.max(0, players.length - 1));
@@ -384,7 +409,7 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
   const handleSeatKeyDown = (event: KeyboardEvent<HTMLDivElement>, index: number, player: string) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      onSelect(index);
+      onEdit(index);
     } else if (event.key === "F2") {
       event.preventDefault();
       beginRename(index, player);
@@ -393,7 +418,7 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
 
   return (
     <div
-      className="sheet-content"
+      className={`${styles.root} sheet-content${players.length > 10 ? " dense-puzzle" : ""}`}
       onPointerMove={moveDesktopSeatDrag}
       onPointerUp={finishDesktopSeatDrag}
       onPointerCancel={clearDesktopSeatDrag}
@@ -492,7 +517,7 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
                 <button
                   type="button"
                   className="mobile-player-main"
-                  onClick={() => onSelect(index)}
+                  onClick={() => onEdit(index)}
                   onDoubleClick={() => beginRename(index, player)}
                   aria-label={`Player ${index + 1}: ${player}. Double-click to rename.`}
                 >
@@ -537,13 +562,19 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
                 >
                   {deathMarker === undefined ? "+" : compactTimingLabel(deathMarker.timing)}
                 </button>
+                {renderDetails?.(index)}
               </article>
             );
           })}
         </div>
       </section>
 
-      <div className="seating-chart" aria-label="Clockwise seating chart">
+      <div
+        ref={chartRef}
+        style={{ marginBottom: chartFooterSpace }}
+        className={`seating-chart${players.length > 10 ? " many-seats" : ""}`}
+        aria-label="Clockwise seating chart"
+      >
         <div className="seating-ring" />
         {draggedIndex !== undefined && desktopDropIndex !== undefined && draggedIndex !== desktopDropIndex && (
           <div
@@ -582,7 +613,9 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
               role="button"
               tabIndex={0}
               onPointerDown={(event) => startDesktopSeatDrag(event, index)}
-              onClick={() => onSelect(index)}
+              onClick={() => {
+                if (!desktopDragActive.current) onEdit(index);
+              }}
               onDoubleClick={() => beginRename(index, player)}
               onPointerUp={(event) => handleSeatPointerUp(event, index, player)}
               onKeyDown={(event) => handleSeatKeyDown(event, index, player)}
@@ -625,7 +658,15 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
                   }}
                 />
               ) : (
-                <span className="seat-player-name">{player}</span>
+                <span
+                  className="seat-player-name"
+                  style={players.length > 10 ? radialNamePosition(previewIndex, players.length) : undefined}
+                >
+                  {player}
+                </span>
+              )}
+              {primaryClaim && (
+                <span className="seat-character">{canonicalRoleName(primaryClaim.type) ?? primaryClaim.type}</span>
               )}
               {deathMarker !== undefined && deathClass !== undefined && (
                 <span className={`seat-death-badge ${deathClass}`} aria-hidden="true">
@@ -642,7 +683,7 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
             type="button"
             className={`claim-callout${card.playerIndex === draggedIndex ? " dragging" : ""}`}
             style={calloutPosition(previewSeatIndex(card.playerIndex, draggedIndex, desktopDropIndex), players.length)}
-            onClick={() => onSelect(card.playerIndex)}
+            onClick={() => onEdit(card.playerIndex)}
           >
             "{card.summary}"
           </button>
@@ -650,11 +691,11 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect }: SharedPr
 
         <div className="center-timeline" aria-live="polite">
           <strong>{selectedName ?? "No player selected"}</strong>
-          <span>Click tokens to edit claims</span>
+          <span>Clockwise seating · click a player to edit</span>
         </div>
       </div>
 
-      <ClaimQuoteDeck cards={quoteCards} onSelect={onSelect} />
+      <ClaimQuoteDeck cards={quoteCards} onSelect={onEdit} />
 
       <div className="sheet-divider" />
       <TimelineStrip
@@ -840,46 +881,123 @@ function ClaimQuoteDeck({ cards, onSelect }: { cards: readonly ClaimQuoteCard[];
   );
 }
 
-export function DrawWorkbench({ doc, dispatch, selectedIndex, onSelect }: DrawWorkbenchProps) {
+export function DrawWorkbench({ doc, dispatch, selectedIndex, onSelect, inline = false, onClose }: DrawWorkbenchProps) {
   const players = doc.players;
-  const [newType, setNewType] = useState<Claim["type"]>("Investigator");
+  const [newType, setNewType] = useState<Claim["type"] | undefined>(undefined);
   const selectedName = players[selectedIndex];
   const selectedClaims = selectedName === undefined ? [] : claimIndexesForPlayer(doc, selectedName);
+  const panel = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (inline) panel.current?.scrollIntoView({ block: "start" });
+  }, [inline, selectedIndex]);
+  const closeInline = () => {
+    const trigger = panel.current
+      ?.closest(".mobile-player-row, .roster-row")
+      ?.querySelector<HTMLButtonElement>(".mobile-player-main, .roster-report");
+    onClose?.();
+    trigger?.focus();
+  };
 
   const addClaim = () => {
-    if (selectedName === undefined) return;
+    if (selectedName === undefined || newType === undefined) return;
     dispatch({ type: "addClaim", claim: makeEmptyClaim(newType, selectedName) });
   };
 
   return (
-    <div className="draw-workbench">
+    <div
+      ref={panel}
+      className={`${styles.root} draw-workbench${inline ? " mobile-claim-details" : ""}`}
+      role={inline ? "region" : undefined}
+      aria-label={inline ? "Puzzle workbench" : undefined}
+      onKeyDown={(event) => {
+        if (inline && event.key === "Escape") closeInline();
+      }}
+    >
       <section id="claims-panel" className="panel claims-panel">
         <header className="panel-heading-row">
           <div>
-            <h3>Claims</h3>
-            <span>{selectedClaims.length} for selected player</span>
+            <span className="detail-eyebrow">CLAIM DETAILS</span>
+            <h3>{selectedName ?? "Select a player"}</h3>
+            <span>
+              {selectedClaims.length} report{selectedClaims.length === 1 ? "" : "s"} · seat {selectedIndex + 1}
+            </span>
           </div>
+          {inline ? (
+            <button type="button" aria-label="Close claim editor" onClick={closeInline}>
+              Done
+            </button>
+          ) : (
+            <div className="player-navigation">
+              <button
+                type="button"
+                aria-label="Previous player"
+                disabled={selectedIndex <= 0}
+                onClick={() => onSelect(selectedIndex - 1)}
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                aria-label="Next player"
+                disabled={selectedIndex >= players.length - 1}
+                onClick={() => onSelect(selectedIndex + 1)}
+              >
+                →
+              </button>
+            </div>
+          )}
         </header>
-        <div className="claim-add-row">
-          <ClaimTypeahead value={newType} onChange={setNewType} />
-          <select
-            aria-label="Claiming player"
-            value={selectedName ?? ""}
-            onChange={(event) => onSelect(players.indexOf(event.target.value))}
-          >
-            <option value="">— player —</option>
-            {players.map((player) => (
-              <option key={player} value={player}>
-                {player}
-              </option>
-            ))}
-          </select>
-          <button type="button" onClick={addClaim} disabled={selectedName === undefined}>
-            + Add claim
-          </button>
-        </div>
+        {inline && selectedName !== undefined && (
+          <label className="inline-player-name">
+            Player name
+            <PlayerName
+              ariaLabel="Selected player name"
+              name={selectedName}
+              index={selectedIndex}
+              players={players}
+              onChange={(name) => dispatch({ type: "renamePlayer", index: selectedIndex, name })}
+            />
+          </label>
+        )}
+        {(!inline || selectedClaims.length === 0) && (
+          <div className="claim-add-row">
+            <ClaimTypeahead
+              value={newType}
+              onChange={(type) => {
+                if (inline && selectedName !== undefined)
+                  dispatch({ type: "addClaim", claim: makeEmptyClaim(type, selectedName) });
+                else setNewType(type);
+              }}
+            />
+            {!inline && (
+              <select
+                aria-label="Claiming player"
+                value={selectedName ?? ""}
+                onChange={(event) => onSelect(players.indexOf(event.target.value))}
+              >
+                <option value="">— player —</option>
+                {players.map((player) => (
+                  <option key={player} value={player}>
+                    {player}
+                  </option>
+                ))}
+              </select>
+            )}
+            {!inline && (
+              <button type="button" onClick={addClaim} disabled={selectedName === undefined || newType === undefined}>
+                + Add claim
+              </button>
+            )}
+          </div>
+        )}
         <div className="selected-claims">
-          {selectedName !== undefined && selectedClaims.length === 0 && <p>No claims for {selectedName}.</p>}
+          {selectedName !== undefined && selectedClaims.length === 0 && (
+            <div className="claim-empty-state">
+              <span aria-hidden="true">✎</span>
+              <strong>What did {selectedName} claim?</strong>
+              <p>Choose a character in the roster, or add a report above. Its information fields will appear here.</p>
+            </div>
+          )}
           {selectedClaims.map(([claim, index]) => (
             <div key={index} className="claim-block">
               <header>
@@ -898,6 +1016,37 @@ export function DrawWorkbench({ doc, dispatch, selectedIndex, onSelect }: DrawWo
             </div>
           ))}
         </div>
+        {inline && selectedClaims.length > 0 && (
+          <details className="inline-add-report">
+            <summary>Add another report</summary>
+            <div className="claim-add-row">
+              <ClaimTypeahead value={newType} onChange={setNewType} />
+              <button type="button" onClick={addClaim} disabled={newType === undefined}>
+                + Add claim
+              </button>
+            </div>
+          </details>
+        )}
+        {inline && (
+          <footer className="inline-player-navigation">
+            <button
+              type="button"
+              aria-label="Previous player"
+              disabled={selectedIndex <= 0}
+              onClick={() => onSelect(selectedIndex - 1)}
+            >
+              ← Previous
+            </button>
+            <button
+              type="button"
+              aria-label="Next player"
+              disabled={selectedIndex >= players.length - 1}
+              onClick={() => onSelect(selectedIndex + 1)}
+            >
+              Next: {players[selectedIndex + 1] ?? "last player"} →
+            </button>
+          </footer>
+        )}
       </section>
     </div>
   );
@@ -1305,12 +1454,11 @@ function timelineEventGlyph(event: TimelineEventDoc): string {
 
 function seatPosition(index: number, count: number): CSSProperties {
   if (count === 0) return {};
-  const angle = -90 + (index * 360) / count;
+  const angle = -90 - 180 / count + (index * 360) / count;
   const radians = (angle * Math.PI) / 180;
-  const radius = 36;
   return {
-    left: `${50 + Math.cos(radians) * radius}%`,
-    top: `${50 + Math.sin(radians) * radius}%`,
+    left: `${50 + Math.cos(radians) * 22}%`,
+    top: `${46 + Math.sin(radians) * 34}%`,
   };
 }
 
@@ -1331,13 +1479,32 @@ function seatButtonStyle(index: number, count: number, player: string): CSSPrope
 
 function calloutPosition(index: number, count: number): CSSProperties {
   if (count === 0) return {};
-  const angle = -90 + (index * 360) / count;
+  const angle = -90 - 180 / count + (index * 360) / count;
   const radians = (angle * Math.PI) / 180;
-  const radiusX = 50;
-  const radiusY = 50;
+  const horizontal = Math.cos(radians);
+  const vertical = Math.sin(radians);
+  const center = Math.abs(horizontal) < 0.15;
+  const right = horizontal > 0;
+  const anchor = 50 + horizontal * 22;
   return {
-    left: `${50 + Math.cos(radians) * radiusX}%`,
-    top: `${50 + Math.sin(radians) * radiusY}%`,
+    left: center ? "50%" : `calc(${anchor}% + ${right ? 56 : -56}px)`,
+    top: center
+      ? `calc(${46 + Math.sin(radians) * 34}% + ${Math.sin(radians) > 0 ? 76 : -60}px)`
+      : `${46 + Math.sin(radians) * 34}%`,
+    width: center ? "280px" : `calc(${right ? 100 - anchor : anchor}% - 76px)`,
+    transform: center
+      ? "translate(-50%, 0)"
+      : `translate(${right ? "0" : "-100%"}, ${vertical < -0.6 ? "-75%" : vertical > 0.6 ? "-15%" : "-50%"})`,
+    textAlign: center ? "center" : right ? "left" : "right",
+  };
+}
+
+function radialNamePosition(index: number, count: number): CSSProperties {
+  const angle = ((-90 - 180 / count + (index * 360) / count) * Math.PI) / 180;
+  return {
+    left: `calc(50% + ${Math.cos(angle) * 68}px)`,
+    top: `calc(50% + ${Math.sin(angle) * 68}px)`,
+    transform: "translate(-50%, -50%)",
   };
 }
 
