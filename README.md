@@ -34,4 +34,17 @@ Results distinguish incomplete enumeration and incomplete game-rule coverage. Li
 
 ```sh
 bun scripts/benchmark-engine.ts
+bun run benchmark --runs 7 --output /tmp/botc-before.json
+# After an engine change:
+bun run benchmark --runs 7 --compare /tmp/botc-before.json --output /tmp/botc-after.json
 ```
+
+The catalog benchmark fully enumerates all 91 existing puzzles, including the intro. It reports per-puzzle medians,
+raw samples, formula sizes, and hashes of sorted initial role assignments. `--compare` fails if assignments or
+enumeration status change. Use `--filter puzzle-82` for a focused run. One full warmup pass precedes three measured
+passes by default; `--warmup` and `--runs` control those counts. Run benchmarks without concurrent tests or builds.
+Backend time includes Kissat creation, clause loading, search, witness extraction, and release. Total time also
+includes document validation, constraint construction, finalization, witness checks, and decoding. Runtime startup,
+result hashing, and report output are excluded. Coverage limitations still apply to the enumerated worlds.
+
+[SAT optimization benchmark and per-puzzle results](docs/sat-benchmark.md).

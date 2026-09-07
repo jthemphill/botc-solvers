@@ -32,3 +32,68 @@ test("constraint snapshots retain nested origins and reject later writes", () =>
   expect(() => game.addTruth(value)).toThrow("finalized");
   expect(game.finalize()).toBe(problem);
 });
+
+test("finalized clauses stay immutable and do not share the caller's array", () => {
+  class Constraints extends BooleanConstraints {
+    addInput(clause: number[]): void {
+      this.addClause(clause);
+    }
+  }
+  const game = new Constraints();
+  const variable = game.newBool("input");
+  const input = [variable.lit];
+  game.addInput(input);
+  input[0] = variable.not();
+  const problem = game.finalize();
+  expect(problem.clauses).toEqual([[variable.lit]]);
+  expect(Object.isFrozen(problem)).toBe(true);
+  expect(Object.isFrozen(problem.clauses)).toBe(true);
+  expect(Object.isFrozen(problem.clauses[0])).toBe(true);
+  expect(Object.isFrozen(problem.origins)).toBe(true);
+  expect(Object.isFrozen(input)).toBe(false);
+});
+
+test("reified counts agree with arithmetic in both directions", async () => {
+  for (const inputs of [[], [1], [1, 2, 3, 4], [1, -2, 1, 3, -3, 2, 1]]) {
+    for (let count = -1; count <= inputs.length + 1; count += 1) {
+      const game = new BooleanConstraints();
+      const variables = Array.from({ length: 4 }, (_, i) => game.newBool(`input_${i}`));
+      const result = game.boolSumEquals(inputs, count, "count");
+      const problem = game.finalize();
+      for (let mask = 0; mask < 16; mask += 1) {
+        const value = (literal: number) => Boolean(mask & (1 << (Math.abs(literal) - 1))) === literal > 0;
+        const expected = inputs.filter(value).length === count;
+        const fixed = variables.map(({ lit }) => [value(lit) ? lit : -lit]);
+        for (const asserted of [false, true]) {
+          const current = {
+            ...problem,
+            clauses: [...problem.clauses, ...fixed, [asserted ? result.lit : result.not()]],
+          };
+          const witness = await backend.solve(current);
+          expect(witness.sat).toBe(asserted === expected);
+          if (witness.sat) validateSatWitness(current, witness.model);
+        }
+      }
+    }
+  }
+});
+
+test("boundary counts use a single gate", () => {
+  for (const count of [0, 20]) {
+    const game = new BooleanConstraints();
+    const inputs = Array.from({ length: 20 }, (_, i) => game.newBool(`input_${i}`));
+    game.boolSumEquals(inputs, count, "boundary");
+    expect(game.finalize().variableCount).toBe(21);
+    expect(game.finalize().clauses).toHaveLength(21);
+  }
+});
+
+test("complementary counts have the same counter size", () => {
+  const size = (count: number) => {
+    const game = new BooleanConstraints();
+    const inputs = Array.from({ length: 20 }, (_, i) => game.newBool(`input_${i}`));
+    game.boolSumEquals(inputs, count, "count");
+    return game.finalize().variableCount;
+  };
+  expect(size(19)).toBe(size(1));
+});

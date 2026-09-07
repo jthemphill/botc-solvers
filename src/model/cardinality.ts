@@ -11,6 +11,8 @@ export function atMostClauses(inputs: readonly Literal[], count: number, fresh: 
   if (count < 0) return [[]];
   if (count >= inputs.length) return [];
   if (count === 0) return inputs.map((input) => [-input]);
+  // At least one input must be false.
+  if (count === inputs.length - 1) return [inputs.map((input) => -input)];
   // Use the pairwise method for an at-most-one constraint with up to six inputs.
   if (count === 1 && inputs.length <= 6) {
     return inputs.flatMap((input, i) => inputs.slice(i + 1).map((other) => [-input, -other]));

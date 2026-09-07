@@ -232,6 +232,10 @@ export class BooleanConstraints {
   // Keep at most `count + 1` levels to limit the counter size.
   // Count each duplicate literal as a separate input.
   private reifyExactCount(literals: readonly Literal[], count: number, name: string): BoolVar {
+    if (count === 0) return this.allOf(literals.map(negate), name);
+    if (count === literals.length) return this.allOf(literals, name);
+    // Count false inputs when this reduces the number of counter levels.
+    if (count > literals.length / 2) return this.reifyExactCount(literals.map(negate), literals.length - count, name);
     const maxLevel = Math.min(count + 1, literals.length);
     let row: BoolLike[] = [];
     for (let index = 0; index < literals.length; index += 1) {
@@ -260,7 +264,7 @@ export class BooleanConstraints {
   finalize(): SatProblem {
     return (this.prepared ??= Object.freeze({
       variableCount: this.variableCount,
-      clauses: Object.freeze(this.clauses.map((clause) => Object.freeze([...clause]))),
+      clauses: Object.freeze(this.clauses.map((clause) => Object.freeze(clause))),
       origins: Object.freeze([...this.origins]),
     }));
   }

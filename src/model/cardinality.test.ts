@@ -12,7 +12,7 @@ test("cardinality agrees with arithmetic for signed and repeated inputs, includi
     [1, 2, 3, 4, 5, 6, 7],
     [1, -2, 1, 3, -3, 2, 1],
   ]) {
-    for (const count of [-1, 0, 1, 2, 3, 6, 7, 8]) {
+    for (const count of [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8]) {
       let variables = 8;
       const clauses = atMostClauses(inputs, count, () => ++variables).map((clause) => [-8, ...clause]);
       for (let bits = 0; bits < 128; bits++) {
@@ -28,6 +28,14 @@ test("cardinality agrees with arithmetic for signed and repeated inputs, includi
       }
     }
   }
+});
+
+test("an all-but-one bound uses one clause and no auxiliary variables", () => {
+  const inputs = [1, -2, 1, 3, -3, 2, 1];
+  const clauses = atMostClauses(inputs, inputs.length - 1, () => {
+    throw new Error("This bound does not need an auxiliary variable.");
+  });
+  expect(clauses).toEqual([inputs.map((literal) => -literal)]);
 });
 
 test("middle cardinalities have polynomial size", () => {

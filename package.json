@@ -7,6 +7,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "search:bmr": "bun scripts/search-bmr.ts",
+    "benchmark": "bun scripts/benchmark-puzzles.ts",
     "test": "bun run test:unit && bun run test:e2e",
     "test:unit": "bun test",
     "test:e2e": "playwright test",
