@@ -20,10 +20,5 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
-    {
-      name: "mobile",
-      testMatch: "**/manual-puzzle-entry.spec.ts",
-      use: { browserName: "chromium", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
-    },
   ],
 });

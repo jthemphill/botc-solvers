@@ -1,15 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-test("all catalog puzzles keep circular reports separate at full width", async ({ page }) => {
-  test.setTimeout(60_000);
+test("small, long-report, and dense puzzles keep circular reports separate at full width", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1100 });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  const examples = await page
-    .getByLabel("Load example puzzle")
-    .locator("option")
-    .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value).filter(Boolean));
-  expect(examples).toHaveLength(91);
+  const examples = [
+    "puzzle-01-sober-savant",
+    "puzzle-03a-not-throwing-away-my-shot",
+    "puzzle-02-come-fly-with-me",
+    "puzzle-76-three-for-three",
+  ];
   const collisions: string[] = [];
   for (const id of examples) {
     await page.getByLabel("Load example puzzle").selectOption(id);

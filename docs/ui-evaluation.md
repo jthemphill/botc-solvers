@@ -6,7 +6,7 @@ The roster is a separate entry view. It supports direct name editing, character 
 
 ## Creation evaluations
 
-`tests/e2e/manual-puzzle-entry.spec.ts` recreates all 91 supplied puzzles through the UI at both desktop and 390 × 844 phone widths and compares their exported documents with the existing puzzle inputs. The evaluation includes 730 seats and 834 source claims across puzzles with 6–15 players. It covers repeated reports, later character claims, public events, structured abilities, and custom statements. It does not generate new solution fixtures.
+`tests/e2e/manual-puzzle-entry.spec.ts` uses compact examples to exercise every structured claim form, repeated reports, later character claims, public events, expressions, and advanced fields. Complete desktop and phone workflows create a puzzle, solve it through the worker, change a report to make it unsatisfiable, correct it, and export/import it. The shared helpers use the roster and inline mobile report editor. Exhaustive puzzle solution coverage stays in the unit suite.
 
 The revised entry path sets all player names with one field entry and two clicks. A player's first character claim takes one character-field edit, replacing the former character selection, player selection, and Add claim sequence. Further reports retain the detailed claim editor.
 
@@ -26,7 +26,7 @@ The mobile checks cover later reports, renaming, focus after closing, 320 × 480
 
 ## Overview evaluations
 
-`tests/e2e/circle-layout.spec.ts` loads every catalog puzzle at 1440 × 1100 and checks that reports, tokens, player names, and the event history do not overlap. Motion is disabled to measure settled layouts. Long reports use the available horizontal space, and the event history moves down when a report needs more room. Circles with more than ten seats use outward-facing names and a complete report list below the circle.
+`tests/e2e/circle-layout.spec.ts` loads four representative puzzles at 1440 × 1100 and checks that reports, tokens, player names, and the event history do not overlap. The examples cover small circles, long reports, and dense seating. Motion is disabled to measure settled layouts. Long reports use the available horizontal space, and the event history moves down when a report needs more room. Circles with more than ten seats use outward-facing names and a complete report list below the circle.
 
 The reference seven-player puzzle has an additional viewport check for its continuation convention. Mobile tests cover complete report text, long titles, seat reordering, and entry without horizontal scrolling.
 

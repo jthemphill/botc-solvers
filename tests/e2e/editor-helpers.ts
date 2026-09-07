@@ -19,32 +19,27 @@ export function comparableDoc(doc: PuzzleDoc) {
   };
 }
 
+export async function selectPlayerClaims(page: Page, player: string) {
+  const panel = claimsPanel(page);
+  if (await panel.getByRole("heading", { name: player, exact: true }).isVisible()) return;
+  const rosterButton = page.getByRole("button", { name: `Edit claims for ${player}`, exact: true });
+  if (await rosterButton.isVisible()) {
+    await rosterButton.click();
+  } else {
+    const prefix = (page.viewportSize()?.width ?? 1280) <= 760 ? "Player" : "Seat";
+    await page.getByRole("button", { name: new RegExp(`^${prefix} \\d+: ${escapeRegExp(player)}[,.]`) }).click();
+  }
+  await expect(panel.getByRole("heading", { name: player, exact: true })).toBeVisible();
+}
+
 async function setTitleAndPlayers(page: Page, doc: PuzzleDoc) {
   if (doc.title !== undefined) await page.getByLabel("Title").fill(doc.title);
+  await page.getByRole("button", { name: "Roster", exact: true }).click();
 
-  const countInput = page.getByRole("spinbutton", { name: "Players" });
-  await countInput.fill("");
-  await countInput.fill(String(doc.players.length));
-  await expect(page.getByRole("spinbutton", { name: "Players" })).toHaveValue(String(doc.players.length));
-
-  const currentNames = Array.from({ length: doc.players.length }, (_, index) => `Player ${index + 1}`);
-  for (const [index, name] of doc.players.entries()) {
-    const currentName = currentNames[index] as string;
-    if (currentName === name) continue;
-    const mobile = (page.viewportSize()?.width ?? 1280) < 700;
-    if (mobile) {
-      await page
-        .getByRole("button", { name: new RegExp(`^Player ${index + 1}: ${escapeRegExp(currentName)}[,.]`) })
-        .dblclick();
-    } else {
-      await seatFor(page, currentName).focus();
-      await page.keyboard.press("F2");
-    }
-    const input = page.getByLabel(`Rename ${currentName}${mobile ? " on mobile" : ""}`, { exact: true });
-    await input.fill(name);
-    await input.press("Enter");
-    currentNames[index] = name;
-  }
+  await page.getByRole("button", { name: "Paste roster", exact: true }).click();
+  await page.getByLabel("Players and claimed characters").fill(doc.players.join("\n"));
+  await page.getByRole("button", { name: "Use roster", exact: true }).click();
+  await expect(page.locator(".roster-row")).toHaveCount(doc.players.length);
 }
 
 export async function setTimeline(page: Page, timeline: readonly TimelineEventDoc[], players: readonly string[]) {
@@ -81,9 +76,21 @@ export async function addAndFillClaims(page: Page, claims: readonly Claim[]) {
   const panel = claimsPanel(page);
 
   for (const claim of claims) {
-    await panel.getByLabel("Claim type").fill(claim.type);
-    await panel.getByLabel("Claiming player").selectOption(claim.name);
-    await panel.getByRole("button", { name: "+ Add claim" }).click();
+    const firstClaim = page.getByLabel(`Claim for ${claim.name}`, { exact: true });
+    if (await firstClaim.count()) {
+      await firstClaim.fill(claim.type);
+    } else {
+      const mobile = (page.viewportSize()?.width ?? 1280) <= 760;
+      if (mobile) {
+        await page.getByRole("button", { name: `Edit claims for ${claim.name}`, exact: true }).click();
+        const extra = panel.locator(".inline-add-report");
+        if (!(await extra.evaluate((element) => (element as HTMLDetailsElement).open)))
+          await extra.locator("summary").click();
+      }
+      await panel.getByLabel("Claim type").fill(claim.type);
+      if (!mobile) await panel.getByLabel("Claiming player").selectOption(claim.name);
+      await panel.getByRole("button", { name: "+ Add claim" }).click();
+    }
     const blocks = panel.locator(":scope .selected-claims > .claim-block");
     await fillClaim(blocks.last(), claim);
   }
@@ -92,7 +99,15 @@ export async function addAndFillClaims(page: Page, claims: readonly Claim[]) {
 async function setRoleUniverseAndRules(page: Page, doc: PuzzleDoc) {
   const panel = page.locator("section.hidden-roles-editor");
 
-  for (const role of doc.script) {
+  const mobile = (page.viewportSize()?.width ?? 1280) <= 760;
+  if (mobile) {
+    await panel.getByRole("button", { name: "Choose hidden roles" }).click();
+    const picker = page.getByRole("dialog", { name: "Choose hidden roles" });
+    for (const role of doc.script) await picker.getByRole("checkbox", { name: role, exact: true }).check();
+    await picker.getByRole("button", { name: "Close hidden role picker" }).click();
+  }
+
+  for (const role of mobile ? [] : doc.script) {
     const existing = panel.getByRole("button", { name: new RegExp(`^${escapeRegExp(role)}(?: |$)`) });
     if ((await existing.count()) > 0) continue;
     const input = panel.getByLabel("Add hidden role");
@@ -474,11 +489,7 @@ export async function exportPuzzleDoc(page: Page): Promise<PuzzleDoc> {
 }
 
 export function claimsPanel(page: Page): Locator {
-  return page.locator("section.panel", { has: page.getByRole("heading", { name: "Claims" }) });
-}
-
-function seatFor(page: Page, player: string): Locator {
-  return page.getByRole("button", { name: new RegExp(`Seat \\d+: ${escapeRegExp(player)}(?:[,.])`) });
+  return page.locator("#claims-panel");
 }
 
 function fieldRoot(scope: Locator, label: string, index = 0): Locator {

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectPlayerClaims } from "./editor-helpers";
 
 test("renders claim details and distinct timeline death markers", async ({ page }) => {
   await page.goto("/");
@@ -30,10 +31,11 @@ test("renders claim details and distinct timeline death markers", async ({ page 
   ).toBeVisible();
 
   const claimsPanel = page.locator(".claims-panel");
+  await selectPlayerClaims(page, "Sula");
   await expect(claimsPanel.getByText("Demon-minion distance").first()).toBeVisible();
-  await page.getByLabel("Claiming player").selectOption("You");
+  await selectPlayerClaims(page, "You");
   await expect(claimsPanel.getByText("Malfunctions").first()).toBeVisible();
-  await page.getByLabel("Claiming player").selectOption("Steph");
+  await selectPlayerClaims(page, "Steph");
   await expect(claimsPanel.getByText("Aoife.initial_role == `No Dashii`").first()).toBeVisible();
   await expect(page.getByText("false info under Vortox")).toHaveCount(0);
 
@@ -97,7 +99,7 @@ test("shows structured summaries without inventing hidden death causes", async (
   await expect(claims).toContainText("D1 gossip: Fraser.initial_type == Demon; D2 gossip: Anna.initial_type == Demon");
   await expect(claims).not.toContainText("I am the Gossip");
 
-  await page.getByLabel("Claiming player").selectOption("Josh");
+  await selectPlayerClaims(page, "Josh");
   await expect(page.getByText("Josh — ⚔️ Knight")).toBeVisible();
 });
 
@@ -139,7 +141,7 @@ test("renders repeated, timed, and role-choice summaries", async ({ page }) => {
     }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: /N1: Aoife \+ Tim -> no; N2: Aoife \+ Olivia -> no/ })).toBeVisible();
-  await page.getByLabel("Claiming player").selectOption("Olivia");
+  await selectPlayerClaims(page, "Olivia");
   await expect(page.getByText("Olivia — 🔮 Fortune Teller")).toHaveCount(2);
   await expect(page.getByText("+ Add check")).toHaveCount(0);
 
