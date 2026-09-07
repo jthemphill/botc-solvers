@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("reorders seats by dragging one player token onto another", async ({ page }) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "Seating chart", exact: true }).click();
 
   const firstSeat = page.getByRole("button", { name: /Seat 1: Player 1\./ });
   const thirdSeat = page.getByRole("button", { name: /Seat 3: Player 3\./ });
@@ -40,10 +41,10 @@ test("reorders seats by dragging one player token onto another", async ({ page }
         if (second === undefined || third === undefined || placeholder === undefined || chartRect === undefined)
           return false;
         const seatCenter = (index: number) => {
-          const angle = (-90 + (index * 360) / 7) * (Math.PI / 180);
+          const angle = (-90 - 180 / 7 + (index * 360) / 7) * (Math.PI / 180);
           return {
-            x: chartRect.x + chartRect.width * (0.5 + Math.cos(angle) * 0.36),
-            y: chartRect.y + chartRect.height * (0.5 + Math.sin(angle) * 0.36),
+            x: chartRect.x + chartRect.width * (0.5 + Math.cos(angle) * 0.22),
+            y: chartRect.y + chartRect.height * (0.46 + Math.sin(angle) * 0.34),
           };
         };
         const closeTo = (rect: DOMRect, point: { x: number; y: number }) =>
@@ -65,6 +66,7 @@ test("reorders seats by dragging one player token onto another", async ({ page }
 test("animates and reorders the mobile roster with continuous handle drags", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/");
+  await page.getByRole("button", { name: "Seating chart", exact: true }).click();
 
   const mobileList = page.locator(".mobile-player-list");
   const handle = page.getByRole("button", { name: "Reorder Player 1" });
@@ -165,6 +167,7 @@ test("animates and reorders the mobile roster with continuous handle drags", asy
 
 test("renames a seat inline after double-clicking it", async ({ page }) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "Seating chart", exact: true }).click();
 
   await page.getByRole("button", { name: /Seat 1: Player 1\./ }).dblclick();
 
@@ -179,6 +182,7 @@ test("renames a seat inline after double-clicking it", async ({ page }) => {
 
 test("player count input does not retain a leading zero", async ({ page }) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "Seating chart", exact: true }).click();
 
   const countInput = page.getByRole("spinbutton", { name: "Players" });
   await countInput.fill("");
@@ -191,6 +195,7 @@ test("player count input does not retain a leading zero", async ({ page }) => {
 
 test("removes a seat by dragging it to the trash zone", async ({ page }) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "Seating chart", exact: true }).click();
 
   const firstSeat = page.getByRole("button", { name: /Seat 1: Player 1\./ });
   const trashZone = page.locator(".seat-trash-zone");
@@ -219,6 +224,7 @@ test("removes a seat by dragging it to the trash zone", async ({ page }) => {
 
 test("adds and refines deaths from the timeline panel", async ({ page }) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "Seating chart", exact: true }).click();
 
   const timeline = page.getByLabel("Puzzle timeline");
   await expect(timeline).toBeVisible();
@@ -250,6 +256,7 @@ test("adds and refines deaths from the timeline panel", async ({ page }) => {
 test("uses a quick event sheet instead of mobile timeline drop zones", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/");
+  await page.getByRole("button", { name: "Seating chart", exact: true }).click();
 
   await expect(page.locator(".timeline-drop-zone")).toHaveCount(0);
   await page.getByRole("button", { name: "Add event for Player 2" }).click();

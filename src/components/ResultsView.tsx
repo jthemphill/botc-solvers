@@ -14,9 +14,17 @@ export function ResultsView({ summary, worlds, players, error, busy = false, lim
   if (error)
     return (
       <div className="results-view">
-        <pre className="error" style={{ whiteSpace: "pre-wrap" }}>
-          {error}
-        </pre>
+        <p className="error" role="alert">
+          {error.split("\n")[0]}
+        </p>
+        {error.includes("\n") && (
+          <details>
+            <summary>Error details</summary>
+            <pre className="error" style={{ whiteSpace: "pre-wrap" }}>
+              {error}
+            </pre>
+          </details>
+        )}
       </div>
     );
   if (worlds === undefined)

@@ -15,7 +15,7 @@ export function PuzzleHeader({ doc, dispatch }: Props) {
 
   return (
     <div className="puzzle-title-editor">
-      <span className="puzzle-number">Puzzle Sheet</span>
+      <span className="puzzle-number">YOUR WORKSPACE</span>
       <label htmlFor="puzzle-title">
         <span className="sr-only">Title</span>
         <input
