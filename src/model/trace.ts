@@ -1,3 +1,4 @@
+import { timingOrder } from "./timing";
 import type { BoolLike, BoolVar, BOTCModel, Timing } from "./model";
 
 export interface CharacterTransition {
@@ -17,12 +18,6 @@ export interface TraceWitness {
   readonly initial: Readonly<Record<string, string>>;
   readonly transitions: readonly Omit<CharacterTransition, "active">[];
   readonly snapshots: readonly CharacterSnapshot[];
-}
-
-export function timingOrder(timing: Timing): number {
-  const match = /^(night|day)_([1-9]\d*)$/.exec(timing);
-  if (match === null) throw new Error(`Invalid timing '${timing}'.`);
-  return Number(match[2]) * 2 + (match[1] === "day" ? 1 : 0);
 }
 
 /**
@@ -134,8 +129,7 @@ export class CharacterTrace {
           "character_state",
         );
       }
-      this.game.addImplication(query.variable, state);
-      this.game.addImplication(state, query.variable);
+      this.game.equate(query.variable, state);
     }
     this.closed = true;
   }

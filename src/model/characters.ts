@@ -1,3 +1,4 @@
+import { slug } from "./keys";
 import {
   Alignment,
   CharacterType,
@@ -59,13 +60,6 @@ export interface ApplyClaimsOptions extends TimedOptions {
   readonly context?: unknown;
 }
 
-function slug(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-}
-
 function claimName(player: string, role: RoleRef, suffix: string): string {
   return `${slug(player)}_${slug(roleName(role))}_${suffix}`;
 }
@@ -85,7 +79,7 @@ function buildStatement(
     const activeVortox = game.anyOf(
       game.players.map((candidate) =>
         game.allOf(
-          [game.hasRoleAt(candidate, "Vortox", timing), game.soberAndHealthy(candidate, timing)],
+          [game.hasAbilityAt(candidate, "Vortox", timing), game.soberAndHealthy(candidate, timing)],
           claimName(player, Savant, `statement_${index}_vortox_${candidate}`),
         ),
       ),
@@ -371,120 +365,102 @@ export abstract class Role {
   }
 }
 
-export class Imp extends Role {
+abstract class DemonRole extends Role {
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Demon;
+}
+
+abstract class MinionRole extends Role {
+  static readonly alignment = Alignment.Evil;
+  static readonly characterType = CharacterType.Minion;
+}
+
+abstract class OutsiderRole extends Role {
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Outsider;
+}
+
+abstract class TownsfolkRole extends Role {
+  static readonly alignment = Alignment.Good;
+  static readonly characterType = CharacterType.Townsfolk;
+}
+
+export class Imp extends DemonRole {
   static readonly roleName = "Imp";
   static readonly wake = Wakes.unlessPrevented(Wakes.everyNightExceptFirst);
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
 }
-export class FangGu extends Role {
+export class FangGu extends DemonRole {
   static readonly roleName = "Fang Gu";
   static readonly wake = Wakes.unlessPrevented(Wakes.everyNightExceptFirst);
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
 }
-export class NoDashii extends Role {
+export class NoDashii extends DemonRole {
   static readonly roleName = "No Dashii";
   static readonly wake = Wakes.unlessPrevented(Wakes.everyNightExceptFirst);
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
 }
-export class Kazali extends Role {
+export class Kazali extends DemonRole {
   static readonly roleName = "Kazali";
   static readonly wake = Wakes.unlessPrevented(Wakes.everyNight);
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
 }
-export class Leviathan extends Role {
+export class Leviathan extends DemonRole {
   static readonly roleName = "Leviathan";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
 }
-export class Lleech extends Role {
+export class Lleech extends DemonRole {
   static readonly roleName = "Lleech";
   static readonly wake = Wakes.unlessPrevented(Wakes.everyNight);
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
 }
-export class Legion extends Role {
+export class Legion extends DemonRole {
   static readonly roleName = "Legion";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
   static readonly maxCopies = 6;
 }
-export class Riot extends Role {
+export class Riot extends DemonRole {
   static readonly roleName = "Riot";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
 }
-export class LordOfTyphon extends Role {
+export class LordOfTyphon extends DemonRole {
   static readonly roleName = "Lord of Typhon";
   static readonly wake = Wakes.unlessPrevented(Wakes.everyNightExceptFirst);
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
 }
-export class Pukka extends Role {
+export class Pukka extends DemonRole {
   static readonly roleName = "Pukka";
   static readonly wake = Wakes.unlessPrevented(Wakes.everyNight);
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
 }
-export class Shabaloth extends Role {
+export class Shabaloth extends DemonRole {
   static readonly roleName = "Shabaloth";
   static readonly wake = Wakes.unlessPrevented(Wakes.everyNightExceptFirst);
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
 }
-export class Zombuul extends Role {
+export class Zombuul extends DemonRole {
   static readonly roleName = "Zombuul";
   static readonly wake = Wakes.unlessPrevented(Wakes.everyNightExceptFirst);
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
 }
-export class Po extends Role {
+export class Po extends DemonRole {
   static readonly roleName = "Po";
   static readonly wake = Wakes.unlessPrevented(Wakes.everyNightExceptFirst);
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
 }
-export class Vortox extends Role {
+export class Vortox extends DemonRole {
   static readonly roleName = "Vortox";
   static readonly wake = Wakes.unlessPrevented(Wakes.everyNightExceptFirst);
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
 }
-export class Vigormortis extends Role {
+export class Vigormortis extends DemonRole {
   static readonly roleName = "Vigormortis";
   static readonly wake = Wakes.unlessPrevented(Wakes.everyNightExceptFirst);
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Demon;
 }
-export class Baron extends Role {
+export class Baron extends MinionRole {
   static readonly roleName = "Baron";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 }
-export class Boffin extends Role {
+export class Boffin extends MinionRole {
   static readonly roleName = "Boffin";
   static readonly wake = Wakes.firstNight;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 }
-export class Goblin extends Role {
+export class Goblin extends MinionRole {
   static readonly roleName = "Goblin";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 }
-export class Godfather extends Role {
+export class Godfather extends MinionRole {
   static readonly roleName = "Godfather";
   static readonly wake = Wakes.firstNightOrConditional("Godfather");
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
   readonly outsiderRoles: readonly RoleRef[];
 
   constructor(options: RoleBaseOptions & { readonly outsiderRoles?: readonly RoleRef[] }) {
@@ -508,11 +484,9 @@ export class Godfather extends Role {
     );
   }
 }
-export class Assassin extends Role {
+export class Assassin extends MinionRole {
   static readonly roleName = "Assassin";
   static readonly wake = Wakes.untilAbilityUsed("Assassin", Wakes.everyNightExceptFirst);
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
   readonly target?: string;
 
   constructor(options: RoleBaseOptions & { readonly target?: string }) {
@@ -524,46 +498,34 @@ export class Assassin extends Role {
     this.applyRoleClaim(game, Assassin, options);
     if (this.target !== undefined) {
       const timing = this.claimTiming(explicitTiming(options));
-      game.registerAbilityUse(this.name, Assassin, timing, game.hasRoleAt(this.name, Assassin, timing));
+      game.registerAbilityUse(this.name, Assassin, timing, game.hasAbilityAt(this.name, Assassin, timing));
     }
     this.applyInfoClaimBuilders(game, Assassin, this.infoClaims, options);
   }
 }
-export class Mastermind extends Role {
+export class Mastermind extends MinionRole {
   static readonly roleName = "Mastermind";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 }
-export class Cerenovus extends Role {
+export class Cerenovus extends MinionRole {
   static readonly roleName = "Cerenovus";
   static readonly wake = Wakes.everyNightExceptFirst;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 }
-export class DevilsAdvocate extends Role {
+export class DevilsAdvocate extends MinionRole {
   static readonly roleName = "Devil's Advocate";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 }
-export class Marionette extends Role {
+export class Marionette extends MinionRole {
   static readonly roleName = "Marionette";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 }
-export class PitHag extends Role {
+export class PitHag extends MinionRole {
   static readonly roleName = "Pit-Hag";
   static readonly wake = Wakes.everyNightExceptFirst;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 }
-export class EvilTwin extends Role {
+export class EvilTwin extends MinionRole {
   static readonly roleName = "Evil Twin";
   static readonly wake = Wakes.firstNight;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 
   static pairedWith(game: BOTCModel, evilTwin: string, goodTwin: string, name: string): BoolVar {
     return game.allOf([game.actualIs(evilTwin, EvilTwin), game.isGood(goodTwin)], name);
@@ -579,71 +541,49 @@ export class EvilTwin extends Role {
     );
   }
 }
-export class Poisoner extends Role {
+export class Poisoner extends MinionRole {
   static readonly roleName = "Poisoner";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 }
-export class Widow extends Role {
+export class Widow extends MinionRole {
   static readonly roleName = "Widow";
   static readonly wake = Wakes.firstNight;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 }
-export class ScarletWoman extends Role {
+export class ScarletWoman extends MinionRole {
   static readonly roleName = "Scarlet Woman";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 }
-export class Spy extends Role {
+export class Spy extends MinionRole {
   static readonly roleName = "Spy";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 }
-export class Xaan extends Role {
+export class Xaan extends MinionRole {
   static readonly roleName = "Xaan";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 }
-export class Witch extends Role {
+export class Witch extends MinionRole {
   static readonly roleName = "Witch";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Evil;
-  static readonly characterType = CharacterType.Minion;
 }
-export class Lunatic extends Role {
+export class Lunatic extends OutsiderRole {
   static readonly roleName = "Lunatic";
   static readonly wake = Wakes.everyNightExceptFirst;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
 }
-export class Goon extends Role {
+export class Goon extends OutsiderRole {
   static readonly roleName = "Goon";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
 }
-export class Moonchild extends Role {
+export class Moonchild extends OutsiderRole {
   static readonly roleName = "Moonchild";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
 }
-export class Tinker extends Role {
+export class Tinker extends OutsiderRole {
   static readonly roleName = "Tinker";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
 }
-export class Klutz extends Role {
+export class Klutz extends OutsiderRole {
   static readonly roleName = "Klutz";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
   readonly chosen?: string;
 
   constructor(options: RoleBaseOptions & { readonly chosen?: string }) {
@@ -660,24 +600,20 @@ export class Klutz extends Role {
 
     const timing = this.claimTiming(explicitTiming(options));
     const activeHealthy = game.allOf(
-      [game.hasRoleAt(this.name, Klutz, timing), game.soberAndHealthy(this.name, timing)],
+      [game.hasAbilityAt(this.name, Klutz, timing), game.soberAndHealthy(this.name, timing)],
       claimName(this.name, Klutz, "choice_active"),
     );
     game.addImplication(activeHealthy, game.isGood(this.chosen));
     this.applyInfoClaimBuilders(game, Klutz, this.infoClaims, options);
   }
 }
-export class Politician extends Role {
+export class Politician extends OutsiderRole {
   static readonly roleName = "Politician";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
 }
-export class Puzzlemaster extends Role {
+export class Puzzlemaster extends OutsiderRole {
   static readonly roleName = "Puzzlemaster";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
   readonly guesses: readonly {
     readonly player: string;
     readonly learnedDemon: string;
@@ -703,7 +639,7 @@ export class Puzzlemaster extends Role {
       const timing = this.claimTiming(guess.timing ?? explicitTiming(options), index);
       const activeHealthy = game.allOf(
         [
-          game.hasRoleAt(this.name, Puzzlemaster, timing),
+          game.hasAbilityAt(this.name, Puzzlemaster, timing),
           game.soberAndHealthy(this.name, healthTimingForAbility(timing)),
         ],
         claimName(this.name, Puzzlemaster, `guess_${index + 1}_active`),
@@ -728,65 +664,45 @@ export class Puzzlemaster extends Role {
     this.applyInfoClaimBuilders(game, Puzzlemaster, this.infoClaims, options);
   }
 }
-export class Drunk extends Role {
+export class Drunk extends OutsiderRole {
   static readonly roleName = "Drunk";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
 }
-export class Hermit extends Role {
+export class Hermit extends OutsiderRole {
   static readonly roleName = "Hermit";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
 }
-export class Golem extends Role {
+export class Golem extends OutsiderRole {
   static readonly roleName = "Golem";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
 }
-export class Butler extends Role {
+export class Butler extends OutsiderRole {
   static readonly roleName = "Butler";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
 }
-export class Damsel extends Role {
+export class Damsel extends OutsiderRole {
   static readonly roleName = "Damsel";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
 }
-export class Mutant extends Role {
+export class Mutant extends OutsiderRole {
   static readonly roleName = "Mutant";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
 }
-export class Recluse extends Role {
+export class Recluse extends OutsiderRole {
   static readonly roleName = "Recluse";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
 }
-export class Saint extends Role {
+export class Saint extends OutsiderRole {
   static readonly roleName = "Saint";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
 }
-export class Sweetheart extends Role {
+export class Sweetheart extends OutsiderRole {
   static readonly roleName = "Sweetheart";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Outsider;
 }
-export class Slayer extends Role {
+export class Slayer extends TownsfolkRole {
   static readonly roleName = "Slayer";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly target?: string;
   readonly killed?: boolean;
   readonly gameContinued: boolean;
@@ -837,7 +753,7 @@ export class Slayer extends Role {
 
     const timing = this.claimTiming(explicitTiming(options));
     const activeHealthy = game.allOf(
-      [game.hasRoleAt(this.name, Slayer, timing), game.soberAndHealthy(this.name, healthTimingForAbility(timing))],
+      [game.hasAbilityAt(this.name, Slayer, timing), game.soberAndHealthy(this.name, healthTimingForAbility(timing))],
       claimName(this.name, Slayer, "shot_active"),
     );
     if (this.killed) game.addTruth(activeHealthy);
@@ -855,32 +771,24 @@ export class Slayer extends Role {
   }
 }
 
-export class Alsaahir extends Role {
+export class Alsaahir extends TownsfolkRole {
   static readonly roleName = "Alsaahir";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
-export class Artist extends Role {
+export class Artist extends TownsfolkRole {
   static readonly roleName = "Artist";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
-export class Atheist extends Role {
+export class Atheist extends TownsfolkRole {
   static readonly roleName = "Atheist";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
-export class Philosopher extends Role {
+export class Philosopher extends TownsfolkRole {
   static readonly roleName = "Philosopher";
   static readonly wake = Wakes.untilAbilityUsed("Philosopher", Wakes.everyNight);
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly role?: RoleRef;
 
   constructor(options: RoleBaseOptions & { readonly role?: RoleRef }) {
@@ -892,7 +800,7 @@ export class Philosopher extends Role {
     this.applyRoleClaim(game, Philosopher, options);
     if (this.role !== undefined) {
       const timing = this.claimTiming(explicitTiming(options));
-      game.registerAbilityUse(this.name, Philosopher, timing, game.hasRoleAt(this.name, Philosopher, timing));
+      game.registerAbilityUse(this.name, Philosopher, timing, game.hasAbilityAt(this.name, Philosopher, timing));
       const activeHealthy = game.allOf(
         [game.actualIs(this.name, Philosopher), game.soberAndHealthy(this.name, timing)],
         claimName(this.name, Philosopher, "choice_active"),
@@ -903,25 +811,19 @@ export class Philosopher extends Role {
   }
 }
 
-export class PoppyGrower extends Role {
+export class PoppyGrower extends TownsfolkRole {
   static readonly roleName = "Poppy Grower";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
-export class SolarProdigy extends Role {
+export class SolarProdigy extends TownsfolkRole {
   static readonly roleName = "Solar Prodigy";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
-export class LunarProdigy extends Role {
+export class LunarProdigy extends TownsfolkRole {
   static readonly roleName = "Lunar Prodigy";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
 export interface ProdigyCheck {
@@ -931,11 +833,9 @@ export interface ProdigyCheck {
   readonly name?: string;
 }
 
-export class Prodigy extends Role {
+export class Prodigy extends TownsfolkRole {
   static readonly roleName = "Solar Prodigy";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly checks: readonly ProdigyCheck[];
 
   constructor(
@@ -988,11 +888,9 @@ export class Prodigy extends Role {
   }
 }
 
-export class Acrobat extends Role {
+export class Acrobat extends TownsfolkRole {
   static readonly roleName = "Acrobat";
   static readonly wake = Wakes.everyNightExceptFirst;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly choices: readonly AcrobatChoice[];
 
   constructor(
@@ -1013,7 +911,7 @@ export class Acrobat extends Role {
     this.choices.forEach((choice, index) => {
       const timing = this.claimTiming(choice.timing, index);
       const activeHealthy = game.allOf(
-        [game.hasRoleAt(this.name, Acrobat, timing), game.soberAndHealthy(this.name, timing)],
+        [game.hasAbilityAt(this.name, Acrobat, timing), game.soberAndHealthy(this.name, timing)],
         claimName(this.name, Acrobat, `choice_${index + 1}_active`),
       );
       const targetDrunkOrPoisoned = Acrobat.targetIsDrunkOrPoisoned(
@@ -1034,11 +932,9 @@ export class Acrobat extends Role {
   }
 }
 
-export class Grandmother extends Role {
+export class Grandmother extends TownsfolkRole {
   static readonly roleName = "Grandmother";
   static readonly wake = Wakes.firstNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly grandchild?: string;
   readonly role?: RoleRef;
 
@@ -1069,11 +965,9 @@ export interface SailorChoice {
   readonly timing?: Timing;
 }
 
-export class Sailor extends Role {
+export class Sailor extends TownsfolkRole {
   static readonly roleName = "Sailor";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly choices: readonly SailorChoice[];
 
   constructor(options: RoleBaseOptions & { readonly choices?: readonly SailorChoice[] }) {
@@ -1106,11 +1000,9 @@ export interface InnkeeperChoice {
   readonly timing?: Timing;
 }
 
-export class Innkeeper extends Role {
+export class Innkeeper extends TownsfolkRole {
   static readonly roleName = "Innkeeper";
   static readonly wake = Wakes.everyNightExceptFirst;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly choices: readonly InnkeeperChoice[];
 
   constructor(
@@ -1129,7 +1021,7 @@ export class Innkeeper extends Role {
         return;
       const timing = this.claimTiming(choice.timing, index);
       const activeHealthy = game.allOf(
-        [game.hasRoleAt(this.name, Innkeeper, timing), game.soberAndHealthy(this.name, timing)],
+        [game.hasAbilityAt(this.name, Innkeeper, timing), game.soberAndHealthy(this.name, timing)],
         claimName(this.name, Innkeeper, `choice_${index + 1}_active`),
       );
       const match = /^night_(\d+)$/.exec(timing);
@@ -1145,32 +1037,24 @@ export class Innkeeper extends Role {
   }
 }
 
-export class Professor extends Role {
+export class Professor extends TownsfolkRole {
   static readonly roleName = "Professor";
   static readonly wake = Wakes.untilAbilityUsed("Professor", Wakes.everyNightExceptFirst);
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
-export class Minstrel extends Role {
+export class Minstrel extends TownsfolkRole {
   static readonly roleName = "Minstrel";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
-export class Pacifist extends Role {
+export class Pacifist extends TownsfolkRole {
   static readonly roleName = "Pacifist";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
-export class Fool extends Role {
+export class Fool extends TownsfolkRole {
   static readonly roleName = "Fool";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
 export interface AcrobatChoice {
@@ -1179,11 +1063,9 @@ export interface AcrobatChoice {
   readonly died: boolean;
 }
 
-export class Gambler extends Role {
+export class Gambler extends TownsfolkRole {
   static readonly roleName = "Gambler";
   static readonly wake = Wakes.everyNightExceptFirst;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly guesses: readonly GamblerGuess[];
 
   constructor(
@@ -1206,11 +1088,9 @@ export interface ExorcistChoice {
   readonly timing?: Timing;
 }
 
-export class Exorcist extends Role {
+export class Exorcist extends TownsfolkRole {
   static readonly roleName = "Exorcist";
   static readonly wake = Wakes.everyNightExceptFirst;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly choices: readonly ExorcistChoice[];
 
   constructor(
@@ -1230,7 +1110,7 @@ export class Exorcist extends Role {
         choice.player,
         timing,
         game.allOf(
-          [game.hasRoleAt(this.name, Exorcist, timing), game.soberAndHealthy(this.name, timing)],
+          [game.hasAbilityAt(this.name, Exorcist, timing), game.soberAndHealthy(this.name, timing)],
           claimName(this.name, Exorcist, `choice_${index + 1}_active`),
         ),
       );
@@ -1250,11 +1130,9 @@ export interface GossipStatement {
   readonly statement: ClaimPredicate;
 }
 
-export class Gossip extends Role {
+export class Gossip extends TownsfolkRole {
   static readonly roleName = "Gossip";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly statements: readonly GossipStatement[];
 
   constructor(
@@ -1272,11 +1150,9 @@ export class Gossip extends Role {
   }
 }
 
-export class Mathematician extends Role {
+export class Mathematician extends TownsfolkRole {
   static readonly roleName = "Mathematician";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly malfunctions: readonly { readonly timing: Timing; readonly count: number }[];
   constructor(
     options: RoleBaseOptions & {
@@ -1313,11 +1189,9 @@ export interface TownCrierCheck {
   readonly minionNominated: boolean;
 }
 
-export class TownCrier extends Role {
+export class TownCrier extends TownsfolkRole {
   static readonly roleName = "Town Crier";
   static readonly wake = Wakes.everyNightExceptFirst;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly checks: readonly TownCrierCheck[];
 
   constructor(options: RoleBaseOptions & { readonly checks?: readonly TownCrierCheck[] }) {
@@ -1351,11 +1225,9 @@ export interface PrincessNomination {
   readonly timing?: Timing;
 }
 
-export class Princess extends Role {
+export class Princess extends TownsfolkRole {
   static readonly roleName = "Princess";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly nominations: readonly PrincessNomination[];
 
   constructor(
@@ -1373,11 +1245,9 @@ export class Princess extends Role {
   }
 }
 
-export class Ravenkeeper extends Role {
+export class Ravenkeeper extends TownsfolkRole {
   static readonly roleName = "Ravenkeeper";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly player?: string;
   readonly role?: RoleRef;
 
@@ -1399,11 +1269,9 @@ export class Ravenkeeper extends Role {
   }
 }
 
-export class Sage extends Role {
+export class Sage extends TownsfolkRole {
   static readonly roleName = "Sage";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly demonAmong: readonly string[];
   constructor(options: RoleBaseOptions & { readonly demonAmong?: readonly string[] }) {
     super(options);
@@ -1421,11 +1289,9 @@ export class Sage extends Role {
   }
 }
 
-export class SnakeCharmer extends Role {
+export class SnakeCharmer extends TownsfolkRole {
   static readonly roleName = "Snake Charmer";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly checked?: string;
   readonly demon?: boolean;
   constructor(options: RoleBaseOptions & { readonly checked?: string; readonly demon?: boolean }) {
@@ -1439,18 +1305,14 @@ export class SnakeCharmer extends Role {
     return this.demon ? checkedIsDemon : game.not(checkedIsDemon, claimName(this.name, SnakeCharmer, "not_demon"));
   }
 }
-export class Soldier extends Role {
+export class Soldier extends TownsfolkRole {
   static readonly roleName = "Soldier";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
-export class Balloonist extends Role {
+export class Balloonist extends TownsfolkRole {
   static readonly roleName = "Balloonist";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly differentCharacterTypePairs: readonly [string, string][];
   constructor(
     options: RoleBaseOptions & {
@@ -1477,11 +1339,9 @@ export class Balloonist extends Role {
   }
 }
 
-export class Chef extends Role {
+export class Chef extends TownsfolkRole {
   static readonly roleName = "Chef";
   static readonly wake = Wakes.firstNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly count?: number;
   constructor(
     options: RoleBaseOptions & {
@@ -1508,11 +1368,9 @@ export interface ChambermaidCheck {
   readonly timing?: Timing;
 }
 
-export class Chambermaid extends Role {
+export class Chambermaid extends TownsfolkRole {
   static readonly roleName = "Chambermaid";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly checks: readonly ChambermaidCheck[];
 
   constructor(
@@ -1528,7 +1386,7 @@ export class Chambermaid extends Role {
     return game.anyOf(
       [...game.characters.entries()].map(([role, character]) =>
         game.allOf(
-          [game.hasRoleAt(player, role, timing), roleWakeRule(character).wakes(game, player, timing, name)],
+          [game.hasAbilityAt(player, role, timing), roleWakeRule(character).wakes(game, player, timing, name)],
           `${name}_${player}_${slug(role)}_woke_due_to_ability`,
         ),
       ),
@@ -1580,11 +1438,9 @@ export class Chambermaid extends Role {
   }
 }
 
-export class Clockmaker extends Role {
+export class Clockmaker extends TownsfolkRole {
   static readonly roleName = "Clockmaker";
   static readonly wake = Wakes.firstNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly distance?: number;
   constructor(
     options: RoleBaseOptions & {
@@ -1637,11 +1493,9 @@ export class Clockmaker extends Role {
   }
 }
 
-export class Courtier extends Role {
+export class Courtier extends TownsfolkRole {
   static readonly roleName = "Courtier";
   static readonly wake = Wakes.untilAbilityUsed("Courtier", Wakes.everyNight);
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly role?: RoleRef;
   readonly drunkTimings: readonly Timing[];
 
@@ -1660,9 +1514,9 @@ export class Courtier extends Role {
     this.applyRoleClaim(game, Courtier, options);
     if (this.role !== undefined && this.drunkTimings.length > 0) {
       const timing = this.claimTiming(explicitTiming(options));
-      game.registerAbilityUse(this.name, Courtier, timing, game.hasRoleAt(this.name, Courtier, timing));
+      game.registerAbilityUse(this.name, Courtier, timing, game.hasAbilityAt(this.name, Courtier, timing));
       const activeHealthy = game.allOf(
-        [game.hasRoleAt(this.name, Courtier, timing), game.soberAndHealthy(this.name, timing)],
+        [game.hasAbilityAt(this.name, Courtier, timing), game.soberAndHealthy(this.name, timing)],
         claimName(this.name, Courtier, "choice_active"),
       );
       game.addRoleDrunking(this.role, this.drunkTimings, { activeIf: activeHealthy });
@@ -1671,11 +1525,9 @@ export class Courtier extends Role {
   }
 }
 
-export class Dreamer extends Role {
+export class Dreamer extends TownsfolkRole {
   static readonly roleName = "Dreamer";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly player?: string;
   readonly roles: readonly RoleRef[];
   constructor(
@@ -1702,11 +1554,9 @@ export class Dreamer extends Role {
   }
 }
 
-export class Empath extends Role {
+export class Empath extends TownsfolkRole {
   static readonly roleName = "Empath";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly count?: number;
   readonly neighbors?: readonly [string, string];
   readonly neighborOptions?: readonly EmpathNeighborOption[];
@@ -1774,11 +1624,9 @@ export interface FlowergirlVote {
   readonly demonVoted: boolean;
 }
 
-export class Flowergirl extends Role {
+export class Flowergirl extends TownsfolkRole {
   static readonly roleName = "Flowergirl";
   static readonly wake = Wakes.everyNightExceptFirst;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly votes: readonly FlowergirlVote[];
 
   constructor(
@@ -1842,11 +1690,9 @@ export class Flowergirl extends Role {
   }
 }
 
-export class TeaLady extends Role {
+export class TeaLady extends TownsfolkRole {
   static readonly roleName = "Tea Lady";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
 export interface FortuneTellerCheck {
@@ -1857,11 +1703,9 @@ export interface FortuneTellerCheck {
   readonly timing?: Timing;
 }
 
-export class FortuneTeller extends Role {
+export class FortuneTeller extends TownsfolkRole {
   static readonly roleName = "Fortune Teller";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly checks: readonly FortuneTellerCheck[];
   constructor(
     options: RoleBaseOptions & {
@@ -1922,11 +1766,9 @@ export class FortuneTeller extends Role {
   }
 }
 
-export class Investigator extends Role {
+export class Investigator extends TownsfolkRole {
   static readonly roleName = "Investigator";
   static readonly wake = Wakes.firstNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly among: readonly string[];
   readonly role?: RoleRef;
   readonly minionRole?: RoleRef;
@@ -1953,11 +1795,9 @@ export class Investigator extends Role {
   }
 }
 
-export class Juggler extends Role {
+export class Juggler extends TownsfolkRole {
   static readonly roleName = "Juggler";
   static readonly wake = Wakes.secondNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly guesses: ReadonlyMap<string, RoleRef>;
   readonly correctCount?: number;
   constructor(
@@ -1998,11 +1838,9 @@ export class Juggler extends Role {
   }
 }
 
-export class Shugenja extends Role {
+export class Shugenja extends TownsfolkRole {
   static readonly roleName = "Shugenja";
   static readonly wake = Wakes.firstNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly evilDirection?: "clockwise" | "anticlockwise";
   constructor(
     options: RoleBaseOptions & {
@@ -2042,11 +1880,9 @@ export class Shugenja extends Role {
   }
 }
 
-export class Knight extends Role {
+export class Knight extends TownsfolkRole {
   static readonly roleName = "Knight";
   static readonly wake = Wakes.firstNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   static readonly maxNoDemonAmong = 2;
   readonly noDemonAmong: readonly string[];
   constructor(
@@ -2088,11 +1924,9 @@ export interface VillageIdiotCheck {
   readonly name?: string;
 }
 
-export class VillageIdiot extends Role {
+export class VillageIdiot extends TownsfolkRole {
   static readonly roleName = "Village Idiot";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   static readonly maxCopies = 3;
   readonly checks: readonly VillageIdiotCheck[];
   constructor(
@@ -2126,11 +1960,9 @@ export class VillageIdiot extends Role {
   }
 }
 
-export class Virgin extends Role {
+export class Virgin extends TownsfolkRole {
   static readonly roleName = "Virgin";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly nominator?: string;
   readonly executed?: boolean;
 
@@ -2154,7 +1986,7 @@ export class Virgin extends Role {
 
     const timing = this.claimTiming(explicitTiming(options));
     const activeHealthy = game.allOf(
-      [game.hasRoleAt(this.name, Virgin, timing), game.soberAndHealthy(this.name, healthTimingForAbility(timing))],
+      [game.hasAbilityAt(this.name, Virgin, timing), game.soberAndHealthy(this.name, healthTimingForAbility(timing))],
       claimName(this.name, Virgin, "nomination_active"),
     );
     if (this.executed) game.addTruth(activeHealthy);
@@ -2179,11 +2011,9 @@ export class Virgin extends Role {
   }
 }
 
-export class Librarian extends Role {
+export class Librarian extends TownsfolkRole {
   static readonly roleName = "Librarian";
   static readonly wake = Wakes.firstNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly among: readonly string[];
   readonly role?: RoleRef;
   constructor(
@@ -2221,11 +2051,9 @@ export class Librarian extends Role {
   }
 }
 
-export class Legionary extends Role {
+export class Legionary extends TownsfolkRole {
   static readonly roleName = "Legionary";
   static readonly wake = Wakes.everyNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   static readonly maxCopies = 3;
   readonly counts: readonly LegionaryCount[];
 
@@ -2307,25 +2135,19 @@ export interface LegionaryCount {
   readonly alivePlayers?: readonly string[];
 }
 
-export class Mayor extends Role {
+export class Mayor extends TownsfolkRole {
   static readonly roleName = "Mayor";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
-export class Monk extends Role {
+export class Monk extends TownsfolkRole {
   static readonly roleName = "Monk";
   static readonly wake = Wakes.everyNightExceptFirst;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
 }
 
-export class Noble extends Role {
+export class Noble extends TownsfolkRole {
   static readonly roleName = "Noble";
   static readonly wake = Wakes.firstNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly oneEvilAmong: readonly string[];
   readonly among: readonly string[];
   readonly evilCount?: number;
@@ -2350,11 +2172,9 @@ export class Noble extends Role {
   }
 }
 
-export class Oracle extends Role {
+export class Oracle extends TownsfolkRole {
   static readonly roleName = "Oracle";
   static readonly wake = Wakes.everyNightExceptFirst;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly count?: number;
   readonly deadPlayers: readonly string[];
   readonly deadPlayerOptions?: readonly OracleDeadPlayerOption[];
@@ -2453,11 +2273,9 @@ export interface OracleDeadPlayerOption {
   readonly activeIf: BoolLike;
 }
 
-export class Nightwatchman extends Role {
+export class Nightwatchman extends TownsfolkRole {
   static readonly roleName = "Nightwatchman";
   static readonly wake = Wakes.untilAbilityUsed("Nightwatchman", Wakes.everyNight);
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly chosen?: string;
   readonly learned?: boolean;
   readonly confirmedByChosen: boolean;
@@ -2483,9 +2301,9 @@ export class Nightwatchman extends Role {
     }
 
     const timing = this.claimTiming(explicitTiming(options));
-    game.registerAbilityUse(this.name, Nightwatchman, timing, game.hasRoleAt(this.name, Nightwatchman, timing));
+    game.registerAbilityUse(this.name, Nightwatchman, timing, game.hasAbilityAt(this.name, Nightwatchman, timing));
     const activeHealthy = game.allOf(
-      [game.hasRoleAt(this.name, Nightwatchman, timing), game.soberAndHealthy(this.name, timing)],
+      [game.hasAbilityAt(this.name, Nightwatchman, timing), game.soberAndHealthy(this.name, timing)],
       claimName(this.name, Nightwatchman, "chosen_player_learns"),
     );
     game.addImplication(
@@ -2499,11 +2317,9 @@ export class Nightwatchman extends Role {
   }
 }
 
-export class Savant extends Role {
+export class Savant extends TownsfolkRole {
   static readonly roleName = "Savant";
   static readonly wake = Wakes.never;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly statements: readonly StatementBuilder[];
   constructor(
     options: RoleBaseOptions & {
@@ -2526,11 +2342,9 @@ export class Savant extends Role {
   }
 }
 
-export class Seamstress extends Role {
+export class Seamstress extends TownsfolkRole {
   static readonly roleName = "Seamstress";
   static readonly wake = Wakes.untilAbilityUsed("Seamstress", Wakes.everyNight);
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly among: readonly string[];
   readonly aligned?: boolean;
   constructor(
@@ -2571,15 +2385,13 @@ export class Seamstress extends Role {
       ? predicates.sameAlignmentAt(game, left, right, timing)
       : predicates.differentAlignmentsAt(game, left, right, timing);
     this.applyInfoClaimBuilders(game, Seamstress, [{ learned, timing }, ...this.infoClaims], options);
-    game.registerAbilityUse(this.name, Seamstress, timing, game.hasRoleAt(this.name, Seamstress, timing));
+    game.registerAbilityUse(this.name, Seamstress, timing, game.hasAbilityAt(this.name, Seamstress, timing));
   }
 }
 
-export class Steward extends Role {
+export class Steward extends TownsfolkRole {
   static readonly roleName = "Steward";
   static readonly wake = Wakes.firstNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly goodPlayer?: string;
   constructor(options: RoleBaseOptions & { readonly goodPlayer?: string }) {
     super(options);
@@ -2593,11 +2405,9 @@ export class Steward extends Role {
   }
 }
 
-export class Undertaker extends Role {
+export class Undertaker extends TownsfolkRole {
   static readonly roleName = "Undertaker";
   static readonly wake = Wakes.everyNightExceptFirst;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly player?: string;
   readonly role?: RoleRef;
   constructor(
@@ -2620,11 +2430,9 @@ export class Undertaker extends Role {
   }
 }
 
-export class Washerwoman extends Role {
+export class Washerwoman extends TownsfolkRole {
   static readonly roleName = "Washerwoman";
   static readonly wake = Wakes.firstNight;
-  static readonly alignment = Alignment.Good;
-  static readonly characterType = CharacterType.Townsfolk;
   readonly among: readonly string[];
   readonly role?: RoleRef;
   constructor(

@@ -28,7 +28,7 @@ test("typed operations retain source spans despite whitespace", () => {
 test("current and initial properties, forward joins and inverse joins share time semantics", async () => {
   const game = model();
   game.fixActual("A", "Chef");
-  game.addRoleAt("A", "Artist", "night_2");
+  game.replaceCharacter("A", "Artist", "night_2");
   game.addTruth(
     compile(
       "A.initial_role == Chef && A.role == Artist && some Artist.~role && no Artist.~initial_role && players.initial_role == {Chef} && A.initial_type == Townsfolk",

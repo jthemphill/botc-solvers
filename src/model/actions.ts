@@ -1,3 +1,4 @@
+import { type BooleanConstraints, type BoolVar } from "./boolean";
 import type { BoolLike, BOTCModel, Timing } from "./model";
 
 export interface ChoiceAction {
@@ -9,20 +10,41 @@ export interface ChoiceAction {
   readonly choices: ReadonlyMap<string, BoolLike>;
 }
 
+export function constrainSelection(
+  game: BooleanConstraints,
+  choices: readonly BoolLike[],
+  count: number,
+  active: BoolLike,
+): void {
+  for (const selected of choices) game.addImplication(selected, active);
+  game.addEnforcedExactlyN(choices, count, active);
+}
+
+export function select(
+  game: BooleanConstraints,
+  candidates: readonly string[],
+  active: BoolLike,
+  name: string,
+  count: number,
+): ReadonlyMap<string, BoolVar> {
+  const choices = new Map(candidates.map((candidate) => [candidate, game.newBool(`${name}_${candidate}`)]));
+  constrainSelection(game, [...choices.values()], count, active);
+  return choices;
+}
+
 /** Make choices for an action from its candidate list and specified count. */
 export function choose(
   game: BOTCModel,
   action: Omit<ChoiceAction, "choices">,
   candidates: readonly string[],
 ): ChoiceAction {
-  const choices = new Map(
-    candidates.map((candidate) => [
-      candidate,
-      game.newBool(`${action.rule}_${action.actor}_${action.timing}_${candidate}`),
-    ]),
+  const choices = select(
+    game,
+    candidates,
+    action.active,
+    `${action.rule}_${action.actor}_${action.timing}`,
+    action.count,
   );
-  for (const selected of choices.values()) game.addImplication(selected, action.active);
-  game.addEnforcedExactlyN([...choices.values()], action.count, action.active);
   const result = { ...action, choices };
   game.registerChoiceAction(result);
   return result;

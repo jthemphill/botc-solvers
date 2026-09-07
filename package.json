@@ -8,7 +8,7 @@
     "format:check": "prettier --check .",
     "search:bmr": "bun scripts/search-bmr.ts",
     "test": "bun run test:unit && bun run test:e2e",
-    "test:unit": "bun test src",
+    "test:unit": "bun test",
     "test:e2e": "playwright test",
     "playwright:install": "playwright install chromium",
     "typecheck": "bunx tsc --build tsconfig.json --pretty false",
