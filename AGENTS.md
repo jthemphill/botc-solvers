@@ -19,3 +19,4 @@ Each puzzle describes a game that continues after its last event.
 - Compare puzzle conclusions separately from arbitrary hidden witnesses. Do not regenerate expected role assignments from the solver under test without an independent rule/source justification.
 - Report incomplete character and interaction support. Do not describe a satisfiable approximation as a verified game history.
 - Run unit tests, typechecking, and build checks for engine changes; run relevant browser tests for changes to the worker, schema, or UI.
+- Cover editor controls and complete UI workflows with small browser examples. Keep exhaustive puzzle solution coverage in unit tests. Do not add a browser test for each puzzle.
