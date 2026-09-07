@@ -1,11 +1,12 @@
 import { type Claim, type PuzzleDoc, type TimelineEventDoc } from "../schema/puzzleDoc";
-import type { SerializableWorld } from "../worker/protocol";
+import type { SerializableWorld, SolveSummary } from "../worker/protocol";
 import { scriptWithProtectedRoles, withProtectedScript } from "./scriptRoles";
 
 export interface PuzzleState {
   readonly doc: PuzzleDoc;
   readonly solveResult?: readonly SerializableWorld[];
   readonly solveError?: string;
+  readonly solveSummary?: SolveSummary;
 }
 
 export type PuzzleDocAction =
@@ -28,7 +29,7 @@ export type PuzzleDocAction =
 
 export type SolveAction =
   | { type: "solve"; status: "started"; doc: PuzzleDoc }
-  | { type: "solve"; status: "succeeded"; doc: PuzzleDoc; worlds: readonly SerializableWorld[] }
+  | { type: "solve"; status: "succeeded"; doc: PuzzleDoc; worlds: readonly SerializableWorld[]; summary?: SolveSummary }
   | { type: "solve"; status: "failed"; doc: PuzzleDoc; message: string }
   | { type: "solve"; status: "cleared"; doc: PuzzleDoc };
 
@@ -180,7 +181,7 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
 function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
   if (claim.name === name) return undefined;
   if (claim.knownEvilTwin === name) claim = { ...claim, knownEvilTwin: undefined } as Claim;
-  // Strip references but leave the claim in place.
+  // Remove references to the deleted player. Keep the claim.
   const stripArr = (arr: readonly string[] | undefined) => arr?.filter((n) => n !== name);
   switch (claim.type) {
     case "Assassin":
@@ -555,7 +556,7 @@ export function reducer(state: PuzzleState, action: PuzzleAction): PuzzleState {
       case "cleared":
         return { doc: state.doc };
       case "succeeded":
-        return { doc: state.doc, solveResult: action.worlds };
+        return { doc: state.doc, solveResult: action.worlds, solveSummary: action.summary };
       case "failed":
         return { doc: state.doc, solveError: action.message };
     }

@@ -1,5 +1,6 @@
+import type { ConstraintOrigin } from "../model/sat";
 import { CharacterType, type RoleClass } from "../model/core";
-import { Chef } from "../model/characters";
+import { SemanticBuilder, lower, type TypedProgram } from "./ir";
 import type { BoolLike, BoolVar, BOTCModel, Timing } from "../model/model";
 import { roleByName } from "../model/roleRegistry";
 import type { AstCall, AstJoin, AstNode, AstPath } from "./ast";
@@ -8,6 +9,7 @@ import { parse } from "./parse";
 import type { Span } from "./tokens";
 
 export interface CompileCtx {
+  readonly origin?: ConstraintOrigin;
   readonly players: readonly string[];
   readonly script: readonly string[];
   readonly nameRoot: string;
@@ -29,9 +31,9 @@ type DslValue =
   | { kind: "cardinality"; literals: readonly BoolLike[]; span: Span }
   | { kind: "alignment"; value: AlignmentName; span: Span }
   | { kind: "type"; value: CharacterType; span: Span }
-  | { kind: "playerRole"; player: string; span: Span }
+  | { kind: "playerRole"; player: string; initial?: boolean; span: Span }
   | { kind: "playerAlignment"; player: string; span: Span }
-  | { kind: "playerType"; player: string; span: Span }
+  | { kind: "playerType"; player: string; initial?: boolean; span: Span }
   | { kind: "bool"; value: BoolLike; span: Span }
   | { kind: "number"; value: number; span: Span };
 
@@ -71,7 +73,7 @@ class Compiler {
   private counter = 0;
 
   constructor(
-    private readonly game: BOTCModel,
+    private readonly game: SemanticBuilder,
     private readonly ctx: CompileCtx,
   ) {}
 
@@ -95,6 +97,10 @@ class Compiler {
   }
 
   private evalNode(node: AstNode, env: ReadonlyMap<string, DslValue>): DslValue {
+    return this.game.withSpan(node.span, () => this.evalScopedNode(node, env));
+  }
+
+  private evalScopedNode(node: AstNode, env: ReadonlyMap<string, DslValue>): DslValue {
     switch (node.kind) {
       case "boollit":
         return {
@@ -157,6 +163,10 @@ class Compiler {
   }
 
   private applyInverseField(value: DslValue, field: string, fieldSpan: Span, fullSpan: Span): DslValue {
+    const initial = field.startsWith("initial_");
+    if (initial && field !== "initial_role" && field !== "initial_type")
+      throw new DslError(`Unknown initial-state field ${field}`, fieldSpan);
+    if (initial) field = field.slice("initial_".length);
     const source = this.setElements(value, value.span);
     if (field === "role" && source.kind !== "role")
       throw new DslError(`Cannot apply '.~role' to a ${value.kind}`, fieldSpan);
@@ -171,9 +181,9 @@ class Compiler {
       source.elements.map((entry) => {
         const matches =
           entry.atom.kind === "role"
-            ? this.game.actualIs(player, entry.atom.name)
+            ? this.game.characterAt(player, entry.atom.name, initial ? undefined : this.ctx.timing)
             : entry.atom.kind === "type"
-              ? this.game.hasCharacterType(player, entry.atom.value)
+              ? this.game.hasCharacterTypeAt(player, entry.atom.value, initial ? undefined : this.ctx.timing)
               : entry.atom.kind === "alignment" && entry.atom.value === "Evil"
                 ? this.evilAtContext(player)
                 : this.goodAtContext(player);
@@ -223,9 +233,11 @@ class Compiler {
         const [l, r] = this.game.neighbors(value.name);
         return { kind: "playerSet", names: [l, r], span: fullSpan };
       }
-      if (field === "role") return { kind: "playerRole", player: value.name, span: fullSpan };
+      if (field === "role" || field === "initial_role")
+        return { kind: "playerRole", player: value.name, initial: field === "initial_role", span: fullSpan };
       if (field === "alignment") return { kind: "playerAlignment", player: value.name, span: fullSpan };
-      if (field === "type") return { kind: "playerType", player: value.name, span: fullSpan };
+      if (field === "type" || field === "initial_type")
+        return { kind: "playerType", player: value.name, initial: field === "initial_type", span: fullSpan };
       throw new DslError(`Unknown field '${field}' on a player`, fieldSpan);
     }
     if (value.kind === "playerSet" || (value.kind === "dynamicSet" && value.atomKind === "player")) {
@@ -235,6 +247,10 @@ class Compiler {
   }
 
   private applyPlayerSetField(value: DslValue, field: string, fieldSpan: Span, fullSpan: Span): DslValue {
+    const initial = field.startsWith("initial_");
+    if (initial && field !== "initial_role" && field !== "initial_type")
+      throw new DslError(`Unknown initial-state field ${field}`, fieldSpan);
+    if (initial) field = field.slice("initial_".length);
     const source = this.setElements(value, value.span);
     if (source.kind !== "player") throw new DslError(`Cannot apply '.${field}' to a ${value.kind}`, fieldSpan);
     const playerEntries: readonly PlayerSetElement[] = source.elements.map((entry) => {
@@ -260,7 +276,7 @@ class Compiler {
         this.ctx.script.map((name) => ({
           atom: { kind: "role" as const, name, span: fullSpan },
           present: this.game.allOf(
-            [entry.present, this.game.actualIs(entry.atom.name, name)],
+            [entry.present, this.game.characterAt(entry.atom.name, name, initial ? undefined : this.ctx.timing)],
             this.freshName("join_role"),
           ),
         })),
@@ -273,7 +289,7 @@ class Compiler {
         ALL_CHARACTER_TYPES.map((type) => ({
           atom: { kind: "type" as const, value: type, span: fullSpan },
           present: this.game.allOf(
-            [entry.present, this.game.hasCharacterType(entry.atom.name, type)],
+            [entry.present, this.game.hasCharacterTypeAt(entry.atom.name, type, initial ? undefined : this.ctx.timing)],
             this.freshName("join_type"),
           ),
         })),
@@ -503,7 +519,7 @@ class Compiler {
         kind: "role",
         elements: this.ctx.script.map((name) => ({
           atom: { kind: "role", name, span },
-          present: this.game.actualIs(value.player, name),
+          present: this.game.characterAt(value.player, name, value.initial ? undefined : this.ctx.timing),
         })),
       };
     if (value.kind === "playerType")
@@ -511,7 +527,7 @@ class Compiler {
         kind: "type",
         elements: ALL_CHARACTER_TYPES.map((type) => ({
           atom: { kind: "type", value: type, span },
-          present: this.game.hasCharacterType(value.player, type),
+          present: this.game.hasCharacterTypeAt(value.player, type, value.initial ? undefined : this.ctx.timing),
         })),
       };
     if (value.kind === "playerAlignment")
@@ -678,7 +694,8 @@ class Compiler {
       return this.game.boolSumEquals(a.literals, b.value, this.freshName(`cardinality_${b.value}`));
     if (a.kind === "number" && b.kind === "number")
       return this.game.constantBool(a.value === b.value, this.freshName("number_eq"));
-    if (a.kind === "playerRole" && b.kind === "role") return this.game.actualIs(a.player, b.name);
+    if (a.kind === "playerRole" && b.kind === "role")
+      return this.game.characterAt(a.player, b.name, a.initial ? undefined : this.ctx.timing);
     if (a.kind === "playerAlignment" && b.kind === "alignment")
       return b.value === "Evil" ? this.evilAtContext(a.player) : this.goodAtContext(a.player);
     if (a.kind === "playerAlignment" && b.kind === "playerAlignment")
@@ -689,12 +706,16 @@ class Compiler {
         ],
         this.freshName("same_alignment"),
       );
-    if (a.kind === "playerType" && b.kind === "type") return this.game.hasCharacterType(a.player, b.value);
+    if (a.kind === "playerType" && b.kind === "type")
+      return this.game.hasCharacterTypeAt(a.player, b.value, a.initial ? undefined : this.ctx.timing);
     if (a.kind === "playerType" && b.kind === "playerType")
       return this.game.anyOf(
         Object.values(CharacterType).map((type) =>
           this.game.allOf(
-            [this.game.hasCharacterType(a.player, type), this.game.hasCharacterType(b.player, type)],
+            [
+              this.game.hasCharacterTypeAt(a.player, type, a.initial ? undefined : this.ctx.timing),
+              this.game.hasCharacterTypeAt(b.player, type, b.initial ? undefined : this.ctx.timing),
+            ],
             this.freshName(`both_${type}`),
           ),
         ),
@@ -708,6 +729,23 @@ class Compiler {
       return this.game.constantBool(a.value === b.value, this.freshName("alignment_eq"));
     if (a.kind === "type" && b.kind === "type")
       return this.game.constantBool(a.value === b.value, this.freshName("type_eq"));
+    const setKinds = ["dynamicSet", "playerSet", "roleSet", "typeSet", "alignmentSet"];
+    if (setKinds.includes(a.kind) && setKinds.includes(b.kind)) {
+      const left = this.setElements(a, a.span),
+        right = this.setElements(b, b.span);
+      if (left.kind !== right.kind) throw new DslError("Set equality requires matching element types", span);
+      const differences = [
+        ...this.subtractElements(left.elements, right.elements),
+        ...this.subtractElements(right.elements, left.elements),
+      ];
+      return this.game.not(
+        this.game.anyOf(
+          differences.map((entry) => entry.present),
+          this.freshName("set_difference"),
+        ),
+        this.freshName("set_equal"),
+      );
+    }
     throw new DslError(`Cannot compare ${lhs.kind} with ${rhs.kind}`, span);
   }
 
@@ -756,7 +794,7 @@ class Compiler {
         const role = this.evalNode(roleArg.value, env);
         if (player.kind !== "player") throw new DslError(`role_count expected a player`, player.span);
         if (role.kind !== "role") throw new DslError(`role_count expected a role`, role.span);
-        literals.push(this.game.actualIs(player.name, role.name));
+        literals.push(this.game.characterAt(player.name, role.name, this.ctx.timing));
       }
       return {
         kind: "bool",
@@ -821,7 +859,7 @@ class Compiler {
       if (role.kind !== "role") throw new DslError(`registers_as expected a role`, role.span);
       return {
         kind: "bool",
-        value: this.game.registersAsRole(player.name, role.name, this.freshName("registers_as")),
+        value: this.game.registersAsRole(player.name, role.name, this.freshName("registers_as"), this.ctx.timing),
         span: node.span,
       };
     }
@@ -839,7 +877,7 @@ class Compiler {
       if (role.kind !== "role") throw new DslError(`role_at expected a role second`, role.span);
       return {
         kind: "bool",
-        value: this.game.hasRoleAt(player.name, role.name, timing),
+        value: this.game.characterAt(player.name, role.name, timing),
         span: node.span,
       };
     }
@@ -900,7 +938,7 @@ class Compiler {
       const countVal = this.evalNode(countArg.value, env);
       if (countVal.kind !== "number") throw new DslError(`chef expects a number`, countArg.span);
       const name = this.freshName(`chef_${countVal.value}`);
-      const bv = Chef.learnsCount(this.game, countVal.value, name);
+      const bv = this.game.chefCount(countVal.value, name);
       return { kind: "bool", value: bv, span: node.span };
     }
     throw new DslError(`Unknown function '${node.name}'`, node.nameSpan);
@@ -916,8 +954,8 @@ class Compiler {
           const seatingDistance = Math.min(clockwise, this.ctx.players.length - clockwise);
           return this.game.allOf(
             [
-              this.game.actualIs(leftPlayer, leftRole),
-              this.game.actualIs(rightPlayer, rightRole),
+              this.game.characterAt(leftPlayer, leftRole, this.ctx.timing),
+              this.game.characterAt(rightPlayer, rightRole, this.ctx.timing),
               this.game.constantBool(seatingDistance === distance, this.freshName(`distance_${distance}`)),
             ],
             this.freshName(`role_distance_${distance}`),
@@ -949,7 +987,7 @@ class Compiler {
         this.game.allOf(
           Array.from({ length }, (_ignored, offset) => {
             const player = this.ctx.players[(startIndex + offset) % this.ctx.players.length] as string;
-            return this.game.hasCharacterType(player, characterType);
+            return this.game.hasCharacterTypeAt(player, characterType, this.ctx.timing);
           }),
           this.freshName(`${characterType}_chain_${length}`),
         ),
@@ -1003,8 +1041,12 @@ function orderPair(a: DslValue, b: DslValue): readonly [DslValue, DslValue] {
   return [a, b];
 }
 
+export function prepare(src: string, ctx: CompileCtx): TypedProgram {
+  const ast = parse(lex(src));
+  const semantics = new SemanticBuilder(ctx.players);
+  return semantics.finish(new Compiler(semantics, ctx).compile(ast), src, ctx.nameRoot, ctx.origin);
+}
+
 export function compile(src: string, game: BOTCModel, ctx: CompileCtx): BoolLike {
-  const tokens = lex(src);
-  const ast = parse(tokens);
-  return new Compiler(game, ctx).compile(ast);
+  return game.withTiming(ctx.timing ?? "night_1", () => lower(prepare(src, ctx), game));
 }

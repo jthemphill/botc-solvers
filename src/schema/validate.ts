@@ -58,6 +58,8 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
   const claims = input["claims"];
   if (!Array.isArray(claims)) throw new ValidationError(`Expected array`, "$.claims");
   const validatedClaims = claims.map((c, i) => validateClaim(c, `$.claims[${i}]`));
+  validateTimingFields(claims, "$.claims");
+  validateTimingFields(input["timeline"], "$.timeline");
 
   const setup = input["setup"];
   if (setup !== undefined && setup !== "standard" && setup !== "none" && setup !== "atheist")
@@ -82,13 +84,33 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
   };
 }
 
+function validateTimingFields(value: unknown, path: string): void {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => validateTimingFields(item, `${path}[${index}]`));
+    return;
+  }
+  if (!isObject(value)) return;
+  for (const [key, child] of Object.entries(value)) {
+    if (child === undefined) continue;
+    if (key === "timing" || key === "roleTiming") {
+      if (typeof child !== "string" || !/^(night|day)_[1-9]\d*$/.test(child))
+        throw new ValidationError("Expected a positive night or day", `${path}.${key}`);
+    } else if (typeof child === "object") validateTimingFields(child, `${path}.${key}`);
+  }
+}
+
 function validateConstraints(v: unknown, pathRoot: string): NonNullable<PuzzleDoc["constraints"]> {
   if (!Array.isArray(v)) throw new ValidationError(`Expected array`, pathRoot);
   return v.map((entry, i) => {
     const path = `${pathRoot}[${i}]`;
     if (!isObject(entry)) throw new ValidationError(`Expected object`, path);
+    const kind = entry["kind"];
+    if (kind !== undefined && kind !== "fact" && kind !== "assumption")
+      throw new ValidationError("Expected fact or assumption", `${path}.kind`);
     return {
       expression: expectString(entry["expression"], `${path}.expression`),
+      kind,
+      source: entry["source"] === undefined ? undefined : expectString(entry["source"], `${path}.source`),
     };
   });
 }
@@ -138,7 +160,20 @@ function validateClaim(input: unknown, path: string): Claim {
   const knownEvilTwin =
     input["knownEvilTwin"] === undefined ? undefined : expectString(input["knownEvilTwin"], `${path}.knownEvilTwin`);
   const info = input["info"] === undefined ? undefined : validateCustomInfo(input["info"], `${path}.info`, type);
-  const base = { name, timing, alignment, possibleActualRoles, heardWidowCall, knownEvilTwin, info };
+  const roleTiming =
+    input["roleTiming"] === undefined ? undefined : expectString(input["roleTiming"], `${path}.roleTiming`);
+  const source = input["source"] === undefined ? undefined : expectString(input["source"], `${path}.source`);
+  const base = {
+    name,
+    roleTiming,
+    source,
+    timing,
+    alignment,
+    possibleActualRoles,
+    heardWidowCall,
+    knownEvilTwin,
+    info,
+  };
 
   switch (type as Claim["type"]) {
     case "Assassin":

@@ -60,7 +60,7 @@
       "info": [
         {
           "timing": "day_1",
-          "expression": "Hannah.role != Boffin"
+          "expression": "Hannah.initial_role != Boffin"
         }
       ]
     },

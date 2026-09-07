@@ -84,7 +84,7 @@
       "info": [
         {
           "timing": "day_1",
-          "expression": "Fraser.type == Demon"
+          "expression": "Fraser.initial_type == Demon"
         }
       ],
       "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]

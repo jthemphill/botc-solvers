@@ -40,55 +40,55 @@
   "setup": "none",
   "constraints": [
     {
-      "expression": "#Townsfolk.~type = 8"
+      "expression": "#Townsfolk.~initial_type = 8"
     },
     {
-      "expression": "#Outsider.~type = 3"
+      "expression": "#Outsider.~initial_type = 3"
     },
     {
-      "expression": "#Minion.~type = 3"
+      "expression": "#Minion.~initial_type = 3"
     },
     {
-      "expression": "#Demon.~type = 1"
+      "expression": "#Demon.~initial_type = 1"
     },
     {
-      "expression": "no Slayer.~role"
+      "expression": "no Slayer.~initial_role"
     },
     {
-      "expression": "no Ravenkeeper.~role"
+      "expression": "no Ravenkeeper.~initial_role"
     },
     {
-      "expression": "no Mayor.~role"
+      "expression": "no Mayor.~initial_role"
     },
     {
       "expression": "poisoned(Sarah, night_1)"
     },
     {
-      "expression": "Adam.role == Poisoner"
+      "expression": "Adam.initial_role == Poisoner"
     },
     {
-      "expression": "Sarah.role in {Washerwoman, Undertaker, Butler}"
+      "expression": "Sarah.initial_role in {Washerwoman, Undertaker, Butler}"
     },
     {
-      "expression": "Sula.role == Godfather"
+      "expression": "Sula.initial_role == Godfather"
     },
     {
-      "expression": "Aoife.role in {Librarian, Saint, Mayor}"
+      "expression": "Aoife.initial_role in {Librarian, Saint, Mayor}"
     },
     {
-      "expression": "Jasmine.role in {Investigator, `Fortune Teller`, Butler}"
+      "expression": "Jasmine.initial_role in {Investigator, `Fortune Teller`, Butler}"
     },
     {
-      "expression": "You.role == Imp"
+      "expression": "You.initial_role == Imp"
     },
     {
-      "expression": "Anna.role in {`Fortune Teller`, Monk, Recluse}"
+      "expression": "Anna.initial_role in {`Fortune Teller`, Monk, Recluse}"
     },
     {
-      "expression": "Oscar.role == `Scarlet Woman`"
+      "expression": "Oscar.initial_role == `Scarlet Woman`"
     },
     {
-      "expression": "Olivia.role in {Washerwoman, Monk, Recluse}"
+      "expression": "Olivia.initial_role in {Washerwoman, Monk, Recluse}"
     }
   ],
   "claims": [

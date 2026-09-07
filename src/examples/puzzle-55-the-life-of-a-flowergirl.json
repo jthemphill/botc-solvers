@@ -52,7 +52,7 @@
       "info": [
         {
           "timing": "day_1",
-          "expression": "Aoife.role != Artist"
+          "expression": "Aoife.initial_role != Artist"
         }
       ]
     },

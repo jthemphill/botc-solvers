@@ -1,15 +1,24 @@
 export type Literal = number;
 export type Clause = readonly Literal[];
 
+export interface ConstraintOrigin {
+  readonly kind: "rule" | "fact" | "assumption";
+  readonly id: string;
+  readonly expression?: string;
+  readonly span?: { readonly start: number; readonly end: number };
+  readonly source?: string;
+}
+
 export interface SatProblem {
   readonly variableCount: number;
   readonly clauses: readonly Clause[];
+  readonly origins?: readonly ConstraintOrigin[];
 }
 
-export interface SatResult {
-  readonly sat: boolean;
-  readonly model?: ReadonlySet<number>;
-}
+export type SatResult =
+  | { readonly status: "sat"; readonly sat: true; readonly model: ReadonlySet<number> }
+  | { readonly status: "unsat"; readonly sat: false }
+  | { readonly status: "unknown"; readonly sat: undefined; readonly reason: string };
 
 export interface SatBackend {
   solve(problem: SatProblem): Promise<SatResult>;
@@ -87,8 +96,10 @@ export class KissatBackend implements SatBackend {
     try {
       for (const clause of problem.clauses) solver.addClause(clause);
       const sat = solver.solve();
-      if (sat !== true) return { sat: false };
-      return { sat: true, model: solver.positiveModel(problem.variableCount) };
+      if (sat === undefined)
+        return { status: "unknown", sat: undefined, reason: "Kissat did not complete the search." };
+      if (!sat) return { status: "unsat", sat: false };
+      return { status: "sat", sat: true, model: solver.positiveModel(problem.variableCount) };
     } finally {
       solver.release();
     }
@@ -118,4 +129,17 @@ export function combinations<T>(items: readonly T[], size: number): T[][] {
   };
   visit(0);
   return result;
+}
+
+/** Make sure that each clause in the supplied problem is true in the SAT witness. */
+export function validateSatWitness(problem: SatProblem, model: ReadonlySet<number>): void {
+  for (const variable of model)
+    if (!Number.isInteger(variable) || variable < 1 || variable > problem.variableCount)
+      throw new Error(`Backend returned an invalid variable: ${variable}.`);
+  for (const [index, clause] of problem.clauses.entries()) {
+    if (!clause.some((literal) => model.has(Math.abs(literal)) === literal > 0)) {
+      const origin = problem.origins?.[index];
+      throw new Error(`Invalid SAT witness at clause ${index + 1}${origin ? ` (${origin.kind}: ${origin.id})` : ""}.`);
+    }
+  }
 }

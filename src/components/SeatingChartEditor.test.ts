@@ -168,3 +168,12 @@ describe("claimSummary", () => {
     ).toBe("I learned that Oscar, Hannah, or Jasmine was poisoned on day 1.");
   });
 });
+
+test("Artist summaries preserve the distinction between starting and current characters", () => {
+  expect(claimSummary({ type: "Artist", name: "A", info: [{ expression: "B.initial_role != Chef" }] })).toBe(
+    "I learned that B did not start as the Chef.",
+  );
+  expect(claimSummary({ type: "Artist", name: "A", info: [{ expression: "B.role != Chef" }] })).toBe(
+    "I learned that B is not the Chef.",
+  );
+});

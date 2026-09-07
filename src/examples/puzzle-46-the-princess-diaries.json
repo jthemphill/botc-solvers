@@ -59,11 +59,11 @@
       "statements": [
         {
           "timing": "day_1",
-          "expression": "Adam.type == Townsfolk"
+          "expression": "Adam.initial_type == Townsfolk"
         },
         {
           "timing": "day_2",
-          "expression": "Matthew.type == Demon"
+          "expression": "Matthew.initial_type == Demon"
         }
       ]
     },

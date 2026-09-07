@@ -19,15 +19,42 @@
     "Librarian"
   ],
   "timeline": [
-    { "timing": "day_1", "type": "execution", "players": ["Josh"] },
-    { "timing": "night_2", "type": "nightDeath", "players": ["Dan"] },
-    { "timing": "day_2", "type": "execution", "players": ["Sarah"] },
-    { "timing": "night_3", "type": "nightDeath", "players": ["Tom"] },
-    { "timing": "day_3", "type": "execution", "players": ["Olivia"] },
-    { "timing": "night_4", "type": "nightDeath", "players": ["You"] }
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Josh"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Dan"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Sarah"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Tom"]
+    },
+    {
+      "timing": "day_3",
+      "type": "execution",
+      "players": ["Olivia"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": ["You"]
+    }
   ],
   "claims": [
-    { "type": "Saint", "name": "Anna" },
+    {
+      "type": "Saint",
+      "name": "Anna"
+    },
     {
       "type": "Investigator",
       "name": "Olivia",
@@ -42,7 +69,10 @@
       "role": "Investigator",
       "among": ["Charlotte", "Olivia"]
     },
-    { "type": "Butler", "name": "Josh" },
+    {
+      "type": "Butler",
+      "name": "Josh"
+    },
     {
       "type": "Librarian",
       "name": "Sarah",
@@ -55,12 +85,32 @@
       "name": "You",
       "possibleActualRoles": ["Fortune Teller", "Drunk"],
       "checks": [
-        { "timing": "night_1", "left": "Charlotte", "right": "You", "yes": false },
-        { "timing": "night_2", "left": "Tom", "right": "Charlotte", "yes": false },
-        { "timing": "night_3", "left": "Matthew", "right": "You", "yes": false }
+        {
+          "timing": "night_1",
+          "left": "Charlotte",
+          "right": "You",
+          "yes": false
+        },
+        {
+          "timing": "night_2",
+          "left": "Tom",
+          "right": "Charlotte",
+          "yes": false
+        },
+        {
+          "timing": "night_3",
+          "left": "Matthew",
+          "right": "You",
+          "yes": false
+        }
       ]
     },
-    { "type": "Chef", "name": "Dan", "timing": "night_1", "count": 0 },
+    {
+      "type": "Chef",
+      "name": "Dan",
+      "timing": "night_1",
+      "count": 0
+    },
     {
       "type": "Ravenkeeper",
       "name": "Tom",
@@ -68,6 +118,9 @@
       "player": "Olivia",
       "role": "Scarlet Woman"
     },
-    { "type": "Recluse", "name": "Charlotte" }
+    {
+      "type": "Recluse",
+      "name": "Charlotte"
+    }
   ]
 }

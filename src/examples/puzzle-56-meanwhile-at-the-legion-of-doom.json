@@ -17,28 +17,28 @@
   "setup": "none",
   "constraints": [
     {
-      "expression": "#Legion.~role in {0, 5, 6}"
+      "expression": "#Legion.~initial_role in {0, 5, 6}"
     },
     {
-      "expression": "no Legion.~role => one Imp.~role"
+      "expression": "no Legion.~initial_role => one Imp.~initial_role"
     },
     {
-      "expression": "no Legion.~role => one Poisoner.~role"
+      "expression": "no Legion.~initial_role => one Poisoner.~initial_role"
     },
     {
-      "expression": "some Legion.~role => no Imp.~role"
+      "expression": "some Legion.~initial_role => no Imp.~initial_role"
     },
     {
-      "expression": "some Legion.~role => no Poisoner.~role"
+      "expression": "some Legion.~initial_role => no Poisoner.~initial_role"
     },
     {
-      "expression": "some Legion.~role => some ({Aoife, Hannah, Tom, Sula, Sarah} & Good.~alignment)"
+      "expression": "some Legion.~initial_role => some ({Aoife, Hannah, Tom, Sula, Sarah} & Good.~alignment)"
     },
     {
-      "expression": "some Legion.~role => some ({Aoife, Hannah, Tom, Fraser} & Good.~alignment)"
+      "expression": "some Legion.~initial_role => some ({Aoife, Hannah, Tom, Fraser} & Good.~alignment)"
     },
     {
-      "expression": "some Legion.~role => #({You, Aoife, Hannah, Fraser} & Good.~alignment) != 1"
+      "expression": "some Legion.~initial_role => #({You, Aoife, Hannah, Fraser} & Good.~alignment) != 1"
     }
   ],
   "timeline": [

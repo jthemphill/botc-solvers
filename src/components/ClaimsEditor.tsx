@@ -618,6 +618,21 @@ function AdvancedClaimFields({ doc, claim, onChange }: BodyProps) {
     <details className="advanced-claim-fields" open={possibleActualRoles.length > 0 || claim.alignment !== undefined}>
       <summary>Advanced</summary>
       <div className="field-grid">
+        <span>Character claim refers to</span>
+        <select
+          aria-label="Character claim refers to"
+          value={claim.roleTiming ?? ""}
+          onChange={(event) => onChange({ ...claim, roleTiming: event.target.value || undefined })}
+        >
+          <option value="">Starting character</option>
+          {Array.from({ length: 10 }, (_, i) => [`night_${i + 1}`, `day_${i + 1}`])
+            .flat()
+            .map((timing) => (
+              <option key={timing} value={timing}>
+                {timingLabel(timing)}
+              </option>
+            ))}
+        </select>
         <span>Claimed alignment</span>
         <select
           aria-label="Claimed alignment"

@@ -177,7 +177,7 @@ function artistInfoSummary(expression: string): string {
     const summary = artistInfoAstSummary(parse(lex(expression)));
     if (summary !== undefined) return summary;
   } catch {
-    // Invalid or unsupported expressions remain visible as entered.
+    // If the parser fails, show the expression as text.
   }
 
   return `I learned: ${readable}.`;
@@ -196,16 +196,16 @@ function artistInfoAstSummary(node: AstNode): string | undefined {
     const roleComparison = simpleComparisonFromAst(node.body);
     if (
       roleComparison?.player === node.variable &&
-      roleComparison.field === "role" &&
+      (roleComparison.field === "role" || roleComparison.field === "initial_role") &&
       roleComparison.operator === "eq"
     ) {
       if (isPath(node.set, "players") && node.quantifier === "some") {
-        return `I learned that someone is the ${roleComparison.value}.`;
+        return `I learned that someone ${roleComparison.field === "initial_role" ? "started as" : "is"} the ${roleComparison.value}.`;
       }
       if (players !== undefined && (node.quantifier === "some" || node.quantifier === "no")) {
         return node.quantifier === "no"
-          ? `I learned that none of ${formatList(players)} is the ${roleComparison.value}.`
-          : `I learned that one of ${formatList(players)} is the ${roleComparison.value}.`;
+          ? `I learned that none of ${formatList(players)} ${roleComparison.field === "initial_role" ? "started as" : "is"} the ${roleComparison.value}.`
+          : `I learned that one of ${formatList(players)} ${roleComparison.field === "initial_role" ? "started as" : "is"} the ${roleComparison.value}.`;
       }
     }
 
@@ -278,7 +278,7 @@ function artistInfoAstSummary(node: AstNode): string | undefined {
 
 interface SimpleComparison {
   readonly player: string;
-  readonly field: "role" | "type";
+  readonly field: "role" | "type" | "initial_role" | "initial_type";
   readonly operator: "eq" | "neq";
   readonly value: string;
 }
@@ -303,7 +303,9 @@ function learnedComparisonSummary(
   operator: SimpleComparison["operator"],
   value: string,
 ): string {
-  const article = field === "role" ? "the" : /^[aeiou]/i.test(value) ? "an" : "a";
+  const article = field === "role" || field === "initial_role" ? "the" : /^[aeiou]/i.test(value) ? "an" : "a";
+  if (field.startsWith("initial_"))
+    return `I learned that ${player} ${operator === "neq" ? "did not start as" : "started as"} ${article} ${value}.`;
   return `I learned that ${player} is${operator === "neq" ? " not" : ""} ${article} ${value}.`;
 }
 
@@ -311,7 +313,10 @@ function playerField(node: AstNode): Pick<SimpleComparison, "player" | "field"> 
   if (
     node.kind !== "join" ||
     node.inverse ||
-    (node.field !== "role" && node.field !== "type") ||
+    (node.field !== "role" &&
+      node.field !== "type" &&
+      node.field !== "initial_role" &&
+      node.field !== "initial_type") ||
     node.left.kind !== "path"
   ) {
     return undefined;
@@ -319,15 +324,22 @@ function playerField(node: AstNode): Pick<SimpleComparison, "player" | "field"> 
   return { player: node.left.root, field: node.field };
 }
 
-function joinedSetMembership(
-  node: AstNode,
-): { readonly players: string; readonly field: "role" | "type"; readonly value: string } | undefined {
+function joinedSetMembership(node: AstNode):
+  | {
+      readonly players: string;
+      readonly field: "role" | "type" | "initial_role" | "initial_type";
+      readonly value: string;
+    }
+  | undefined {
   if (
     node.kind !== "binop" ||
     node.op !== "in" ||
     node.right.kind !== "join" ||
     node.right.inverse ||
-    (node.right.field !== "role" && node.right.field !== "type")
+    (node.right.field !== "role" &&
+      node.right.field !== "type" &&
+      node.right.field !== "initial_role" &&
+      node.right.field !== "initial_type")
   ) {
     return undefined;
   }

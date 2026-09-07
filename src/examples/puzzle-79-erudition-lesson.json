@@ -53,7 +53,7 @@
       "info": [
         {
           "timing": "day_2",
-          "expression": "Goose.type != Townsfolk"
+          "expression": "Goose.initial_type != Townsfolk"
         }
       ],
       "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "Vortox", "No Dashii", "Witch", "Mutant"]
@@ -98,8 +98,8 @@
       "statements": [
         {
           "options": [
-            "#({Mathematician, Juggler, Vigormortis, `No Dashii`} & players.role) = 3",
-            "#{p : {Edd, Louisa, Chris} | p.type == Townsfolk} == 2"
+            "#({Mathematician, Juggler, Vigormortis, `No Dashii`} & players.initial_role) = 3",
+            "#{p : {Edd, Louisa, Chris} | p.initial_type == Townsfolk} == 2"
           ]
         }
       ],
@@ -123,8 +123,8 @@
       "statements": [
         {
           "options": [
-            "#((Seb + Louisa + Marc + Chris).type) = 3",
-            "some p : Vigormortis.~role | Mutant in p.neighbors.role"
+            "#((Seb + Louisa + Marc + Chris).initial_type) = 3",
+            "some p : Vigormortis.~initial_role | Mutant in p.neighbors.initial_role"
           ]
         }
       ],

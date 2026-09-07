@@ -61,7 +61,7 @@
       "info": [
         {
           "timing": "night_4",
-          "expression": "Matt.type != Demon"
+          "expression": "Matt.initial_type != Demon"
         }
       ]
     },

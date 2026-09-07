@@ -64,7 +64,7 @@
       "info": [
         {
           "timing": "day_3",
-          "expression": "Tom.type == Townsfolk"
+          "expression": "Tom.initial_type == Townsfolk"
         }
       ],
       "possibleActualRoles": ["Artist", "Vortox", "Witch", "Mutant"]

@@ -15,7 +15,7 @@ export function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { doc, solveError, solveResult } = state;
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const { busy, solve } = useSolver();
+  const { busy, solve, cancel } = useSolver();
 
   useEffect(() => {
     if (doc.players.length === 0 || doc.script.length === 0) {
@@ -27,8 +27,8 @@ export function App() {
     const timer = window.setTimeout(() => {
       dispatch({ type: "solve", status: "started", doc });
       void solve(doc, SOLUTION_LIMIT).then(
-        (worlds) => {
-          if (active) dispatch({ type: "solve", status: "succeeded", doc, worlds });
+        ({ worlds, summary }) => {
+          if (active) dispatch({ type: "solve", status: "succeeded", doc, worlds, summary });
         },
         (error: unknown) => {
           if (!active) return;
@@ -45,8 +45,9 @@ export function App() {
     return () => {
       active = false;
       window.clearTimeout(timer);
+      cancel();
     };
-  }, [doc, solve]);
+  }, [doc, solve, cancel]);
 
   const handleError = (message: string | undefined) => {
     dispatch(
@@ -103,6 +104,7 @@ export function App() {
               </div>
               <ResultsView
                 worlds={solveResult}
+                summary={state.solveSummary}
                 players={doc.players}
                 error={solveError}
                 busy={busy}

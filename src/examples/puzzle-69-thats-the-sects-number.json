@@ -60,7 +60,7 @@
       "info": [
         {
           "timing": "day_3",
-          "expression": "Fraser.role != Artist"
+          "expression": "Fraser.initial_role != Artist"
         }
       ],
       "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]

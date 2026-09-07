@@ -71,6 +71,7 @@ function timingOf(t: string | undefined): Timing | undefined {
 export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx, "nameRoot">): Role {
   const timing = timingOf(claim.timing);
   const base = {
+    roleTiming: timingOf(claim.roleTiming),
     name: claim.name,
     timing,
     claimAlignment:

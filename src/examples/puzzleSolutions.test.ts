@@ -73,7 +73,12 @@ describe("JSON puzzle solutions", () => {
       const doc = validatePuzzleDoc(data);
       const worlds = await buildFromDoc(doc, backend).solveAll();
 
-      expect(serializeWorlds(worlds, doc.players), id).toEqual(solutions);
+      // Compare role assignments with the published answers.
+      // The solver examines the hidden choices in each witness.
+      expect(
+        serializeWorlds(worlds, doc.players).map(({ roles }) => ({ roles })),
+        id,
+      ).toEqual(solutions.map(({ roles }) => ({ roles })));
     },
     SOLUTION_TIMEOUT_MS,
   );

@@ -95,11 +95,11 @@
       "statements": [
         {
           "timing": "day_1",
-          "expression": "Fraser.type == Demon"
+          "expression": "Fraser.initial_type == Demon"
         },
         {
           "timing": "day_2",
-          "expression": "Anna.type == Demon"
+          "expression": "Anna.initial_type == Demon"
         }
       ]
     }

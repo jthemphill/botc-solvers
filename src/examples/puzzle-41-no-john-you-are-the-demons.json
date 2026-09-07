@@ -66,7 +66,7 @@
       "info": [
         {
           "timing": "day_1",
-          "expression": "Riley.type != Townsfolk"
+          "expression": "Riley.initial_type != Townsfolk"
         }
       ],
       "possibleActualRoles": ["Artist", "Imp", "Witch", "Lunatic", "Drunk"]

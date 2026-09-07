@@ -18,13 +18,13 @@
   ],
   "constraints": [
     {
-      "expression": "Matthew.role != Drunk"
+      "expression": "Matthew.initial_role != Drunk"
     },
     {
-      "expression": "Oscar.role != Drunk"
+      "expression": "Oscar.initial_role != Drunk"
     },
     {
-      "expression": "Dan.role != Drunk"
+      "expression": "Dan.initial_role != Drunk"
     }
   ],
   "timeline": [

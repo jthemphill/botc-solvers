@@ -149,14 +149,14 @@
       "type": "Gossip",
       "statements": [
         {
-          "expression": "some Pukka.~role"
+          "expression": "some Pukka.~initial_role"
         },
         {
-          "expression": "some Pukka.~role",
+          "expression": "some Pukka.~initial_role",
           "timing": "day_2"
         },
         {
-          "expression": "some Pukka.~role",
+          "expression": "some Pukka.~initial_role",
           "timing": "day_3"
         }
       ]

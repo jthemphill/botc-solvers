@@ -12,6 +12,8 @@ export interface PuzzleDoc {
 export const KNIGHT_NO_DEMON_AMONG_MAX = 2;
 
 export interface PuzzleConstraintDoc {
+  readonly source?: string;
+  readonly kind?: "fact" | "assumption";
   readonly expression: string;
 }
 
@@ -106,6 +108,9 @@ export type Claim =
   | BareClaim;
 
 interface BaseClaim {
+  /** Role claims use the initial character by default. This field gives the phase of a later character claim. */
+  readonly roleTiming?: string;
+  readonly source?: string;
   readonly name: string;
   readonly timing?: string;
   readonly alignment?: "good" | "evil";

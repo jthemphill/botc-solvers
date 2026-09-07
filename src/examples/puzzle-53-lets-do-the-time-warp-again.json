@@ -91,7 +91,7 @@
       "info": [
         {
           "timing": "day_2",
-          "expression": "Sarah.type != Demon"
+          "expression": "Sarah.initial_type != Demon"
         }
       ],
       "possibleActualRoles": ["Artist"]

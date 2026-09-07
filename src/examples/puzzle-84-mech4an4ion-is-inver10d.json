@@ -14,19 +14,48 @@
     "Librarian"
   ],
   "timeline": [
-    { "timing": "day_1", "type": "witchCurse", "players": ["Sarah"], "caller": "Sarah" },
-    { "timing": "day_1", "type": "execution", "players": ["Matt"] },
-    { "timing": "night_2", "type": "nightDeath", "players": ["Fraser"] },
-    { "timing": "day_2", "type": "execution", "players": ["Aoife"] },
-    { "timing": "night_3", "type": "nightDeath", "players": ["You"] }
+    {
+      "timing": "day_1",
+      "type": "witchCurse",
+      "players": ["Sarah"],
+      "caller": "Sarah"
+    },
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Matt"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Aoife"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["You"]
+    }
   ],
   "claims": [
     {
       "type": "Town Crier",
       "name": "Josh",
       "checks": [
-        { "timing": "night_2", "nominators": ["Sarah", "Aoife"], "minionNominated": true },
-        { "timing": "night_3", "nominators": ["You", "Charlotte"], "minionNominated": false }
+        {
+          "timing": "night_2",
+          "nominators": ["Sarah", "Aoife"],
+          "minionNominated": true
+        },
+        {
+          "timing": "night_3",
+          "nominators": ["You", "Charlotte"],
+          "minionNominated": false
+        }
       ]
     },
     {
@@ -36,8 +65,18 @@
       "role": "Recluse",
       "among": ["You", "Matt"]
     },
-    { "type": "Oracle", "name": "Tim", "timing": "night_2", "count": 0 },
-    { "type": "Oracle", "name": "Tim", "timing": "night_3", "count": 1 },
+    {
+      "type": "Oracle",
+      "name": "Tim",
+      "timing": "night_2",
+      "count": 0
+    },
+    {
+      "type": "Oracle",
+      "name": "Tim",
+      "timing": "night_3",
+      "count": 1
+    },
     {
       "type": "Seamstress",
       "name": "Fraser",
@@ -49,15 +88,27 @@
       "type": "Mathematician",
       "name": "You",
       "malfunctions": [
-        { "timing": "night_1", "count": 0 },
-        { "timing": "night_2", "count": 1 }
+        {
+          "timing": "night_1",
+          "count": 0
+        },
+        {
+          "timing": "night_2",
+          "count": 1
+        }
       ],
       "possibleActualRoles": ["Mathematician"]
     },
     {
       "type": "Puzzlemaster",
       "name": "Matt",
-      "guesses": [{ "timing": "day_1", "player": "You", "learnedDemon": "Fraser" }]
+      "guesses": [
+        {
+          "timing": "day_1",
+          "player": "You",
+          "learnedDemon": "Fraser"
+        }
+      ]
     },
     {
       "type": "Dreamer",
@@ -73,6 +124,9 @@
       "player": "Charlotte",
       "roles": ["Librarian", "Kazali"]
     },
-    { "type": "Recluse", "name": "Sarah" }
+    {
+      "type": "Recluse",
+      "name": "Sarah"
+    }
   ]
 }

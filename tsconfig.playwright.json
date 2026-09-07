@@ -13,6 +13,7 @@
     "src/schema/**/*.ts",
     "src/state/**/*.ts",
     "src/worker/protocol.ts",
+    "src/worker/client.ts",
     "vendor/**/*.ts"
   ],
   "exclude": ["src/**/*.test.ts"]

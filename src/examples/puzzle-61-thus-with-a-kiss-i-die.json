@@ -119,8 +119,8 @@
       "statements": [
         {
           "options": [
-            "#{p : {Steph, Josh, Oscar} | p.type == Townsfolk} == 2",
-            "#({Matthew, Steph, Josh, Tim}.type) = 2"
+            "#{p : {Steph, Josh, Oscar} | p.initial_type == Townsfolk} == 2",
+            "#({Matthew, Steph, Josh, Tim}.initial_type) = 2"
           ]
         }
       ],

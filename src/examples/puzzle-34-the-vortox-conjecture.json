@@ -92,7 +92,7 @@
       "info": [
         {
           "timing": "night_2",
-          "expression": "Aoife.role == `No Dashii`"
+          "expression": "Aoife.initial_role == `No Dashii`"
         }
       ]
     }

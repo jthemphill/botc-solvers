@@ -15,7 +15,7 @@
     "Seamstress",
     "Snake Charmer"
   ],
-  "uniqueCharacters": false,
+  "uniqueCharacters": true,
   "timeline": [
     {
       "timing": "day_1",
@@ -54,10 +54,11 @@
       "info": [
         {
           "timing": "day_2",
-          "expression": "You.role == Clockmaker"
+          "expression": "You.initial_role == Clockmaker"
         }
       ],
-      "possibleActualRoles": ["Seamstress", "Vortox", "Cerenovus", "Pit-Hag", "Artist", "Mutant"]
+      "possibleActualRoles": ["Seamstress", "Vortox", "Cerenovus", "Pit-Hag", "Artist", "Mutant"],
+      "roleTiming": "day_2"
     },
     {
       "type": "Sage",

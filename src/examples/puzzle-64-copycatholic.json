@@ -19,7 +19,7 @@
   "uniqueCharacters": false,
   "constraints": [
     {
-      "expression": "some r : townsfolk + outsiders | not lone r.~role"
+      "expression": "some r : townsfolk + outsiders | not lone r.~initial_role"
     }
   ],
   "timeline": [

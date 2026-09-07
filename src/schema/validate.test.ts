@@ -333,3 +333,18 @@ describe("validatePuzzleDoc", () => {
     ]);
   });
 });
+
+test("preserves role timing and sources and accepts title strings that resemble timings", () => {
+  const doc = validatePuzzleDoc({
+    title: "night_0",
+    players: ["A"],
+    script: ["Chef"],
+    claims: [{ type: "Chef", name: "A", timing: "night_2", roleTiming: "day_1", source: "setup record" }],
+    constraints: [{ expression: "A.initial_role == Chef", source: "setup record", kind: "fact" }],
+  });
+  expect(doc.claims[0]?.roleTiming).toBe("day_1");
+  expect(doc.constraints?.[0]?.source).toBe("setup record");
+  expect(() => validatePuzzleDoc({ ...doc, claims: [{ type: "Chef", name: "A", timing: "night_0" }] })).toThrow(
+    "positive",
+  );
+});

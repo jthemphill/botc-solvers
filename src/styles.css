@@ -1688,7 +1688,7 @@ summary {
   }
 }
 
-/* Streamlined single-page workspace */
+/* These rules put the workspace on one page. */
 .app-chrome {
   grid-template-columns: minmax(11rem, auto) minmax(0, 1fr) auto;
 }
@@ -2270,4 +2270,17 @@ summary {
   .event-composer-sheet > label {
     grid-template-columns: 1fr;
   }
+}
+
+.coverage-notice {
+  padding: 0.6rem;
+  border-left: 3px solid #95612e;
+  background: #95612e0d;
+}
+.results-view details {
+  margin-block: 0.7rem;
+}
+.results-view details p,
+.results-view details ul {
+  font-size: 0.85rem;
 }

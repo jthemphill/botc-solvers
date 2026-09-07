@@ -108,7 +108,8 @@
       "type": "Imp",
       "name": "Matt",
       "timing": "night_4",
-      "alignment": "good"
+      "alignment": "good",
+      "roleTiming": "night_4"
     },
     {
       "type": "Undertaker",

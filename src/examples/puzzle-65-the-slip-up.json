@@ -134,7 +134,7 @@
       "info": [
         {
           "timing": "day_1",
-          "expression": "Demon in {Tom, Matt}.type"
+          "expression": "Demon in {Tom, Matt}.initial_type"
         }
       ]
     }

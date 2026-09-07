@@ -139,14 +139,20 @@ describe("predicates and helpers", () => {
   });
 
   test("evil role claims exclude the exact apparent evil role", async () => {
-    const valid = new BOTCModel(["A", "B", "C"], { characters: script(Imp, ScarletWoman, Chef), backend });
+    const valid = new BOTCModel(["A", "B", "C"], {
+      characters: script(Imp, ScarletWoman, Chef),
+      backend,
+    });
     valid.addRoleClaim({ player: "A", apparentRole: "Imp" });
     valid.fixActual("A", ScarletWoman);
     valid.fixActual("B", Imp);
     valid.fixActual("C", Chef);
     expect(await valid.solveAll({ limit: 1 })).toHaveLength(1);
 
-    const invalid = new BOTCModel(["A", "B", "C"], { characters: script(Imp, ScarletWoman, Chef), backend });
+    const invalid = new BOTCModel(["A", "B", "C"], {
+      characters: script(Imp, ScarletWoman, Chef),
+      backend,
+    });
     invalid.addRoleClaim({ player: "A", apparentRole: "Imp" });
     invalid.fixActual("A", Imp);
     invalid.fixActual("B", ScarletWoman);
@@ -295,7 +301,9 @@ describe("predicates and helpers", () => {
 
     expect(worlds).toHaveLength(1);
     for (let timingNumber = 0; timingNumber <= 4; timingNumber += 1) {
-      expect(worlds[0]?.isPoisoned("Chef", `night_${timingNumber}` as Timing)).toBe(timingNumber === numOutsiders);
+      expect(worlds[0]?.isPoisoned("Chef", `night_${timingNumber}` as Timing)).toBe(
+        timingNumber > 0 && timingNumber === numOutsiders,
+      );
     }
   });
 

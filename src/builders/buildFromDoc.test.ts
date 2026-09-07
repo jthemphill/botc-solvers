@@ -828,6 +828,7 @@ describe("buildFromDoc", () => {
           ],
         }),
         timeline: [
+          { timing: "day_1", type: "execution", players: ["A"] },
           { timing: "night_2", type: "nightDeath", players: ["B"] },
           { timing: "night_3", type: "resurrection", players: ["B"] },
         ],
@@ -1158,6 +1159,7 @@ describe("buildFromDoc", () => {
             timing: "day_2",
             info: [{ timing: "day_2", expression: "B.role == Clockmaker" }],
             possibleActualRoles: ["Seamstress"],
+            roleTiming: "day_2",
           },
           { type: "Clockmaker", name: "B", possibleActualRoles: ["Clockmaker"] },
           { type: "Cerenovus", name: "C", possibleActualRoles: ["Cerenovus", "Pit-Hag"] },
@@ -1191,6 +1193,7 @@ describe("buildFromDoc", () => {
             timing: "day_2",
             info: [{ timing: "day_2", expression: "B.role == Clockmaker" }],
             possibleActualRoles: ["Imp"],
+            roleTiming: "day_2",
           },
           { type: "Clockmaker", name: "B", possibleActualRoles: ["Clockmaker"] },
           { type: "Cerenovus", name: "C", possibleActualRoles: ["Cerenovus", "Pit-Hag"] },
@@ -1390,7 +1393,10 @@ describe("buildFromDoc", () => {
           { name: "D", roles: ["Chef"] },
         ],
       }),
-      timeline: [{ timing: "night_2", type: "nightDeath", players: ["B"] }],
+      timeline: [
+        { timing: "day_1", type: "execution", players: ["D"] },
+        { timing: "night_2", type: "nightDeath", players: ["B"] },
+      ],
       claims: [],
     };
 
@@ -1553,6 +1559,7 @@ describe("buildFromDoc", () => {
           name: "B",
           timing: "day_1",
           possibleActualRoles: ["Goon"],
+          roleTiming: "day_1",
         },
       ],
     };
@@ -4150,9 +4157,9 @@ describe("buildFromDoc", () => {
       type: "Gossip",
       name: "Finn",
       statements: [
-        { expression: "some Pukka.~role" },
-        { timing: "day_2", expression: "some Pukka.~role" },
-        { timing: "day_3", expression: "some Pukka.~role" },
+        { expression: "some Pukka.~initial_role" },
+        { timing: "day_2", expression: "some Pukka.~initial_role" },
+        { timing: "day_3", expression: "some Pukka.~initial_role" },
       ],
     });
 

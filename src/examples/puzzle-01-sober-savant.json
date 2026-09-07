@@ -27,7 +27,7 @@
       "timing": "day_1",
       "statements": [
         {
-          "options": ["some p: players | p.role == Investigator", "some p: You.neighbors | p.alignment == Evil"]
+          "options": ["some p: players | p.initial_role == Investigator", "some p: You.neighbors | p.alignment == Evil"]
         }
       ],
       "possibleActualRoles": ["Savant"]
@@ -38,7 +38,7 @@
       "timing": "day_2",
       "statements": [
         {
-          "options": ["chef(1)", "some p : Drunk.~role | all n : p.neighbors | n.type = Townsfolk"]
+          "options": ["chef(1)", "some p : Drunk.~initial_role | all n : p.neighbors | n.initial_type = Townsfolk"]
         }
       ],
       "possibleActualRoles": ["Savant"]
@@ -49,7 +49,7 @@
       "timing": "day_3",
       "statements": [
         {
-          "options": ["some p: {Tim, Sula} | p.type == Minion", "no p: players | p.role == Noble"]
+          "options": ["some p: {Tim, Sula} | p.initial_type == Minion", "no p: players | p.initial_role == Noble"]
         }
       ],
       "possibleActualRoles": ["Savant"]

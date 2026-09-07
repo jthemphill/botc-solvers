@@ -15,14 +15,38 @@
     "Town Crier"
   ],
   "timeline": [
-    { "timing": "day_1", "type": "execution", "players": ["Oscar"] },
-    { "timing": "night_2", "type": "nightDeath", "players": ["Sarah"] },
-    { "timing": "day_2", "type": "execution", "players": ["You"] },
-    { "timing": "night_3", "type": "nightDeath", "players": ["Jasmine"] }
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Oscar"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Sarah"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Jasmine"]
+    }
   ],
   "claims": [
-    { "type": "Clockmaker", "name": "Steph", "distance": 1 },
-    { "type": "Steward", "name": "Oscar", "goodPlayer": "Fraser" },
+    {
+      "type": "Clockmaker",
+      "name": "Steph",
+      "distance": 1
+    },
+    {
+      "type": "Steward",
+      "name": "Oscar",
+      "goodPlayer": "Fraser"
+    },
     {
       "type": "Juggler",
       "name": "Josh",
@@ -35,9 +59,24 @@
       },
       "correctCount": 1
     },
-    { "type": "Empath", "name": "Fraser", "timing": "night_1", "count": 0 },
-    { "type": "Empath", "name": "Fraser", "timing": "night_2", "count": 0 },
-    { "type": "Empath", "name": "Fraser", "timing": "night_3", "count": 0 },
+    {
+      "type": "Empath",
+      "name": "Fraser",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Fraser",
+      "timing": "night_2",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Fraser",
+      "timing": "night_3",
+      "count": 0
+    },
     {
       "type": "Undertaker",
       "name": "You",
@@ -57,11 +96,21 @@
         }
       ]
     },
-    { "type": "Knight", "name": "Sarah", "noDemonAmong": ["You", "Josh"] },
+    {
+      "type": "Knight",
+      "name": "Sarah",
+      "noDemonAmong": ["You", "Josh"]
+    },
     {
       "type": "Town Crier",
       "name": "Jasmine",
-      "checks": [{ "timing": "night_2", "nominators": ["Sarah", "Josh"], "minionNominated": false }]
+      "checks": [
+        {
+          "timing": "night_2",
+          "nominators": ["Sarah", "Josh"],
+          "minionNominated": false
+        }
+      ]
     }
   ]
 }

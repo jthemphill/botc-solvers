@@ -18,31 +18,31 @@
   "setup": "none",
   "constraints": [
     {
-      "expression": "#Legion.~role in {0, 5, 6}"
+      "expression": "#Legion.~initial_role in {0, 5, 6}"
     },
     {
-      "expression": "no Legion.~role => one Imp.~role"
+      "expression": "no Legion.~initial_role => one Imp.~initial_role"
     },
     {
-      "expression": "no Legion.~role => one Spy.~role"
+      "expression": "no Legion.~initial_role => one Spy.~initial_role"
     },
     {
-      "expression": "no Legion.~role => one Drunk.~role"
+      "expression": "no Legion.~initial_role => one Drunk.~initial_role"
     },
     {
-      "expression": "some Legion.~role => no Imp.~role"
+      "expression": "some Legion.~initial_role => no Imp.~initial_role"
     },
     {
-      "expression": "some Legion.~role => no Spy.~role"
+      "expression": "some Legion.~initial_role => no Spy.~initial_role"
     },
     {
-      "expression": "some Legion.~role => no Drunk.~role"
+      "expression": "some Legion.~initial_role => no Drunk.~initial_role"
     },
     {
-      "expression": "some Legion.~role => some ({Matt, Fraser, Tim, Josh, Oscar} & Good.~alignment)"
+      "expression": "some Legion.~initial_role => some ({Matt, Fraser, Tim, Josh, Oscar} & Good.~alignment)"
     },
     {
-      "expression": "some Legion.~role => #({Tim, Josh, Oscar, You, Matt, Fraser} & Good.~alignment) != 1"
+      "expression": "some Legion.~initial_role => #({Tim, Josh, Oscar, You, Matt, Fraser} & Good.~alignment) != 1"
     }
   ],
   "timeline": [
@@ -78,7 +78,7 @@
       "info": [
         {
           "timing": "day_2",
-          "expression": "some p : players | p.role == Imp"
+          "expression": "some p : players | p.initial_role == Imp"
         }
       ]
     },

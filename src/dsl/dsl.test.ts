@@ -34,7 +34,7 @@ const CHARACTERS = script(Imp, ScarletWoman, Drunk, Investigator, Knight, Noble,
 const PUZZLE: PuzzleSpec = { players: PLAYERS, characters: CHARACTERS };
 
 const SAVANT_CLAIMS = [
-  // statement 1
+  // The first Savant report contains these two statements.
   {
     dsl: "some p: players | p.role == Investigator",
     ts: (g: BOTCModel) => g.roleInPlay(Investigator),
@@ -43,7 +43,7 @@ const SAVANT_CLAIMS = [
     dsl: "some p: You.neighbors | p.alignment == Evil",
     ts: (g: BOTCModel) => g.sitsNextToEvil("You"),
   },
-  // statement 2
+  // The second Savant report contains these two statements.
   {
     dsl: "chef(1)",
     ts: (g: BOTCModel) => Chef.learnsCount(g, 1, "ref_chef"),
@@ -52,7 +52,7 @@ const SAVANT_CLAIMS = [
     dsl: "some p: players | p.role == Drunk && p.left.type == Townsfolk && p.right.type == Townsfolk",
     ts: (g: BOTCModel) => drunkBetweenTwoTownsfolk(g),
   },
-  // statement 3
+  // The third Savant report contains these two statements.
   {
     dsl: "some p: {Tim, Sula} | p.type == Minion",
     ts: (g: BOTCModel) => g.anyOf([g.isMinion("Tim"), g.isMinion("Sula")], "ref_tim_or_sula_minion"),
@@ -330,7 +330,7 @@ describe("DSL", () => {
   });
 
   test("each DSL statement matches its hand-coded counterpart under the puzzle-01 model", async () => {
-    // Build the puzzle-01 game so the Savant statement is true exactly when the DSL form is.
+    // Use the same puzzle model to compare each DSL statement with its TypeScript function.
     const buildBaseGame = (): BOTCModel => {
       const g = buildPuzzleModel(PUZZLE, backend);
       g.fixActual("You", Savant);
@@ -355,7 +355,7 @@ describe("DSL", () => {
       const game = buildBaseGame();
       const dsl = compile(claim.dsl, game, ctx) as BoolLike;
       const ts = claim.ts(game);
-      // iff: dsl == ts
+      // The equivalence is true when the two forms have the same value.
       const iff = game.allOf(
         [
           game.anyOf([game.not(dsl, "ndsl"), ts], "dsl_implies_ts"),

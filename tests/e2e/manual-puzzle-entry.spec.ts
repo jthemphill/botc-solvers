@@ -202,6 +202,12 @@ async function setRoleUniverseAndRules(page: Page, doc: PuzzleDoc) {
 }
 
 async function fillClaim(block: Locator, claim: Claim, doc: PuzzleDoc) {
+  if (claim.roleTiming) {
+    const advanced = block.locator("details.advanced-claim-fields");
+    if (!(await advanced.evaluate((element) => element.hasAttribute("open"))))
+      await advanced.locator("summary").click();
+    await advanced.getByLabel("Character claim refers to").selectOption(claim.roleTiming);
+  }
   switch (claim.type) {
     case "Assassin":
       if (claim.target !== undefined) await selectField(block, "Kill target", claim.target);

@@ -135,7 +135,7 @@ test("loads puzzle 34 with structured role clues", async ({ page }) => {
   await page.getByLabel("Claiming player").selectOption("You");
   await expect(claimsPanel.getByText("Malfunctions").first()).toBeVisible();
   await page.getByLabel("Claiming player").selectOption("Steph");
-  await expect(claimsPanel.getByText("Aoife.role == `No Dashii`").first()).toBeVisible();
+  await expect(claimsPanel.getByText("Aoife.initial_role == `No Dashii`").first()).toBeVisible();
   await expect(page.getByText("false info under Vortox")).toHaveCount(0);
 
   await expect(page.getByText("Satisfying worlds:")).toBeVisible();
@@ -162,7 +162,9 @@ test("solves puzzle 41 with the Lunatic and starpassed Imp solution", async ({ p
   await expect(timeline).toContainText("Chris");
   await expect(timeline).toContainText("N3 Night Death");
   await expect(timeline).toContainText("Josef");
-  await expect(page.getByLabel("Player claim summaries")).toContainText("I learned that Riley is not a Townsfolk.");
+  await expect(page.getByLabel("Player claim summaries")).toContainText(
+    "I learned that Riley did not start as a Townsfolk.",
+  );
   const solvePanel = page.locator(".solve-panel");
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
@@ -391,7 +393,7 @@ test("solves puzzle 51 with the Nightwatchman bluff", async ({ page }) => {
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 51 - Weird Science");
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("Tim learned Nightwatchman.");
-  await expect(claims).toContainText("I learned that Hannah is not the Boffin.");
+  await expect(claims).toContainText("I learned that Hannah did not start as the Boffin.");
 
   const timeline = page.getByLabel("Puzzle timeline");
   await expect(timeline).toContainText("D1 Slayer Shot");
@@ -484,7 +486,7 @@ test("solves puzzle 55 with the Flowergirl Demon worlds", async ({ page }) => {
 
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 55 - The Life of a Flowergirl");
   const claims = page.getByLabel("Player claim summaries");
-  await expect(claims).toContainText("I learned that Aoife is not the Artist.");
+  await expect(claims).toContainText("I learned that Aoife did not start as the Artist.");
   await expect(claims).toContainText("N2: You, Fraser, Steph, Aoife, and Jasmine voted -> yes");
   await expect(claims).toContainText("Sarah and Jasmine are same");
 
@@ -532,7 +534,7 @@ test("solves puzzle 57 with the Vigormortis and Tea Lady conclusion", async ({ p
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 57 - Neither Victims nor Executioners");
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("You and Adam are same");
-  await expect(claims).toContainText("I learned that Matt is not a Demon.");
+  await expect(claims).toContainText("I learned that Matt did not start as a Demon.");
   await expect(claims).toContainText("Steph, Sarah, or Aoife: 1 evil");
 
   const timeline = page.getByLabel("Puzzle timeline");
@@ -613,7 +615,7 @@ test("solves puzzle 60 with the No Dashii and Drunk conclusion", async ({ page }
   await expect(claims).toContainText("Tim or Fraser is the Artist.");
   await expect(claims).toContainText("N2: 2 evil neighbors");
   await expect(claims).toContainText("Olivia or Fraser is Demon");
-  await expect(claims).toContainText("I learned that Olivia is not a Townsfolk.");
+  await expect(claims).toContainText("I learned that Olivia did not start as a Townsfolk.");
   await expect(claims).toContainText("You or Aoife is the Drunk.");
 
   const timeline = page.getByLabel("Puzzle timeline");
@@ -832,7 +834,7 @@ test("solves puzzle 68 with the Vortox, Witch, and Mutant", async ({ page }) => 
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 68 - The Numbers Are All Wrong");
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("0 dead evil");
-  await expect(claims).toContainText("I learned that Tom is a Townsfolk.");
+  await expect(claims).toContainText("I learned that Tom started as a Townsfolk.");
   await expect(claims).toContainText("N3: Sarah is not Demon");
   await expect(claims).toContainText("1 malfunction (Night 1); 2 malfunctions (Night 2)");
   await expect(claims).toContainText("Day 1 guesses: Sarah=Witch; Matthew=Mutant; Anna=Snake Charmer");
@@ -859,7 +861,7 @@ test("solves puzzle 69 with the No Dashii and self-cursing Witch", async ({ page
 
   await expect(page.locator("input.title-input")).toHaveValue("Puzzle 69 - That's the Sects Number");
   const claims = page.getByLabel("Player claim summaries");
-  await expect(claims).toContainText("I learned that Fraser is not the Artist.");
+  await expect(claims).toContainText("I learned that Fraser did not start as the Artist.");
   await expect(claims).toContainText(
     "Day 1 guesses: You=Witch; Hannah=No Dashii; Matt=Mutant; Fraser=No Dashii; 1 correct.",
   );
@@ -950,7 +952,7 @@ test("solves puzzle 72 with the six-Legion world", async ({ page }) => {
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("Matt is the Drunk.");
   await expect(claims).toContainText("1 dead evil");
-  await expect(claims).toContainText("I learned that someone is the Imp.");
+  await expect(claims).toContainText("I learned that someone started as the Imp.");
   await expect(claims).toContainText("Hannah was Chambermaid");
   await expect(claims).toContainText("Sarah or Josh is the Spy.");
   await expect(claims).toContainText("N1: 1 evil neighbor");
@@ -1049,7 +1051,7 @@ test("solves puzzle 75 with the Fang Gu jump world", async ({ page }) => {
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText("Adam is Artist or Vigormortis");
   await expect(claims).toContainText("Demon 2 steps from Minion");
-  await expect(claims).toContainText("I learned that Fraser is a Demon.");
+  await expect(claims).toContainText("I learned that Fraser started as a Demon.");
   await expect(claims).toContainText("Day 1 guesses: You=No Dashii; Matt=Vigormortis; 0 correct.");
   await expect(claims).toContainText("Sarah and Adam are same");
   await expect(claims).toContainText("2 malfunctions (Night 1); 0 malfunctions (Night 2)");
@@ -1245,7 +1247,7 @@ test("puzzle 9 formats claim summaries without leaking hidden death causes", asy
   await expect(claims).not.toContainText("I am the Gambler");
   await expect(claims).toContainText("N2: chose Fraser, survived; N3: chose Josh, died");
   await expect(claims).not.toContainText("I am the Acrobat");
-  await expect(claims).toContainText("D1 gossip: Fraser.type == Demon; D2 gossip: Anna.type == Demon");
+  await expect(claims).toContainText("D1 gossip: Fraser.initial_type == Demon; D2 gossip: Anna.initial_type == Demon");
   await expect(claims).not.toContainText("I am the Gossip");
 
   await page.getByLabel("Claiming player").selectOption("Josh");
@@ -1308,7 +1310,7 @@ test("puzzle 1 formats Savant claim summaries as Alloy XOR expressions", async (
 
   const claims = page.getByLabel("Player claim summaries");
   await expect(claims).toContainText(
-    "(some p: players | p.role == Investigator) != (some p: You.neighbors | p.alignment == Evil)",
+    "(some p: players | p.initial_role == Investigator) != (some p: You.neighbors | p.alignment == Evil)",
   );
   await expect(claims).not.toContainText("2 Savant statements");
 });
@@ -1346,4 +1348,15 @@ test("puzzle 20 keeps full claim summaries visible on mobile", async ({ page }) 
         .evaluateAll((summaries) => summaries.every((summary) => summary.scrollHeight <= summary.clientHeight + 1)),
     )
     .toBe(true);
+});
+
+test("shows incomplete coverage and a trace witness", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-11-false-is-the-new-black");
+  const solvePanel = page.locator(".solve-panel");
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByText("Rule coverage is incomplete.", { exact: false })).toBeVisible();
+  await expect(solvePanel.getByText("All initial character assignments enumerated.")).toBeVisible();
+  await solvePanel.getByText("Character changes and hidden choices", { exact: true }).click();
+  await expect(solvePanel.getByText("Sarah, Cerenovus:player", { exact: false }).first()).toBeVisible();
 });

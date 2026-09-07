@@ -54,7 +54,7 @@
       "info": [
         {
           "timing": "day_3",
-          "expression": "Poisoner in {Jasmine, Fraser, Dan}.role"
+          "expression": "Poisoner in {Jasmine, Fraser, Dan}.initial_role"
         }
       ]
     },

@@ -55,7 +55,7 @@
       "info": [
         {
           "timing": "day_1",
-          "expression": "some p: {Jasmine, Matt, Aoife} | p.role == Mutant"
+          "expression": "some p: {Jasmine, Matt, Aoife} | p.initial_role == Mutant"
         }
       ]
     },

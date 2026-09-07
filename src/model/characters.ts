@@ -9,7 +9,7 @@ import {
   roleName,
   roleWakeRule,
 } from "./core";
-import { night, type BoolLike, type BoolVar, type BOTCModel, type Timing } from "./model";
+import { day, night, type BoolLike, type BoolVar, type BOTCModel, type Timing } from "./model";
 import * as predicates from "./predicates";
 
 export type StatementResult = BoolLike | readonly BoolLike[];
@@ -31,6 +31,7 @@ export interface InfoClaim {
 }
 
 export interface RoleBaseOptions {
+  readonly roleTiming?: Timing;
   readonly name: string;
   readonly timing?: Timing;
   readonly claimAlignment?: Alignment;
@@ -221,6 +222,7 @@ export const Wakes = {
 } as const;
 
 export abstract class Role {
+  readonly roleTiming?: Timing;
   static readonly roleName: string;
   static readonly alignment: Alignment;
   static readonly characterType: CharacterType;
@@ -245,6 +247,7 @@ export abstract class Role {
     this.characterType = cls.characterType;
     this.maxCopies = cls.maxCopies;
     this.timing = resolvedTiming;
+    this.roleTiming = typeof nameOrOptions === "string" ? undefined : nameOrOptions.roleTiming;
     this.claimAlignment = typeof nameOrOptions === "string" ? undefined : nameOrOptions.claimAlignment;
     this.possibleActualRoles = typeof nameOrOptions === "string" ? undefined : nameOrOptions.possibleActualRoles;
     this.infoClaims = typeof nameOrOptions === "string" ? [] : (nameOrOptions.infoClaims ?? []).map(normalizeInfoClaim);
@@ -277,6 +280,7 @@ export abstract class Role {
         drunkRole,
         evilRoles: options.evilRoles,
         possibleActualRoles: this.possibleActualRoles ?? options.possibleActualRoles,
+        timing: this.roleTiming ?? night(1),
       },
     );
   }
@@ -294,7 +298,7 @@ export abstract class Role {
       applyInfo(game, {
         player: this.name,
         role: resolvedClaim.role ?? role,
-        learned: resolveInfoClaim(game, options.context, resolvedClaim),
+        learned: game.withTiming(timing, () => resolveInfoClaim(game, options.context, resolvedClaim)),
         malfunctionLearned:
           resolvedClaim.malfunctionLearned === undefined
             ? undefined
@@ -357,7 +361,7 @@ export abstract class Role {
   apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
     const cls = this.constructor as RoleClass & typeof Role;
     this.applyRoleClaim(game, cls, options);
-    const learned = this.learnedInfo(game);
+    const learned = game.withTiming(this.defaultInfoTiming(0), () => this.learnedInfo(game));
     this.applyInfoClaimBuilders(
       game,
       cls,
@@ -893,7 +897,7 @@ export class Philosopher extends Role {
         [game.actualIs(this.name, Philosopher), game.soberAndHealthy(this.name, timing)],
         claimName(this.name, Philosopher, "choice_active"),
       );
-      game.addRoleAt(this.name, this.role, timing, activeHealthy);
+      game.gainAbility(this.name, this.role, timing, activeHealthy, "Philosopher");
     }
     this.applyInfoClaimBuilders(game, Philosopher, this.infoClaims, options);
   }
@@ -1294,6 +1298,7 @@ export class Mathematician extends Role {
             entry.timing,
             entry.count,
             claimName(this.name, Mathematician, `${entry.timing}_${entry.count}_malfunctions`),
+            this.name,
           ),
       })),
       options,
@@ -1685,7 +1690,7 @@ export class Dreamer extends Role {
   }
   static learnsOneOf(game: BOTCModel, player: string, roles: readonly RoleRef[], name: string): BoolVar {
     return game.boolSumEquals(
-      roles.map((role) => game.actualIs(player, role)),
+      roles.map((role) => game.registersAsRole(player, role, name)),
       1,
       name,
     );
@@ -1979,13 +1984,16 @@ export class Juggler extends Role {
     );
   }
   override learnedInfo(game: BOTCModel): BoolLike | undefined {
+    const round = Number((this.timing ?? night(2)).split("_")[1]);
     return this.correctCount === undefined
       ? undefined
-      : Juggler.learnsCorrectCount(
-          game,
-          this.guesses,
-          this.correctCount,
-          claimName(this.name, Juggler, "correct_count"),
+      : game.withTiming(day(Math.max(1, round - 1)), () =>
+          Juggler.learnsCorrectCount(
+            game,
+            this.guesses,
+            this.correctCount!,
+            claimName(this.name, Juggler, "correct_count"),
+          ),
         );
   }
 }

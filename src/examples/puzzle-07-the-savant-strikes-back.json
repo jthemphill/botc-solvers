@@ -94,7 +94,7 @@
         {
           "options": [
             "fortune_teller_red_herring(Sarah, Sarah)",
-            "Fraser.role == `Village Idiot` && globally_drunk(Fraser)"
+            "Fraser.initial_role == `Village Idiot` && globally_drunk(Fraser)"
           ]
         }
       ],
@@ -107,8 +107,8 @@
       "statements": [
         {
           "options": [
-            "#({Juggler, Shugenja, `Village Idiot`} & players.role) = 2",
-            "#{p : {Oscar, Anna, Tim} | p.type == Townsfolk} == 2"
+            "#({Juggler, Shugenja, `Village Idiot`} & players.initial_role) = 2",
+            "#{p : {Oscar, Anna, Tim} | p.initial_type == Townsfolk} == 2"
           ]
         }
       ],

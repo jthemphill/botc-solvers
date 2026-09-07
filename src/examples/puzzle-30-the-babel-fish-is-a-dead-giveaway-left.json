@@ -19,7 +19,7 @@
       "info": [
         {
           "timing": "day_1",
-          "expression": "Erika.role == Drunk"
+          "expression": "Erika.initial_role == Drunk"
         }
       ],
       "possibleActualRoles": ["Artist"]

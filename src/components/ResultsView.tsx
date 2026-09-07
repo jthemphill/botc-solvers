@@ -1,7 +1,8 @@
 import { roleEmoji, roleEmojiLabel } from "../model/roleEmoji";
-import type { SerializableWorld } from "../worker/protocol";
+import type { SerializableWorld, SolveSummary } from "../worker/protocol";
 
 interface Props {
+  summary?: SolveSummary;
   worlds: readonly SerializableWorld[] | undefined;
   players: readonly string[];
   error: string | undefined;
@@ -9,7 +10,7 @@ interface Props {
   limit?: number;
 }
 
-export function ResultsView({ worlds, players, error, busy = false, limit }: Props) {
+export function ResultsView({ summary, worlds, players, error, busy = false, limit }: Props) {
   if (error)
     return (
       <div className="results-view">
@@ -29,10 +30,28 @@ export function ResultsView({ worlds, players, error, busy = false, limit }: Pro
       <div className="results-count">
         Satisfying worlds: <strong>{worlds.length}</strong>
       </div>
-      {limit !== undefined && worlds.length >= limit && (
+      {summary?.stopped === "limit" && limit !== undefined && (
         <p className="results-limit">Showing the first {limit} solutions. The puzzle may have more.</p>
       )}
-      {worlds.length === 0 && <p>No worlds — the constraints are unsatisfiable.</p>}
+      {summary?.status === "unknown" && <p role="status">Search incomplete: {summary.reason}</p>}
+      {worlds.length === 0 && summary?.status !== "unknown" && (
+        <p>No worlds — the encoded constraints are unsatisfiable.</p>
+      )}
+      {summary && (
+        <>
+          <p className="coverage-notice">
+            Rule coverage is incomplete. Night action order, life state, and victory rules have partial support.
+          </p>
+          <p>{summary.complete ? "All initial character assignments enumerated." : "Enumeration incomplete."}</p>
+          <details>
+            <summary>Search details</summary>
+            <p>
+              {summary.metrics.variables.toLocaleString()} variables · {summary.metrics.clauses.toLocaleString()}{" "}
+              clauses · {Math.round(summary.buildMs + summary.metrics.finalizeMs + summary.metrics.solveMs)} ms
+            </p>
+          </details>
+        </>
+      )}
       {worlds.map((w, i) => (
         <article key={i} className="solution-card">
           <header>
@@ -65,6 +84,31 @@ export function ResultsView({ worlds, players, error, busy = false, limit }: Pro
               );
             })}
           </div>
+          {w.trace && (
+            <details>
+              <summary>Character changes and hidden choices</summary>
+              {w.trace.transitions.length === 0 ? (
+                <p>No character changes.</p>
+              ) : (
+                <ul>
+                  {w.trace.transitions.map((change, index) => (
+                    <li key={index}>
+                      {change.timing}: {change.player} becomes {change.character} ({change.rule})
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <ul>
+                {w.actions
+                  ?.filter((action) => action.active)
+                  .map((action, index) => (
+                    <li key={index}>
+                      {action.timing}: {action.actor}, {action.rule} — {action.selected.join(", ")}
+                    </li>
+                  ))}
+              </ul>
+            </details>
+          )}
         </article>
       ))}
     </div>

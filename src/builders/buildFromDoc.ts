@@ -1,3 +1,4 @@
+import { choose } from "../model/actions";
 import { applyClaims, type EmpathNeighborOption, type OracleDeadPlayerOption } from "../model/characters";
 import { Alignment, CharacterType, roleAlignment, roleCharacterType, roleName, type RoleRef } from "../model/core";
 import type { BoolLike, BOTCModel, Timing } from "../model/model";
@@ -17,14 +18,22 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
   };
   const game = buildPuzzleModel(spec, backend);
   const ctx = { players: doc.players, script: doc.script };
-  applyLleechHostChoice(game, doc);
-  applyGlobalConstraints(game, doc, ctx);
-  if (doc.setup === "atheist") applyAtheistSetup(game, doc);
-  applyTimelineConstraints(game, doc);
-  if (doc.setup !== "atheist") applyMinstrelSources(game, doc);
-  if (doc.setup !== "atheist") applySailorChoiceLegality(game, doc);
-  applyConditionalWakeSources(game, doc);
-  applyRiotTransformations(game, doc);
+  game.withProvenance({ kind: "rule", id: "applyLleechHostChoice" }, () => applyLleechHostChoice(game, doc));
+  game.withProvenance({ kind: "rule", id: "applyGlobalConstraints" }, () => applyGlobalConstraints(game, doc, ctx));
+  if (doc.setup === "atheist")
+    game.withProvenance({ kind: "rule", id: "applyAtheistSetup" }, () => applyAtheistSetup(game, doc));
+  const characterActions = game.withProvenance({ kind: "rule", id: "nightlyCharacterChoices" }, () =>
+    applyCharacterActions(game, doc),
+  );
+  game.withProvenance({ kind: "rule", id: "applyTimelineConstraints" }, () => applyTimelineConstraints(game, doc));
+  if (doc.setup !== "atheist")
+    game.withProvenance({ kind: "rule", id: "applyMinstrelSources" }, () => applyMinstrelSources(game, doc));
+  if (doc.setup !== "atheist")
+    game.withProvenance({ kind: "rule", id: "applySailorChoiceLegality" }, () => applySailorChoiceLegality(game, doc));
+  game.withProvenance({ kind: "rule", id: "applyConditionalWakeSources" }, () =>
+    applyConditionalWakeSources(game, doc),
+  );
+  game.withProvenance({ kind: "rule", id: "applyRiotTransformations" }, () => applyRiotTransformations(game, doc));
   const pukkaContext = doc.setup === "atheist" ? emptyPukkaContext() : applyPukkaPoisonChoices(game, doc);
   let nightDeathTiming = emptyNightDeathTimingContext();
   if (doc.setup !== "atheist") {
@@ -36,7 +45,14 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
       registerDeclaredAbilityTargets(game, doc);
       goonContext = applyGoonInteractions(game, doc);
     }
-    applyShabalothChoiceConstraints(game, doc, shabalothContext, goonContext);
+    game.withProvenance(
+      {
+        kind: "rule",
+        id: "Shabaloth.targets",
+        source: "https://wiki.bloodontheclocktower.com/index.php?title=Shabaloth&oldid=1790",
+      },
+      () => applyShabalothChoiceConstraints(game, doc, shabalothContext, goonContext),
+    );
     nightDeathTiming = applyNightDeathSourceConstraints(
       game,
       doc,
@@ -48,28 +64,29 @@ export function buildFromDoc(doc: PuzzleDoc, backend: SatBackend): BOTCModel {
     );
     applyResurrectionConstraints(game, doc, nightDeathTiming);
   }
-  applyFinalDemonPathConstraint(game, doc);
+  game.withProvenance({ kind: "fact", id: "puzzle.ongoing", source: "All puzzles describe ongoing games." }, () =>
+    applyFinalDemonPathConstraint(game, doc),
+  );
   const preNightDeathSnakeCharmerChecks = applyPreNightDeathSnakeCharmerChecks(game, doc);
   const timelineClaims = doc.claims.map((claim, index) =>
     removePreNightDeathSnakeCharmerChecks(claim, index, preNightDeathSnakeCharmerChecks),
   );
   const claims = timelineClaims.map((claim) => applyTimelineClaimContext(claim, doc, game, nightDeathTiming));
-  const ordinaryClaims = claims.filter((claim) => !usesMalfunctionCount(claim)).map((claim) => buildClaim(claim, ctx));
-  const malfunctionCountClaims = claims
-    .filter((claim) => usesMalfunctionCount(claim))
-    .map((claim) => buildClaim(claim, ctx));
+  const reportedClaims = claims.map((claim) => buildClaim(claim, ctx));
   const claimOptions = doc.setup === "atheist" ? { info: () => undefined } : {};
   if (doc.setup !== "atheist") {
     applyPuzzlemasterSources(game, doc);
     applySweetheartSources(game, doc);
   }
-  applyClaims(game, ordinaryClaims, claimOptions);
-  applyClaims(game, malfunctionCountClaims, claimOptions);
-  applyLleechHostPoisoning(game, doc);
+  for (const [index, claim] of reportedClaims.entries())
+    game.withProvenance({ kind: "assumption", id: `claims[${index}]`, source: doc.claims[index]?.source }, () =>
+      applyClaims(game, [claim], claimOptions),
+    );
+  game.withProvenance({ kind: "rule", id: "applyLleechHostPoisoning" }, () => applyLleechHostPoisoning(game, doc));
   if (doc.script.includes("Assassin")) game.enforceAbilityUseLimit("Assassin", 1);
   if (doc.setup !== "atheist") {
     applyPhilosopherDrunking(game, doc);
-    applyChangedRoleClaimExplanations(game, doc);
+    applyChangedRoleClaimExplanations(game, doc, characterActions);
     applyXaanActivity(game, doc);
     applyVigormortisPoisonSources(game, doc, nightDeathTiming);
     applyPoisonerSources(game, doc, nightDeathTiming);
@@ -504,15 +521,12 @@ interface ShabalothContext {
 }
 
 function registerShabalothChoices(game: BOTCModel, doc: PuzzleDoc): ShabalothContext {
-  const modelsNoDeathNight = (doc.timeline ?? []).some(
-    (event) => event.type === "nightDeath" && event.players.length === 0,
-  );
-  if (!doc.script.includes("Shabaloth") || !modelsNoDeathNight) return { choices: [] };
+  if (!doc.script.includes("Shabaloth")) return { choices: [] };
   const choices: ShabalothChoice[] = [];
   for (const timing of allNightTimings(doc)) {
     for (const actor of livingPlayersAt(doc, timing)) {
       const targets = new Map<string, BoolLike>();
-      for (const target of livingPlayersAt(doc, timing)) {
+      for (const target of doc.players) {
         const selected = game.newBool(`${timing}_${slug(actor)}_shabaloth_targets_${slug(target)}`);
         targets.set(target, selected);
         game.addImplication(selected, game.hasRoleAt(actor, "Shabaloth", timing));
@@ -531,17 +545,10 @@ function applyShabalothChoiceConstraints(
   goonContext: GoonContext,
 ): void {
   for (const choice of context.choices) {
-    const preGoonHealthy = game.soberAndHealthyBeforeOwnDrunking(
-      choice.actor,
-      choice.timing,
-      goonContext.drunkSourcesByActorTiming.get(`${choice.actor}\u0000${choice.timing}`) ?? [],
-      `${choice.timing}_${slug(choice.actor)}_shabaloth_healthy_before_targeting_goon`,
-    );
     const wakes = game.constantBool(choice.timing !== "night_1", `${choice.timing}_shabaloth_can_wake`);
     const shouldChoose = game.allOf(
       [
         game.hasRoleAt(choice.actor, "Shabaloth", choice.timing),
-        preGoonHealthy,
         wakes,
         game.not(
           demonKillBlockedAt(game, doc, choice.timing),
@@ -550,6 +557,14 @@ function applyShabalothChoiceConstraints(
       ],
       `${choice.timing}_${slug(choice.actor)}_shabaloth_choice_active`,
     );
+    game.registerChoiceAction({
+      rule: "Shabaloth:targets",
+      actor: choice.actor,
+      timing: choice.timing,
+      count: 2,
+      active: shouldChoose,
+      choices: choice.targets,
+    });
     game.addEnforcedExactlyN([...choice.targets.values()], 2, shouldChoose);
     game.addEnforcedExactlyN(
       [...choice.targets.values()],
@@ -562,14 +577,19 @@ function applyShabalothChoiceConstraints(
       `${choice.timing}_${slug(choice.actor)}_shabaloth_effective`,
     );
     const publicDeaths = nightDeathPlayersAt(doc, choice.timing);
+    const completeReport = (doc.timeline ?? []).some(
+      (event) => event.type === "nightDeath" && event.timing === choice.timing,
+    );
     for (const [target, selected] of choice.targets) {
-      if (publicDeaths.has(target)) continue;
+      if (!completeReport || publicDeaths.has(target) || !livingPlayersAt(doc, choice.timing).includes(target))
+        continue;
       game.addImplication(
         game.allOf([effective, selected], `${choice.timing}_${slug(choice.actor)}_shabaloth_kills_${slug(target)}`),
         game.anyOf(
           [
             deathProtectionAt(game, doc, target, choice.timing),
             innkeeperProtectionAt(game, doc, target, choice.timing),
+            game.pitHagCreatedDemon(choice.timing),
           ],
           `${choice.timing}_${slug(target)}_protected_from_shabaloth`,
         ),
@@ -735,104 +755,101 @@ function applyGlobalConstraints(game: BOTCModel, doc: PuzzleDoc, ctx: Omit<Compi
   for (const [index, constraint] of (doc.constraints ?? []).entries()) {
     const expression = constraint.expression.trim();
     if (expression === "") continue;
-    game.addTruth(
-      compile(expression, game, {
-        ...ctx,
-        nameRoot: `global_constraint_${index + 1}`,
-      }) as BoolLike,
+    const origin = {
+      kind: constraint.kind ?? ("fact" as const),
+      id: `constraints[${index}]`,
+      source: constraint.source,
+    };
+    game.withProvenance(origin, () =>
+      game.addTruth(compile(expression, game, { ...ctx, nameRoot: `global_constraint_${index + 1}`, origin })),
     );
   }
 }
 
-function applyChangedRoleClaimExplanations(game: BOTCModel, doc: PuzzleDoc): void {
-  const claimsByPlayer = new Map<
-    string,
-    Array<{ readonly index: number; readonly claim: PuzzleDoc["claims"][number] }>
-  >();
-  for (const [index, claim] of doc.claims.entries()) {
-    if (claim.timing === undefined) continue;
-    const role = claimRoleRef(claim);
-    if (role === undefined) continue;
+interface CharacterActions {
+  readonly madness: ReadonlyMap<string, readonly BoolLike[]>;
+}
 
-    const claims = claimsByPlayer.get(claim.name);
-    if (claims === undefined) claimsByPlayer.set(claim.name, [{ index, claim }]);
-    else claims.push({ index, claim });
-  }
-
-  for (const claims of claimsByPlayer.values()) {
-    const timedClaims = claims.sort(
-      (left, right) =>
-        phaseStartOrder(left.claim.timing as Timing) - phaseStartOrder(right.claim.timing as Timing) ||
-        left.index - right.index,
-    );
-    for (let index = 1; index < timedClaims.length; index += 1) {
-      const previous = timedClaims[index - 1] as (typeof timedClaims)[number];
-      const current = timedClaims[index] as (typeof timedClaims)[number];
-      const priorClaimRole = claimRoleRef(previous.claim);
-      const currentRole = claimRoleRef(current.claim);
-      if (priorClaimRole === undefined || currentRole === undefined) continue;
-      if (roleName(priorClaimRole) === roleName(currentRole)) continue;
-      if (phaseStartOrder(current.claim.timing as Timing) <= phaseStartOrder(previous.claim.timing as Timing)) continue;
-
-      explainChangedRoleClaim(game, doc, current.claim, currentRole);
+function applyCharacterActions(game: BOTCModel, doc: PuzzleDoc): CharacterActions {
+  const madness = new Map<string, BoolLike[]>();
+  for (const timing of allNightTimings(doc)) {
+    for (const role of ["Pit-Hag", "Cerenovus"]) {
+      if (!doc.script.includes(role) || (role === "Pit-Hag" && timing === "night_1")) continue;
+      for (const actor of livingPlayersAt(doc, timing)) {
+        const active = game.characterBefore(actor, role, timing);
+        const target = choose(game, { rule: `${role}:player`, actor, timing, count: 1, active }, doc.players);
+        const roles = doc.script.filter(
+          (candidate) => role === "Pit-Hag" || roleAlignment(resolveRoleRef(candidate)) === Alignment.Good,
+        );
+        const character = choose(game, { rule: `${role}:character`, actor, timing, count: 1, active }, roles);
+        const healthy = game.soberAndHealthyBeforeCharacterChange(actor, timing);
+        for (const [player, selectedPlayer] of target.choices)
+          for (const [chosenRole, selectedRole] of character.choices) {
+            const selected = game.allOf(
+              [healthy, selectedPlayer, selectedRole],
+              `${timing}_${role}_${actor}_${player}_${chosenRole}_effective`,
+            );
+            if (role === "Cerenovus") {
+              const dayTiming = timing.replace("night_", "day_") as Timing;
+              for (const when of [timing, dayTiming]) {
+                const key = JSON.stringify([player, chosenRole, when]);
+                madness.set(key, [...(madness.get(key) ?? []), selected]);
+              }
+            } else {
+              const inPlay = game.anyOf(
+                doc.players.map((candidate) => game.characterBefore(candidate, chosenRole, timing)),
+                `${timing}_${chosenRole}_in_play_before_pit_hag`,
+              );
+              const changes = game.allOf(
+                [selected, inPlay.not()],
+                `${timing}_${actor}_changes_${player}_to_${chosenRole}`,
+              );
+              game.trace.replace({ player, character: chosenRole, timing, active: changes, rule: "Pit-Hag" });
+              if (roleCharacterType(resolveRoleRef(chosenRole)) === CharacterType.Demon)
+                game.registerPitHagDemonCreation(timing, changes);
+            }
+          }
+      }
     }
   }
+  return { madness };
 }
 
-function explainChangedRoleClaim(
-  game: BOTCModel,
-  doc: PuzzleDoc,
-  claim: PuzzleDoc["claims"][number],
-  claimedRole: RoleRef,
-): void {
-  if (claim.timing === undefined) return;
-  const claimTiming = claim.timing as Timing;
-  const sourceTiming = roleChangeSourceTiming(claimTiming);
-  const claimedRoleName = roleName(claimedRole);
-  const claimedRoleAtTiming = game.hasRoleAt(claim.name, claimedRole, claimTiming);
-  const claimantEvil = game.hasAlignmentOverrideAt(claim.name, claimTiming)
-    ? game.isEvilAt(claim.name, claimTiming)
-    : game.isEvil(claim.name);
-  const claimantGood = game.hasAlignmentOverrideAt(claim.name, claimTiming)
-    ? game.isGoodAt(claim.name, claimTiming)
-    : game.isGood(claim.name);
-  const claimedAlignmentMatches =
-    claim.alignment === undefined ? undefined : claim.alignment === "good" ? claimantGood : claimantEvil;
-  const truthfulClaim =
-    claimedAlignmentMatches === undefined
-      ? claimedRoleAtTiming
-      : game.allOf(
-          [claimedRoleAtTiming, claimedAlignmentMatches],
-          `${claimTiming}_${slug(claim.name)}_${slug(claimedRoleName)}_claimed_alignment_matches`,
-        );
-  const explanations: BoolLike[] = [truthfulClaim, claimantEvil];
+function applyChangedRoleClaimExplanations(game: BOTCModel, doc: PuzzleDoc, actions: CharacterActions): void {
+  for (const claim of doc.claims) {
+    const claimTiming = claim.roleTiming as Timing | undefined;
+    if (claimTiming === undefined || phaseStartOrder(claimTiming) <= phaseStartOrder("night_1")) continue;
+    const claimedRole = claimRoleRef(claim);
+    if (claimedRole === undefined) continue;
+    const claimedRoleName = roleName(claimedRole);
+    const claimedRoleAtTiming = game.hasRoleAt(claim.name, claimedRole, claimTiming);
+    const claimantEvil = game.hasAlignmentOverrideAt(claim.name, claimTiming)
+      ? game.isEvilAt(claim.name, claimTiming)
+      : game.isEvil(claim.name);
+    const claimantGood = game.hasAlignmentOverrideAt(claim.name, claimTiming)
+      ? game.isGoodAt(claim.name, claimTiming)
+      : game.isGood(claim.name);
+    const claimedAlignmentMatches =
+      claim.alignment === undefined ? undefined : claim.alignment === "good" ? claimantGood : claimantEvil;
+    const truthfulClaim =
+      claimedAlignmentMatches === undefined
+        ? claimedRoleAtTiming
+        : game.allOf(
+            [claimedRoleAtTiming, claimedAlignmentMatches],
+            `${claimTiming}_${slug(claim.name)}_${slug(claimedRoleName)}_claimed_alignment_matches`,
+          );
+    const explanations: BoolLike[] = [truthfulClaim, claimantEvil];
 
-  if (doc.script.includes("Pit-Hag")) {
-    const activePitHag = game.roleSoberAndHealthyAt(
-      "Pit-Hag",
-      sourceTiming,
-      `${sourceTiming}_${slug(claim.name)}_${slug(claimedRoleName)}_pit_hag_active`,
-    );
-    const legalPitHagTransformation = game.allOf(
-      [activePitHag, game.roleInPlay(claimedRole).not()],
-      `${sourceTiming}_${slug(claim.name)}_${slug(claimedRoleName)}_pit_hag_transform`,
-    );
-    game.addRoleAt(claim.name, claimedRole, claimTiming, legalPitHagTransformation);
-  }
+    explanations.push(...(actions.madness.get(JSON.stringify([claim.name, claimedRoleName, claimTiming])) ?? []));
+    for (const hiddenRole of ["Drunk", "Marionette"]) {
+      if (doc.script.includes(hiddenRole) && roleCharacterType(claimedRole) === CharacterType.Townsfolk)
+        explanations.push(game.characterAt(claim.name, hiddenRole, claimTiming));
+    }
 
-  if (doc.script.includes("Cerenovus") && roleAlignment(claimedRole) === Alignment.Good) {
-    explanations.push(
-      game.roleSoberAndHealthyAt(
-        "Cerenovus",
-        sourceTiming,
-        `${sourceTiming}_${slug(claim.name)}_cerenovus_mad_as_${slug(claimedRoleName)}`,
-      ),
+    game.addTruth(
+      game.anyOf(explanations, `${claimTiming}_${slug(claim.name)}_${slug(claimedRoleName)}_role_change_explained`),
     );
   }
-
-  game.addTruth(
-    game.anyOf(explanations, `${claimTiming}_${slug(claim.name)}_${slug(claimedRoleName)}_role_change_explained`),
-  );
 }
 
 function claimRoleRef(claim: PuzzleDoc["claims"][number]): RoleRef | undefined {
@@ -1868,6 +1885,17 @@ function nightDeathSources(
 ): readonly NightDeathSource[] {
   const timing = event.timing as Timing;
   return [
+    ...(doc.script.includes("Pit-Hag")
+      ? [
+          {
+            id: `${timing}_pit_hag_arbitrary_death`,
+            available: game.pitHagCreatedDemon(timing),
+            maxAssignments: doc.players.length,
+            requiredWhenAvailable: false,
+            deathTiming: "beforeInfo" as const,
+          },
+        ]
+      : []),
     ...atNightResolutionOrder(
       demonKillDeathSources(game, doc, event, poCharged, goonContext, shabalothContext),
       nightActionOrder("Po"),
@@ -2147,7 +2175,7 @@ function demonKillDeathSources(
       roles: demonRoleNames.filter((role) => role === "Shabaloth"),
       maxAssignments: 2,
       requiredWhenAvailable: false,
-      targetCountWhenAvailable: shabalothContext.choices.length > 0 ? 2 : undefined,
+      targetCountWhenAvailable: 2,
     },
     {
       id: "zombuul_kill",
@@ -2260,7 +2288,7 @@ function demonKillProtectionAt(game: BOTCModel, doc: PuzzleDoc, player: string, 
       )
     : game.constantBool(false, `${timing}_${slug(player)}_no_soldier_protection`);
   return game.anyOf(
-    [deathProtectionAt(game, doc, player, timing), soberHealthySoldier],
+    [deathProtectionAt(game, doc, player, timing), soberHealthySoldier, game.pitHagCreatedDemon(timing)],
     `${timing}_${slug(player)}_survives_demon_target`,
   );
 }
@@ -2429,10 +2457,6 @@ function applyImpStarpass(
     game.removeRoleAt(deadPlayer, "Imp", futureTiming, starpass);
     for (const { player, value } of successors) {
       game.addRoleAt(player, "Imp", futureTiming, value);
-      for (const role of doc.script) {
-        if (role === "Imp") continue;
-        game.removeRoleAt(player, resolveRoleRef(role), futureTiming, value);
-      }
     }
   }
 }
@@ -2475,10 +2499,6 @@ function applyFangGuJump(
     game.removeRoleAt(deadPlayer, "Fang Gu", futureTiming, jump);
     for (const { player, value } of successors) {
       game.addRoleAt(player, "Fang Gu", futureTiming, value);
-      for (const role of doc.script) {
-        if (role === "Fang Gu") continue;
-        game.removeRoleAt(player, resolveRoleRef(role), futureTiming, value);
-      }
     }
   }
 }
@@ -2505,7 +2525,11 @@ function applyScarletWomanCatch(
   for (const demonRole of demonRoles) {
     const demonRoleName = roleName(demonRole);
     const caught = game.allOf(
-      [assignment, roleAtBeforeEvent(game, doc, deadPlayer, demonRole, event)],
+      [
+        assignment,
+        roleAtBeforeEvent(game, doc, deadPlayer, demonRole, event),
+        livingScarletWomanCanCatchDemonDeath(game, doc, event),
+      ],
       `${timing}_${slug(deadPlayer)}_${slug(demonRoleName)}_scarlet_woman_catch`,
     );
     const candidates = livingPlayersAfterDeathEvent(doc, event);
@@ -2536,10 +2560,6 @@ function applyScarletWomanCatch(
       game.removeRoleAt(deadPlayer, demonRole, futureTiming, caught);
       for (const { player, value } of successors) {
         game.addRoleAt(player, demonRole, futureTiming, value);
-        for (const role of doc.script) {
-          if (role === demonRoleName) continue;
-          game.removeRoleAt(player, resolveRoleRef(role), futureTiming, value);
-        }
       }
     }
   }
@@ -2911,11 +2931,6 @@ function livingPlayersAfterTimeline(doc: PuzzleDoc): readonly string[] {
   return doc.players.filter((player) => !deadPlayers.has(player));
 }
 
-function usesMalfunctionCount(claim: PuzzleDoc["claims"][number]): boolean {
-  if (claim.type === "Mathematician" && (claim.malfunctions?.length ?? 0) > 0) return true;
-  return claim.info?.some((info) => info.expression?.includes("malfunctions(")) ?? false;
-}
-
 function applyTimelineClaimContext(
   claim: PuzzleDoc["claims"][number],
   doc: PuzzleDoc,
@@ -3191,7 +3206,7 @@ function applyWidowSources(game: BOTCModel, doc: PuzzleDoc): void {
 
 function applyXaanActivity(game: BOTCModel, doc: PuzzleDoc): void {
   if (!doc.script.includes("Xaan")) return;
-  for (let count = 0; count <= doc.players.length; count += 1) {
+  for (let count = 1; count <= doc.players.length; count += 1) {
     const timing = `night_${count}` as Timing;
     game.setRoleActiveAt("Xaan", timing, roleAliveAt(game, doc, "Xaan", timing));
   }
@@ -3414,22 +3429,37 @@ function playersInDocOrder(doc: PuzzleDoc, players: ReadonlySet<string>): readon
   return doc.players.filter((player) => players.has(player));
 }
 
-function collectTimings(value: unknown): readonly Timing[] {
+function collectTimings(doc: PuzzleDoc): readonly Timing[] {
   const timings = new Set<Timing>();
-  const visit = (entry: unknown): void => {
-    if (typeof entry === "string") {
-      if (/^(night|day)_\d+$/.test(entry)) timings.add(entry as Timing);
-      return;
-    }
-    if (Array.isArray(entry)) {
-      for (const item of entry) visit(item);
-      return;
-    }
-    if (typeof entry !== "object" || entry === null) return;
-    for (const item of Object.values(entry)) visit(item);
+  const add = (value: unknown) => {
+    if (typeof value === "string" && /^(night|day)_[1-9]\d*$/.test(value)) timings.add(value as Timing);
   };
-
-  visit(value);
+  // Read phase values from the timing, roleTiming, and drunkTimings fields.
+  const visit = (value: unknown): void => {
+    if (Array.isArray(value)) {
+      for (const item of value) visit(item);
+      return;
+    }
+    if (typeof value !== "object" || value === null) return;
+    for (const [key, child] of Object.entries(value)) {
+      if (key === "timing" || key === "roleTiming") add(child);
+      else if (key === "drunkTimings" && Array.isArray(child)) child.forEach(add);
+      else if (typeof child === "object") visit(child);
+    }
+  };
+  for (const claim of doc.claims) {
+    const fields = claim as unknown as Record<string, unknown>;
+    for (const key of ["checks", "counts", "malfunctions"]) {
+      const entries = fields[key];
+      if (Array.isArray(entries))
+        entries.forEach((entry: { timing?: string }, index: number) =>
+          add(entry.timing ?? claim.timing ?? `night_${index + 1}`),
+        );
+    }
+    if (claim.type === "Juggler") add(claim.timing ?? "night_2");
+  }
+  visit(doc.claims);
+  visit(doc.timeline);
   return [...timings].sort((left, right) => phaseStartOrder(left) - phaseStartOrder(right));
 }
 

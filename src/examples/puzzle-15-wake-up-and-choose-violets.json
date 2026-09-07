@@ -36,7 +36,7 @@
       "info": [
         {
           "timing": "day_1",
-          "expression": "no p: {You, Oscar, Sarah} | p.role == Vortox"
+          "expression": "no p: {You, Oscar, Sarah} | p.initial_role == Vortox"
         }
       ],
       "possibleActualRoles": ["Artist", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
@@ -84,7 +84,7 @@
       "timing": "day_1",
       "statements": [
         {
-          "options": ["#({Clockmaker, Klutz, Juggler, Vortox} & players.role) = 3", "townsfolk_chain_length(5)"]
+          "options": ["#({Clockmaker, Klutz, Juggler, Vortox} & players.initial_role) = 3", "townsfolk_chain_length(5)"]
         }
       ],
       "possibleActualRoles": ["Savant"]

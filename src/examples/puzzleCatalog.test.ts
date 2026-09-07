@@ -36,11 +36,11 @@ describe("puzzle catalog", () => {
 
   test("reserves custom constraints for rules specified by the source image", () => {
     const expected = new Set([
-      "puzzle-56-meanwhile-at-the-legion-of-doom", // Standard-game and Legion setup branches.
-      "puzzle-62-have-you-ever-seen-the-rain", // Storm Catcher protects the Drunk from non-execution deaths.
-      "puzzle-64-copycatholic", // Pope requires a duplicate good character.
-      "puzzle-72-one-digit-too-many", // Standard-game and Legion setup branches.
-      "puzzle-76-three-for-three", // Custom three-role deduction setup.
+      "puzzle-56-meanwhile-at-the-legion-of-doom", // The setup includes standard games and Legion games.
+      "puzzle-62-have-you-ever-seen-the-rain", // The Storm Catcher lets the Drunk die only by execution.
+      "puzzle-64-copycatholic", // With the Pope, the setup must have a duplicate good character.
+      "puzzle-72-one-digit-too-many", // The setup includes standard games and Legion games.
+      "puzzle-76-three-for-three", // This puzzle uses a custom setup with three roles.
     ]);
     const actual = new Set(
       PUZZLE_EXAMPLES.filter((example) => (validatePuzzleDoc(example.data).constraints?.length ?? 0) > 0).map(
@@ -68,7 +68,7 @@ describe("puzzle catalog", () => {
 
     expect(matt).toEqual([
       { type: "Recluse", name: "Matt", timing: "night_1" },
-      { type: "Imp", name: "Matt", timing: "night_4", alignment: "good" },
+      { type: "Imp", name: "Matt", timing: "night_4", roleTiming: "night_4", alignment: "good" },
     ]);
     expect(doc.constraints).toBeUndefined();
   });

@@ -80,7 +80,7 @@
       "info": [
         {
           "timing": "day_3",
-          "expression": "Olivia.type != Townsfolk"
+          "expression": "Olivia.initial_type != Townsfolk"
         }
       ]
     },
