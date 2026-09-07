@@ -32,16 +32,11 @@ jobs:
         run: bun run test:unit
 
   playwright:
-    name: Playwright (${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
+    name: Playwright
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.63.0-noble
       options: --ipc=host
-    strategy:
-      fail-fast: false
-      matrix:
-        shardIndex: [1, 2, 3, 4]
-        shardTotal: [4]
 
     steps:
       - name: Check out repository
@@ -63,7 +58,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Run Playwright tests
-        run: bun run test:e2e -- --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+        run: bun run test:e2e
 
   checks:
     name: CI
