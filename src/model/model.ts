@@ -1,7 +1,13 @@
-import { validateSatWitness, type ConstraintOrigin, type SatProblem } from "./sat";
-import { type ChoiceAction, type ChoiceWitness, validateChoiceWitness } from "./actions";
-import { CharacterTrace, validateTraceWitness, type TraceWitness } from "./trace";
-import { atMostClauses } from "./cardinality";
+import { World, KeyError, flavorByTiming } from "./world";
+import { enumerateWorlds, type SolveReport } from "./solve";
+export { World, KeyError, forcedRoleHolders } from "./world";
+export type { SolveReport } from "./solve";
+import { BooleanConstraints, BoolVar, lit, type BoolLike } from "./boolean";
+export { BoolVar, type BoolLike } from "./boolean";
+import { slug, keyOf, addMapValue } from "./keys";
+import type { SatProblem } from "./sat";
+import { select, constrainSelection, type ChoiceAction, type ChoiceWitness } from "./actions";
+import { CharacterTrace } from "./trace";
 import {
   Alignment,
   CharacterType,
@@ -12,49 +18,17 @@ import {
   roleMaxCopies,
   roleName,
 } from "./core";
-import { type Clause, type Literal, type SatBackend, combinations, negate } from "./sat";
+import { type SatBackend, combinations, negate } from "./sat";
 
-export type Timing = `night_${number}` | `day_${number}`;
+export { day, night, type Timing } from "./timing";
+import { night, timingOrder, type Timing } from "./timing";
 
 const DEFAULT_TIMING_KEY = "default";
-
-export function night(number: number): Timing {
-  if (!Number.isInteger(number) || number <= 0) throw new Error(`Night must be a positive integer: ${number}.`);
-  return `night_${number}`;
-}
-
-export function day(number: number): Timing {
-  if (!Number.isInteger(number) || number <= 0) throw new Error(`Day must be a positive integer: ${number}.`);
-  return `day_${number}`;
-}
 
 export interface TimingQuery {
   readonly timing?: Timing;
 }
 
-function slug(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-}
-
-export class BoolVar {
-  constructor(
-    readonly id: number,
-    readonly name: string,
-  ) {}
-
-  not(): Literal {
-    return -this.id;
-  }
-
-  get lit(): Literal {
-    return this.id;
-  }
-}
-
-export type BoolLike = BoolVar | Literal;
 export type RedHerrings = ReadonlyMap<string, BoolVar>;
 export type DemonPredicate = (player: string, name: string) => BoolLike;
 
@@ -67,87 +41,7 @@ export interface InfoClaimConstraint {
   readonly vortoxAffected?: boolean;
 }
 
-function lit(value: BoolLike): Literal {
-  return typeof value === "number" ? value : value.lit;
-}
-
-function keyOf(items: readonly string[]): string {
-  return items.join("\u0000");
-}
-
-function timingOrder(timing: Timing): number {
-  const match = /^(night|day)_(\d+)$/.exec(timing);
-  if (match === null) throw new Error(`Invalid timing: ${timing}.`);
-  const round = Number(match[2]);
-  return round * 2 + (match[1] === "day" ? 1 : 0);
-}
-
-function addMapValue<K, V>(map: Map<K, V[]>, key: K, value: V): void {
-  const values = map.get(key);
-  if (values === undefined) map.set(key, [value]);
-  else values.push(value);
-}
-
-export class World {
-  constructor(
-    readonly actual: ReadonlyMap<string, string>,
-    readonly apparent: ReadonlyMap<string, string>,
-    readonly poisoned: ReadonlySet<string>,
-    readonly poisonedByTiming: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
-    readonly drunk: ReadonlySet<string> = new Set(),
-    readonly drunkByTiming: ReadonlyMap<string, ReadonlySet<string>> = new Map(),
-    readonly trace?: TraceWitness,
-    readonly actions: readonly ChoiceWitness[] = [],
-  ) {}
-
-  holder(role: RoleRef): string | undefined {
-    const roleRef = roleName(role);
-    const holders = [...this.actual.entries()]
-      .filter(([, actualRole]) => actualRole === roleRef)
-      .map(([player]) => player);
-    return holders.length === 1 ? holders[0] : undefined;
-  }
-
-  actualRole(player: string): string {
-    const actual = this.actual.get(player);
-    if (actual === undefined) throw new KeyError(`Unknown player: ${player}`);
-    return actual;
-  }
-
-  isPoisoned(player: string, timing?: Timing): boolean {
-    if (timing === undefined) return this.poisoned.has(player);
-    return this.poisonedByTiming.get(timing)?.has(player) ?? false;
-  }
-
-  isDrunk(player: string, timing?: Timing): boolean {
-    if (this.drunk.has(player)) return true;
-    if (timing === undefined) return false;
-    return this.drunkByTiming.get(timing)?.has(player) ?? false;
-  }
-}
-
-export class KeyError extends Error {}
-
-export interface SolveReport {
-  readonly status: "sat" | "unsat" | "unknown";
-  readonly complete: boolean;
-  readonly stopped: "exhausted" | "limit" | "unknown";
-  readonly reason?: string;
-  readonly projection: "initialCharacters";
-  readonly worlds: readonly World[];
-  readonly metrics: {
-    readonly variables: number;
-    readonly clauses: number;
-    readonly backendCalls: number;
-    readonly finalizeMs: number;
-    readonly solveMs: number;
-  };
-}
-
-export class BOTCModel {
-  private prepared: SatProblem | undefined;
-  private readonly origins: ConstraintOrigin[] = [];
-  private origin: ConstraintOrigin = { kind: "rule", id: "model.core" };
+export class BOTCModel extends BooleanConstraints {
   private finalizeMs = 0;
   private readonly choiceActions: ChoiceAction[] = [];
   private readonly pitHagDemonCreations = new Map<Timing, BoolLike[]>();
@@ -168,9 +62,6 @@ export class BOTCModel {
   // Add the applicable effect sources at each of these times.
   readonly droisonTimingKeys = new Set<string>();
 
-  private variableCount = 0;
-  private counter = 0;
-  private readonly clauses: Clause[] = [];
   private readonly actual = new Map<string, BoolVar>();
   private readonly droisonedVars = new Map<string, BoolVar>();
   private readonly activePoisonSourcesByTiming = new Map<string, BoolLike[]>();
@@ -183,13 +74,11 @@ export class BOTCModel {
   private readonly globalDrunkSourceTargetsByPlayer = new Map<string, BoolLike[]>();
   private readonly puzzlemasterDrunkSourceTargetsByPlayer = new Map<string, BoolLike[]>();
   private readonly lleechHostTargetsByPlayer = new Map<string, BoolLike[]>();
-  private readonly roleAtVars = new Map<string, BoolVar>();
-  private readonly roleAtSources = new Map<string, BoolLike[]>();
-  private readonly roleAtRemovals = new Map<string, BoolLike[]>();
+  private readonly abilityAtVars = new Map<string, BoolVar>();
+  private readonly abilityRemovals = new Map<string, BoolLike[]>();
   private readonly roleActiveByTimingRole = new Map<string, BoolLike>();
   private readonly goodAtVars = new Map<string, BoolVar>();
   private readonly goodAtSources = new Map<string, BoolLike>();
-  private readonly defaultAlignmentConstraints = new Set<string>();
   private readonly abilityUses: Array<{
     readonly player: string;
     readonly role: string;
@@ -229,14 +118,7 @@ export class BOTCModel {
     readonly excludedSourceIds: ReadonlySet<number>;
     readonly variable: BoolVar;
   }> = [];
-  private readonly defaultWakeConstraints = new Set<string>();
-  private readonly defaultRoleAtConstraints = new Set<string>();
   private readonly explicitDroisonTrue = new Set<number>();
-  private globalDrunkSourceConstraintsApplied = false;
-  private readonly defaultSoberConstraints = new Set<string>();
-  private readonly gateCache = new Map<string, BoolVar>();
-  private trueConstant: BoolVar | undefined;
-  private falseConstant: BoolVar | undefined;
   private readonly fortuneTellerRedHerringVars = new Map<string, RedHerrings>();
   private readonly malfunctions = new Map<string, Map<string, BoolLike[]>>();
   private readonly malfunctionQueries: Array<{ timing: Timing; count: number; observer?: string; variable: BoolVar }> =
@@ -251,6 +133,7 @@ export class BOTCModel {
       readonly backend: SatBackend;
     },
   ) {
+    super();
     if (players.length === 0) throw new Error("At least one player is required.");
     this.players = [...players];
     if (new Set(this.players).size !== this.players.length) throw new Error("Player names must be unique.");
@@ -303,75 +186,6 @@ export class BOTCModel {
         .filter(([, variable]) => model.has(Math.abs(lit(variable))) === lit(variable) > 0)
         .map(([candidate]) => candidate),
     }));
-  }
-
-  newBool(name: string): BoolVar {
-    this.assertBuilding();
-    this.variableCount += 1;
-    this.counter += 1;
-    return new BoolVar(this.variableCount, `${slug(name)}__${this.counter}`);
-  }
-
-  constantBool(value: boolean, name: string): BoolVar {
-    const existing = value ? this.trueConstant : this.falseConstant;
-    if (existing !== undefined) return existing;
-    const result = this.newBool(name);
-    this.addClause([value ? result.lit : result.not()]);
-    if (value) this.trueConstant = result;
-    else this.falseConstant = result;
-    return result;
-  }
-
-  private constantValueOf(literal: Literal): boolean | undefined {
-    if (this.trueConstant !== undefined && Math.abs(literal) === this.trueConstant.id) return literal > 0;
-    if (this.falseConstant !== undefined && Math.abs(literal) === this.falseConstant.id) return literal < 0;
-    return undefined;
-  }
-
-  private literalBool(literal: Literal, name: string): BoolVar {
-    if (literal > 0) return new BoolVar(literal, name);
-    const key = keyOf(["not", String(-literal)]);
-    let cached = this.gateCache.get(key);
-    if (cached === undefined) {
-      cached = this.newBool(name);
-      this.addClause([cached.not(), literal]);
-      this.addClause([cached.lit, negate(literal)]);
-      this.gateCache.set(key, cached);
-    }
-    return cached;
-  }
-
-  // Return the variable for an AND or OR gate with these inputs.
-  // If an equivalent gate is available, use its variable.
-  // The identity element is true for AND and false for OR.
-  // Remove each input that has the value of the identity element.
-  // An absorbing operand or a complementary pair gives a constant result.
-  private gate(
-    kind: string,
-    values: readonly BoolLike[],
-    name: string,
-    identity: boolean,
-    build: (literals: readonly Literal[], result: BoolVar) => void,
-  ): BoolVar {
-    const unique = new Set(values.map(lit));
-    const literals: Literal[] = [];
-    for (const literal of unique) {
-      const constant = this.constantValueOf(literal);
-      if (constant === identity) continue;
-      if (constant === !identity || unique.has(-literal)) return this.constantBool(!identity, name);
-      literals.push(literal);
-    }
-    literals.sort((left, right) => left - right);
-    if (literals.length === 0) return this.constantBool(identity, name);
-    if (literals.length === 1) return this.literalBool(literals[0] as Literal, name);
-    const key = keyOf([kind, ...literals.map(String)]);
-    let cached = this.gateCache.get(key);
-    if (cached === undefined) {
-      cached = this.newBool(name);
-      build(literals, cached);
-      this.gateCache.set(key, cached);
-    }
-    return cached;
   }
 
   actualIs(player: string, role: RoleRef): BoolVar {
@@ -493,21 +307,6 @@ export class BOTCModel {
         this.addThinksOutOfPlayRole(claim.player, apparentRole, hiddenRole);
   }
 
-  addClaim(
-    player: string,
-    apparentRole: RoleRef,
-    possibleRoles: readonly RoleRef[],
-    options: { readonly drunkRole?: RoleRef } = {},
-  ): void {
-    this.assertBuilding();
-    const apparentRoleRef = roleName(apparentRole);
-    const drunkRole = options.drunkRole ?? "Drunk";
-    this.setApparentRole(player, apparentRoleRef);
-    this.setPossibleActualRoles(player, possibleRoles);
-    if (possibleRoles.some((role) => roleName(role) === roleName(drunkRole)))
-      this.addThinksOutOfPlayRole(player, apparentRoleRef, drunkRole);
-  }
-
   setPossibleActualRoles(player: string, roles: readonly RoleRef[]): void {
     this.assertBuilding();
     this.checkPlayer(player);
@@ -532,13 +331,6 @@ export class BOTCModel {
     this.addImplication(this.actualIs(player, hiddenRole), this.roleInPlay(apparentRole).not());
   }
 
-  forceOutsiderCount(
-    count: number,
-    options: { readonly players?: readonly string[]; readonly name?: string } = {},
-  ): void {
-    this.addTruth(this.outsiderCountIs(count, options));
-  }
-
   outsiderCountIs(
     count: number,
     options: { readonly players?: readonly string[]; readonly name?: string } = {},
@@ -551,24 +343,9 @@ export class BOTCModel {
     );
   }
 
-  addBaronOutsiderCounts(
-    counts: { readonly withoutBaron: number; readonly withBaron: number },
-    options: { readonly players?: readonly string[]; readonly baronRole?: RoleRef } = {},
-  ): void {
-    this.assertBuilding();
-    const baronRole = options.baronRole ?? "Baron";
-    this.addImplication(this.roleInPlay(baronRole), this.outsiderCountIs(counts.withBaron, options));
-    this.addImplication(this.roleInPlay(baronRole).not(), this.outsiderCountIs(counts.withoutBaron, options));
-  }
-
   fixPoisoned(player: string, value: boolean, timing?: Timing): void {
     this.assertBuilding();
     this.fixFlavor(this.poisoned(player, timing), player, value, timing);
-  }
-
-  fixDrunk(player: string, value: boolean, timing?: Timing): void {
-    this.assertBuilding();
-    this.fixFlavor(this.drunk(player, timing), player, value, timing);
   }
 
   private fixFlavor(flavor: BoolVar, player: string, value: boolean, timing?: Timing): void {
@@ -618,8 +395,7 @@ export class BOTCModel {
           ? this.constantBool(options.activeIf, `${sourceName}_drunking_active`)
           : options.activeIf;
 
-    this.addEnforcedExactlyN(targetVars, 1, active);
-    this.addEnforcedExactlyN(targetVars, 0, negate(lit(active)));
+    constrainSelection(this, targetVars, 1, active);
 
     for (const timing of timings) {
       const activeAtTiming = activeByTiming.get(timing) ?? active;
@@ -667,20 +443,15 @@ export class BOTCModel {
       `${sourceName}_actor_healthy_before_choice`,
     );
     const shouldBeActive = this.allOf(
-      [this.hasRoleAt(actor, role, timing), preAbilityHealthy],
+      [this.hasAbilityAt(actor, role, timing), preAbilityHealthy],
       `${sourceName}_should_be_active`,
     );
-    this.addImplication(active, shouldBeActive);
-    this.addImplication(shouldBeActive, active);
-    this.addEnforcedExactlyN(
+    this.equate(active, shouldBeActive);
+    constrainSelection(
+      this,
       targets.map(([, target]) => target),
       1,
       active,
-    );
-    this.addEnforcedExactlyN(
-      targets.map(([, target]) => target),
-      0,
-      active.not(),
     );
     return active;
   }
@@ -724,8 +495,7 @@ export class BOTCModel {
       this.addImplication(drunk, this.actualIs(player, villageIdiotRole));
       return drunk;
     });
-    this.addEnforcedExactlyN(drunkPlayers, 1, atLeastTwoVillageIdiots);
-    this.addEnforcedExactlyN(drunkPlayers, 0, atLeastTwoVillageIdiots.not());
+    constrainSelection(this, drunkPlayers, 1, atLeastTwoVillageIdiots);
   }
 
   private registerGlobalDrunkSourceTarget(player: string, target: BoolLike): void {
@@ -754,8 +524,7 @@ export class BOTCModel {
       addMapValue(this.lleechHostTargetsByPlayer, player, target);
       return target;
     });
-    this.addEnforcedExactlyN(targets, 1, active);
-    this.addEnforcedExactlyN(targets, 0, active.not());
+    constrainSelection(this, targets, 1, active);
   }
 
   lleechHost(player: string, name: string): BoolVar {
@@ -792,7 +561,7 @@ export class BOTCModel {
 
       for (const player of this.players) {
         if (excludedPlayers.has(player)) continue;
-        const hasRole = this.hasRoleAt(player, roleRef, timing);
+        const hasRole = this.hasAbilityAt(player, roleRef, timing);
         this.registerDrunkSourceTarget(
           player,
           timing,
@@ -834,8 +603,7 @@ export class BOTCModel {
       for (const timing of timings) this.registerPoisonSourceTarget(player, timing, target);
       return target;
     });
-    this.addEnforcedExactlyN(targets, 1, activeIf);
-    this.addEnforcedExactlyN(targets, 0, negate(lit(activeIf)));
+    constrainSelection(this, targets, 1, activeIf);
     for (const timing of timings) {
       this.droisonTimingKeys.add(timing);
       this.registerActivePoisonSource(timing, activeIf);
@@ -898,8 +666,7 @@ export class BOTCModel {
     if (activeIf === undefined) {
       this.addExactlyN(targets, 1);
     } else {
-      this.addEnforcedExactlyN(targets, 1, activeIf);
-      this.addEnforcedExactlyN(targets, 0, negate(lit(activeIf)));
+      constrainSelection(this, targets, 1, activeIf);
     }
   }
 
@@ -919,100 +686,6 @@ export class BOTCModel {
     this.assertBuilding();
     this.checkPlayer(player);
     addMapValue(this.drunkSourceTargetsByTimingPlayer, this.timingPlayerKey(timing, player), target);
-  }
-
-  setCharacterCount(role: RoleRef, count: number): void {
-    this.assertBuilding();
-    const roleRef = roleName(role);
-    this.checkRole(roleRef);
-    this.addExactlyN(
-      this.players.map((player) => this.actualIs(player, roleRef)),
-      count,
-    );
-  }
-
-  addTruth(value: BoolLike): void {
-    this.assertBuilding();
-    this.addClause([lit(value)]);
-  }
-
-  addFalse(value: BoolLike): void {
-    this.assertBuilding();
-    this.addClause([negate(lit(value))]);
-  }
-
-  addImplication(condition: BoolLike, conclusion: BoolLike): void {
-    this.assertBuilding();
-    this.addClause([negate(lit(condition)), lit(conclusion)]);
-  }
-
-  addExactlyOne(values: readonly BoolLike[]): void {
-    this.assertBuilding();
-    this.addExactlyN(values, 1);
-  }
-
-  addExactlyN(values: readonly BoolLike[], count: number): void {
-    this.assertBuilding();
-    this.addAtMostN(values, count);
-    this.addAtLeastN(values, count);
-  }
-
-  addEnforcedExactlyN(values: readonly BoolLike[], count: number, condition: BoolLike): void {
-    this.assertBuilding();
-    for (const clause of this.exactlyNClauses(values.map(lit), count))
-      this.addClause([negate(lit(condition)), ...clause]);
-  }
-
-  addEnforcedAtLeastN(values: readonly BoolLike[], count: number, condition: BoolLike): void {
-    this.assertBuilding();
-    for (const clause of this.atLeastNClauses(values.map(lit), count))
-      this.addClause([negate(lit(condition)), ...clause]);
-  }
-
-  addEnforcedAtMostN(values: readonly BoolLike[], count: number, condition: BoolLike): void {
-    this.assertBuilding();
-    for (const clause of this.atMostNClauses(values.map(lit), count))
-      this.addClause([negate(lit(condition)), ...clause]);
-  }
-
-  boolSumEquals(values: readonly BoolLike[], count: number, name: string): BoolVar {
-    const literals = values.map(lit).sort((left, right) => left - right);
-    if (count < 0 || count > literals.length) return this.constantBool(false, name);
-    if (literals.length === 0) return this.constantBool(true, name);
-    if (literals.length === 1)
-      return this.literalBool(count === 1 ? (literals[0] as Literal) : negate(literals[0] as Literal), name);
-    const key = keyOf(["sum", String(count), ...literals.map(String)]);
-    let cached = this.gateCache.get(key);
-    if (cached === undefined) {
-      cached = this.reifyExactCount(literals, count, name);
-      this.gateCache.set(key, cached);
-    }
-    return cached;
-  }
-
-  allOf(values: readonly BoolLike[], name: string): BoolVar {
-    return this.gate("all_of", values, name, true, (literals, result) => {
-      for (const literal of literals) this.addClause([result.not(), literal]);
-      this.addClause([result.lit, ...literals.map(negate)]);
-    });
-  }
-
-  anyOf(values: readonly BoolLike[], name: string): BoolVar {
-    return this.gate("any_of", values, name, false, (literals, result) => {
-      this.addClause([result.not(), ...literals]);
-      for (const literal of literals) this.addClause([result.lit, negate(literal)]);
-    });
-  }
-
-  not(value: BoolLike, name: string): BoolVar {
-    const literal = lit(value);
-    const constant = this.constantValueOf(literal);
-    if (constant !== undefined) return this.constantBool(!constant, name);
-    return this.literalBool(negate(literal), name);
-  }
-
-  xor(left: BoolLike, right: BoolLike, name: string): BoolVar {
-    return this.boolSumEquals([left, right], 1, name);
   }
 
   isEvil(player: string): BoolVar {
@@ -1122,17 +795,17 @@ export class BOTCModel {
     return this.roleActiveByTimingRole.get(this.timingRoleKey(timing, roleRef)) ?? this.roleInPlay(roleRef);
   }
 
-  hasRoleAt(player: string, role: RoleRef, timing?: Timing): BoolVar {
+  hasAbilityAt(player: string, role: RoleRef, timing?: Timing): BoolVar {
     this.checkPlayer(player);
     const roleRef = roleName(role);
     this.checkRole(roleRef);
     const roleTiming = timing ?? DEFAULT_TIMING_KEY;
     if (roleTiming === DEFAULT_TIMING_KEY) return this.actualIs(player, roleRef);
-    const key = this.roleAtKey(roleTiming, player, roleRef);
-    let result = this.roleAtVars.get(key);
+    const key = this.abilityAtKey(roleTiming, player, roleRef);
+    let result = this.abilityAtVars.get(key);
     if (result === undefined) {
       result = this.newBool(`${player}_${roleRef}_${roleTiming}`);
-      this.roleAtVars.set(key, result);
+      this.abilityAtVars.set(key, result);
     }
     return result;
   }
@@ -1283,28 +956,29 @@ export class BOTCModel {
     this.acquiredAbilities.push({ player, role: roleName(role), timing, active, sourceRole });
   }
 
-  addRoleAt(player: string, role: RoleRef, timing: Timing, value: BoolLike | boolean = true): BoolVar {
+  replaceCharacter(
+    player: string,
+    role: RoleRef,
+    timing: Timing,
+    active: BoolLike = this.constantBool(true, "character_transition"),
+  ): BoolVar {
     this.assertBuilding();
-    if (value === false) return this.removeRoleAt(player, role, timing);
-    const active = value === true ? this.constantBool(true, "character_transition") : value;
     this.trace.replace({ player, character: roleName(role), timing, active, rule: "character-change" });
-    return this.hasRoleAt(player, role, timing);
+    return this.hasAbilityAt(player, role, timing);
   }
 
-  removeRoleAt(player: string, role: RoleRef, timing: Timing, value: BoolLike | boolean = true): BoolVar {
+  removeAbility(
+    player: string,
+    role: RoleRef,
+    timing: Timing,
+    active: BoolLike = this.constantBool(true, "ability_removal"),
+  ): BoolVar {
     this.assertBuilding();
     const roleRef = roleName(role);
-    const roleAt = this.hasRoleAt(player, roleRef, timing);
-    const key = this.roleAtKey(timing, player, roleRef);
-    if (typeof value === "boolean") {
-      if (!value) return roleAt;
-      this.addFalse(roleAt);
-      addMapValue(this.roleAtRemovals, key, this.constantBool(true, `${player}_${roleRef}_${timing}_role_at_removal`));
-    } else {
-      this.addImplication(value, roleAt.not());
-      addMapValue(this.roleAtRemovals, key, value);
-    }
-    return roleAt;
+    const ability = this.hasAbilityAt(player, roleRef, timing);
+    this.addImplication(active, ability.not());
+    addMapValue(this.abilityRemovals, this.abilityAtKey(timing, player, roleRef), active);
+    return ability;
   }
 
   isDemonAt(player: string, timing?: Timing): BoolVar {
@@ -1312,7 +986,7 @@ export class BOTCModel {
       .filter(([, character]) => roleCharacterType(character) === CharacterType.Demon)
       .map(([role]) => role);
     return this.anyOf(
-      demonRoles.map((role) => this.hasRoleAt(player, role, timing)),
+      demonRoles.map((role) => this.hasAbilityAt(player, role, timing)),
       `${player}_demon_at_${timing ?? DEFAULT_TIMING_KEY}`,
     );
   }
@@ -1406,9 +1080,7 @@ export class BOTCModel {
     this.checkRole(roleRef);
     const active = this.newBool(`${sourceName}_active`);
     const choiceActive = this.newBool(`${sourceName}_choice_active`);
-    const targets = new Map(
-      this.players.map((player) => [player, this.newBool(`${sourceName}_${slug(player)}_target`)]),
-    );
+    const targets = select(this, this.players, choiceActive, sourceName, 1);
     const activeTargetsByTimingPlayer = new Map<string, BoolLike>();
     for (const affectedTiming of affectedTimings) {
       this.registerActivePoisonSource(affectedTiming, active);
@@ -1424,7 +1096,7 @@ export class BOTCModel {
     const healthyRoleHolders = this.players.map((player) =>
       this.allOf(
         [
-          this.hasRoleAt(player, roleRef, timing),
+          this.hasAbilityAt(player, roleRef, timing),
           this.soberAndHealthyBeforeOwnPoisoning(
             player,
             timing,
@@ -1442,20 +1114,15 @@ export class BOTCModel {
     const shouldChoose = this.allOf(
       [
         this.anyOf(
-          this.players.map((player) => this.hasRoleAt(player, roleRef, timing)),
+          this.players.map((player) => this.hasAbilityAt(player, roleRef, timing)),
           `${sourceName}_role_in_play`,
         ),
         activeIf,
       ],
       `${sourceName}_should_choose`,
     );
-    this.addImplication(choiceActive, shouldChoose);
-    this.addImplication(shouldChoose, choiceActive);
-    this.addImplication(active, shouldBeActive);
-    this.addImplication(shouldBeActive, active);
-    for (const target of targets.values()) this.addImplication(target, choiceActive);
-    this.addEnforcedExactlyN([...targets.values()], 1, choiceActive);
-    this.addEnforcedExactlyN([...targets.values()], 0, choiceActive.not());
+    this.equate(choiceActive, shouldChoose);
+    this.equate(active, shouldBeActive);
     return {
       active,
       choiceActive,
@@ -1651,7 +1318,7 @@ export class BOTCModel {
     const roleRef = roleName(claim.role);
     const claimTiming = claim.timing;
     const claimTimingName = claimTiming;
-    const activeRole = this.hasRoleAt(claim.player, roleRef, claimTiming);
+    const activeRole = this.hasAbilityAt(claim.player, roleRef, claimTiming);
     this.addImplication(
       this.allOf(
         [this.actualIs(claim.player, roleRef), this.isGoodAt(claim.player, claimTiming)],
@@ -1719,37 +1386,6 @@ export class BOTCModel {
     }
   }
 
-  addNoDashiiInfoClaim(
-    player: string,
-    role: RoleRef,
-    reportedInfo: BoolLike,
-    name: string,
-    options: {
-      readonly noDashiiRole?: RoleRef;
-      readonly timing?: Timing;
-    } = {},
-  ): BoolVar {
-    this.assertBuilding();
-    const active = this.actualIs(player, role);
-    const poisoned = this.noDashiiPoisoned(player, options);
-    this.addImplication(this.allOf([active, poisoned.not()], `${player}_${name}_sober_info`), reportedInfo);
-    return this.allOf(
-      [active, poisoned, this.not(reportedInfo, `${player}_${name}_false_info`)],
-      `${player}_${name}_malfunction`,
-    );
-  }
-
-  noDashiiPoisoned(
-    player: string,
-    options: {
-      readonly noDashiiRole?: RoleRef;
-      readonly timing?: Timing;
-    } = {},
-  ): BoolVar {
-    const timing = options.timing ?? night(1);
-    return this.noDashiiPoisonedAt(player, timing, options);
-  }
-
   noDashiiPoisonedAt(player: string, timing: Timing, options: { readonly noDashiiRole?: RoleRef } = {}): BoolVar {
     const timingName = timing;
     const players = this.players;
@@ -1800,8 +1436,7 @@ export class BOTCModel {
         query.count,
         "abnormal_player_count",
       );
-      this.addImplication(query.variable, count);
-      this.addImplication(count, query.variable);
+      this.equate(query.variable, count);
     }
   }
 
@@ -1823,41 +1458,22 @@ export class BOTCModel {
     return this.anyOf([this.isEvil(left), this.isEvil(right)], `${player}_sits_next_to_evil`);
   }
 
-  withProvenance<T>(origin: ConstraintOrigin, operation: () => T): T {
-    const previous = this.origin;
-    this.origin = origin;
-    try {
-      return operation();
-    } finally {
-      this.origin = previous;
-    }
-  }
-
-  private assertBuilding(): void {
-    if (this.prepared !== undefined)
-      throw new Error("The model is finalized; build a new model to change facts or rules.");
-  }
-
   /** Complete the source sets once. Each solver call uses the same fixed set of constraints. */
   finalize(): SatProblem {
     if (this.prepared !== undefined) return this.prepared;
     const started = performance.now();
-    // Add default effect sources before you complete the queries for each phase.
     this.applyDefaultXaanPoisoningConstraints();
-    this.applyDefaultTimingRoleConstraints();
-    this.applyDefaultWakeConstraints();
-    this.applyDefaultSoberConstraints();
-    this.applyDefaultTimingRoleConstraints();
-    this.applyDefaultAlignmentConstraints();
+    const healthConstraints = this.collectHealthConstraints();
+    this.resolveEffects();
+    for (const [variable, healthy] of healthConstraints) this.equate(variable, healthy);
+    this.resolveActions();
+    this.resolveAbilities();
+    this.resolveAlignment();
     this.applyMalfunctionConstraints();
     this.trace.finalize();
-    this.prepared = Object.freeze({
-      variableCount: this.variableCount,
-      clauses: Object.freeze(this.clauses.map((clause) => Object.freeze([...clause]))),
-      origins: Object.freeze([...this.origins]),
-    });
+    const problem = super.finalize();
     this.finalizeMs = performance.now() - started;
-    return this.prepared;
+    return problem;
   }
 
   async solveAll(options: { readonly limit?: number } = {}): Promise<World[]> {
@@ -1870,131 +1486,70 @@ export class BOTCModel {
     if (options.limit !== undefined && (!Number.isSafeInteger(options.limit) || options.limit < 1))
       throw new Error("Solution limit must be a positive integer.");
     const problem = this.finalize();
-    const started = performance.now();
-    let backendCalls = 0;
-    let stopped: SolveReport["stopped"] = "limit";
-    let reason: string | undefined;
-    const worlds: World[] = [];
-    const workingClauses = [...this.clauses];
-    while (options.limit === undefined || worlds.length < options.limit) {
-      backendCalls += 1;
-      const current = { ...problem, clauses: workingClauses };
-      const result = await this.backend.solve(current);
-      if (result.status === "unknown") {
-        stopped = "unknown";
-        reason = result.reason;
-        break;
-      }
-      if (!result.sat) {
-        stopped = "exhausted";
-        break;
-      }
-      validateSatWitness(current, result.model);
-      const model = result.model;
-      const actual = new Map<string, string>();
-      for (const player of this.players) {
-        const matching = [...this.characters.keys()].filter((role) => model.has(this.actualIs(player, role).id));
-        if (matching.length !== 1) throw new Error(`Expected exactly one actual character for ${player}.`);
-        actual.set(player, matching[0] as string);
-      }
-      const poisonedByTiming = this.flavorByTiming(
-        model,
-        [this.poisonSourceTargetsByTimingPlayer, this.poisonOverridesByTimingPlayer],
-        this.poisonQueryVars,
-      );
-      for (const timing of new Set(
-        [...this.poisonQueryVars.entries()]
-          .filter(([, variable]) => this.explicitDroisonTrue.has(variable.id))
-          .map(([key]) => key.split("\u0000")[0] as string),
-      )) {
-        poisonedByTiming.set(
-          timing,
-          new Set(
-            [...this.poisonQueryVars.entries()]
-              .filter(
-                ([key, variable]) =>
-                  key.startsWith(`${timing}\u0000`) &&
-                  this.explicitDroisonTrue.has(variable.id) &&
-                  model.has(variable.id),
-              )
-              .map(([key]) => key.split("\u0000")[1] as string),
-          ),
-        );
-      }
-      const poisoned = poisonedByTiming.get(DEFAULT_TIMING_KEY) ?? new Set<string>();
-      const drunkByTiming = this.flavorByTiming(model, [this.drunkSourceTargetsByTimingPlayer], this.drunkQueryVars);
-      const globallyDrunk = new Set(
-        [...this.globalDrunkVars.entries()].filter(([, variable]) => model.has(variable.id)).map(([player]) => player),
-      );
-      worlds.push(
-        new World(
-          actual,
-          new Map(this.apparentRoles),
-          poisoned,
-          poisonedByTiming,
-          globallyDrunk,
-          drunkByTiming,
-          this.trace.decode(model, actual),
-          this.decodeActions(model),
+    return enumerateWorlds(
+      problem,
+      this.backend,
+      [...this.actual.values()].map((variable) => variable.id),
+      (model) => this.decodeWorld(model),
+      this.finalizeMs,
+      options.limit,
+    );
+  }
+
+  private decodeWorld(model: ReadonlySet<number>): World {
+    const actual = new Map<string, string>();
+    for (const player of this.players) {
+      const matching = [...this.characters.keys()].filter((role) => model.has(this.actualIs(player, role).id));
+      if (matching.length !== 1) throw new Error(`Expected exactly one actual character for ${player}.`);
+      actual.set(player, matching[0] as string);
+    }
+    const poisonedByTiming = flavorByTiming(
+      model,
+      [this.poisonSourceTargetsByTimingPlayer, this.poisonOverridesByTimingPlayer],
+      this.poisonQueryVars,
+    );
+    for (const timing of new Set(
+      [...this.poisonQueryVars.entries()]
+        .filter(([, variable]) => this.explicitDroisonTrue.has(variable.id))
+        .map(([key]) => key.split("\u0000")[0] as string),
+    )) {
+      poisonedByTiming.set(
+        timing,
+        new Set(
+          [...this.poisonQueryVars.entries()]
+            .filter(
+              ([key, variable]) =>
+                key.startsWith(`${timing}\u0000`) &&
+                this.explicitDroisonTrue.has(variable.id) &&
+                model.has(variable.id),
+            )
+            .map(([key]) => key.split("\u0000")[1] as string),
         ),
       );
-      const witnessErrors = [
-        ...validateTraceWitness(worlds.at(-1)!.trace!),
-        ...worlds.at(-1)!.actions.flatMap(validateChoiceWitness),
-      ];
-      if (witnessErrors.length > 0) throw new Error(witnessErrors.join("\n"));
-      workingClauses.push(this.players.map((player) => -this.actualIs(player, actual.get(player)!).id));
     }
-    return {
-      status: stopped === "unknown" ? "unknown" : worlds.length > 0 ? "sat" : "unsat",
-      complete: stopped === "exhausted",
-      stopped,
-      reason,
-      projection: "initialCharacters",
-      worlds,
-      metrics: {
-        variables: problem.variableCount,
-        clauses: problem.clauses.length,
-        backendCalls,
-        finalizeMs: this.finalizeMs,
-        solveMs: performance.now() - started,
-      },
-    };
+    const poisoned = poisonedByTiming.get(DEFAULT_TIMING_KEY) ?? new Set<string>();
+    const drunkByTiming = flavorByTiming(model, [this.drunkSourceTargetsByTimingPlayer], this.drunkQueryVars);
+    const globallyDrunk = new Set(
+      [...this.globalDrunkVars.entries()].filter(([, variable]) => model.has(variable.id)).map(([player]) => player),
+    );
+    return new World(
+      actual,
+      new Map(this.apparentRoles),
+      poisoned,
+      poisonedByTiming,
+      globallyDrunk,
+      drunkByTiming,
+      this.trace.decode(model, actual),
+      this.decodeActions(model),
+    );
   }
 
-  private applyDefaultAlignmentConstraints(): void {
+  private resolveAlignment(): void {
     for (const [key, variable] of this.goodAtVars) {
-      if (this.defaultAlignmentConstraints.has(key)) continue;
       const [, player] = key.split("\u0000") as [string, string];
       const source = this.goodAtSources.get(key) ?? this.isGood(player);
-      this.addImplication(variable, source);
-      this.addImplication(source, variable);
-      this.defaultAlignmentConstraints.add(key);
+      this.equate(variable, source);
     }
-  }
-
-  private flavorByTiming(
-    model: ReadonlySet<number>,
-    sourceMaps: readonly ReadonlyMap<string, readonly BoolLike[]>[],
-    queryVars: ReadonlyMap<string, BoolVar>,
-  ): Map<string, ReadonlySet<string>> {
-    const satisfied = (value: BoolLike): boolean => {
-      const literal = lit(value);
-      return literal > 0 ? model.has(literal) : !model.has(-literal);
-    };
-    const keys = new Set([...sourceMaps.flatMap((sources) => [...sources.keys()]), ...queryVars.keys()]);
-    const result = new Map<string, Set<string>>();
-    for (const key of [...keys].sort()) {
-      const [timing, player] = key.split("\u0000") as [string, string];
-      let players = result.get(timing);
-      if (players === undefined) result.set(timing, (players = new Set()));
-      const queryVar = queryVars.get(key);
-      const affected =
-        (queryVar !== undefined && model.has(queryVar.id)) ||
-        sourceMaps.some((sources) => (sources.get(key) ?? []).some(satisfied));
-      if (affected) players.add(player);
-    }
-    return result;
   }
 
   private poisonSourceFlavor(key: string): readonly BoolLike[] {
@@ -2028,60 +1583,8 @@ export class BOTCModel {
     return keyOf([timing, role]);
   }
 
-  private roleAtKey(timing: string, player: string, role: string): string {
+  private abilityAtKey(timing: string, player: string, role: string): string {
     return keyOf(["role_at", timing, player, role]);
-  }
-
-  private addClause(clause: readonly Literal[]): void {
-    this.assertBuilding();
-    this.clauses.push([...clause]);
-    this.origins.push(this.origin);
-  }
-
-  private addAtMostN(values: readonly BoolLike[], count: number): void {
-    this.assertBuilding();
-    for (const clause of this.atMostNClauses(values.map(lit), count)) this.addClause(clause);
-  }
-
-  private addAtLeastN(values: readonly BoolLike[], count: number): void {
-    this.assertBuilding();
-    for (const clause of this.atLeastNClauses(values.map(lit), count)) this.addClause(clause);
-  }
-
-  private atMostNClauses(literals: readonly Literal[], count: number): Clause[] {
-    return atMostClauses(literals, count, () => this.newBool("cardinality").lit);
-  }
-
-  private atLeastNClauses(literals: readonly Literal[], count: number): Clause[] {
-    return this.atMostNClauses(literals.map(negate), literals.length - count);
-  }
-
-  private exactlyNClauses(literals: readonly Literal[], count: number): Clause[] {
-    return [...this.atMostNClauses(literals, count), ...this.atLeastNClauses(literals, count)];
-  }
-
-  // Use a sequential counter to test if exactly `count` input literals are true.
-  // Each row entry tests if at least `level` literals are true among the processed inputs.
-  // Keep at most `count + 1` levels to limit the counter size.
-  // Count each duplicate literal as a separate input.
-  private reifyExactCount(literals: readonly Literal[], count: number, name: string): BoolVar {
-    const maxLevel = Math.min(count + 1, literals.length);
-    let row: BoolLike[] = [];
-    for (let index = 0; index < literals.length; index += 1) {
-      const literal = literals[index] as Literal;
-      const levels = Math.min(index + 1, maxLevel);
-      const next: BoolLike[] = [];
-      for (let level = 1; level <= levels; level += 1) {
-        const levelName = `${name}__ge_${level}_of_${index + 1}`;
-        const carry: BoolLike = level === 1 ? literal : this.allOf([literal, row[level - 2] as BoolLike], levelName);
-        next.push(level <= row.length ? this.anyOf([row[level - 1] as BoolLike, carry], levelName) : carry);
-      }
-      row = next;
-    }
-    const bounds: BoolLike[] = [];
-    if (count > 0) bounds.push(row[count - 1] as BoolLike);
-    if (count < literals.length) bounds.push(negate(lit(row[count] as BoolLike)));
-    return this.allOf(bounds, name);
   }
 
   private registersAsAlignment(player: string, alignment: Alignment, name: string, timing: Timing): BoolVar {
@@ -2155,7 +1658,7 @@ export class BOTCModel {
     });
     return this.allOf(
       [
-        this.hasRoleAt(demon, noDashiiRole, timing),
+        this.hasAbilityAt(demon, noDashiiRole, timing),
         this.hasCharacterType(target, CharacterType.Townsfolk),
         ...between.map((betweenPlayer) => this.hasCharacterType(betweenPlayer, CharacterType.Townsfolk).not()),
       ],
@@ -2231,7 +1734,7 @@ export class BOTCModel {
     return this.anyOf(
       this.players.map((player) =>
         this.allOf(
-          [this.hasRoleAt(player, roleRef, timing), this.soberAndHealthy(player, timing)],
+          [this.hasAbilityAt(player, roleRef, timing), this.soberAndHealthy(player, timing)],
           `${name}_${player}_${timing}_sober_healthy`,
         ),
       ),
@@ -2239,9 +1742,8 @@ export class BOTCModel {
     );
   }
 
-  private applyDefaultTimingRoleConstraints(): void {
-    for (const [key, roleAt] of this.roleAtVars.entries()) {
-      if (this.defaultRoleAtConstraints.has(key)) continue;
+  private resolveAbilities(): void {
+    for (const [key, roleAt] of this.abilityAtVars.entries()) {
       const [, timing, player, role] = key.split("\u0000") as [string, Timing, string, string];
       const acquired = this.acquiredAbilities
         .filter(
@@ -2260,7 +1762,7 @@ export class BOTCModel {
                 "retains_acquired_ability",
               ),
         );
-      const removals = [...this.roleAtRemovals.entries()].flatMap(([removalKey, sources]) => {
+      const removals = [...this.abilityRemovals.entries()].flatMap(([removalKey, sources]) => {
         const [, when, who, what] = removalKey.split("\u0000") as [string, Timing, string, string];
         return who === player && what === role && timingOrder(when) <= timingOrder(timing) ? sources : [];
       });
@@ -2271,34 +1773,30 @@ export class BOTCModel {
         ],
         "ability_at",
       );
-      this.addImplication(roleAt, state);
-      this.addImplication(state, roleAt);
-      this.defaultRoleAtConstraints.add(key);
+      this.equate(roleAt, state);
     }
   }
 
-  private constrainToAnySource(key: string, variable: BoolVar, sources: readonly BoolLike[]): void {
-    if (this.defaultWakeConstraints.has(key)) return;
+  private constrainToAnySource(variable: BoolVar, sources: readonly BoolLike[]): void {
     for (const source of sources) this.addImplication(source, variable);
-    this.addClause([variable.not(), ...sources.map(lit)]);
-    this.defaultWakeConstraints.add(key);
+    if (!this.explicitDroisonTrue.has(variable.id)) this.addClause([variable.not(), ...sources.map(lit)]);
   }
 
-  private applyDefaultWakeConstraints(): void {
-    for (const [key, query] of this.abilityUsedBeforeQueries) {
+  private resolveActions(): void {
+    for (const query of this.abilityUsedBeforeQueries.values()) {
       const queryOrder = timingOrder(query.timing);
       const sources = this.abilityUses
         .filter((use) => use.player === query.player && use.role === query.role && timingOrder(use.timing) < queryOrder)
         .map((use) => use.activeIf);
-      this.constrainToAnySource(key, query.variable, sources);
+      this.constrainToAnySource(query.variable, sources);
     }
     for (const [key, query] of this.wakePreventionQueries) {
-      this.constrainToAnySource(key, query, this.wakePreventionSources.get(key) ?? []);
+      this.constrainToAnySource(query, this.wakePreventionSources.get(key) ?? []);
     }
     for (const [key, query] of this.conditionalWakeQueries) {
-      this.constrainToAnySource(key, query, this.conditionalWakeSources.get(key) ?? []);
+      this.constrainToAnySource(query, this.conditionalWakeSources.get(key) ?? []);
     }
-    for (const [key, query] of this.abilityTargetQueries) {
+    for (const query of this.abilityTargetQueries.values()) {
       const sources = this.abilityTargets
         .filter(
           (target) =>
@@ -2308,41 +1806,26 @@ export class BOTCModel {
             target.timing === query.timing,
         )
         .map((target) => target.activeIf);
-      this.constrainToAnySource(key, query.variable, sources);
+      this.constrainToAnySource(query.variable, sources);
     }
   }
 
-  private applyDefaultSoberConstraints(): void {
-    this.applyDefaultXaanPoisoningConstraints();
+  private resolveEffects(): void {
     this.applyDefaultPoisonCapacityConstraints();
-    this.applyPreDrunkHealthConstraints();
-    this.applyFlavorPredicateConstraints();
-    for (const [key, droisoned] of this.droisonedVars.entries()) {
-      const defaultKey = `droison:${key}`;
-      if (this.defaultSoberConstraints.has(defaultKey)) continue;
-      const sources = [...this.poisonSourceFlavor(key), ...this.drunkSourceFlavor(key)];
-      if (sources.length > 0) {
-        for (const source of sources) this.addImplication(source, droisoned);
-        if (!this.explicitDroisonTrue.has(droisoned.id)) this.addClause([droisoned.not(), ...sources.map(lit)]);
-      } else if (!this.explicitDroisonTrue.has(droisoned.id)) {
-        this.addFalse(droisoned);
-      }
-      this.defaultSoberConstraints.add(defaultKey);
-    }
-    if (this.globalDrunkSourceTargetsByPlayer.size > 0) {
-      this.applyGlobalDrunkSourceConstraints();
-      return;
-    }
-    for (const [player, drunk] of this.globalDrunkVars.entries()) {
-      const key = keyOf(["global_drunk", player]);
-      if (this.defaultSoberConstraints.has(key)) continue;
-      this.addFalse(drunk);
-      this.defaultSoberConstraints.add(key);
+    const predicates: Array<[ReadonlyMap<string, BoolVar>, (key: string) => readonly BoolLike[]]> = [
+      [this.poisonQueryVars, (key) => this.poisonSourceFlavor(key)],
+      [this.drunkQueryVars, (key) => this.drunkSourceFlavor(key)],
+      [this.droisonedVars, (key) => [...this.poisonSourceFlavor(key), ...this.drunkSourceFlavor(key)]],
+    ];
+    for (const [variables, sources] of predicates)
+      for (const [key, variable] of variables) this.constrainToAnySource(variable, sources(key));
+    for (const [player, drunk] of this.globalDrunkVars) {
+      this.addClause([drunk.not(), ...(this.globalDrunkSourceTargetsByPlayer.get(player) ?? []).map(lit)]);
     }
   }
 
-  private applyPreDrunkHealthConstraints(): void {
-    for (const query of this.preDroisonHealthQueries) {
+  private collectHealthConstraints(): readonly (readonly [BoolVar, BoolVar])[] {
+    return this.preDroisonHealthQueries.map((query) => {
       const key = this.timingPlayerKey(query.timing, query.player);
       const poisonSources = this.poisonSourceFlavor(key).filter(
         (source) => !query.excludedPoisonSourceIds.has(Math.abs(lit(source))),
@@ -2365,36 +1848,11 @@ export class BOTCModel {
         `${query.player}_unhealthy_before_own_drunking_at_${query.timing}`,
       );
       const healthy = this.not(unhealthy, `${query.player}_healthy_before_own_drunking_at_${query.timing}`);
-      this.addImplication(query.variable, healthy);
-      this.addImplication(healthy, query.variable);
-    }
-  }
-
-  private applyFlavorPredicateConstraints(): void {
-    const flavors: Array<[string, ReadonlyMap<string, BoolVar>, (key: string) => readonly BoolLike[]]> = [
-      ["poison", this.poisonQueryVars, (key) => this.poisonSourceFlavor(key)],
-      ["drunk", this.drunkQueryVars, (key) => this.drunkSourceFlavor(key)],
-    ];
-    for (const [flavor, vars, sourcesForKey] of flavors) {
-      for (const [key, flavorVar] of vars.entries()) {
-        const defaultKey = `${flavor}_flavor:${key}`;
-        if (this.defaultSoberConstraints.has(defaultKey)) continue;
-        const sources = sourcesForKey(key);
-        if (sources.length > 0) {
-          for (const source of sources) this.addImplication(source, flavorVar);
-          if (!this.explicitDroisonTrue.has(flavorVar.id)) this.addClause([flavorVar.not(), ...sources.map(lit)]);
-        } else if (!this.explicitDroisonTrue.has(flavorVar.id)) {
-          this.addFalse(flavorVar);
-        }
-        this.defaultSoberConstraints.add(defaultKey);
-      }
-    }
+      return [query.variable, healthy] as const;
+    });
   }
 
   private applyDefaultXaanPoisoningConstraints(): void {
-    const key = "xaan_poisoning";
-    if (this.defaultSoberConstraints.has(key)) return;
-    this.defaultSoberConstraints.add(key);
     if (!this.characters.has("Xaan")) return;
     const maxOutsiders = [...this.characters.values()]
       .filter((role) => roleCharacterType(role) === CharacterType.Outsider)
@@ -2412,19 +1870,6 @@ export class BOTCModel {
     }
   }
 
-  private applyGlobalDrunkSourceConstraints(): void {
-    if (this.globalDrunkSourceConstraintsApplied) return;
-    for (const [player, drunk] of this.globalDrunkVars.entries()) {
-      const sources = this.globalDrunkSourceTargetsByPlayer.get(player) ?? [];
-      if (sources.length === 0) {
-        this.addFalse(drunk);
-        continue;
-      }
-      this.addClause([drunk.not(), ...sources.map(lit)]);
-    }
-    this.globalDrunkSourceConstraintsApplied = true;
-  }
-
   private applyDefaultPoisonCapacityConstraints(): void {
     const overrideTimings = [...this.poisonOverridesByTimingPlayer.keys()].map(
       (key) => key.split("\u0000")[0] as string,
@@ -2434,34 +1879,12 @@ export class BOTCModel {
     );
     const timings = new Set([...this.activePoisonSourcesByTiming.keys(), ...overrideTimings, ...targetTimings]);
     for (const timing of timings) {
-      const key = `poison_capacity:${timing}`;
-      if (this.defaultSoberConstraints.has(key)) continue;
       const activeSources = this.activePoisonSourcesByTiming.get(timing) ?? [];
       const cappedPoisonedPlayers = this.players.map((player) => {
         const sourceTargets = this.poisonSourceTargetsByTimingPlayer.get(this.timingPlayerKey(timing, player)) ?? [];
         return this.anyOf(sourceTargets, `${timing}_${player}_capacity_counted_poison`);
       });
       this.addCountAtMostCount(cappedPoisonedPlayers, activeSources);
-      this.defaultSoberConstraints.add(key);
     }
   }
-
-  private addCountAtMostCount(leftValues: readonly BoolLike[], rightValues: readonly BoolLike[]): void {
-    this.assertBuilding();
-    // Use the equivalent bound: |left| + |complement(right)| <= right.length.
-    this.addAtMostN([...leftValues, ...rightValues.map((value) => negate(lit(value)))], rightValues.length);
-  }
-}
-
-export function forcedRoleHolders(
-  worlds: readonly World[],
-  roles: readonly RoleRef[],
-): Record<string, string | undefined> {
-  const summary: Record<string, string | undefined> = {};
-  for (const role of roles) {
-    const roleRef = roleName(role);
-    const holders = new Set(worlds.map((world) => world.holder(roleRef)));
-    summary[roleRef] = holders.size === 1 ? [...holders][0] : undefined;
-  }
-  return summary;
 }

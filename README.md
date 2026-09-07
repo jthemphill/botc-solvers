@@ -13,6 +13,11 @@ bun run test
 bun run typecheck
 ```
 
+`bun test` (or `bun run test:unit`) runs the unit tests in `src`, as configured in `bunfig.toml`.
+`bun run test:e2e` runs the browser tests with Playwright and starts the Vite server automatically.
+Run `bun run playwright:install` once to install Chromium before running browser tests.
+`bun run test` runs both suites. The `run` keyword selects the package script instead of Bun's built-in test runner.
+
 [Rules-first architecture, compatibility migration, tested scope, and remaining work](docs/rules-first-engine.md).
 
 Results distinguish incomplete enumeration and incomplete game-rule coverage. Listed characters are not necessarily fully implemented.

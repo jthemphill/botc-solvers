@@ -56,11 +56,11 @@ test("character transitions persist and acquired abilities do not replace charac
   const game = new BOTCModel(["A"], { characters: ["Philosopher", "Artist", "Chef"].map(roleByName), backend });
   game.fixActual("A", "Philosopher");
   game.gainAbility("A", "Artist", "night_1", game.constantBool(true, "chosen"), "Philosopher");
-  game.addTruth(game.hasRoleAt("A", "Artist", "day_1"));
+  game.addTruth(game.hasAbilityAt("A", "Artist", "day_1"));
   game.addTruth(game.characterAt("A", "Philosopher", "day_1"));
-  game.addRoleAt("A", "Chef", "night_2");
+  game.replaceCharacter("A", "Chef", "night_2");
   game.addTruth(game.characterAt("A", "Chef", "day_3"));
-  game.addFalse(game.hasRoleAt("A", "Artist", "day_3"));
+  game.addFalse(game.hasAbilityAt("A", "Artist", "day_3"));
   const world = (await game.solveAll())[0]!;
   expect(validateTraceWitness(world.trace!)).toEqual([]);
   const bad = { ...world.trace!, snapshots: [{ timing: "day_3" as const, characters: { A: "Philosopher" } }] };
@@ -157,7 +157,7 @@ test("a truthful reporter cannot continue using a lost ability", async () => {
   for (const reportAfterChange of [false, true]) {
     const game = new BOTCModel(["A"], { characters: ["Chef", "Artist"].map(roleByName), backend });
     game.fixActual("A", "Chef");
-    game.addRoleAt("A", "Artist", "night_2");
+    game.replaceCharacter("A", "Artist", "night_2");
     game.addInfoClaim({
       player: "A",
       role: "Chef",
@@ -173,8 +173,8 @@ test("Philosopher can duplicate an ability without duplicate starting characters
   game.fixActual("A", "Philosopher");
   game.fixActual("B", "Artist");
   game.gainAbility("A", "Artist", "night_2", game.constantBool(true, "choice"), "Philosopher");
-  game.addTruth(game.hasRoleAt("A", "Artist", "day_2"));
-  game.addTruth(game.hasRoleAt("B", "Artist", "day_2"));
+  game.addTruth(game.hasAbilityAt("A", "Artist", "day_2"));
+  game.addTruth(game.hasAbilityAt("B", "Artist", "day_2"));
   expect(await game.solveAll()).toHaveLength(1);
   const duplicate = new BOTCModel(["A", "B"], { characters: ["Philosopher", "Artist"].map(roleByName), backend });
   duplicate.fixActual("A", "Artist");
@@ -212,7 +212,7 @@ test("small independently generated character histories remain possible after hi
         snapshots: [{ timing: "day_3" as const, characters: { A: finish } }],
       };
       expect(validateTraceWitness(origin)).toEqual([]);
-      game.addRoleAt("A", finish, "night_2");
+      game.replaceCharacter("A", finish, "night_2");
       game.addTruth(game.characterAt("A", finish, "day_3"));
       expect((await game.solveAll()).some((world) => world.actualRole("A") === start)).toBe(true);
     }
@@ -245,7 +245,7 @@ test("the independent choice checker rejects changing a rule's required count", 
 test("intrinsic Drunk state follows character replacement instead of the starting token", async () => {
   const game = new BOTCModel(["A"], { characters: ["Chef", "Drunk"].map(roleByName), backend });
   game.fixActual("A", "Chef");
-  game.addRoleAt("A", "Drunk", "night_2");
+  game.replaceCharacter("A", "Drunk", "night_2");
   game.addTruth(game.soberAndHealthy("A", "night_1"));
   game.addFalse(game.soberAndHealthy("A", "day_2"));
   game.addInfoClaim({
@@ -254,7 +254,7 @@ test("intrinsic Drunk state follows character replacement instead of the startin
     timing: "night_2",
     learned: game.constantBool(false, "false_belief"),
   });
-  game.addRoleAt("A", "Chef", "night_3");
+  game.replaceCharacter("A", "Chef", "night_3");
   game.addTruth(game.soberAndHealthy("A", "day_3"));
   expect(await game.solveAll()).toHaveLength(1);
 });
@@ -263,9 +263,9 @@ test("returning to Philosopher does not restore an ability lost with that charac
   const game = new BOTCModel(["A"], { characters: ["Philosopher", "Chef", "Artist"].map(roleByName), backend });
   game.fixActual("A", "Philosopher");
   game.gainAbility("A", "Chef", "night_1", game.constantBool(true, "choice"), "Philosopher");
-  game.addRoleAt("A", "Artist", "night_2");
-  game.addRoleAt("A", "Philosopher", "night_3");
-  game.addFalse(game.hasRoleAt("A", "Chef", "day_3"));
+  game.replaceCharacter("A", "Artist", "night_2");
+  game.replaceCharacter("A", "Philosopher", "night_3");
+  game.addFalse(game.hasAbilityAt("A", "Chef", "day_3"));
   expect(await game.solveAll()).toHaveLength(1);
 });
 
@@ -288,7 +288,7 @@ test("initial role claims and explicit later role claims share a trace", async (
   };
   expect(await build(doc).solveAll()).toHaveLength(0);
   const changed = build(doc);
-  changed.addRoleAt("A", "Artist", "night_2");
+  changed.replaceCharacter("A", "Artist", "night_2");
   expect(await changed.solveAll()).toHaveLength(1);
 });
 

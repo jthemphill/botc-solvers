@@ -301,7 +301,7 @@ describe("DSL", () => {
 
     game.fixActual("A", Chef);
     game.fixActual("B", Imp);
-    game.addRoleAt("A", Imp, "night_2");
+    game.replaceCharacter("A", Imp, "night_2");
     game.addTruth(compile("role_at(A, Imp, night_2)", game, ctx) as BoolLike);
     game.addFalse(compile("role_at(A, Imp, night_1)", game, ctx) as BoolLike);
 

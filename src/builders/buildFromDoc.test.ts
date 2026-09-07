@@ -3022,7 +3022,7 @@ describe("buildFromDoc", () => {
       },
       backend,
     );
-    game.addTruth(game.hasRoleAt("B", "Riot", "day_3"));
+    game.addTruth(game.hasAbilityAt("B", "Riot", "day_3"));
     const worlds = await game.solveAll();
     expect(worlds).toHaveLength(1);
     expect(worlds[0]?.holder("Riot")).toBe("A");

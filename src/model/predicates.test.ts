@@ -453,9 +453,9 @@ describe("predicates and helpers", () => {
     game.fixActual("A", Chef);
     game.fixActual("B", Imp);
     game.fixActual("C", ScarletWoman);
-    game.addTruth(game.hasRoleAt("B", Imp, night(1)));
-    game.removeRoleAt("B", Imp, night(2));
-    game.addRoleAt("C", Imp, night(2));
+    game.addTruth(game.hasAbilityAt("B", Imp, night(1)));
+    game.removeAbility("B", Imp, night(2));
+    game.replaceCharacter("C", Imp, night(2));
     game.addTruth(game.isDemonAt("C", night(2)));
     game.addFalse(game.isDemonAt("B", night(2)));
     expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
