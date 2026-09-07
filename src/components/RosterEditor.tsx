@@ -1,3 +1,4 @@
+import styles from "./RosterEditor.module.css";
 import { useEffect, useLayoutEffect, useRef, useState, type Dispatch, type ReactNode } from "react";
 import { roleEmojiLabel } from "../model/roleEmoji";
 import { SUPPORTED_CLAIM_TYPES, type PuzzleDoc } from "../schema/puzzleDoc";
@@ -78,7 +79,11 @@ export function RosterEditor({ doc, dispatch, selectedIndex, onSelect, compact =
   };
 
   return (
-    <section ref={roster} className={`roster-editor${compact ? " compact" : ""}`} aria-label="Player roster">
+    <section
+      ref={roster}
+      className={`${styles.root} roster-editor${compact ? " compact" : ""}`}
+      aria-label="Player roster"
+    >
       <header className="section-heading">
         <div>
           <h2>Players & claims</h2>

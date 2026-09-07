@@ -1,4 +1,5 @@
-import { Fragment, useId, useState, type Dispatch } from "react";
+import styles from "./ClaimsEditor.module.css";
+import { Fragment, useId } from "react";
 import { DslError, lex } from "../dsl/lex";
 import { parse } from "../dsl/parse";
 import { Alignment, CharacterType } from "../model/core";
@@ -68,13 +69,7 @@ import type {
   WasherwomanClaim,
 } from "../schema/puzzleDoc";
 import { SUPPORTED_CLAIM_TYPES } from "../schema/puzzleDoc";
-import type { PuzzleAction } from "../state/puzzleDoc";
 import { RoleListEditor, RoleTypeahead, sortedRoleNames } from "./RolePicker";
-
-interface Props {
-  doc: PuzzleDoc;
-  dispatch: Dispatch<PuzzleAction>;
-}
 
 export const CLAIM_TYPES = [...SUPPORTED_CLAIM_TYPES];
 const CLAIM_ROLE_OPTIONS = sortedRoleNames(CLAIM_TYPES.map((type) => canonicalRoleName(type) ?? type));
@@ -119,55 +114,6 @@ function timingLabel(timing: string): string {
   const [, period, number] = match;
   if (period === undefined || number === undefined) return timing;
   return `${period[0]?.toUpperCase()}${period.slice(1)} ${number}`;
-}
-
-export function ClaimsEditor({ doc, dispatch }: Props) {
-  const [newType, setNewType] = useState<Claim["type"]>("Investigator");
-  const [newName, setNewName] = useState<string>("");
-
-  const addClaim = () => {
-    const name = newName || doc.players[0] || "";
-    if (!name) return;
-    const claim = makeEmptyClaim(newType, name);
-    dispatch({ type: "addClaim", claim });
-  };
-
-  return (
-    <section className="panel">
-      <h3>Claims</h3>
-      <div className="row">
-        <ClaimTypeahead value={newType} onChange={setNewType} />
-        <select
-          id="claim-player"
-          name="claim-player"
-          aria-label="Claiming player"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-        >
-          <option value="">— player —</option>
-          {doc.players.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
-        <button onClick={addClaim} disabled={doc.players.length === 0}>
-          + Add claim
-        </button>
-      </div>
-      {doc.claims.map((c, i) => (
-        <div key={i} className="claim-block">
-          <header>
-            <strong>
-              {c.name} — {roleEmojiLabel(c.type)}
-            </strong>
-            <button onClick={() => dispatch({ type: "removeClaim", index: i })}>Remove</button>
-          </header>
-          <ClaimBody doc={doc} claim={c} onChange={(claim) => dispatch({ type: "updateClaim", index: i, claim })} />
-        </div>
-      ))}
-    </section>
-  );
 }
 
 export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
@@ -521,7 +467,7 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
   })();
 
   return (
-    <>
+    <div className={styles.root}>
       {body}
       <AdvancedClaimFields doc={doc} claim={claim} onChange={onChange} />
       {showWidowCall && (
@@ -551,7 +497,7 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         </div>
       )}
       {claim.type === "Artist" && <CustomInfoEditor claim={claim} onChange={onChange} />}
-    </>
+    </div>
   );
 }
 

@@ -1,3 +1,4 @@
+import styles from "./HiddenRolesEditor.module.css";
 import { useEffect, useMemo, useRef, useState, type Dispatch } from "react";
 import { ROLE_CLASSES } from "../model/roleRegistry";
 import { roleEmoji } from "../model/roleEmoji";
@@ -60,7 +61,7 @@ export function HiddenRolesEditor({ doc, dispatch }: Props) {
   };
 
   return (
-    <section id="hidden-roles" className="panel hidden-roles-editor">
+    <section id="hidden-roles" className={`${styles.root} panel hidden-roles-editor`}>
       <header className="panel-heading-row">
         <div>
           <h3>Potential hidden roles</h3>

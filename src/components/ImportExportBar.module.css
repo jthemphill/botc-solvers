@@ -1,0 +1,116 @@
+:where(.root):global(.import-export-bar) {
+  display: flex;
+  min-width: 0;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: center;
+}
+
+:where(.root) :global(.toolbar-button-row),
+:where(.root) :global(.example-picker-row) {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+:where(.root) :global(.example-picker-row) {
+  min-width: 0;
+}
+
+:where(.root) :global(.example-picker-row label) {
+  display: flex;
+  min-width: min(22rem, 100%);
+  gap: 0.45rem;
+  align-items: center;
+}
+
+:where(.root) :global(.example-picker-row span) {
+  color: var(--muted-ink);
+  font-size: 0.85rem;
+}
+
+:where(.root) :global(.example-picker-row select) {
+  width: min(24rem, 100%);
+  min-height: var(--control-min-height, 2rem);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 1180px) {
+  :where(.root):global(.import-export-bar) {
+    justify-content: flex-start;
+  }
+}
+
+:global(.editor-redesign) :where(.root):global(.import-export-bar) {
+  flex: 1;
+  gap: 16px;
+  justify-content: flex-end;
+}
+
+:global(.editor-redesign) :where(.root) :global(.toolbar-button-row) {
+  flex-wrap: nowrap;
+  gap: 7px;
+}
+
+:global(.editor-redesign) :where(.root) :global(.toolbar-button-row button) {
+  white-space: nowrap;
+  font-size: 12px;
+  background: transparent;
+}
+
+:global(.editor-redesign) :where(.root) :global(.example-picker-row label) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:global(.editor-redesign) :where(.root) :global(.example-picker-row select) {
+  width: 210px;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 12px;
+}
+
+:where(.root) :global(.example-picker-row label > span) {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  :global(.editor-redesign) :where(.root) :global(.example-picker-row select) {
+    width: 165px;
+  }
+}
+
+@media (max-width: 900px) {
+  :global(.editor-redesign) :where(.root):global(.import-export-bar) {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: space-between;
+  }
+  :global(.editor-redesign) :where(.root) :global(.example-picker-row select) {
+    width: 220px;
+  }
+}
+
+@media (max-width: 600px) {
+  :global(.editor-redesign) :where(.root):global(.import-export-bar) {
+    gap: 8px;
+  }
+  :global(.editor-redesign) :where(.root) :global(.toolbar-button-row button) {
+    font-size: 10px;
+    padding: 7px;
+  }
+  :global(.editor-redesign) :where(.root) :global(.example-picker-row) {
+    flex: 1;
+    min-width: 0;
+  }
+  :global(.editor-redesign) :where(.root) :global(.example-picker-row label) {
+    min-width: 0;
+    width: 100%;
+  }
+  :global(.editor-redesign) :where(.root) :global(.example-picker-row select) {
+    width: 100%;
+    font-size: 11px;
+  }
+}

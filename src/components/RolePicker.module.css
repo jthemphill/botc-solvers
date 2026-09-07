@@ -1,0 +1,31 @@
+:where(.root):global(.role-list-editor) {
+  display: grid;
+  gap: 0.45rem;
+}
+:where(.root) :global(.role-chip-list) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-height: 2.1rem;
+  align-items: center;
+}
+:where(.root) :global(.role-chip) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.22rem 0.5rem;
+  border-color: rgba(14, 119, 169, 0.26);
+  background: rgba(14, 119, 169, 0.08);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+:where(.root) :global(.role-chip span) {
+  color: var(--muted-ink);
+  font-weight: 900;
+}
+:where(.root) :global(.role-chip-empty) {
+  color: var(--muted-ink);
+  font-size: 0.84rem;
+}

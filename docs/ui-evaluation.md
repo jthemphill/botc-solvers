@@ -32,6 +32,10 @@ The reference seven-player puzzle has an additional viewport check for its conti
 
 ## Reproduction
 
+Each editor imports a CSS Module beside its React file. `App.module.css` owns the page layout. `styles.css` contains shared tokens, resets, and form and panel primitives; it loads before the component modules.
+
+Modules scope their selectors beneath a local `root` class. Existing DOM class names remain available to drag handlers and browser evaluations. The zero-specificity `:where(.root)` boundary preserves the selectors' relative priority. Add component styles to the owning module and remove them when removing the corresponding UI. CSS Modules isolate styles; they do not detect unused selectors.
+
 ```sh
 bun run test:unit
 bun run typecheck

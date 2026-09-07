@@ -1,0 +1,223 @@
+:where(.root) :global(.palette-empty) {
+  color: var(--muted-ink);
+}
+
+:where(.root) :global(.hidden-role-chips) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+:where(.root) :global(.hidden-role-chip) {
+  display: inline-grid;
+  grid-template-columns: auto auto auto auto;
+  min-height: 2.65rem;
+  align-items: center;
+  gap: 0.35rem;
+  border-color: rgba(14, 119, 169, 0.38);
+  border-radius: 999px;
+  background: rgba(221, 239, 248, 0.48);
+  padding: 0.35rem 0.65rem;
+}
+
+:where(.root) :global(.hidden-role-chip small) {
+  color: var(--muted-ink);
+  font-size: 0.66rem;
+  text-transform: capitalize;
+}
+
+:where(.root) :global(.hidden-role-chip.locked) {
+  opacity: 0.65;
+}
+
+:where(.root) :global(.hidden-role-add) {
+  display: grid;
+  gap: 0.32rem;
+  color: var(--muted-ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+:where(.root) :global(.hidden-role-add input) {
+  width: 100%;
+}
+
+:global(.editor-redesign) :where(.root) :global(.hidden-role-chip) {
+  border-color: #dde5d4;
+  border-radius: 6px;
+  padding: 6px 8px;
+  background: #f5f8f0;
+  font-size: 11px;
+}
+
+:global(.editor-redesign) :where(.root) :global(.hidden-role-chip small) {
+  display: none;
+}
+
+:global(.editor-redesign) :where(.root) :global(.hidden-role-add) {
+  font-size: 11px;
+}
+
+:global(.editor-redesign) :where(.root) :global(.hidden-role-add input) {
+  font-size: 12px;
+}
+
+:global(.editor-redesign) :where(.root) :global(.palette-empty) {
+  font-size: 12px;
+  color: #82907d;
+}
+
+:global(.view-seating) :where(.root):global(.hidden-roles-editor) {
+  padding-block: 15px;
+  display: grid;
+  grid-template-columns: 210px 1fr 190px;
+  gap: 12px;
+  align-items: start;
+}
+
+:global(.view-seating) :where(.root) :global(.hidden-role-add > span) {
+  display: none;
+}
+
+:global(.view-seating) :where(.root):global(.hidden-roles-editor .panel-count) {
+  display: none;
+}
+
+:global(.view-seating) :where(.root) :global(.hidden-role-chip) {
+  min-height: 30px;
+}
+
+:global(.view-seating) :where(.root):global(.hidden-roles-editor .palette-empty) {
+  padding: 8px 0;
+}
+
+@media (max-width: 760px) {
+  :global(.view-seating) :where(.root):global(.hidden-roles-editor) {
+    display: flex;
+  }
+  :global(.view-seating) :where(.root) :global(.hidden-role-add > span) {
+    display: inline;
+  }
+}
+
+:where(.root) :global(.choose-hidden-roles) {
+  display: none;
+}
+
+:where(.root) :global(.hidden-roles-dialog) {
+  width: min(600px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 20px;
+  border: 1px solid #d9e3d2;
+  border-radius: 16px;
+  color: #2b4236;
+  background: #fff;
+}
+
+:where(.root) :global(.hidden-roles-dialog::backdrop) {
+  background: #172e2559;
+}
+
+:where(.root) :global(.hidden-roles-dialog[open]) {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+:where(.root) :global(.hidden-roles-dialog header) {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+:where(.root) :global(.hidden-roles-dialog h2) {
+  margin: 0;
+  font-size: 22px;
+}
+
+:where(.root) :global(.hidden-roles-dialog p) {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+:where(.root) :global(.hidden-role-categories) {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+:where(.root) :global(.hidden-role-categories button) {
+  flex: 1 0 auto;
+}
+
+:where(.root) :global(.hidden-role-categories button[aria-pressed="true"]) {
+  background: #375f50;
+  color: #fff;
+}
+
+:where(.root) :global(.hidden-role-options) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  overflow: auto;
+  min-height: 0;
+}
+
+:where(.root) :global(.hidden-role-options label) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #d9e3d2;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+:where(.root) :global(.hidden-role-options label.chosen) {
+  background: #edf5eb;
+  border-color: #7d9d81;
+}
+
+:where(.root) :global(.hidden-role-options label:has(input:focus-visible)) {
+  outline: 2px solid #375f50;
+  outline-offset: 1px;
+}
+
+:where(.root) :global(.hidden-role-options label small) {
+  flex-basis: 100%;
+  color: #647268;
+}
+
+:where(.root) :global(.hidden-roles-dialog footer) {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  :global(.editor-redesign) :where(.root) :global(.choose-hidden-roles) {
+    display: block;
+    width: 100%;
+    font-size: 15px;
+  }
+  :global(.editor-redesign) :where(.root) :global(.hidden-role-add) {
+    display: none;
+  }
+  :global(.editor-redesign) :where(.root):global(.hidden-roles-editor) {
+    scroll-margin-top: 12px;
+  }
+  :global(.editor-redesign) :where(.root) :global(.hidden-roles-dialog header button) {
+    flex-shrink: 0;
+  }
+  :global(.editor-redesign) :where(.root) :global(.hidden-role-options) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  :global(.editor-redesign) :where(.root) :global(.hidden-roles-dialog) {
+    padding: 16px;
+  }
+  :global(.editor-redesign) :where(.root) :global(.hidden-roles-dialog > :not(.hidden-role-options)) {
+    flex-shrink: 0;
+  }
+}

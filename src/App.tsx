@@ -1,3 +1,4 @@
+import styles from "./App.module.css";
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { ConstraintsEditor } from "./components/ConstraintsEditor";
 import { HiddenRolesEditor } from "./components/HiddenRolesEditor";
@@ -93,7 +94,7 @@ export function App() {
     : undefined;
 
   return (
-    <main className={`app-shell editor-redesign view-${view}`}>
+    <main className={`${styles.root} app-shell editor-redesign view-${view}`}>
       <header className="app-chrome" aria-label="Application toolbar">
         <div className="brand-lockup">
           <span className="brand-mark" aria-hidden="true">

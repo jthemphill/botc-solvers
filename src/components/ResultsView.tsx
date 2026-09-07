@@ -1,3 +1,4 @@
+import styles from "./ResultsView.module.css";
 import { roleEmoji, roleEmojiLabel } from "../model/roleEmoji";
 import type { SerializableWorld, SolveSummary } from "../worker/protocol";
 
@@ -13,7 +14,7 @@ interface Props {
 export function ResultsView({ summary, worlds, players, error, busy = false, limit }: Props) {
   if (error)
     return (
-      <div className="results-view">
+      <div className={`${styles.root} results-view`}>
         <p className="error" role="alert">
           {error.split("\n")[0]}
         </p>
@@ -29,12 +30,12 @@ export function ResultsView({ summary, worlds, players, error, busy = false, lim
     );
   if (worlds === undefined)
     return (
-      <div className="results-view empty-results">
+      <div className={`${styles.root} results-view empty-results`}>
         <p>{busy ? "Finding satisfying worlds…" : "Add a claimed or hidden role to generate solutions."}</p>
       </div>
     );
   return (
-    <div className="results-view">
+    <div className={`${styles.root} results-view`}>
       <div className="results-count">
         Satisfying worlds: <strong>{worlds.length}</strong>
       </div>

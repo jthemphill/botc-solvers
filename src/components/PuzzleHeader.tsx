@@ -1,3 +1,4 @@
+import styles from "./PuzzleHeader.module.css";
 import type { CSSProperties, Dispatch } from "react";
 import type { PuzzleDoc } from "../schema/puzzleDoc";
 import type { PuzzleAction } from "../state/puzzleDoc";
@@ -14,7 +15,7 @@ export function PuzzleHeader({ doc, dispatch }: Props) {
   } as CSSProperties;
 
   return (
-    <div className="puzzle-title-editor">
+    <div className={`${styles.root} puzzle-title-editor`}>
       <span className="puzzle-number">YOUR WORKSPACE</span>
       <label htmlFor="puzzle-title">
         <span className="sr-only">Title</span>

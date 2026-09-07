@@ -1,0 +1,265 @@
+:where(.root) :global(.primary-button) {
+  background: #285f4d;
+  color: white;
+  border-color: #285f4d;
+  white-space: nowrap;
+}
+:where(.root) :global(.primary-button:hover:not(:disabled)) {
+  background: #1d4b3c;
+  color: white;
+}
+:where(.root):global(.roster-editor) {
+  padding: 21px 20px 0;
+}
+:where(.root) :global(.section-heading) {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 14px;
+  margin-bottom: 19px;
+}
+:where(.root) :global(.section-heading h2) {
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+:where(.root) :global(.section-heading p) {
+  color: #77877c;
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 5px;
+}
+:where(.root) :global(.section-heading > button) {
+  white-space: nowrap;
+  font-size: 12px;
+}
+:where(.root) :global(.roster-columns),
+:where(.root) :global(.roster-row) {
+  display: grid;
+  grid-template-columns: 28px minmax(80px, 0.65fr) minmax(150px, 1.35fr);
+  gap: 11px;
+  align-items: center;
+}
+:where(.root) :global(.roster-columns) {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #8a968a;
+  padding: 0 10px 10px;
+  border-bottom: 1px solid #e7ebe3;
+}
+:where(.root) :global(.roster-row) {
+  min-height: 66px;
+  padding: 9px 10px;
+  border-bottom: 1px solid #edf0e9;
+  border-left: 2px solid transparent;
+  transition: background 0.12s;
+}
+:where(.root) :global(.roster-row.selected) {
+  background: #f0f6ef;
+  border-left-color: #609572;
+}
+:where(.root) :global(.roster-row .roster-name) {
+  width: 100%;
+  min-width: 0;
+  font-weight: 550;
+  font-size: 12px;
+  background: transparent;
+  border-color: transparent;
+  padding: 7px 4px;
+}
+:where(.root) :global(.roster-row .roster-name:hover),
+:where(.root) :global(.roster-row .roster-name:focus) {
+  background: white;
+  border-color: #c9d9ca;
+}
+:where(.root) :global(.roster-seat) {
+  font:
+    11px ui-monospace,
+    monospace;
+  color: #83927f;
+}
+:where(.root) :global(.roster-reports) {
+  min-width: 0;
+}
+:where(.root) :global(.roster-reports > input) {
+  width: 100%;
+  font-size: 12px;
+  background: #fcfdfa;
+}
+:where(.root) :global(.roster-report) {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  background: transparent;
+  border-radius: 5px;
+  text-align: left;
+  padding: 4px 7px;
+  gap: 3px;
+}
+:where(.root) :global(.roster-report strong) {
+  font-size: 12px;
+  font-weight: 550;
+  color: #385f49;
+}
+:where(.root) :global(.roster-report > span) {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #758273;
+  overflow-wrap: anywhere;
+}
+:where(.root) :global(.roster-report small) {
+  font-size: 9px;
+  color: #5f846b;
+}
+:where(.root) :global(.roster-footer) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 0 19px;
+}
+:where(.root) :global(.roster-footer button) {
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  padding-left: 0;
+  color: #507a59;
+}
+:where(.root) :global(.roster-footer > span) {
+  font-size: 9px;
+  color: #899582;
+}
+:where(.root) :global(.roster-dialog) {
+  width: min(560px, calc(100% - 32px));
+  padding: 26px;
+  border: 1px solid #cfdbca;
+  border-radius: 14px;
+  color: #304b39;
+  box-shadow: 0 24px 100px #19351d40;
+}
+:where(.root) :global(.roster-dialog::backdrop) {
+  background: #1e342b60;
+  backdrop-filter: blur(3px);
+}
+:where(.root) :global(.roster-dialog label) {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 9px;
+}
+:where(.root) :global(.roster-dialog textarea) {
+  min-height: 220px;
+  line-height: 1.8;
+  font-size: 13px;
+  padding: 14px;
+}
+:where(.root) :global(.roster-dialog p) {
+  font-size: 12px;
+  line-height: 1.7;
+}
+:where(.root) :global(.roster-paste-help) {
+  color: #819078;
+  margin: 12px 0;
+}
+:where(.root) :global(.roster-preview) {
+  padding: 10px;
+  background: #f2f7ec;
+  border-radius: 6px;
+}
+:where(.root) :global(.roster-dialog footer) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+:where(.root) :global(.roster-dialog footer span) {
+  color: #8c997f;
+  font-size: 10px;
+}
+@media (max-width: 1100px) {
+  :where(.root) :global(.roster-columns),
+  :where(.root) :global(.roster-row) {
+    grid-template-columns: 23px minmax(70px, 0.65fr) minmax(135px, 1.35fr);
+    gap: 6px;
+  }
+  :where(.root):global(.roster-editor) {
+    padding-inline: 16px;
+  }
+  :where(.root) :global(.roster-footer > span) {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  :where(.root):global(.roster-editor) {
+    padding: 18px 12px 0;
+  }
+  :where(.root) :global(.section-heading) {
+    gap: 9px;
+  }
+  :where(.root) :global(.section-heading h2) {
+    font-size: 15px;
+  }
+  :where(.root) :global(.section-heading p) {
+    font-size: 11px;
+  }
+  :where(.root) :global(.section-heading > button) {
+    padding: 7px 8px;
+    font-size: 11px;
+  }
+  :where(.root) :global(.roster-row),
+  :where(.root) :global(.roster-columns) {
+    grid-template-columns: 19px minmax(66px, 0.6fr) minmax(130px, 1.4fr);
+    padding-inline: 5px;
+  }
+  :where(.root) :global(.roster-columns) {
+    font-size: 8px;
+    letter-spacing: 0.5px;
+  }
+  :where(.root) :global(.roster-report) {
+    padding-inline: 3px;
+  }
+  :where(.root) :global(.roster-dialog) {
+    padding: 20px;
+  }
+}
+:where(.root):global(.roster-editor.compact) {
+  padding: 0;
+}
+:where(.root):global(.roster-editor.compact > .section-heading) {
+  margin: 0;
+}
+:where(.root):global(.roster-editor.compact > .section-heading > div),
+:where(.root):global(.roster-editor.compact > .roster-columns),
+:where(.root):global(.roster-editor.compact > .roster-rows),
+:where(.root):global(.roster-editor.compact > .roster-footer) {
+  display: none;
+}
+@media (max-width: 760px) {
+  :global(.editor-redesign) :where(.root) :global(.roster-dialog) {
+    max-height: calc(100dvh - 24px);
+    padding: 16px;
+  }
+  :global(.editor-redesign) :where(.root) :global(.roster-dialog textarea) {
+    min-height: 150px;
+    height: 25dvh;
+  }
+  :global(.editor-redesign) :where(.root) :global(.roster-dialog footer) {
+    position: sticky;
+    bottom: -16px;
+    padding: 12px 0;
+    background: #fff;
+  }
+  :global(.editor-redesign) :where(.root) :global(.roster-dialog footer span) {
+    display: none;
+  }
+  :global(.editor-redesign) :where(.root) :global(.roster-dialog footer button) {
+    width: 100%;
+  }
+}

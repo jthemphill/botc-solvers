@@ -1,3 +1,4 @@
+import styles from "./SeatingChartEditor.module.css";
 import {
   useEffect,
   useLayoutEffect,
@@ -86,16 +87,6 @@ const TIMELINE_EVENT_TYPE_OPTIONS: Array<{ type: TimelineEventType; label: strin
   { type: "nominationDeath", label: "Nomination Death" },
   { type: "doomsayerDeath", label: "Doomsayer Death" },
 ];
-
-export function SeatingChartEditor({ doc, dispatch }: Props) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  return (
-    <section className="seating-composer">
-      <PuzzleSheet doc={doc} dispatch={dispatch} selectedIndex={selectedIndex} onSelect={setSelectedIndex} />
-      <DrawWorkbench doc={doc} dispatch={dispatch} selectedIndex={selectedIndex} onSelect={setSelectedIndex} />
-    </section>
-  );
-}
 
 export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect, onEdit = onSelect, renderDetails }: SharedProps) {
   const players = doc.players;
@@ -427,7 +418,7 @@ export function PuzzleSheet({ doc, dispatch, selectedIndex, onSelect, onEdit = o
 
   return (
     <div
-      className={`sheet-content${players.length > 10 ? " dense-puzzle" : ""}`}
+      className={`${styles.root} sheet-content${players.length > 10 ? " dense-puzzle" : ""}`}
       onPointerMove={moveDesktopSeatDrag}
       onPointerUp={finishDesktopSeatDrag}
       onPointerCancel={clearDesktopSeatDrag}
@@ -915,7 +906,7 @@ export function DrawWorkbench({ doc, dispatch, selectedIndex, onSelect, inline =
   return (
     <div
       ref={panel}
-      className={`draw-workbench${inline ? " mobile-claim-details" : ""}`}
+      className={`${styles.root} draw-workbench${inline ? " mobile-claim-details" : ""}`}
       role={inline ? "region" : undefined}
       aria-label={inline ? "Puzzle workbench" : undefined}
       onKeyDown={(event) => {

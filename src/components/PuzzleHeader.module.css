@@ -1,0 +1,111 @@
+:where(.root):global(.puzzle-title-editor) {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+:where(.root):global(.puzzle-title-editor label) {
+  width: min(100%, 46rem);
+  container-type: inline-size;
+}
+
+:where(.root) :global(.puzzle-number) {
+  font-weight: 750;
+  color: var(--muted-ink);
+}
+
+:where(.root) :global(.title-input) {
+  box-sizing: border-box;
+  width: 100%;
+  border: 0;
+  border-bottom: 3px solid var(--paper-line);
+  border-radius: 0;
+  background: transparent;
+  padding: 0 0.6rem 0.18rem;
+  text-align: center;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: min(clamp(0.85rem, calc(2.75rem * var(--title-scale, 1)), 2.75rem), 5.3cqi);
+  font-weight: 800;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+:where(.root) :global(.puzzle-counts) {
+  color: var(--muted-ink);
+  font-size: 0.9rem;
+}
+
+:global(.editor-redesign) :where(.root):global(.puzzle-title-editor) {
+  text-align: left;
+  justify-items: start;
+  min-width: 0;
+  flex: 1;
+  gap: 6px;
+}
+
+:global(.editor-redesign) :where(.root):global(.puzzle-title-editor label) {
+  width: 100%;
+  container-type: normal;
+}
+
+:global(.editor-redesign) :where(.root) :global(.puzzle-number) {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  color: #7a8c80;
+}
+
+:global(.editor-redesign) :where(.root) :global(.title-input) {
+  width: 100%;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  text-align: left;
+  font:
+    500 clamp(22px, 2.6vw, 34px)/1.25 Georgia,
+    serif;
+  color: #293e34;
+}
+
+:global(.editor-redesign) :where(.root) :global(.title-input:hover) {
+  border-color: #d3ddd2;
+}
+
+:global(.editor-redesign) :where(.root) :global(.puzzle-counts) {
+  font-size: 12px;
+}
+
+@media (max-width: 600px) {
+  :global(.editor-redesign) :where(.root) :global(.title-input) {
+    font-size: 26px;
+  }
+}
+
+@media (min-width: 901px) {
+  :global(.view-seating) :where(.root) :global(.puzzle-number) {
+    display: none;
+  }
+  :global(.view-seating) :where(.root):global(.puzzle-title-editor) {
+    gap: 4px;
+  }
+  :global(.view-seating) :where(.root) :global(.title-input) {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 600px) {
+  :global(.editor-redesign) :where(.root) :global(.title-input) {
+    font-size: clamp(12px, calc(26px * var(--title-scale, 1)), 26px);
+  }
+}
+
+@media (max-width: 760px) {
+  :global(.editor-redesign) :where(.root) :global(.title-input) {
+    font-size: clamp(12px, calc(26px * var(--title-scale, 1)), 26px);
+  }
+  :global(.editor-redesign) :where(.root) :global(.puzzle-number) {
+    display: none;
+  }
+}
