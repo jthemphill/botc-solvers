@@ -66,6 +66,7 @@ export class BOTCModel extends BooleanConstraints {
   private readonly droisonedVars = new Map<string, BoolVar>();
   private readonly activePoisonSourcesByTiming = new Map<string, BoolLike[]>();
   private readonly poisonSourceTargetsByTimingPlayer = new Map<string, BoolLike[]>();
+  private readonly poisonerTargetsByNight = new Map<string, ReadonlyMap<string, BoolVar>>();
   private readonly poisonOverridesByTimingPlayer = new Map<string, BoolLike[]>();
   private readonly drunkSourceTargetsByTimingPlayer = new Map<string, BoolLike[]>();
   private readonly poisonQueryVars = new Map<string, BoolVar>();
@@ -586,7 +587,20 @@ export class BOTCModel extends BooleanConstraints {
     const poisonTiming = timing;
     const poisonerRole = options.poisonerRole ?? "Poisoner";
     const poisonerActive = this.activeRole(poisonerRole, `${poisonTiming}_${roleName(poisonerRole)}`, options.activeIf);
-    this.addOnePlayerPoisonSource(timing, poisonerActive, slug(roleName(poisonerRole)));
+    const choiceTiming = timing.replace("day_", "night_") as Timing;
+    const key = keyOf([roleName(poisonerRole), choiceTiming]);
+    let targets = this.poisonerTargetsByNight.get(key);
+    if (targets === undefined) {
+      targets = select(this, this.players, this.roleInPlay(poisonerRole), `${key}_poisoner_target`, 1);
+      this.poisonerTargetsByNight.set(key, targets);
+    }
+    this.registerActivePoisonSource(timing, poisonerActive);
+    for (const [player, target] of targets)
+      this.registerPoisonSourceTarget(
+        player,
+        timing,
+        this.allOf([target, poisonerActive], `${timing}_${player}_poisoner_effect`),
+      );
   }
 
   addPersistentPoisonSource(
@@ -637,17 +651,6 @@ export class BOTCModel extends BooleanConstraints {
   private registerActivePoisonSource(timing: string, sourceActive: BoolLike): void {
     this.assertBuilding();
     addMapValue(this.activePoisonSourcesByTiming, timing, sourceActive);
-  }
-
-  private addOnePlayerPoisonSource(timing: Timing, sourceActive: BoolLike, sourceName: string): void {
-    this.assertBuilding();
-    const poisonTiming = timing;
-    this.registerActivePoisonSource(poisonTiming, sourceActive);
-    this.addOnePlayerDroisonSource(
-      sourceActive,
-      (player) => `${poisonTiming}_${sourceName}_poisons_${slug(player)}`,
-      (player, target) => this.registerPoisonSourceTarget(player, timing, target),
-    );
   }
 
   private addOnePlayerDroisonSource(
@@ -1018,7 +1021,7 @@ export class BOTCModel extends BooleanConstraints {
         [
           this.droisoned(player, timing),
           this.globalDrunk(player),
-          this.noDashiiPoisonedAt(player, timing),
+          this.noDashiiPoisonedAt(player, timing, { beforeCharacterChange: true }),
           ...intrinsic,
         ],
         "unhealthy_before_character_change",
@@ -1386,7 +1389,11 @@ export class BOTCModel extends BooleanConstraints {
     }
   }
 
-  noDashiiPoisonedAt(player: string, timing: Timing, options: { readonly noDashiiRole?: RoleRef } = {}): BoolVar {
+  noDashiiPoisonedAt(
+    player: string,
+    timing: Timing,
+    options: { readonly noDashiiRole?: RoleRef; readonly beforeCharacterChange?: boolean } = {},
+  ): BoolVar {
     const timingName = timing;
     const players = this.players;
     const noDashiiRole = options.noDashiiRole ?? "No Dashii";
@@ -1395,8 +1402,24 @@ export class BOTCModel extends BooleanConstraints {
       return this.constantBool(false, `${player}_no_no_dashii_${timingName}`);
     return this.anyOf(
       players.flatMap((demon) => [
-        this.closestTownfolkInDirectionIs(players, demon, player, 1, noDashiiRole, timing),
-        this.closestTownfolkInDirectionIs(players, demon, player, -1, noDashiiRole, timing),
+        this.closestTownfolkInDirectionIs(
+          players,
+          demon,
+          player,
+          1,
+          noDashiiRole,
+          timing,
+          options.beforeCharacterChange,
+        ),
+        this.closestTownfolkInDirectionIs(
+          players,
+          demon,
+          player,
+          -1,
+          noDashiiRole,
+          timing,
+          options.beforeCharacterChange,
+        ),
       ]),
       `${player}_poisoned_by_no_dashii_${timingName}`,
     );
@@ -1644,6 +1667,7 @@ export class BOTCModel extends BooleanConstraints {
     direction: 1 | -1,
     noDashiiRole: RoleRef,
     timing: Timing,
+    beforeCharacterChange = false,
   ): BoolVar {
     const timingName = timing;
     const demonIndex = players.indexOf(demon);
@@ -1656,11 +1680,22 @@ export class BOTCModel extends BooleanConstraints {
       const index = (demonIndex + direction * (offset + 1) + players.length) % players.length;
       return players[index] as string;
     });
+    const townsfolk = (player: string) =>
+      beforeCharacterChange
+        ? this.anyOf(
+            [...this.characters]
+              .filter(([, role]) => roleCharacterType(role) === CharacterType.Townsfolk)
+              .map(([role]) => this.characterBefore(player, role, timing)),
+            `${player}_townsfolk_before_${timing}`,
+          )
+        : this.hasCharacterTypeAt(player, CharacterType.Townsfolk, timing);
     return this.allOf(
       [
-        this.hasAbilityAt(demon, noDashiiRole, timing),
-        this.hasCharacterType(target, CharacterType.Townsfolk),
-        ...between.map((betweenPlayer) => this.hasCharacterType(betweenPlayer, CharacterType.Townsfolk).not()),
+        beforeCharacterChange
+          ? this.characterBefore(demon, noDashiiRole, timing)
+          : this.hasAbilityAt(demon, noDashiiRole, timing),
+        townsfolk(target),
+        ...between.map((betweenPlayer) => townsfolk(betweenPlayer).not()),
       ],
       `${target}_closest_townsfolk_${direction}_of_${demon}_${timingName}`,
     );

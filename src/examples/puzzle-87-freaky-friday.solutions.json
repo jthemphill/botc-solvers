@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Witch",
+        "Charlotte": "Barber",
+        "Fraser": "Mathematician",
+        "Matt": "Snake Charmer",
+        "Oscar": "Town Crier",
+        "Sarah": "No Dashii",
+        "Tom": "Artist",
+        "You": "Clockmaker"
+      }
+    }
+  ]
+}

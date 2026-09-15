@@ -501,6 +501,7 @@ export const BARE_CLAIM_TYPES = [
   "Baron",
   "Boffin",
   "Butler",
+  "Barber",
   "Cerenovus",
   "Damsel",
   "Drunk",

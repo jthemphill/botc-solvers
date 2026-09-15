@@ -67,6 +67,21 @@ describe("JSON puzzle solutions", () => {
     }
   });
 
+  test("puzzle 87 requires the Barber to swap the initial Demon and Witch", async () => {
+    const example = PUZZLE_EXAMPLES.find(({ id }) => id === "puzzle-87-freaky-friday")!;
+    const doc = validatePuzzleDoc(example.data);
+    const game = buildFromDoc(doc, backend);
+    // The published answer places the No Dashii with Aoife after night 2.
+    // https://www.reddit.com/r/BloodOnTheClocktower/comments/1vhyfy0/comment/p294awr/
+    game.addTruth(
+      game.anyOf(
+        [game.characterAt("Aoife", "No Dashii", "night_2").not(), game.characterAt("Sarah", "Witch", "night_2").not()],
+        "published_barber_swap_missing",
+      ),
+    );
+    expect(await game.solveAll()).toHaveLength(0);
+  });
+
   test.each(PUZZLE_SOLUTION_CASES)(
     "$id solution set comes from JSON doc",
     async ({ id, data, solutions }) => {

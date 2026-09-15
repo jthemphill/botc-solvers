@@ -680,6 +680,10 @@ export class Butler extends OutsiderRole {
   static readonly roleName = "Butler";
   static readonly wake = Wakes.everyNight;
 }
+export class Barber extends OutsiderRole {
+  static readonly roleName = "Barber";
+  static readonly wake = Wakes.never;
+}
 export class Damsel extends OutsiderRole {
   static readonly roleName = "Damsel";
   static readonly wake = Wakes.never;

@@ -88,6 +88,9 @@ import doc_83_be_the_one from "./puzzle-83-be-the-one.json";
 import doc_84_mech4an4ion_is_inver10d from "./puzzle-84-mech4an4ion-is-inver10d.json";
 import doc_85_trust_is_a_two_way_street from "./puzzle-85-trust-is-a-two-way-street.json";
 import doc_86_blood_and_ink from "./puzzle-86-blood-and-ink.json";
+import doc_87_freaky_friday from "./puzzle-87-freaky-friday.json";
+import doc_88_lucky_saint from "./puzzle-88-lucky-saint.json";
+import doc_89_the_bigger_picture from "./puzzle-89-the-bigger-picture.json";
 import doc_a_clean_sweep from "./a-clean-sweep.json";
 
 export interface PuzzleExample {
@@ -195,6 +198,9 @@ const PUZZLE_DOCS = [
   { id: "puzzle-84-mech4an4ion-is-inver10d", data: doc_84_mech4an4ion_is_inver10d },
   { id: "puzzle-85-trust-is-a-two-way-street", data: doc_85_trust_is_a_two_way_street },
   { id: "puzzle-86-blood-and-ink", data: doc_86_blood_and_ink },
+  { id: "puzzle-87-freaky-friday", data: doc_87_freaky_friday },
+  { id: "puzzle-88-lucky-saint", data: doc_88_lucky_saint },
+  { id: "puzzle-89-the-bigger-picture", data: doc_89_the_bigger_picture },
   { id: "a-clean-sweep", data: doc_a_clean_sweep },
 ] as const;
 

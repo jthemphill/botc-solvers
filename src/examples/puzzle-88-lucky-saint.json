@@ -1,0 +1,125 @@
+{
+  "title": "Puzzle 88 - Lucky Saint",
+  "players": ["Josh", "Hannah", "Aoife", "Charlotte", "Fraser", "You", "Sarah", "Oscar", "Matt"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Spy",
+    "Baron",
+    "Scarlet Woman",
+    "Drunk",
+    "Recluse",
+    "Saint",
+    "Butler",
+    "Artist",
+    "Washerwoman",
+    "Slayer",
+    "Librarian",
+    "Empath",
+    "Ravenkeeper"
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Hannah"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Oscar"]
+    },
+    {
+      "timing": "day_3",
+      "type": "execution",
+      "players": ["Sarah"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": ["Matt"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Artist",
+      "name": "Josh",
+      "timing": "day_4",
+      "info": [
+        {
+          "timing": "day_4",
+          "expression": "Sarah.type != Townsfolk"
+        }
+      ]
+    },
+    {
+      "type": "Washerwoman",
+      "name": "Hannah",
+      "timing": "night_1",
+      "role": "Empath",
+      "among": ["You", "Sarah"]
+    },
+    {
+      "type": "Slayer",
+      "name": "Aoife",
+      "timing": "day_4",
+      "target": "Josh",
+      "killed": false
+    },
+    {
+      "type": "Butler",
+      "name": "Charlotte"
+    },
+    {
+      "type": "Librarian",
+      "name": "Fraser",
+      "timing": "night_1",
+      "role": "Drunk",
+      "among": ["Sarah", "Matt"]
+    },
+    {
+      "type": "Recluse",
+      "name": "You",
+      "possibleActualRoles": ["Recluse"]
+    },
+    {
+      "type": "Empath",
+      "name": "Sarah",
+      "timing": "night_1",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Sarah",
+      "timing": "night_2",
+      "count": 0
+    },
+    {
+      "type": "Empath",
+      "name": "Sarah",
+      "timing": "night_3",
+      "count": 1
+    },
+    {
+      "type": "Saint",
+      "name": "Oscar"
+    },
+    {
+      "type": "Ravenkeeper",
+      "name": "Matt",
+      "timing": "night_4",
+      "player": "Aoife",
+      "role": "Spy"
+    }
+  ]
+}
