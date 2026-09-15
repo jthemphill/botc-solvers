@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Artist",
+        "Charlotte": "Clockmaker",
+        "Dan": "Town Crier",
+        "Fraser": "Klutz",
+        "Josh": "Witch",
+        "Sarah": "Mathematician",
+        "Tim": "Vortox",
+        "You": "Snake Charmer"
+      }
+    }
+  ]
+}

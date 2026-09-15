@@ -1,0 +1,141 @@
+{
+  "title": "Puzzle 89 - The Bigger Picture",
+  "players": ["Josh", "Charlotte", "Sarah", "Dan", "You", "Tim", "Aoife", "Fraser"],
+  "script": [
+    "Fang Gu",
+    "Vigormortis",
+    "No Dashii",
+    "Vortox",
+    "Witch",
+    "Mutant",
+    "Klutz",
+    "Seamstress",
+    "Clockmaker",
+    "Mathematician",
+    "Town Crier",
+    "Snake Charmer",
+    "Juggler",
+    "Artist"
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "witchCurse",
+      "players": ["Charlotte"],
+      "caller": "Charlotte"
+    },
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Aoife"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Dan"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Seamstress",
+      "name": "Josh",
+      "timing": "night_1",
+      "among": ["You", "Aoife"],
+      "aligned": true,
+      "possibleActualRoles": ["Seamstress", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    {
+      "type": "Clockmaker",
+      "name": "Charlotte",
+      "timing": "night_1",
+      "distance": 1
+    },
+    {
+      "type": "Mathematician",
+      "name": "Sarah",
+      "malfunctions": [
+        {
+          "timing": "night_1",
+          "count": 0
+        },
+        {
+          "timing": "night_2",
+          "count": 0
+        },
+        {
+          "timing": "night_3",
+          "count": 1
+        }
+      ],
+      "possibleActualRoles": ["Mathematician", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    {
+      "type": "Town Crier",
+      "name": "Dan",
+      "checks": [
+        {
+          "timing": "night_2",
+          "nominators": ["Charlotte", "Josh"],
+          "minionNominated": false
+        }
+      ]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "You",
+      "checks": [
+        {
+          "timing": "night_1",
+          "player": "Aoife",
+          "demon": false
+        },
+        {
+          "timing": "night_2",
+          "player": "Dan",
+          "demon": false
+        }
+      ],
+      "possibleActualRoles": ["Snake Charmer"]
+    },
+    {
+      "type": "Juggler",
+      "name": "Tim",
+      "timing": "night_2",
+      "guesses": {
+        "You": "Fang Gu",
+        "Aoife": "Artist",
+        "Fraser": "Fang Gu",
+        "Charlotte": "Witch"
+      },
+      "correctCount": 0,
+      "possibleActualRoles": ["Juggler", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    {
+      "type": "Artist",
+      "name": "Aoife",
+      "timing": "day_1",
+      "info": [
+        {
+          "timing": "day_1",
+          "expression": "no p: {Tim, Fraser, Dan} | p.role == Witch || p.role == Vortox"
+        }
+      ]
+    },
+    {
+      "type": "Klutz",
+      "name": "Fraser",
+      "timing": "day_1",
+      "chosen": "Dan"
+    }
+  ]
+}

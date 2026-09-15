@@ -65,19 +65,30 @@ test("renders Slayer shot death markers", async ({ page }) => {
 test("refreshes automatic solve results when loading another puzzle", async ({ page }) => {
   await page.goto("/");
 
-  await page.getByLabel("Load example puzzle").selectOption("puzzle-09-the-new-acrobat");
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-87-freaky-friday");
   const solvePanel = page.locator(".solve-panel");
 
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
   await expect(solvePanel.getByText("Solution 1")).toBeVisible();
+  await expect(solvePanel.getByLabel("Sarah: No Dashii, claimed Juggler")).toBeVisible();
+  await expect(solvePanel.getByLabel("Aoife: Witch, claimed Seamstress")).toBeVisible();
+  await solvePanel.getByText("Character changes and hidden choices", { exact: true }).click();
+  await expect(solvePanel.getByText("Barber", { exact: false }).first()).toBeVisible();
 
-  await page.getByLabel("Load example puzzle").selectOption("puzzle-10-dont-overcook-it");
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-88-lucky-saint");
 
-  await expect(page.locator("input.title-input")).toHaveValue("Puzzle 10 - Dont Overcook It");
+  await expect(page.locator("input.title-input")).toHaveValue("Puzzle 88 - Lucky Saint");
   await expect(solvePanel.getByText("Satisfying worlds:")).toBeVisible();
   await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
-  await expect(solvePanel.getByLabel("Dan: Imp")).toBeVisible();
+  await expect(solvePanel.getByLabel("Charlotte: Imp, claimed Butler")).toBeVisible();
+  await expect(solvePanel.getByLabel("Josh: Poisoner, claimed Artist")).toBeVisible();
+
+  await page.getByLabel("Load example puzzle").selectOption("puzzle-89-the-bigger-picture");
+  await expect(page.locator("input.title-input")).toHaveValue("Puzzle 89 - The Bigger Picture");
+  await expect(solvePanel.getByText("Satisfying worlds:").locator("strong")).toHaveText("1");
+  await expect(solvePanel.getByLabel("Tim: Vortox, claimed Juggler")).toBeVisible();
+  await expect(solvePanel.getByLabel("Josh: Witch, claimed Seamstress")).toBeVisible();
 });
 
 test("shows structured summaries without inventing hidden death causes", async ({ page }) => {

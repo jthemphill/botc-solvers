@@ -2,6 +2,7 @@ import { DeathAssignments, type AssignedDeath, type NightDeathSource } from "./n
 import { PoChoices } from "./po";
 import { slug, addMapValue } from "../model/keys";
 import { TimelineFacts, deathEventOrder } from "./timeline";
+import { applyBarberSwaps } from "./barber";
 import {
   timingOrder,
   followingNight,
@@ -40,6 +41,14 @@ export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
     game.withProvenance({ kind: "rule", id: "applyAtheistSetup" }, () => applyAtheistSetup(game, doc));
   const characterActions = game.withProvenance({ kind: "rule", id: "nightlyCharacterChoices" }, () =>
     applyCharacterActions(game, doc),
+  );
+  game.withProvenance(
+    {
+      kind: "rule",
+      id: "Barber.swaps",
+      source: "https://wiki.bloodontheclocktower.com/index.php?title=Barber&oldid=1757",
+    },
+    () => applyBarberSwaps(game, doc, doc.facts),
   );
   game.withProvenance({ kind: "rule", id: "applyTimelineConstraints" }, () => applyTimelineConstraints(game, doc));
   if (doc.setup !== "atheist")
@@ -839,6 +848,20 @@ function applyChangedRoleClaimExplanations(game: BOTCModel, doc: BuildDoc, actio
       if (doc.script.includes(hiddenRole) && roleCharacterType(claimedRole) === CharacterType.Townsfolk)
         explanations.push(game.characterAt(claim.name, hiddenRole, claimTiming));
     }
+    const repeatsStartingBluff = doc.claims.some(
+      (earlier) =>
+        earlier.name === claim.name &&
+        earlier.type === claim.type &&
+        earlier.roleTiming === undefined &&
+        earlier.possibleActualRoles?.includes("Mutant"),
+    );
+    if (repeatsStartingBluff && doc.facts.livingAt(claimTiming).includes(claim.name))
+      explanations.push(
+        game.allOf(
+          [game.actualIs(claim.name, "Mutant"), game.characterAt(claim.name, "Mutant", claimTiming)],
+          `${claimTiming}_${slug(claim.name)}_retains_starting_mutant_bluff`,
+        ),
+      );
 
     game.addTruth(
       game.anyOf(explanations, `${claimTiming}_${slug(claim.name)}_${slug(claimedRoleName)}_role_change_explained`),
@@ -1045,7 +1068,7 @@ function applyTimelineConstraints(game: BOTCModel, doc: BuildDoc): void {
         )
           continue;
         if (roleName(demonRole) === "Zombuul") continue;
-        game.fixNotActual(player, demonRole);
+        game.addFalse(roleAtBeforeEvent(game, doc, player, demonRole, event));
       }
     }
   }
@@ -2629,7 +2652,11 @@ function livingNeighborOptionsAt(
 
 function applyPoisonerSources(game: BOTCModel, doc: BuildDoc, nightDeathTiming: NightDeathTimingContext): void {
   if (!doc.script.includes("Poisoner")) return;
-  for (const timing of game.droisonTimingKeys) {
+  const timings = new Set([
+    ...game.droisonTimingKeys,
+    ...doc.facts.nights.flatMap((timing) => [timing, timing.replace("night_", "day_")]),
+  ]);
+  for (const timing of timings) {
     const poisonerCanAct = roleCanUseAbilityAt(game, doc, "Poisoner", timing as Timing, nightDeathTiming);
     const poisonerDiesBeforeInfo = roleDiesBeforeInfoAt(game, "Poisoner", timing as Timing, nightDeathTiming);
     game.addPoisonerEffect(timing as Timing, {

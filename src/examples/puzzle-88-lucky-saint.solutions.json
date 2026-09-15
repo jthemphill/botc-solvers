@@ -1,0 +1,17 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Slayer",
+        "Charlotte": "Imp",
+        "Fraser": "Librarian",
+        "Hannah": "Washerwoman",
+        "Josh": "Poisoner",
+        "Matt": "Ravenkeeper",
+        "Oscar": "Saint",
+        "Sarah": "Empath",
+        "You": "Recluse"
+      }
+    }
+  ]
+}

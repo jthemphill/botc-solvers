@@ -8,6 +8,7 @@ const ROLE_CLASS_LIST: readonly RoleClass[] = [
   characters.Assassin,
   characters.Atheist,
   characters.Balloonist,
+  characters.Barber,
   characters.Baron,
   characters.Boffin,
   characters.Butler,

@@ -7,6 +7,7 @@ const ROLE_EMOJI_ENTRIES = [
   ["Assassin", "🗡️"],
   ["Atheist", "🚫"],
   ["Balloonist", "🎈"],
+  ["Barber", "💈"],
   ["Baron", "🎩"],
   ["Boffin", "🧪"],
   ["Butler", "🛎️"],

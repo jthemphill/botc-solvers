@@ -1,0 +1,186 @@
+{
+  "title": "Puzzle 87 - Freaky Friday",
+  "players": ["Charlotte", "Sarah", "Oscar", "Matt", "You", "Tom", "Aoife", "Fraser"],
+  "script": [
+    "Fang Gu",
+    "Vigormortis",
+    "No Dashii",
+    "Vortox",
+    "Witch",
+    "Mutant",
+    "Barber",
+    "Juggler",
+    "Town Crier",
+    "Snake Charmer",
+    "Clockmaker",
+    "Artist",
+    "Seamstress",
+    "Mathematician"
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "witchCurse",
+      "players": ["Matt"],
+      "caller": "Matt"
+    },
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Charlotte"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Sarah"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Oscar"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Barber",
+      "name": "Charlotte"
+    },
+    {
+      "type": "Juggler",
+      "name": "Sarah",
+      "timing": "night_2",
+      "guesses": {
+        "Oscar": "Town Crier",
+        "Fraser": "Mutant",
+        "Matt": "Witch",
+        "Tom": "No Dashii"
+      },
+      "correctCount": 0
+    },
+    {
+      "type": "Town Crier",
+      "name": "Oscar",
+      "checks": [
+        {
+          "timing": "night_2",
+          "nominators": ["Matt", "Fraser"],
+          "minionNominated": false
+        }
+      ]
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Matt",
+      "checks": [
+        {
+          "timing": "night_1",
+          "player": "Aoife",
+          "demon": false
+        }
+      ]
+    },
+    {
+      "type": "Clockmaker",
+      "name": "You",
+      "timing": "night_1",
+      "distance": 3,
+      "possibleActualRoles": ["Clockmaker"]
+    },
+    {
+      "type": "Artist",
+      "name": "Tom",
+      "timing": "day_3",
+      "info": [
+        {
+          "timing": "day_3",
+          "expression": "some p: {Fraser, Charlotte} | p.role == Witch"
+        }
+      ],
+      "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    {
+      "type": "Seamstress",
+      "name": "Aoife",
+      "timing": "night_1",
+      "among": ["You", "Oscar"],
+      "aligned": true,
+      "possibleActualRoles": ["Seamstress", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    {
+      "type": "Mathematician",
+      "name": "Fraser",
+      "malfunctions": [
+        {
+          "timing": "night_1",
+          "count": 1
+        },
+        {
+          "timing": "night_2",
+          "count": 1
+        },
+        {
+          "timing": "night_3",
+          "count": 0
+        }
+      ],
+      "possibleActualRoles": ["Mathematician", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    {
+      "type": "Barber",
+      "name": "Charlotte",
+      "roleTiming": "day_3",
+      "source": "Good players truthfully report their current role; no player reports a swap."
+    },
+    {
+      "type": "Juggler",
+      "name": "Sarah",
+      "roleTiming": "day_3",
+      "source": "Good players truthfully report their current role; no player reports a swap.",
+      "guesses": {}
+    },
+    {
+      "type": "Town Crier",
+      "name": "Oscar",
+      "roleTiming": "day_3",
+      "source": "Good players truthfully report their current role; no player reports a swap.",
+      "checks": []
+    },
+    {
+      "type": "Snake Charmer",
+      "name": "Matt",
+      "roleTiming": "day_3",
+      "source": "Good players truthfully report their current role; no player reports a swap.",
+      "checks": []
+    },
+    {
+      "type": "Clockmaker",
+      "name": "You",
+      "roleTiming": "day_3",
+      "source": "Good players truthfully report their current role; no player reports a swap."
+    },
+    {
+      "type": "Artist",
+      "name": "Tom",
+      "roleTiming": "day_3",
+      "source": "Good players truthfully report their current role; no player reports a swap."
+    },
+    {
+      "type": "Seamstress",
+      "name": "Aoife",
+      "roleTiming": "day_3",
+      "source": "Good players truthfully report their current role; no player reports a swap.",
+      "among": []
+    },
+    {
+      "type": "Mathematician",
+      "name": "Fraser",
+      "roleTiming": "day_3",
+      "source": "Good players truthfully report their current role; no player reports a swap."
+    }
+  ]
+}
