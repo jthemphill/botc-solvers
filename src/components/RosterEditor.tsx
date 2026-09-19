@@ -18,10 +18,19 @@ interface Props {
   dispatch: Dispatch<PuzzleAction>;
   selectedIndex: number;
   onSelect: (index: number) => void;
+  onEdit: (index: number) => void;
   renderDetails?: (index: number) => ReactNode;
 }
 
-export function RosterEditor({ doc, dispatch, selectedIndex, onSelect, compact = false, renderDetails }: Props) {
+export function RosterEditor({
+  doc,
+  dispatch,
+  selectedIndex,
+  onSelect,
+  onEdit,
+  compact = false,
+  renderDetails,
+}: Props) {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const dialog = useRef<HTMLDialogElement>(null);
@@ -133,7 +142,7 @@ export function RosterEditor({ doc, dispatch, selectedIndex, onSelect, compact =
                     aria-label={`Edit claims for ${name}`}
                     aria-pressed={selectedIndex === index}
                     onClick={() => {
-                      onSelect(index);
+                      onEdit(index);
                       if (!renderDetails && window.matchMedia("(max-width: 900px)").matches)
                         document.getElementById("claims-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
                     }}
