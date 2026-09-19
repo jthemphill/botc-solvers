@@ -1,0 +1,148 @@
+{
+  "title": "Puzzle 90 - Last Liar Standing",
+  "players": ["Fraser", "Tom", "Jasmine", "Olivia", "Matt", "You", "Dan", "Anna", "Aoife"],
+  "script": [
+    "Imp",
+    "Spy",
+    "Xaan",
+    "Drunk",
+    "Recluse",
+    "Saint",
+    "Golem",
+    "Librarian",
+    "Town Crier",
+    "Chambermaid",
+    "Fortune Teller",
+    "Juggler",
+    "Empath"
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "nominationDeath",
+      "players": ["Olivia"],
+      "caller": "Dan"
+    },
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Aoife"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Anna"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Dan"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": ["Jasmine"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Librarian",
+      "name": "Fraser",
+      "timing": "night_1",
+      "role": "Drunk",
+      "among": ["Tom", "Olivia"]
+    },
+    {
+      "type": "Recluse",
+      "name": "Tom"
+    },
+    {
+      "type": "Town Crier",
+      "name": "Jasmine",
+      "checks": [
+        {
+          "timing": "night_2",
+          "nominators": ["Aoife", "Dan"],
+          "minionNominated": false
+        },
+        {
+          "timing": "night_3",
+          "nominators": ["Fraser", "Tom"],
+          "minionNominated": false
+        }
+      ]
+    },
+    {
+      "type": "Saint",
+      "name": "Olivia"
+    },
+    {
+      "type": "Chambermaid",
+      "name": "Matt",
+      "checks": [
+        {
+          "timing": "night_1",
+          "left": "Aoife",
+          "right": "Olivia",
+          "count": 0
+        },
+        {
+          "timing": "night_2",
+          "left": "Dan",
+          "right": "Fraser",
+          "count": 0
+        },
+        {
+          "timing": "night_3",
+          "left": "Fraser",
+          "right": "Tom",
+          "count": 1
+        },
+        {
+          "timing": "night_4",
+          "left": "Fraser",
+          "right": "Tom",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "type": "FortuneTeller",
+      "name": "You",
+      "checks": [
+        {
+          "timing": "night_1",
+          "left": "Anna",
+          "right": "Aoife",
+          "yes": false
+        }
+      ],
+      "possibleActualRoles": ["Fortune Teller", "Drunk"]
+    },
+    {
+      "type": "Golem",
+      "name": "Dan"
+    },
+    {
+      "type": "Juggler",
+      "name": "Anna",
+      "timing": "night_2",
+      "guesses": {
+        "Jasmine": "Drunk",
+        "Matt": "Drunk"
+      },
+      "correctCount": 1
+    },
+    {
+      "type": "Empath",
+      "name": "Aoife",
+      "timing": "night_1",
+      "count": 0
+    }
+  ]
+}
