@@ -11,6 +11,51 @@ async function exportedDoc(page: Page): Promise<PuzzleDoc> {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
+for (const width of [1440, 820, 390]) {
+  for (const view of ["Seating chart", "Roster"]) {
+    test(`toggles the same player's card in ${view} at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      await page.getByRole("button", { name: view, exact: true }).click();
+      await page.getByRole("button", { name: "Paste roster", exact: true }).click();
+      await page
+        .getByLabel("Players and claimed characters")
+        .fill("Ada = Empath\nBen = Chef\nCara = Soldier\nDrew = Recluse\nEve = Slayer");
+      await page.getByRole("button", { name: "Use roster", exact: true }).click();
+
+      const card = page.getByLabel("Puzzle workbench", { exact: true });
+      const playerButton = (seat: number, name: string) =>
+        page.getByRole("button", {
+          name:
+            view === "Roster"
+              ? `Edit claims for ${name}`
+              : new RegExp(`^${width <= 760 ? "Player" : "Seat"} ${seat}: ${name}\\.`),
+        });
+      const ada = playerButton(1, "Ada");
+      const ben = playerButton(2, "Ben");
+      await expect(card.getByRole("heading", { name: "Ada", exact: true })).toBeVisible();
+      await card.getByLabel("Count", { exact: true }).fill("1");
+      await ada.click();
+      await expect(card).toBeHidden();
+
+      await ada.click();
+      await expect(card.getByRole("heading", { name: "Ada", exact: true })).toBeVisible();
+      await expect(card.getByLabel("Count", { exact: true })).toHaveValue("1");
+      await ben.click();
+      await expect(card.getByRole("heading", { name: "Ben", exact: true })).toBeVisible();
+      await card.getByRole("button", { name: "Previous player", exact: true }).click();
+      await expect(card.getByRole("heading", { name: "Ada", exact: true })).toBeVisible();
+      await ada.click();
+      await expect(card).toBeHidden();
+
+      await ada.press("Enter");
+      await expect(card.getByRole("heading", { name: "Ada", exact: true })).toBeVisible();
+      await ada.press("Space");
+      await expect(card).toBeHidden();
+    });
+  }
+}
+
 test("creates seven named character claims with one paste and two clicks", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByLabel("Clockwise seating chart")).toBeVisible();

@@ -30,6 +30,13 @@ export function App() {
     setSelectedIndex(index);
     setDetailsOpen(true);
   }, []);
+  const togglePlayer = useCallback(
+    (index: number) => {
+      setSelectedIndex(index);
+      setDetailsOpen((open) => index !== selectedIndex || !open);
+    },
+    [selectedIndex],
+  );
   const { busy, solve, cancel } = useSolver();
 
   useEffect(() => {
@@ -144,6 +151,7 @@ export function App() {
                   dispatch={dispatch}
                   selectedIndex={selectedIndex}
                   onSelect={selectPlayer}
+                  onEdit={togglePlayer}
                 />
               )}
               {view === "seating" && (
@@ -159,6 +167,7 @@ export function App() {
               dispatch={dispatch}
               selectedIndex={selectedIndex}
               onSelect={selectPlayer}
+              onEdit={togglePlayer}
               renderDetails={renderMobileDetails}
             />
           )}
@@ -167,7 +176,7 @@ export function App() {
             dispatch={dispatch}
             selectedIndex={selectedIndex}
             onSelect={setSelectedIndex}
-            onEdit={selectPlayer}
+            onEdit={togglePlayer}
             renderDetails={view === "seating" ? renderMobileDetails : undefined}
           />
           <HiddenRolesEditor doc={doc} dispatch={dispatch} />

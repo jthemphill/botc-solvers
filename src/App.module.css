@@ -523,7 +523,7 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
-:where(.root):global(.view-seating .workbench) {
+:where(.root) :global(.workbench:not(.inspector-open)) {
   display: none;
 }
 
