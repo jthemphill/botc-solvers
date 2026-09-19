@@ -1,0 +1,17 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Juggler",
+        "Aoife": "Empath",
+        "Dan": "Golem",
+        "Fraser": "Librarian",
+        "Jasmine": "Town Crier",
+        "Matt": "Drunk",
+        "Olivia": "Spy",
+        "Tom": "Imp",
+        "You": "Fortune Teller"
+      }
+    }
+  ]
+}

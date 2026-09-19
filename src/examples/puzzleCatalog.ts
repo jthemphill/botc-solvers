@@ -91,6 +91,7 @@ import doc_86_blood_and_ink from "./puzzle-86-blood-and-ink.json";
 import doc_87_freaky_friday from "./puzzle-87-freaky-friday.json";
 import doc_88_lucky_saint from "./puzzle-88-lucky-saint.json";
 import doc_89_the_bigger_picture from "./puzzle-89-the-bigger-picture.json";
+import doc_90_last_liar_standing from "./puzzle-90-last-liar-standing.json";
 import doc_a_clean_sweep from "./a-clean-sweep.json";
 
 export interface PuzzleExample {
@@ -201,6 +202,7 @@ const PUZZLE_DOCS = [
   { id: "puzzle-87-freaky-friday", data: doc_87_freaky_friday },
   { id: "puzzle-88-lucky-saint", data: doc_88_lucky_saint },
   { id: "puzzle-89-the-bigger-picture", data: doc_89_the_bigger_picture },
+  { id: "puzzle-90-last-liar-standing", data: doc_90_last_liar_standing },
   { id: "a-clean-sweep", data: doc_a_clean_sweep },
 ] as const;
 
