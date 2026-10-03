@@ -45,10 +45,14 @@ export function claimScriptRoles(claim: Claim): string[] {
   const roles = [
     claimTypeRoleName(claim.type),
     ...(claim.possibleActualRoles ?? []),
+    ...((claim.nightwatchmanPings?.length ?? 0) > 0 ? ["Nightwatchman"] : []),
     ...(claim.info ?? []).flatMap((info) => extractDslRoleNames(info.expression ?? "")),
   ];
 
   switch (claim.type) {
+    case "Philosopher":
+      roles.push(claim.role);
+      break;
     case "Investigator":
       roles.push(claim.minionRole, claim.role);
       break;

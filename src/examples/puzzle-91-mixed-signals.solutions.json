@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Clockmaker",
+        "Charlotte": "Mutant",
+        "Fraser": "Witch",
+        "Hannah": "Juggler",
+        "Josh": "Sage",
+        "Sarah": "Philosopher",
+        "Tim": "Vortox",
+        "You": "Town Crier"
+      }
+    }
+  ]
+}

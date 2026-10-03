@@ -4,6 +4,13 @@ import { lex } from "../dsl/lex";
 import { parse } from "../dsl/parse";
 
 export function claimSummary(claim: Claim): string {
+  const pings = (claim.nightwatchmanPings ?? []).map(
+    (ping) => `${compactTimingLabel(ping.timing)}: learned ${ping.player} is the Nightwatchman.`,
+  );
+  return [abilitySummary(claim), ...pings].join(" ");
+}
+
+function abilitySummary(claim: Claim): string {
   const customInfo = (claim.info ?? [])
     .map((info) => info.expression?.trim())
     .filter((text): text is string => Boolean(text));
@@ -483,6 +490,9 @@ function gossipSummary(claim: Extract<Claim, { readonly type: "Gossip" }>): stri
 
 function philosopherSummary(claim: Extract<Claim, { readonly type: "Philosopher" }>): string {
   if (claim.role === undefined) return "No Philosopher choice";
+  if (claim.role === "Nightwatchman" && claim.nightwatchman?.chosen) {
+    return `Chose Nightwatchman; ${compactTimingLabel(claim.nightwatchman.timing ?? claim.timing ?? "night_1")}: chose ${claim.nightwatchman.chosen}.`;
+  }
   const seamstress = claim.seamstress;
   if (claim.role !== "Seamstress" || seamstress === undefined) return `Chose ${claim.role}.`;
   const [left, right] = seamstress.among;
