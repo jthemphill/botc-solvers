@@ -3,6 +3,7 @@ import { PoChoices } from "./po";
 import { slug, addMapValue } from "../model/keys";
 import { TimelineFacts, deathEventOrder } from "./timeline";
 import { applyBarberSwaps } from "./barber";
+import { applyNightwatchmanActions } from "./nightwatchman";
 import {
   timingOrder,
   followingNight,
@@ -112,6 +113,7 @@ export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
   if (doc.script.includes("Assassin")) game.enforceAbilityUseLimit("Assassin", 1);
   if (doc.setup !== "atheist") {
     applyPhilosopherDrunking(game, doc);
+    applyNightwatchmanActions(game, doc, doc.facts);
     applyChangedRoleClaimExplanations(game, doc, characterActions);
     applyXaanActivity(game, doc);
     applyVigormortisPoisonSources(game, doc, nightDeathTiming);

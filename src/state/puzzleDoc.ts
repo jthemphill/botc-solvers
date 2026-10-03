@@ -60,6 +60,7 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
   claim = {
     ...claim,
     knownEvilTwin: claim.knownEvilTwin === undefined ? undefined : remap(claim.knownEvilTwin),
+    nightwatchmanPings: claim.nightwatchmanPings?.map((ping) => ({ ...ping, player: remap(ping.player) })),
   } as Claim;
   const name = claim.name === oldName ? newName : claim.name;
 
@@ -114,6 +115,10 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
       return {
         ...claim,
         name,
+        nightwatchman:
+          claim.nightwatchman === undefined
+            ? undefined
+            : { ...claim.nightwatchman, chosen: remap(claim.nightwatchman.chosen) },
         seamstress:
           claim.seamstress === undefined ? undefined : { ...claim.seamstress, among: remapArr(claim.seamstress.among) },
       };
@@ -182,6 +187,10 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
 function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
   if (claim.name === name) return undefined;
   if (claim.knownEvilTwin === name) claim = { ...claim, knownEvilTwin: undefined } as Claim;
+  if (claim.nightwatchmanPings?.some((ping) => ping.player === name)) {
+    const pings = claim.nightwatchmanPings.filter((ping) => ping.player !== name);
+    claim = { ...claim, nightwatchmanPings: pings.length > 0 ? pings : undefined };
+  }
   // Remove references to the deleted player. Keep the claim.
   const stripArr = (arr: readonly string[] | undefined) => arr?.filter((n) => n !== name);
   switch (claim.type) {
@@ -216,7 +225,11 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
         among: stripArr(claim.among),
       };
     case "Philosopher":
-      return claim.seamstress?.among.includes(name) ? { ...claim, seamstress: undefined } : claim;
+      return {
+        ...claim,
+        seamstress: claim.seamstress?.among.includes(name) ? undefined : claim.seamstress,
+        nightwatchman: claim.nightwatchman?.chosen === name ? undefined : claim.nightwatchman,
+      };
     case "Steward":
       return claim.goodPlayer === name ? { ...claim, goodPlayer: undefined } : claim;
     case "Juggler": {

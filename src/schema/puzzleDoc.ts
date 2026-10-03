@@ -118,7 +118,13 @@ interface BaseClaim {
   readonly possibleActualRoles?: readonly string[];
   readonly heardWidowCall?: boolean;
   readonly knownEvilTwin?: string;
+  readonly nightwatchmanPings?: readonly NightwatchmanPingDoc[];
   readonly info?: readonly CustomInfoStatementDoc[];
+}
+
+export interface NightwatchmanPingDoc {
+  readonly player: string;
+  readonly timing: string;
 }
 
 export interface CustomInfoStatementDoc {
@@ -328,6 +334,7 @@ export interface PhilosopherClaim extends BaseClaim {
   readonly type: "Philosopher";
   readonly role?: string;
   readonly seamstress?: PhilosopherSeamstressInfoDoc;
+  readonly nightwatchman?: { readonly chosen: string; readonly timing?: string };
 }
 
 export interface PrincessNominationDoc {

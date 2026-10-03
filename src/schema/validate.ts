@@ -174,6 +174,17 @@ function validateClaim(input: unknown, path: string): Claim {
     possibleActualRoles,
     heardWidowCall,
     knownEvilTwin,
+    nightwatchmanPings:
+      input["nightwatchmanPings"] === undefined
+        ? undefined
+        : expectArray(input["nightwatchmanPings"], `${path}.nightwatchmanPings`).map((entry, index) => {
+            const entryPath = `${path}.nightwatchmanPings[${index}]`;
+            if (!isObject(entry)) throw new ValidationError("Expected object", entryPath);
+            return {
+              player: expectString(entry["player"], `${entryPath}.player`),
+              timing: expectString(entry["timing"], `${entryPath}.timing`),
+            };
+          }),
     info,
   };
 
@@ -481,6 +492,10 @@ function validateClaim(input: unknown, path: string): Claim {
       return {
         ...base,
         type: "Philosopher",
+        nightwatchman:
+          input["nightwatchman"] === undefined
+            ? undefined
+            : validateNightwatchmanChoice(input["nightwatchman"], `${path}.nightwatchman`),
         role: input["role"] === undefined ? undefined : expectString(input["role"], `${path}.role`),
         seamstress:
           input["seamstress"] === undefined
@@ -742,6 +757,14 @@ function validateClaim(input: unknown, path: string): Claim {
     default:
       return { ...base, type: type as Claim["type"] } as Claim;
   }
+}
+
+function validateNightwatchmanChoice(input: unknown, path: string) {
+  if (!isObject(input)) throw new ValidationError("Expected object", path);
+  return {
+    chosen: expectString(input["chosen"], `${path}.chosen`),
+    timing: input["timing"] === undefined ? undefined : expectString(input["timing"], `${path}.timing`),
+  };
 }
 
 function validateNightlyPlayerChoices(

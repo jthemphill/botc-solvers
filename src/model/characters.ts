@@ -2280,45 +2280,6 @@ export interface OracleDeadPlayerOption {
 export class Nightwatchman extends TownsfolkRole {
   static readonly roleName = "Nightwatchman";
   static readonly wake = Wakes.untilAbilityUsed("Nightwatchman", Wakes.everyNight);
-  readonly chosen?: string;
-  readonly learned?: boolean;
-  readonly confirmedByChosen: boolean;
-
-  constructor(
-    options: RoleBaseOptions & {
-      readonly chosen?: string;
-      readonly learned?: boolean;
-      readonly confirmedByChosen?: boolean;
-    },
-  ) {
-    super(options);
-    this.chosen = options.chosen;
-    this.learned = options.learned;
-    this.confirmedByChosen = options.confirmedByChosen ?? false;
-  }
-
-  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
-    this.applyRoleClaim(game, Nightwatchman, options);
-    if (this.chosen === undefined || this.learned === undefined) {
-      this.applyInfoClaimBuilders(game, Nightwatchman, this.infoClaims, options);
-      return;
-    }
-
-    const timing = this.claimTiming(explicitTiming(options));
-    game.registerAbilityUse(this.name, Nightwatchman, timing, game.hasAbilityAt(this.name, Nightwatchman, timing));
-    const activeHealthy = game.allOf(
-      [game.hasAbilityAt(this.name, Nightwatchman, timing), game.soberAndHealthy(this.name, timing)],
-      claimName(this.name, Nightwatchman, "chosen_player_learns"),
-    );
-    game.addImplication(
-      activeHealthy,
-      game.constantBool(this.learned, claimName(this.chosen, Nightwatchman, "learned")),
-    );
-    if (this.learned && this.confirmedByChosen) {
-      game.addImplication(game.isGood(this.chosen), activeHealthy);
-    }
-    this.applyInfoClaimBuilders(game, Nightwatchman, this.infoClaims, options);
-  }
 }
 
 export class Savant extends TownsfolkRole {

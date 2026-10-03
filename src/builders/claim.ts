@@ -356,12 +356,7 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
         ),
       });
     case "Nightwatchman":
-      return new Nightwatchman({
-        ...base,
-        chosen: claim.chosen,
-        learned: claim.learned,
-        confirmedByChosen: claim.confirmedByChosen,
-      });
+      return new Nightwatchman(base);
     default: {
       const klass = roleByName(claim.type) as unknown as new (opts: { name: string; timing?: Timing }) => Role;
       return new klass({ ...base });

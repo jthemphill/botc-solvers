@@ -469,6 +469,7 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
   return (
     <div className={styles.root}>
       {body}
+      {doc.script.includes("Nightwatchman") && <NightwatchmanPingsBody doc={doc} claim={claim} onChange={onChange} />}
       <AdvancedClaimFields doc={doc} claim={claim} onChange={onChange} />
       {showWidowCall && (
         <label className="checkbox-row">
@@ -1368,6 +1369,7 @@ function PhilosopherBody({
       ...claim,
       role: role || undefined,
       seamstress: role === "Seamstress" ? seamstress : undefined,
+      nightwatchman: role === "Nightwatchman" ? claim.nightwatchman : undefined,
     });
   };
   const setSeamstress = (next: NonNullable<PhilosopherClaim["seamstress"]>) => {
@@ -1418,6 +1420,27 @@ function PhilosopherBody({
             ariaLabel="Info timing"
             value={seamstress.timing ?? claim.timing}
             onChange={(timing) => setSeamstress({ ...seamstress, timing })}
+          />
+        </>
+      )}
+      {claim.role === "Nightwatchman" && (
+        <>
+          <span>Nightwatchman chosen player</span>
+          <PlayerSelect
+            ariaLabel="Nightwatchman chosen player"
+            players={doc.players}
+            value={claim.nightwatchman?.chosen}
+            onChange={(chosen) =>
+              onChange({ ...claim, nightwatchman: chosen ? { ...claim.nightwatchman, chosen } : undefined })
+            }
+          />
+          <span>Nightwatchman choice timing</span>
+          <TimingField
+            ariaLabel="Nightwatchman choice timing"
+            value={claim.nightwatchman?.timing ?? claim.timing}
+            onChange={(timing) =>
+              onChange({ ...claim, nightwatchman: { chosen: claim.nightwatchman?.chosen ?? "", timing } })
+            }
           />
         </>
       )}
@@ -2422,6 +2445,49 @@ function SavantBody({ doc, claim, onChange }: { doc: PuzzleDoc; claim: SavantCla
         })}
         <button onClick={() => setOptions([...statement.options, ""])}>+ Add option</button>
       </div>
+    </div>
+  );
+}
+
+function NightwatchmanPingsBody({
+  doc,
+  claim,
+  onChange,
+}: {
+  doc: PuzzleDoc;
+  claim: Claim;
+  onChange: (c: Claim) => void;
+}) {
+  const pings = claim.nightwatchmanPings ?? [];
+  const update = (next: NonNullable<Claim["nightwatchmanPings"]>) =>
+    onChange({ ...claim, nightwatchmanPings: next.length > 0 ? next : undefined });
+  return (
+    <div>
+      {pings.map((ping, index) => (
+        <div className="field-grid" key={index}>
+          <span>Learned Nightwatchman</span>
+          <PlayerSelect
+            ariaLabel="Learned Nightwatchman"
+            players={doc.players}
+            value={ping.player}
+            onChange={(player) => update(pings.map((entry, i) => (i === index ? { ...entry, player } : entry)))}
+          />
+          <span>Signal timing</span>
+          <TimingField
+            ariaLabel="Signal timing"
+            value={ping.timing}
+            onChange={(timing) =>
+              update(pings.map((entry, i) => (i === index ? { ...entry, timing: timing ?? "night_1" } : entry)))
+            }
+          />
+          <button type="button" onClick={() => update(pings.filter((_, i) => i !== index))}>
+            Remove Nightwatchman signal
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={() => update([...pings, { player: doc.players[0] ?? "", timing: "night_1" }])}>
+        + Add received Nightwatchman signal
+      </button>
     </div>
   );
 }

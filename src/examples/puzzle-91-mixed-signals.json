@@ -1,0 +1,68 @@
+{
+  "title": "Puzzle 91 - Mixed Signals",
+  "players": ["Sarah", "Aoife", "Charlotte", "Hannah", "You", "Josh", "Fraser", "Tim"],
+  "script": [
+    "Fang Gu",
+    "Vigormortis",
+    "No Dashii",
+    "Vortox",
+    "Witch",
+    "Mutant",
+    "Klutz",
+    "Philosopher",
+    "Clockmaker",
+    "Nightwatchman",
+    "Juggler",
+    "Town Crier",
+    "Sage",
+    "Artist"
+  ],
+  "timeline": [
+    { "timing": "day_1", "type": "witchCurse", "players": ["Fraser"], "caller": "Fraser" },
+    { "timing": "day_1", "type": "execution", "players": ["Aoife"] },
+    { "timing": "night_2", "type": "nightDeath", "players": ["Josh"] },
+    { "timing": "day_2", "type": "execution", "players": ["You"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["Hannah"] }
+  ],
+  "claims": [
+    {
+      "type": "Philosopher",
+      "name": "Sarah",
+      "timing": "night_1",
+      "role": "Nightwatchman",
+      "nightwatchman": { "chosen": "Hannah" },
+      "possibleActualRoles": ["Philosopher", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    { "type": "Clockmaker", "name": "Aoife", "distance": 3 },
+    {
+      "type": "Nightwatchman",
+      "name": "Charlotte",
+      "timing": "night_1",
+      "chosen": "Hannah",
+      "possibleActualRoles": ["Nightwatchman", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    },
+    {
+      "type": "Juggler",
+      "name": "Hannah",
+      "timing": "night_2",
+      "nightwatchmanPings": [{ "player": "Charlotte", "timing": "night_1" }],
+      "guesses": { "Aoife": "Clockmaker", "Josh": "Witch", "Sarah": "No Dashii" },
+      "correctCount": 0
+    },
+    {
+      "type": "Town Crier",
+      "name": "You",
+      "possibleActualRoles": ["Town Crier"],
+      "checks": [{ "timing": "night_2", "nominators": ["Fraser", "Sarah"], "minionNominated": false }]
+    },
+    { "type": "Sage", "name": "Josh", "timing": "night_2", "demonAmong": ["Charlotte", "Hannah"] },
+    { "type": "Klutz", "name": "Fraser", "timing": "day_1", "chosen": "Aoife" },
+    {
+      "type": "Artist",
+      "name": "Tim",
+      "timing": "day_3",
+      "info": [{ "timing": "day_3", "expression": "Charlotte.type != Demon" }],
+      "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+    }
+  ]
+}
