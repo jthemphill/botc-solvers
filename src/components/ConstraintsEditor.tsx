@@ -56,6 +56,17 @@ export function ConstraintsEditor({ doc, dispatch }: Props) {
           />
           <span>Unique actual characters</span>
         </label>
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            aria-label="Abilities never target dead players to kill"
+            checked={doc.noKillSinking === true}
+            onChange={(event) =>
+              dispatch({ type: "setNoKillSinking", noKillSinking: event.target.checked ? true : undefined })
+            }
+          />
+          <span>Abilities never target dead players to kill</span>
+        </label>
       </details>
     </section>
   );

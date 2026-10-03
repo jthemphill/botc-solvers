@@ -1,0 +1,64 @@
+{
+  "title": "Puzzle 92 - Half Moon Rising",
+  "players": ["Fraser", "Matthew", "Josh", "Aoife", "You", "Sarah", "Olivia", "Charlotte"],
+  "script": [
+    "Zombuul",
+    "Po",
+    "Devil's Advocate",
+    "Assassin",
+    "Drunk",
+    "Shugenja",
+    "Seamstress",
+    "Exorcist",
+    "Chambermaid",
+    "Pacifist",
+    "Gossip",
+    "Gambler",
+    "Noble"
+  ],
+  "noKillSinking": true,
+  "timeline": [
+    { "timing": "day_1", "type": "execution", "players": ["Fraser"] },
+    { "timing": "night_2", "type": "nightDeath", "players": [] },
+    { "timing": "day_2", "type": "survivedExecution", "players": ["Aoife"] },
+    { "timing": "night_3", "type": "nightDeath", "players": ["Matthew", "Josh", "Aoife"] }
+  ],
+  "claims": [
+    { "type": "Shugenja", "name": "Fraser", "evilDirection": "clockwise" },
+    { "type": "Seamstress", "name": "Matthew", "timing": "night_1", "among": ["Sarah", "Charlotte"], "aligned": true },
+    {
+      "type": "Exorcist",
+      "name": "Josh",
+      "choices": [
+        { "timing": "night_2", "player": "Charlotte" },
+        { "timing": "night_3", "player": "You" }
+      ]
+    },
+    {
+      "type": "Chambermaid",
+      "name": "Aoife",
+      "checks": [
+        { "timing": "night_1", "left": "You", "right": "Olivia", "count": 0 },
+        { "timing": "night_2", "left": "You", "right": "Charlotte", "count": 1 }
+      ]
+    },
+    { "type": "Pacifist", "name": "You", "possibleActualRoles": ["Pacifist", "Drunk"] },
+    {
+      "type": "Gossip",
+      "name": "Sarah",
+      "statements": [
+        { "timing": "day_1", "expression": "some p: players | p.role == Po" },
+        { "timing": "day_2", "expression": "Charlotte.role == Po || Charlotte.role == Assassin" }
+      ]
+    },
+    {
+      "type": "Gambler",
+      "name": "Olivia",
+      "guesses": [
+        { "timing": "night_2", "player": "Matthew", "role": "Devil's Advocate" },
+        { "timing": "night_3", "player": "You", "role": "Pacifist" }
+      ]
+    },
+    { "type": "Noble", "name": "Charlotte", "oneEvilAmong": ["You", "Josh", "Aoife"] }
+  ]
+}

@@ -37,6 +37,7 @@ export class DeathAssignments {
     private readonly timing: Timing,
     private readonly players: readonly string[],
     private readonly deadAtStart: ReadonlySet<string>,
+    private readonly noKillSinking = false,
   ) {}
 
   assign(player: string, source: NightDeathSource): BoolVar {
@@ -118,6 +119,12 @@ export class DeathAssignments {
         return game.allOf(
           [
             survivesDemonTarget,
+            ...(this.noKillSinking
+              ? [
+                  game.constantBool(!deadAtPhaseStart.has(player), `${timing}_${player}_target_not_already_dead`),
+                  game.not(diesEarlier, `${timing}_${player}_target_did_not_die_earlier`),
+                ]
+              : []),
             game.not(killedBySource, `${timing}_${slug(source.id)}_does_not_also_target_${slug(player)}`),
           ],
           `${timing}_${slug(player)}_non_death_target_for_${slug(source.id)}`,

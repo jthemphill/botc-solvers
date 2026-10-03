@@ -78,6 +78,8 @@ export function validatePuzzleDoc(input: unknown): PuzzleDoc {
     script,
     setup,
     uniqueCharacters,
+    noKillSinking:
+      input["noKillSinking"] === undefined ? undefined : expectBool(input["noKillSinking"], "$.noKillSinking"),
     constraints,
     timeline,
     claims: validatedClaims,

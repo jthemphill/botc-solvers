@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Aoife": "Chambermaid",
+        "Charlotte": "Assassin",
+        "Fraser": "Shugenja",
+        "Josh": "Exorcist",
+        "Matthew": "Zombuul",
+        "Olivia": "Drunk",
+        "Sarah": "Gossip",
+        "You": "Pacifist"
+      }
+    }
+  ]
+}

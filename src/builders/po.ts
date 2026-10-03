@@ -15,7 +15,7 @@ export class PoChoices {
       : game.not(priorPoChoice ?? game.constantBool(false, `${timing}_no_prior_po_choice`), `${timing}_po_charged`);
   }
 
-  record(timing: Timing, resolution: DeathAssignments): void {
+  record(timing: Timing, resolution: DeathAssignments, canChoose: BoolLike): void {
     const { game } = this;
     const poSources = [...resolution.bySource.keys()].filter((source) => source.kind === "po");
     const poKillAssignments = poSources.flatMap((source) => resolution.bySource.get(source) ?? []);
@@ -45,6 +45,23 @@ export class PoChoices {
       ),
       poNonDeathTargetAvailable,
     );
-    this.choices.set(timing, poChosePlayer);
+    // An Exorcist preserves the last choice instead of charging the Po.
+    // https://wiki.bloodontheclocktower.com/index.php?title=Po&oldid=3104
+    this.choices.set(
+      timing,
+      game.anyOf(
+        [
+          game.allOf([canChoose, poChosePlayer], `${timing}_po_new_choice`),
+          game.allOf(
+            [
+              game.not(canChoose, `${timing}_po_no_choice`),
+              game.not(this.chargedAt(timing), `${timing}_po_prior_choice`),
+            ],
+            `${timing}_po_preserve_choice`,
+          ),
+        ],
+        `${timing}_po_last_choice_was_player`,
+      ),
+    );
   }
 }
