@@ -26,6 +26,7 @@ interface BuildDoc extends PuzzleDoc {
 }
 
 export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
+  input = { ...input, claims: [...new Map(input.claims.map((claim) => [JSON.stringify(claim), claim])).values()] };
   const doc: BuildDoc = { ...input, facts: new TimelineFacts(input) };
   const spec: PuzzleSpec = {
     players: doc.players,
@@ -1601,7 +1602,13 @@ function applyNightDeathSourceConstraints(
       goonContext,
       shabalothContext,
     );
-    const resolution = new DeathAssignments(game, timing, doc.players, doc.facts.deadBefore(timing));
+    const resolution = new DeathAssignments(
+      game,
+      timing,
+      doc.players,
+      doc.facts.deadBefore(timing),
+      doc.noKillSinking ?? false,
+    );
     if (event.players.length === 0) for (const source of sources) resolution.bySource.set(source, []);
     for (const player of event.players) {
       const eligible = sources.filter((source) => source.players === undefined || source.players.includes(player));
@@ -1633,8 +1640,26 @@ function applyNightDeathSourceConstraints(
     }
     applyRequiredGrandmotherDeaths(game, doc, event, resolution.demonKills);
     resolution.constrainSources();
-    resolution.constrainTargets((player) => demonKillProtectionAt(game, doc, player, timing));
-    po.record(timing, resolution);
+    game.withProvenance(
+      {
+        kind: doc.noKillSinking ? "assumption" : "rule",
+        id: doc.noKillSinking ? "noKillSinking" : "nightDeathTargets",
+      },
+      () => resolution.constrainTargets((player) => demonKillProtectionAt(game, doc, player, timing)),
+    );
+    po.record(
+      timing,
+      resolution,
+      game.not(
+        game.anyOf(
+          exorcistDemonKillBlockers(game, doc, timing, (player, healthTiming) =>
+            game.soberAndHealthy(player, healthTiming),
+          ),
+          `${timing}_po_exorcised`,
+        ),
+        `${timing}_po_can_choose`,
+      ),
+    );
   }
   return {
     beforeInfoDeathsByTiming: new Map(

@@ -19,6 +19,7 @@ export type PuzzleDocAction =
   | { type: "movePlayer"; index: number; direction: "up" | "down" }
   | { type: "movePlayerTo"; fromIndex: number; toIndex: number }
   | { type: "setSetup"; setup: PuzzleDoc["setup"] }
+  | { type: "setNoKillSinking"; noKillSinking: PuzzleDoc["noKillSinking"] }
   | { type: "setUniqueCharacters"; uniqueCharacters: PuzzleDoc["uniqueCharacters"] }
   | { type: "setScript"; script: readonly string[] }
   | { type: "setConstraints"; constraints: PuzzleDoc["constraints"] }
@@ -514,6 +515,8 @@ export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc
     }
     case "setSetup":
       return { ...state, setup: action.setup };
+    case "setNoKillSinking":
+      return { ...state, noKillSinking: action.noKillSinking };
     case "setUniqueCharacters":
       return { ...state, uniqueCharacters: action.uniqueCharacters };
     case "setScript": {
