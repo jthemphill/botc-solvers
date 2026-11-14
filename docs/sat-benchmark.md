@@ -159,11 +159,11 @@ The engine enumerates the same 146 initial role assignments across all 97 catalo
 
 | Metric           |  Before |   After | Reduction |
 | ---------------- | ------: | ------: | --------: |
-| Build (ms)       | 1,735.5 | 1,230.2 |     29.1% |
-| Finalize (ms)    | 1,568.6 | 1,386.0 |     11.6% |
-| Enumeration (ms) |   705.5 |   910.0 |    −29.0% |
-| SAT backend (ms) |   433.0 |   161.6 |     62.7% |
-| Total (ms)       | 4,093.9 | 3,550.3 |     13.3% |
+| Build (ms)       | 1,910.0 | 1,361.8 |     28.7% |
+| Finalize (ms)    | 1,687.8 |   541.1 |     67.9% |
+| Enumeration (ms) |   781.8 |   584.5 |     25.2% |
+| SAT backend (ms) |   484.8 |   176.9 |     63.5% |
+| Total (ms)       | 4,405.1 | 2,510.8 |     43.0% |
 | Variables        | 216,418 |  58,733 |     72.9% |
 | Clauses          | 706,987 | 235,550 |     66.7% |
 
@@ -174,5 +174,6 @@ Changes:
 3. An at-most-one bound on more than six inputs uses a binary code.
 4. A negation is a signed literal and uses no variable.
 5. The constraint builders no longer make a name string for each variable.
+6. `finalize()` no longer calls `Object.freeze` on the snapshot and on each clause. The snapshot type is read-only, and the model rejects writes after finalization.
 
-Repeated runs of one engine differed by approximately 10% in total time on this machine. Thus the total time difference is near the noise. The counts are exact. `Object.freeze` on each clause of the full snapshot remains the largest single cost. In one experiment without it, the total time fell by approximately 20%.
+Repeated runs of one engine differed by approximately 10% in total time on this machine. Thus the total time difference is near the noise. The counts are exact.

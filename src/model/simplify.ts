@@ -36,9 +36,8 @@ export function simplify(problem: SatProblem, projection: readonly number[]): Si
     changed = true;
   };
 
-  // The finalized arrays are frozen. A read from a copy is faster.
-  let clauses: readonly Clause[] = problem.clauses.slice();
-  let origins = problem.origins?.slice();
+  let clauses = problem.clauses;
+  let origins = problem.origins;
   const binaryKey = (a: Literal, b: Literal) => (Math.min(a, b) + TRUE) * (2 * TRUE + 1) + Math.max(a, b) + TRUE;
   // A unit clause is frequently later than the clauses that it simplifies. Find the unit clauses first.
   for (const clause of clauses) if (clause.length === 1) equate(clause[0]!, TRUE);
@@ -49,14 +48,18 @@ export function simplify(problem: SatProblem, projection: readonly number[]): Si
     const kept: Clause[] = [];
     const keptOrigins: NonNullable<typeof origins>[number][] = [];
     for (let index = 0; index < clauses.length; index += 1) {
-      const clause = clauses[index]!;
-      const literals: Literal[] = [];
-      let satisfied = false;
-      // After the first pass, a clause changes only if one of its variables has a replacement.
-      let changes = first;
-      for (let position = 0; !changes && position < clause.length; position += 1)
-        changes = replacement[Math.abs(clause[position]!)] !== Math.abs(clause[position]!);
+      let clause = clauses[index]!;
+      // A clause changes only if one of its variables has a replacement or occurs two times.
+      let changes = clause.length < 2;
+      for (let position = 0; !changes && position < clause.length; position += 1) {
+        const variable = Math.abs(clause[position]!);
+        changes = replacement[variable] !== variable;
+        for (let earlier = 0; first && !changes && earlier < position; earlier += 1)
+          changes = Math.abs(clause[earlier]!) === variable;
+      }
       if (changes) {
+        const literals: Literal[] = [];
+        let satisfied = false;
         for (let position = 0; !satisfied && position < clause.length; position += 1) {
           const literal = find(clause[position]!);
           if (literal === TRUE || literals.includes(-literal)) satisfied = true;
@@ -66,15 +69,16 @@ export function simplify(problem: SatProblem, projection: readonly number[]): Si
         if (literals.length === 0) consistent = false;
         if (literals.length === 1) equate(literals[0]!, TRUE);
         if (literals.length < 2) continue;
-        if (literals.length === 2) {
-          if (binary.has(binaryKey(-literals[0]!, -literals[1]!))) {
-            equate(literals[0]!, -literals[1]!);
-            continue;
-          }
-          binary.add(binaryKey(literals[0]!, literals[1]!));
-        }
+        clause = literals;
       }
-      kept.push(literals.length > 0 ? literals : clause);
+      if ((changes || first) && clause.length === 2) {
+        if (binary.has(binaryKey(-clause[0]!, -clause[1]!))) {
+          equate(clause[0]!, -clause[1]!);
+          continue;
+        }
+        binary.add(binaryKey(clause[0]!, clause[1]!));
+      }
+      kept.push(clause);
       if (origins) keptOrigins.push(origins[index]!);
     }
     clauses = kept;

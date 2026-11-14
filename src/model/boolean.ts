@@ -250,10 +250,6 @@ export class BooleanConstraints {
   }
 
   finalize(): SatProblem {
-    return (this.prepared ??= Object.freeze({
-      variableCount: this.variableCount,
-      clauses: Object.freeze(this.clauses.map((clause) => Object.freeze(clause))),
-      origins: Object.freeze([...this.origins]),
-    }));
+    return (this.prepared ??= { variableCount: this.variableCount, clauses: this.clauses, origins: this.origins });
   }
 }
