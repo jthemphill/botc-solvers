@@ -36,8 +36,9 @@ export function simplify(problem: SatProblem, projection: readonly number[]): Si
     changed = true;
   };
 
-  let clauses: Clause[] = [...problem.clauses];
-  let origins = problem.origins === undefined ? undefined : [...problem.origins];
+  // The finalized arrays are frozen. A read from a copy is faster.
+  let clauses: readonly Clause[] = problem.clauses.slice();
+  let origins = problem.origins?.slice();
   const binaryKey = (a: Literal, b: Literal) => (Math.min(a, b) + TRUE) * (2 * TRUE + 1) + Math.max(a, b) + TRUE;
   // A unit clause is frequently later than the clauses that it simplifies. Find the unit clauses first.
   for (const clause of clauses) if (clause.length === 1) equate(clause[0]!, TRUE);
@@ -46,15 +47,18 @@ export function simplify(problem: SatProblem, projection: readonly number[]): Si
   for (let first = true; changed && consistent; first = false) {
     changed = false;
     const kept: Clause[] = [];
-    const keptOrigins: NonNullable<typeof origins> = [];
+    const keptOrigins: NonNullable<typeof origins>[number][] = [];
     for (let index = 0; index < clauses.length; index += 1) {
       const clause = clauses[index]!;
       const literals: Literal[] = [];
       let satisfied = false;
       // After the first pass, a clause changes only if one of its variables has a replacement.
-      if (first || clause.some((literal) => replacement[Math.abs(literal)] !== Math.abs(literal))) {
-        for (const initial of clause) {
-          const literal = find(initial);
+      let changes = first;
+      for (let position = 0; !changes && position < clause.length; position += 1)
+        changes = replacement[Math.abs(clause[position]!)] !== Math.abs(clause[position]!);
+      if (changes) {
+        for (let position = 0; !satisfied && position < clause.length; position += 1) {
+          const literal = find(clause[position]!);
           if (literal === TRUE || literals.includes(-literal)) satisfied = true;
           else if (literal !== -TRUE && !literals.includes(literal)) literals.push(literal);
         }
@@ -83,7 +87,7 @@ export function simplify(problem: SatProblem, projection: readonly number[]): Si
   let variableCount = 0;
   const renumber = (literal: Literal): Literal =>
     Math.sign(literal) * (renumbered[Math.abs(literal)] ||= ++variableCount);
-  const compact = clauses.map((clause) => Object.freeze(clause.map(renumber)));
+  const compact = clauses.map((clause) => clause.map(renumber));
   const projected = new Set<Literal>();
   for (const variable of projection) if (Math.abs(find(variable)) !== TRUE) projected.add(renumber(find(variable)));
   return {
