@@ -1,4 +1,4 @@
-import { validateSatWitness, type SatProblem, type SatBackend } from "./sat";
+import { negate, validateSatWitness, type Literal, type SatProblem, type SatBackend } from "./sat";
 import { validateChoiceWitness } from "./actions";
 import { validateTraceWitness } from "./trace";
 import type { World } from "./world";
@@ -22,7 +22,7 @@ export interface SolveReport {
 export async function enumerateWorlds(
   problem: SatProblem,
   backend: SatBackend,
-  projection: readonly number[],
+  projection: readonly Literal[],
   decode: (model: ReadonlySet<number>) => World,
   finalizeMs: number,
   limit?: number,
@@ -51,7 +51,8 @@ export async function enumerateWorlds(
     const errors = [...validateTraceWitness(world.trace!), ...world.actions.flatMap(validateChoiceWitness)];
     if (errors.length > 0) throw new Error(errors.join("\n"));
     worlds.push(world);
-    clauses.push(projection.filter((variable) => result.model.has(variable)).map((variable) => -variable));
+    const model = result.model;
+    clauses.push(projection.filter((literal) => model.has(Math.abs(literal)) === literal > 0).map(negate));
   }
   return {
     status: stopped === "unknown" ? "unknown" : worlds.length > 0 ? "sat" : "unsat",
