@@ -176,4 +176,4 @@ Changes:
 5. The constraint builders no longer make a name string for each variable.
 6. `finalize()` no longer calls `Object.freeze` on the snapshot and on each clause. The snapshot type is read-only, and the model rejects writes after finalization.
 
-Repeated runs of one engine differed by approximately 10% in total time on this machine. Thus the total time difference is near the noise. The counts are exact.
+Repeated runs of one engine differed by approximately 10% in total time on this machine. The counts are exact.
