@@ -1,4 +1,4 @@
-import { CharacterType, type RoleRef, roleName } from "./core";
+import { CharacterType, type RoleRef } from "./core";
 import { BOTCModel, type BoolLike } from "./model";
 import type { SatBackend } from "./sat";
 
@@ -217,10 +217,7 @@ export function applyStandardSetup(game: BOTCModel): void {
   const ordinarySetup =
     specialDemonConditions.length === 0
       ? undefined
-      : game.allOf(
-          specialDemonConditions.map((condition) => negateBoolLike(condition)),
-          "standard_setup_without_special_demon",
-        );
+      : game.allOf(specialDemonConditions.map((condition) => negateBoolLike(condition)));
 
   applyStandardSetupBranches(game, baseCounts, modifiers, ordinarySetup);
   if (kazaliInPlay !== undefined) enforceVariableOutsiderSetup(game, baseCounts, kazaliInPlay);
@@ -253,16 +250,13 @@ function applyStandardSetupBranches(
   );
   for (let mask = 0; mask < branchCount; mask += 1) {
     const activeModifiers = modifiers.filter((_modifier, index) => (mask & (1 << index)) !== 0);
-    const condition = game.allOf(
-      [
-        ...(baseCondition === undefined ? [] : [baseCondition]),
-        ...modifiers.map((modifier, index) => {
-          const active = activeVariables.get(modifier.roleName) as BoolLike;
-          return (mask & (1 << index)) !== 0 ? active : negateBoolLike(active);
-        }),
-      ],
-      `standard_setup_${activeModifiers.map((modifier) => roleName(modifier.roleName)).join("_") || "base"}`,
-    );
+    const condition = game.allOf([
+      ...(baseCondition === undefined ? [] : [baseCondition]),
+      ...modifiers.map((modifier, index) => {
+        const active = activeVariables.get(modifier.roleName) as BoolLike;
+        return (mask & (1 << index)) !== 0 ? active : negateBoolLike(active);
+      }),
+    ]);
     const countOptions = adjustedSetupCountOptions(baseCounts, activeModifiers).filter((counts) =>
       SETUP_TYPES.every((type) => counts[type] >= 0 && counts[type] <= game.players.length),
     );
@@ -274,13 +268,7 @@ function applyStandardSetupBranches(
       enforceSetupCounts(game, countOptions[0] as StandardSetupCounts, condition);
       continue;
     }
-    game.addImplication(
-      condition,
-      game.anyOf(
-        countOptions.map((counts, index) => setupCountsMatch(game, counts, `standard_setup_option_${mask}_${index}`)),
-        `standard_setup_options_${mask}`,
-      ),
-    );
+    game.addImplication(condition, game.anyOf(countOptions.map((counts) => setupCountsMatch(game, counts))));
   }
 }
 
@@ -296,10 +284,7 @@ function enforceLordOfTyphonSetup(game: BOTCModel, baseCounts: StandardSetupCoun
 
 function enforceLordOfTyphonLine(game: BOTCModel, minionCount: number, condition: BoolLike): void {
   for (const [playerIndex, player] of game.players.entries()) {
-    const playerIsLordOfTyphon = game.allOf(
-      [condition, game.actualIs(player, "Lord of Typhon")],
-      `${player}_lord_of_typhon_line_active`,
-    );
+    const playerIsLordOfTyphon = game.allOf([condition, game.actualIs(player, "Lord of Typhon")]);
     const lineOptions = Array.from({ length: minionCount - 1 }, (_, index) => index + 1).map((leftCount) => {
       const rightCount = minionCount - leftCount;
       const minionSeats = [
@@ -312,22 +297,16 @@ function enforceLordOfTyphonLine(game: BOTCModel, minionCount: number, condition
           (_, offset) => game.players[(playerIndex + offset + 1) % game.players.length] as string,
         ),
       ];
-      return game.allOf(
-        minionSeats.map((minion) => game.isMinion(minion)),
-        `${player}_lord_of_typhon_${leftCount}_left_${rightCount}_right`,
-      );
+      return game.allOf(minionSeats.map((minion) => game.isMinion(minion)));
     });
-    game.addImplication(playerIsLordOfTyphon, game.anyOf(lineOptions, `${player}_lord_of_typhon_line`));
+    game.addImplication(playerIsLordOfTyphon, game.anyOf(lineOptions));
   }
 }
 
 function enforceMarionetteNeighborsDemon(game: BOTCModel): void {
   for (const player of game.players) {
     const [left, right] = game.neighbors(player);
-    game.addImplication(
-      game.actualIs(player, "Marionette"),
-      game.anyOf([game.isDemon(left), game.isDemon(right)], `${player}_marionette_neighbors_demon`),
-    );
+    game.addImplication(game.actualIs(player, "Marionette"), game.anyOf([game.isDemon(left), game.isDemon(right)]));
   }
 }
 
@@ -335,7 +314,7 @@ function setupModifierActive(game: BOTCModel, modifier: SetupModifier): BoolLike
   const inPlay = game.roleInPlay(modifier.roleName);
   if (modifier.activeWhenInPlay) return inPlay;
 
-  const active = game.newBool(`${modifier.roleName}_setup_modifier_active`);
+  const active = game.newBool();
   game.addImplication(active, inPlay);
   return active;
 }
@@ -362,16 +341,14 @@ function adjustedSetupCountOptions(
   return [...new Map(options.map((counts) => [SETUP_TYPES.map((type) => counts[type]).join(","), counts])).values()];
 }
 
-function setupCountsMatch(game: BOTCModel, counts: StandardSetupCounts, name: string): BoolLike {
+function setupCountsMatch(game: BOTCModel, counts: StandardSetupCounts): BoolLike {
   return game.allOf(
     SETUP_TYPES.map((type) =>
       game.boolSumEquals(
         game.players.map((player) => game.hasCharacterType(player, type)),
         counts[type],
-        `${name}_${type}`,
       ),
     ),
-    name,
   );
 }
 

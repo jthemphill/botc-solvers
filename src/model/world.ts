@@ -44,19 +44,6 @@ export class World {
 
 export class KeyError extends Error {}
 
-export function forcedRoleHolders(
-  worlds: readonly World[],
-  roles: readonly RoleRef[],
-): Record<string, string | undefined> {
-  const summary: Record<string, string | undefined> = {};
-  for (const role of roles) {
-    const roleRef = roleName(role);
-    const holders = new Set(worlds.map((world) => world.holder(roleRef)));
-    summary[roleRef] = holders.size === 1 ? [...holders][0] : undefined;
-  }
-  return summary;
-}
-
 export function flavorByTiming(
   model: ReadonlySet<number>,
   sourceMaps: readonly ReadonlyMap<string, readonly BoolLike[]>[],

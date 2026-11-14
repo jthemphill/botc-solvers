@@ -809,11 +809,6 @@ function validatePhilosopherSeamstress(
   };
 }
 
-function validatePair(input: unknown, path: string): [string, string] {
-  if (!Array.isArray(input) || input.length !== 2) throw new ValidationError(`Expected [left, right]`, path);
-  return [expectString(input[0], `${path}[0]`), expectString(input[1], `${path}[1]`)];
-}
-
 function expectPositiveInteger(v: unknown, path: string): number {
   const value = expectNumber(v, path);
   if (value <= 0) throw new ValidationError(`Expected positive integer`, path);

@@ -55,7 +55,7 @@ test("a changed-role report constrains a legal transition without starting-role 
 test("character transitions persist and acquired abilities do not replace characters", async () => {
   const game = new BOTCModel(["A"], { characters: ["Philosopher", "Artist", "Chef"].map(roleByName), backend });
   game.fixActual("A", "Philosopher");
-  game.gainAbility("A", "Artist", "night_1", game.constantBool(true, "chosen"), "Philosopher");
+  game.gainAbility("A", "Artist", "night_1", game.constantBool(true), "Philosopher");
   game.addTruth(game.hasAbilityAt("A", "Artist", "day_1"));
   game.addTruth(game.characterAt("A", "Philosopher", "day_1"));
   game.replaceCharacter("A", "Chef", "night_2");
@@ -109,8 +109,8 @@ test("Spy registration varies between interactions only while healthy", async ()
     const game = new BOTCModel(["A"], { characters: ["Spy", "Chef"].map(roleByName), backend });
     game.fixActual("A", "Spy");
     game.fixPoisoned("A", poisoned, "night_2");
-    game.addTruth(game.registersAsRoleAt("A", "Chef", "night_2", "washerwoman"));
-    game.addTruth(game.registersAsRoleAt("A", "Spy", "night_2", "undertaker"));
+    game.addTruth(game.registersAsRoleAt("A", "Chef", "night_2"));
+    game.addTruth(game.registersAsRoleAt("A", "Spy", "night_2"));
     expect((await game.solveAll()).length).toBe(poisoned ? 0 : 1);
   }
 });
@@ -121,12 +121,12 @@ test("Spy registration varies between interactions only while healthy", async ()
 test("Mathematician counts distinct players across day and night, independent of report order or duplication", async () => {
   for (const copies of [1, 2]) {
     const game = new BOTCModel(["A"], { characters: [roleByName("Chef")], backend });
-    game.addTruth(game.malfunctionCountAt("night_2", 1, "math_before_reports"));
+    game.addTruth(game.malfunctionCountAt("night_2", 1));
     game.fixPoisoned("A", true, "night_2");
     for (let i = 0; i < copies; i++)
-      game.addInfoClaim({ player: "A", role: "Chef", timing: "night_2", learned: game.constantBool(false, "wrong") });
-    game.recordAbilityMalfunction("A", "day_1", game.constantBool(true, "day_ability_failed"));
-    game.addTruth(game.malfunctionCountAt("night_2", 0, "exclude_self", "A"));
+      game.addInfoClaim({ player: "A", role: "Chef", timing: "night_2", learned: game.constantBool(false) });
+    game.recordAbilityMalfunction("A", "day_1", game.constantBool(true));
+    game.addTruth(game.malfunctionCountAt("night_2", 0, "A"));
     expect(await game.solveAll()).toHaveLength(1);
   }
 });
@@ -162,7 +162,7 @@ test("a truthful reporter cannot continue using a lost ability", async () => {
       player: "A",
       role: "Chef",
       timing: reportAfterChange ? "night_3" : "night_1",
-      learned: game.constantBool(true, "truth"),
+      learned: game.constantBool(true),
     });
     expect((await game.solveAll()).length).toBe(reportAfterChange ? 0 : 1);
   }
@@ -172,7 +172,7 @@ test("Philosopher can duplicate an ability without duplicate starting characters
   const game = new BOTCModel(["A", "B"], { characters: ["Philosopher", "Artist"].map(roleByName), backend });
   game.fixActual("A", "Philosopher");
   game.fixActual("B", "Artist");
-  game.gainAbility("A", "Artist", "night_2", game.constantBool(true, "choice"), "Philosopher");
+  game.gainAbility("A", "Artist", "night_2", game.constantBool(true), "Philosopher");
   game.addTruth(game.hasAbilityAt("A", "Artist", "day_2"));
   game.addTruth(game.hasAbilityAt("B", "Artist", "day_2"));
   expect(await game.solveAll()).toHaveLength(1);
@@ -222,7 +222,7 @@ test("information reports follow the shared honesty rule", async () => {
   for (const poisoned of [false, true]) {
     const game = new BOTCModel(["A"], { characters: [roleByName("Chef")], backend });
     game.fixPoisoned("A", poisoned, "night_1");
-    game.addInfoClaim({ player: "A", role: "Chef", timing: "night_1", learned: game.constantBool(false, "wrong") });
+    game.addInfoClaim({ player: "A", role: "Chef", timing: "night_1", learned: game.constantBool(false) });
     expect(await game.solveAll()).toHaveLength(poisoned ? 1 : 0);
   }
 });
@@ -252,7 +252,7 @@ test("intrinsic Drunk state follows character replacement instead of the startin
     player: "A",
     role: "Chef",
     timing: "night_2",
-    learned: game.constantBool(false, "false_belief"),
+    learned: game.constantBool(false),
   });
   game.replaceCharacter("A", "Chef", "night_3");
   game.addTruth(game.soberAndHealthy("A", "day_3"));
@@ -262,7 +262,7 @@ test("intrinsic Drunk state follows character replacement instead of the startin
 test("returning to Philosopher does not restore an ability lost with that character", async () => {
   const game = new BOTCModel(["A"], { characters: ["Philosopher", "Chef", "Artist"].map(roleByName), backend });
   game.fixActual("A", "Philosopher");
-  game.gainAbility("A", "Chef", "night_1", game.constantBool(true, "choice"), "Philosopher");
+  game.gainAbility("A", "Chef", "night_1", game.constantBool(true), "Philosopher");
   game.replaceCharacter("A", "Artist", "night_2");
   game.replaceCharacter("A", "Philosopher", "night_3");
   game.addFalse(game.hasAbilityAt("A", "Chef", "day_3"));

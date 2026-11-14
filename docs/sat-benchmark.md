@@ -148,3 +148,32 @@ Times are milliseconds. SAT denotes backend time, which is included in total tim
 | puzzle-85-trust-is-a-two-way-street               |      1 |        16.76 |       13.49 |       4.32 |      3.18 |              4362 → 2916 |            9902 → 7247 |
 | puzzle-86-blood-and-ink                           |      1 |        18.06 |       15.37 |       2.35 |      1.74 |              2619 → 1775 |            7281 → 5814 |
 | a-clean-sweep                                     |      1 |       114.30 |      109.64 |      23.01 |     22.03 |             11505 → 9434 |          88335 → 84596 |
+
+## Update — 2026-11-14
+
+The engine enumerates the same 146 initial role assignments across all 97 catalog entries. The formula that the solver receives has 72.9% fewer variables and 66.7% fewer clauses.
+
+- Machine: Intel Xeon 2.30 GHz cloud container, Linux x64, Bun 1.4.4. This machine has much more timing noise than the machine above. Compare only the two columns of this table.
+- Baseline engine: commit `9f7bf3e`. Each measurement uses one warmup pass and five measured passes. `--compare` confirmed equal assignment hashes for every puzzle.
+- Enumeration time now includes simplification and the comparison of each expanded witness with the full snapshot.
+
+| Metric           |  Before |   After | Reduction |
+| ---------------- | ------: | ------: | --------: |
+| Build (ms)       | 1,910.0 | 1,361.8 |     28.7% |
+| Finalize (ms)    | 1,687.8 |   541.1 |     67.9% |
+| Enumeration (ms) |   781.8 |   584.5 |     25.2% |
+| SAT backend (ms) |   484.8 |   176.9 |     63.5% |
+| Total (ms)       | 4,405.1 | 2,510.8 |     43.0% |
+| Variables        | 216,418 |  58,733 |     72.9% |
+| Clauses          | 706,987 | 235,550 |     66.7% |
+
+Changes:
+
+1. `simplify()` removes each variable that a unit clause fixes and each variable that two binary clauses make equal to a different literal. This step alone gives 81,629 variables and 238,164 clauses.
+2. One counter cell tests if at least `k` of the first `n` inputs are true. Bounds on the same inputs use the same cells. This replaces the two one-sided sequential counters of an exact count.
+3. An at-most-one bound on more than six inputs uses a binary code.
+4. A negation is a signed literal and uses no variable.
+5. The constraint builders no longer make a name string for each variable.
+6. `finalize()` no longer calls `Object.freeze` on the snapshot and on each clause. The snapshot type is read-only, and the model rejects writes after finalization.
+
+Repeated runs of one engine differed by approximately 10% in total time on this machine. The counts are exact.

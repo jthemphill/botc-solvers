@@ -1,12 +1,9 @@
-import { atMostClauses } from "./cardinality";
 import { type Clause, type Literal, type ConstraintOrigin, type SatProblem, negate } from "./sat";
-import { slug, keyOf } from "./keys";
+import { keyOf } from "./keys";
 
+/** A signed literal. A negative `id` is the negation of a variable. */
 export class BoolVar {
-  constructor(
-    readonly id: number,
-    readonly name: string,
-  ) {}
+  constructor(readonly id: Literal) {}
 
   not(): Literal {
     return -this.id;
@@ -32,16 +29,16 @@ export class BooleanConstraints {
   private trueConstant: BoolVar | undefined;
   private falseConstant: BoolVar | undefined;
 
-  newBool(name: string): BoolVar {
+  newBool(): BoolVar {
     this.assertBuilding();
     this.variableCount += 1;
-    return new BoolVar(this.variableCount, `${slug(name)}__${this.variableCount}`);
+    return new BoolVar(this.variableCount);
   }
 
-  constantBool(value: boolean, name: string): BoolVar {
+  constantBool(value: boolean): BoolVar {
     const existing = value ? this.trueConstant : this.falseConstant;
     if (existing !== undefined) return existing;
-    const result = this.newBool(name);
+    const result = this.newBool();
     this.addClause([value ? result.lit : result.not()]);
     if (value) this.trueConstant = result;
     else this.falseConstant = result;
@@ -54,19 +51,6 @@ export class BooleanConstraints {
     return undefined;
   }
 
-  private literalBool(literal: Literal, name: string): BoolVar {
-    if (literal > 0) return new BoolVar(literal, name);
-    const key = keyOf(["not", String(-literal)]);
-    let cached = this.gateCache.get(key);
-    if (cached === undefined) {
-      cached = this.newBool(name);
-      this.addClause([cached.not(), literal]);
-      this.addClause([cached.lit, negate(literal)]);
-      this.gateCache.set(key, cached);
-    }
-    return cached;
-  }
-
   // Return the variable for an AND or OR gate with these inputs.
   // If an equivalent gate is available, use its variable.
   // The identity element is true for AND and false for OR.
@@ -75,7 +59,6 @@ export class BooleanConstraints {
   private gate(
     kind: string,
     values: readonly BoolLike[],
-    name: string,
     identity: boolean,
     build: (literals: readonly Literal[], result: BoolVar) => void,
   ): BoolVar {
@@ -84,16 +67,16 @@ export class BooleanConstraints {
     for (const literal of unique) {
       const constant = this.constantValueOf(literal);
       if (constant === identity) continue;
-      if (constant === !identity || unique.has(-literal)) return this.constantBool(!identity, name);
+      if (constant === !identity || unique.has(-literal)) return this.constantBool(!identity);
       literals.push(literal);
     }
     literals.sort((left, right) => left - right);
-    if (literals.length === 0) return this.constantBool(identity, name);
-    if (literals.length === 1) return this.literalBool(literals[0] as Literal, name);
+    if (literals.length === 0) return this.constantBool(identity);
+    if (literals.length === 1) return new BoolVar(literals[0] as Literal);
     const key = keyOf([kind, ...literals.map(String)]);
     let cached = this.gateCache.get(key);
     if (cached === undefined) {
-      cached = this.newBool(name);
+      cached = this.newBool();
       build(literals, cached);
       this.gateCache.set(key, cached);
     }
@@ -144,44 +127,38 @@ export class BooleanConstraints {
       this.addClause([negate(lit(condition)), ...clause]);
   }
 
-  boolSumEquals(values: readonly BoolLike[], count: number, name: string): BoolVar {
+  /** Each occurrence of a literal counts as a separate input. */
+  boolSumEquals(values: readonly BoolLike[], count: number): BoolVar {
     const literals = values.map(lit).sort((left, right) => left - right);
-    if (count < 0 || count > literals.length) return this.constantBool(false, name);
-    if (literals.length === 0) return this.constantBool(true, name);
-    if (literals.length === 1)
-      return this.literalBool(count === 1 ? (literals[0] as Literal) : negate(literals[0] as Literal), name);
-    const key = keyOf(["sum", String(count), ...literals.map(String)]);
-    let cached = this.gateCache.get(key);
-    if (cached === undefined) {
-      cached = this.reifyExactCount(literals, count, name);
-      this.gateCache.set(key, cached);
-    }
-    return cached;
+    if (count < 0 || count > literals.length) return this.constantBool(false);
+    const bounds: Literal[] = [];
+    if (count > 0) bounds.push(this.atLeast(literals, count));
+    if (count < literals.length) bounds.push(-this.atLeast(literals, count + 1));
+    return this.allOf(bounds);
   }
 
-  allOf(values: readonly BoolLike[], name: string): BoolVar {
-    return this.gate("all_of", values, name, true, (literals, result) => {
+  allOf(values: readonly BoolLike[]): BoolVar {
+    return this.gate("all_of", values, true, (literals, result) => {
       for (const literal of literals) this.addClause([result.not(), literal]);
       this.addClause([result.lit, ...literals.map(negate)]);
     });
   }
 
-  anyOf(values: readonly BoolLike[], name: string): BoolVar {
-    return this.gate("any_of", values, name, false, (literals, result) => {
+  anyOf(values: readonly BoolLike[]): BoolVar {
+    return this.gate("any_of", values, false, (literals, result) => {
       this.addClause([result.not(), ...literals]);
       for (const literal of literals) this.addClause([result.lit, negate(literal)]);
     });
   }
 
-  not(value: BoolLike, name: string): BoolVar {
+  not(value: BoolLike): BoolVar {
     const literal = lit(value);
     const constant = this.constantValueOf(literal);
-    if (constant !== undefined) return this.constantBool(!constant, name);
-    return this.literalBool(negate(literal), name);
+    return constant === undefined ? new BoolVar(-literal) : this.constantBool(!constant);
   }
 
-  xor(left: BoolLike, right: BoolLike, name: string): BoolVar {
-    return this.boolSumEquals([left, right], 1, name);
+  xor(left: BoolLike, right: BoolLike): BoolVar {
+    return this.boolSumEquals([left, right], 1);
   }
 
   withProvenance<T>(origin: ConstraintOrigin, operation: () => T): T {
@@ -216,43 +193,54 @@ export class BooleanConstraints {
   }
 
   private atMostNClauses(literals: readonly Literal[], count: number): Clause[] {
-    return atMostClauses(literals, count, () => this.newBool("cardinality").lit);
+    if (!Number.isInteger(count)) throw new Error("Cardinality must be an integer.");
+    if (count < 0) return [[]];
+    if (count >= literals.length) return [];
+    if (count === 0) return literals.map((literal) => [-literal]);
+    // At least one input must be false.
+    if (count === literals.length - 1) return [literals.map(negate)];
+    if (count > 1) return [[-this.atLeast(literals, count + 1)]];
+    // Use the pairwise method for an at-most-one constraint with up to six inputs.
+    if (literals.length <= 6)
+      return literals.flatMap((literal, index) => literals.slice(index + 1).map((other) => [-literal, -other]));
+    // Give each input a different binary code. Two true inputs give two values to one bit.
+    const bits = Array.from({ length: Math.ceil(Math.log2(literals.length)) }, () => this.newBool().lit);
+    return literals.flatMap((literal, index) =>
+      bits.map((bit, position) => [-literal, (index >> position) & 1 ? bit : -bit]),
+    );
   }
 
   private atLeastNClauses(literals: readonly Literal[], count: number): Clause[] {
-    return this.atMostNClauses(literals.map(negate), literals.length - count);
+    // The complementary bound needs no counter for these counts.
+    if (count <= 1 || count >= literals.length - 1)
+      return this.atMostNClauses(literals.map(negate), literals.length - count);
+    return [[this.atLeast(literals, count)]];
   }
 
   private exactlyNClauses(literals: readonly Literal[], count: number): Clause[] {
     return [...this.atMostNClauses(literals, count), ...this.atLeastNClauses(literals, count)];
   }
 
-  // Use a sequential counter to test if exactly `count` input literals are true.
-  // Each row entry tests if at least `level` literals are true among the processed inputs.
-  // Keep at most `count + 1` levels to limit the counter size.
-  // Count each duplicate literal as a separate input.
-  private reifyExactCount(literals: readonly Literal[], count: number, name: string): BoolVar {
-    if (count === 0) return this.allOf(literals.map(negate), name);
-    if (count === literals.length) return this.allOf(literals, name);
-    // Count false inputs when this reduces the number of counter levels.
-    if (count > literals.length / 2) return this.reifyExactCount(literals.map(negate), literals.length - count, name);
-    const maxLevel = Math.min(count + 1, literals.length);
-    let row: BoolLike[] = [];
-    for (let index = 0; index < literals.length; index += 1) {
-      const literal = literals[index] as Literal;
-      const levels = Math.min(index + 1, maxLevel);
-      const next: BoolLike[] = [];
-      for (let level = 1; level <= levels; level += 1) {
-        const levelName = `${name}__ge_${level}_of_${index + 1}`;
-        const carry: BoolLike = level === 1 ? literal : this.allOf([literal, row[level - 2] as BoolLike], levelName);
-        next.push(level <= row.length ? this.anyOf([row[level - 1] as BoolLike, carry], levelName) : carry);
-      }
-      row = next;
+  // Give the literal that is true only if at least `count` inputs are true, where 1 <= count <= inputs.
+  // Each counter cell uses the two cells for the inputs without the last input.
+  // Constraints on the same inputs use the same cells.
+  private atLeast(literals: readonly Literal[], count: number): Literal {
+    if (count === 1) return this.anyOf(literals).lit;
+    if (count === literals.length) return this.allOf(literals).lit;
+    const key = keyOf(["at_least", String(count), ...literals.map(String)]);
+    let cached = this.gateCache.get(key);
+    if (cached === undefined) {
+      const last = literals.at(-1) as Literal;
+      const without = this.atLeast(literals.slice(0, -1), count);
+      const withLast = this.atLeast(literals.slice(0, -1), count - 1);
+      cached = this.newBool();
+      this.addClause([cached.lit, -without]);
+      this.addClause([cached.lit, -last, -withLast]);
+      this.addClause([-cached.lit, without, last]);
+      this.addClause([-cached.lit, without, withLast]);
+      this.gateCache.set(key, cached);
     }
-    const bounds: BoolLike[] = [];
-    if (count > 0) bounds.push(row[count - 1] as BoolLike);
-    if (count < literals.length) bounds.push(negate(lit(row[count] as BoolLike)));
-    return this.allOf(bounds, name);
+    return cached.lit;
   }
 
   protected addCountAtMostCount(leftValues: readonly BoolLike[], rightValues: readonly BoolLike[]): void {
@@ -262,10 +250,6 @@ export class BooleanConstraints {
   }
 
   finalize(): SatProblem {
-    return (this.prepared ??= Object.freeze({
-      variableCount: this.variableCount,
-      clauses: Object.freeze(this.clauses.map((clause) => Object.freeze(clause))),
-      origins: Object.freeze([...this.origins]),
-    }));
+    return (this.prepared ??= { variableCount: this.variableCount, clauses: this.clauses, origins: this.origins });
   }
 }

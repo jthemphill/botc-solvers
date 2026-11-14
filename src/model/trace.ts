@@ -1,4 +1,5 @@
 import { timingOrder } from "./timing";
+import { lit } from "./boolean";
 import type { BoolLike, BoolVar, BOTCModel, Timing } from "./model";
 
 export interface CharacterTransition {
@@ -54,7 +55,7 @@ export class CharacterTrace {
         character,
         timing,
         before,
-        variable: this.game.newBool(`${player}_${character}_${timing}_${before ? "before" : "after"}`),
+        variable: this.game.newBool(),
       };
       this.queries.set(key, query);
     }
@@ -70,12 +71,7 @@ export class CharacterTrace {
         timingOrder(change.timing) >= timingOrder(from) &&
         timingOrder(change.timing) <= timingOrder(through),
     );
-    return this.game
-      .anyOf(
-        interruptions.map((change) => change.active),
-        "source_character_lost",
-      )
-      .not();
+    return this.game.anyOf(interruptions.map((change) => change.active)).not();
   }
 
   finalize(): void {
@@ -95,12 +91,9 @@ export class CharacterTrace {
     for (const group of groups.values()) {
       // Put the causes that give the same character in one group.
       const byCharacter = [...new Set(group.map((change) => change.character))].map((character) =>
-        this.game.anyOf(
-          group.filter((change) => change.character === character).map((change) => change.active),
-          "transition_result",
-        ),
+        this.game.anyOf(group.filter((change) => change.character === character).map((change) => change.active)),
       );
-      this.game.addEnforcedAtMostN(byCharacter, 1, this.game.constantBool(true, "one_character_transition"));
+      this.game.addEnforcedAtMostN(byCharacter, 1, this.game.constantBool(true));
     }
     for (const query of this.queries.values()) {
       let state: BoolLike = this.game.actualIs(query.player, query.character);
@@ -116,18 +109,11 @@ export class CharacterTrace {
         })
         .sort((a, b) => timingOrder(a[0]!.timing) - timingOrder(b[0]!.timing));
       for (const group of changes) {
-        const changed = this.game.anyOf(
-          group.map((change) => change.active),
-          "character_changed",
-        );
+        const changed = this.game.anyOf(group.map((change) => change.active));
         const becomes = this.game.anyOf(
           group.filter((change) => change.character === query.character).map((change) => change.active),
-          "becomes_character",
         );
-        state = this.game.anyOf(
-          [becomes, this.game.allOf([state, changed.not()], "character_persists")],
-          "character_state",
-        );
+        state = this.game.anyOf([becomes, this.game.allOf([state, changed.not()])]);
       }
       this.game.equate(query.variable, state);
     }
@@ -135,8 +121,7 @@ export class CharacterTrace {
   }
 
   decode(model: ReadonlySet<number>, initial: ReadonlyMap<string, string>): TraceWitness {
-    const trueIn = (value: BoolLike) =>
-      typeof value === "number" ? model.has(Math.abs(value)) === value > 0 : model.has(value.id);
+    const trueIn = (value: BoolLike) => model.has(Math.abs(lit(value))) === lit(value) > 0;
     const timings = [
       ...new Set([...this.queries.values()].filter((query) => !query.before).map((query) => query.timing)),
     ].sort((a, b) => timingOrder(a) - timingOrder(b));

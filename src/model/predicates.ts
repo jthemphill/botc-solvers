@@ -1,48 +1,29 @@
-import { CharacterType, type RoleRef, roleCharacterType, roleName } from "./core";
+import { type RoleRef, roleCharacterType, roleName } from "./core";
 import type { BoolVar, BOTCModel, Timing } from "./model";
-
-export function exactlyNEvil(game: BOTCModel, players: readonly string[], count: number): BoolVar {
-  return game.boolSumEquals(
-    players.map((player) => game.isEvil(player)),
-    count,
-    `exactly_${count}_evil_among_${players.join("_")}`,
-  );
-}
 
 export function exactlyNRegisteredEvil(game: BOTCModel, players: readonly string[], count: number): BoolVar {
   return game.boolSumEquals(
-    players.map((player) => game.registersAsEvil(player, `registered_evil_${players.join("_")}`)),
+    players.map((player) => game.registersAsEvil(player)),
     count,
-    `exactly_${count}_registered_evil_among_${players.join("_")}`,
   );
 }
 
 export function differentAlignments(game: BOTCModel, left: string, right: string): BoolVar {
-  return game.xor(
-    game.registersAsEvil(left, `${left}_${right}_different_alignments_left`),
-    game.registersAsEvil(right, `${left}_${right}_different_alignments_right`),
-    `${left}_${right}_different_alignments`,
-  );
+  return game.xor(game.registersAsEvil(left), game.registersAsEvil(right));
 }
 
 export function sameAlignment(game: BOTCModel, left: string, right: string): BoolVar {
-  return game.not(differentAlignments(game, left, right), `${left}_${right}_same_alignment`);
+  return game.not(differentAlignments(game, left, right));
 }
 
 export function differentAlignmentsAt(game: BOTCModel, left: string, right: string, timing: Timing): BoolVar {
-  const registersAsEvilAt = (player: string, side: string) =>
-    game.hasAlignmentOverrideAt(player, timing)
-      ? game.isEvilAt(player, timing)
-      : game.registersAsEvil(player, `${left}_${right}_${timing}_${side}`);
-  return game.xor(
-    registersAsEvilAt(left, "left"),
-    registersAsEvilAt(right, "right"),
-    `${left}_${right}_different_alignments_at_${timing}`,
-  );
+  const registersAsEvilAt = (player: string) =>
+    game.hasAlignmentOverrideAt(player, timing) ? game.isEvilAt(player, timing) : game.registersAsEvil(player);
+  return game.xor(registersAsEvilAt(left), registersAsEvilAt(right));
 }
 
 export function sameAlignmentAt(game: BOTCModel, left: string, right: string, timing: Timing): BoolVar {
-  return game.not(differentAlignmentsAt(game, left, right, timing), `${left}_${right}_same_alignment_at_${timing}`);
+  return game.not(differentAlignmentsAt(game, left, right, timing));
 }
 
 export function differentCharacterTypes(game: BOTCModel, left: string, right: string): BoolVar {
@@ -50,66 +31,28 @@ export function differentCharacterTypes(game: BOTCModel, left: string, right: st
   const types = new Set([...game.characters.values()].map(roleCharacterType));
   for (const characterType of types) {
     sameTypeOptions.push(
-      game.allOf(
-        [game.hasCharacterType(left, characterType), game.hasCharacterType(right, characterType)],
-        `${left}_${right}_both_${characterType}`,
-      ),
+      game.allOf([game.hasCharacterType(left, characterType), game.hasCharacterType(right, characterType)]),
     );
   }
-  return game.not(
-    game.anyOf(sameTypeOptions, `${left}_${right}_same_character_type`),
-    `${left}_${right}_different_character_types`,
-  );
+  return game.not(game.anyOf(sameTypeOptions));
 }
 
-export function chefCountIs(game: BOTCModel, count: number): BoolVar {
+export function chefCountRegistersAs(game: BOTCModel, count: number): BoolVar {
   const evilPairs = game
     .adjacentPairs()
-    .map(([left, right]) => game.allOf([game.isEvil(left), game.isEvil(right)], `${left}_${right}_evil_pair`));
-  return game.boolSumEquals(evilPairs, count, `chef_count_is_${count}`);
+    .map(([left, right]) => game.allOf([game.registersAsEvil(left), game.registersAsEvil(right)]));
+  return game.boolSumEquals(evilPairs, count);
 }
 
-export function chefCountRegistersAs(game: BOTCModel, count: number, name: string): BoolVar {
-  const evilPairs = game
-    .adjacentPairs()
-    .map(([left, right]) =>
-      game.allOf(
-        [
-          game.registersAsEvil(left, `${name}_${left}_${right}_left`),
-          game.registersAsEvil(right, `${name}_${left}_${right}_right`),
-        ],
-        `${name}_${left}_${right}_evil_pair`,
-      ),
-    );
-  return game.boolSumEquals(evilPairs, count, `${name}_chef_count_is_${count}`);
-}
-
-export function registersAsRoleAmong(
-  game: BOTCModel,
-  players: readonly string[],
-  role: RoleRef,
-  name: string,
-): BoolVar {
+export function registersAsRoleAmong(game: BOTCModel, players: readonly string[], role: RoleRef): BoolVar {
   const roleRef = roleName(role);
-  return game.anyOf(
-    players.map((player) => game.registersAsRole(player, roleRef, name)),
-    `${name}_${players.join("_")}_registers_as_${roleRef}`,
-  );
-}
-
-export function sitsNextToEvil(game: BOTCModel, player: string): BoolVar {
-  return game.sitsNextToEvil(player);
+  return game.anyOf(players.map((player) => game.registersAsRole(player, roleRef)));
 }
 
 export function drunkBetweenTwoTownsfolk(game: BOTCModel): BoolVar {
   const possibilities = game.players.map((player) => {
     const [left, right] = game.neighbors(player);
-    return game.allOf(
-      [game.actualIs(player, "Drunk"), game.isTownsfolk(left), game.isTownsfolk(right)],
-      `${player}_drunk_between_two_townsfolk`,
-    );
+    return game.allOf([game.actualIs(player, "Drunk"), game.isTownsfolk(left), game.isTownsfolk(right)]);
   });
-  return game.anyOf(possibilities, "drunk_between_two_townsfolk");
+  return game.anyOf(possibilities);
 }
-
-export { CharacterType };

@@ -46,7 +46,7 @@ const SAVANT_CLAIMS = [
   // The second Savant report contains these two statements.
   {
     dsl: "chef(1)",
-    ts: (g: BOTCModel) => Chef.learnsCount(g, 1, "ref_chef"),
+    ts: (g: BOTCModel) => Chef.learnsCount(g, 1),
   },
   {
     dsl: "some p: players | p.role == Drunk && p.left.type == Townsfolk && p.right.type == Townsfolk",
@@ -55,11 +55,11 @@ const SAVANT_CLAIMS = [
   // The third Savant report contains these two statements.
   {
     dsl: "some p: {Tim, Sula} | p.type == Minion",
-    ts: (g: BOTCModel) => g.anyOf([g.isMinion("Tim"), g.isMinion("Sula")], "ref_tim_or_sula_minion"),
+    ts: (g: BOTCModel) => g.anyOf([g.isMinion("Tim"), g.isMinion("Sula")]),
   },
   {
     dsl: "no p: players | p.role == Noble",
-    ts: (g: BOTCModel) => g.not(g.roleInPlay(Noble), "ref_noble_not_in_play"),
+    ts: (g: BOTCModel) => g.not(g.roleInPlay(Noble)),
   },
 ];
 
@@ -140,7 +140,7 @@ describe("DSL", () => {
     const game = buildPuzzleModel({ players: ["A", "B"], characters: [Goon, Imp], setup: false }, backend);
     game.fixActual("A", Goon);
     game.fixActual("B", Imp);
-    game.setGoodAt("A", "day_2", game.constantBool(false, "a_is_evil_on_day_2"));
+    game.setGoodAt("A", "day_2", game.constantBool(false));
 
     game.addTruth(
       compile("A.alignment == Evil", game, {
@@ -356,13 +356,7 @@ describe("DSL", () => {
       const dsl = compile(claim.dsl, game, ctx) as BoolLike;
       const ts = claim.ts(game);
       // The equivalence is true when the two forms have the same value.
-      const iff = game.allOf(
-        [
-          game.anyOf([game.not(dsl, "ndsl"), ts], "dsl_implies_ts"),
-          game.anyOf([game.not(ts, "nts"), dsl], "ts_implies_dsl"),
-        ],
-        "iff",
-      );
+      const iff = game.allOf([game.anyOf([game.not(dsl), ts]), game.anyOf([game.not(ts), dsl])]);
       game.addTruth(iff);
       const worlds = await game.solveAll();
       expect(worlds.length).toBeGreaterThan(0);

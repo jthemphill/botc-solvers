@@ -3,7 +3,6 @@ import { Fragment, useId } from "react";
 import { DslError, lex } from "../dsl/lex";
 import { parse } from "../dsl/parse";
 import { Alignment, CharacterType } from "../model/core";
-import { roleEmojiLabel } from "../model/roleEmoji";
 import { ROLE_CLASSES } from "../model/roleRegistry";
 import { canonicalRoleName, jugglerGuessRoleOptions } from "../state/scriptRoles";
 import type {

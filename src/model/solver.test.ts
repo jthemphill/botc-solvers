@@ -28,7 +28,7 @@ test("bounded enumeration reports its projection and completion honestly", async
   expect(game.finalize()).toBe(game.finalize());
   expect(() => game.fixActual("A", "Chef")).toThrow("finalized");
   expect(() => game.addTimedDrunkSource("A", ["night_3"], 1)).toThrow("finalized");
-  expect(() => game.newBool("too_late")).toThrow("finalized");
+  expect(() => game.newBool()).toThrow("finalized");
 });
 test("invalid backend witnesses fail with clause provenance", () => {
   expect(() =>
@@ -40,7 +40,7 @@ test("invalid backend witnesses fail with clause provenance", () => {
 });
 test("sequential direct cardinality stays polynomial", () => {
   const game = gameWith(backend);
-  const values = Array.from({ length: 20 }, (_, i) => game.newBool(`x${i}`));
+  const values = Array.from({ length: 20 }, (_) => game.newBool());
   game.addExactlyN(values, 10);
   expect(game.finalize().clauses.length).toBeLessThan(1500);
 });

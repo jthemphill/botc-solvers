@@ -39,7 +39,7 @@ bun run benchmark --runs 7 --output /tmp/botc-before.json
 bun run benchmark --runs 7 --compare /tmp/botc-before.json --output /tmp/botc-after.json
 ```
 
-The catalog benchmark fully enumerates all 91 existing puzzles, including the intro. It reports per-puzzle medians,
+The catalog benchmark fully enumerates all existing puzzles, including the intro. It reports per-puzzle medians,
 raw samples, formula sizes, and hashes of sorted initial role assignments. `--compare` fails if assignments or
 enumeration status change. Use `--filter puzzle-82` for a focused run. One full warmup pass precedes three measured
 passes by default; `--warmup` and `--runs` control those counts. Run benchmarks without concurrent tests or builds.

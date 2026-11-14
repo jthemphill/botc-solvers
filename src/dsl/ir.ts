@@ -24,7 +24,7 @@ export type BoolNode =
   | { readonly op: "constant"; readonly value: boolean }
   | { readonly op: "and" | "or"; readonly inputs: readonly number[] }
   | { readonly op: "exactly"; readonly inputs: readonly number[]; readonly count: number }
-  | { readonly op: "chef"; readonly count: number; readonly name: string };
+  | { readonly op: "chef"; readonly count: number };
 export interface TypedProgram {
   readonly origin?: ConstraintOrigin;
   readonly nodes: readonly { readonly expression: BoolNode; readonly span: Span }[];
@@ -43,7 +43,7 @@ export class SemanticBuilder implements Pick<
   constructor(private readonly players: readonly string[]) {}
   private emit(expression: BoolNode): BoolVar {
     this.nodes.push({ expression, span: this.span });
-    return new BoolVar(this.nodes.length, "semantic_reference");
+    return new BoolVar(this.nodes.length);
   }
   withSpan<T>(span: Span, operation: () => T): T {
     const previous = this.span;
@@ -54,23 +54,23 @@ export class SemanticBuilder implements Pick<
       this.span = previous;
     }
   }
-  constantBool(value: boolean, _name: string): BoolVar {
+  constantBool(value: boolean): BoolVar {
     return this.emit({ op: "constant", value });
   }
-  allOf(values: readonly BoolLike[], _name: string): BoolVar {
+  allOf(values: readonly BoolLike[]): BoolVar {
     return this.emit({ op: "and", inputs: values.map(ref) });
   }
-  anyOf(values: readonly BoolLike[], _name: string): BoolVar {
+  anyOf(values: readonly BoolLike[]): BoolVar {
     return this.emit({ op: "or", inputs: values.map(ref) });
   }
-  not(value: BoolLike, _name: string): BoolVar {
-    return new BoolVar(-ref(value), "semantic_negation");
+  not(value: BoolLike): BoolVar {
+    return new BoolVar(-ref(value));
   }
-  boolSumEquals(values: readonly BoolLike[], count: number, _name: string): BoolVar {
+  boolSumEquals(values: readonly BoolLike[], count: number): BoolVar {
     return this.emit({ op: "exactly", inputs: values.map(ref), count });
   }
-  chefCount(count: number, name: string): BoolVar {
-    return this.emit({ op: "chef", count, name });
+  chefCount(count: number): BoolVar {
+    return this.emit({ op: "chef", count });
   }
   neighbors(player: string): [string, string] {
     const index = this.players.indexOf(player);
@@ -127,7 +127,7 @@ export function lower(program: TypedProgram, game: BOTCModel): BoolLike {
   const resolve = (reference: number): BoolLike => {
     const value = values[Math.abs(reference) - 1];
     if (value === undefined) throw new Error("Invalid semantic reference.");
-    return reference < 0 ? game.not(value, "semantic_not") : value;
+    return reference < 0 ? game.not(value) : value;
   };
   for (const { expression: node, span } of program.nodes) {
     const value = game.withProvenance(
@@ -135,39 +135,18 @@ export function lower(program: TypedProgram, game: BOTCModel): BoolLike {
       () => {
         switch (node.op) {
           case "constant":
-            return game.constantBool(node.value, program.name);
+            return game.constantBool(node.value);
           case "and":
-            return game.allOf(node.inputs.map(resolve), program.name);
+            return game.allOf(node.inputs.map(resolve));
           case "or":
-            return game.anyOf(node.inputs.map(resolve), program.name);
+            return game.anyOf(node.inputs.map(resolve));
           case "exactly":
-            return game.boolSumEquals(node.inputs.map(resolve), node.count, program.name);
+            return game.boolSumEquals(node.inputs.map(resolve), node.count);
           case "chef":
-            return Chef.learnsCount(game, node.count, node.name);
-          case "characterAt":
-            return game.characterAt(...node.args);
-          case "hasCharacterTypeAt":
-            return game.hasCharacterTypeAt(...node.args);
-          case "isGood":
-            return game.isGood(...node.args);
-          case "isEvil":
-            return game.isEvil(...node.args);
-          case "isGoodAt":
-            return game.isGoodAt(...node.args);
-          case "isEvilAt":
-            return game.isEvilAt(...node.args);
-          case "registersAsRole":
-            return game.registersAsRole(...node.args);
-          case "fortuneTellerRedHerring":
-            return game.fortuneTellerRedHerring(...node.args);
-          case "lleechHost":
-            return game.lleechHost(...node.args);
-          case "globalDrunk":
-            return game.globalDrunk(...node.args);
-          case "poisoned":
-            return game.poisoned(...node.args);
-          case "malfunctionCountAt":
-            return game.malfunctionCountAt(...node.args);
+            return Chef.learnsCount(game, node.count);
+          default:
+            // Each query node has the name and the arguments of one model method.
+            return (game[node.op] as (...args: readonly unknown[]) => BoolVar).apply(game, node.args);
         }
       },
     );

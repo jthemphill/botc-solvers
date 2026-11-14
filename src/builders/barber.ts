@@ -24,7 +24,7 @@ export function applyBarberSwaps(game: BOTCModel, doc: PuzzleDoc, facts: Timelin
         const healthy = diedAtNight
           ? game.soberAndHealthyBeforeCharacterChange(player, timing)
           : game.soberAndHealthy(player, event.timing as Timing);
-        triggers.set(key, game.allOf([role, healthy], `${key}_barber_died_healthy`));
+        triggers.set(key, game.allOf([role, healthy]));
       }
     }
     for (const [key, trigger] of triggers) {
@@ -35,10 +35,9 @@ export function applyBarberSwaps(game: BOTCModel, doc: PuzzleDoc, facts: Timelin
           [...game.characters]
             .filter(([, role]) => roleCharacterType(role) === CharacterType.Demon)
             .map(([role]) => game.characterBefore(actor, role, timing)),
-          `${timing}_${actor}_demon_before_barber`,
         );
         game.addImplication(selectedActor, demonBefore);
-        const swapping = game.newBool(`${key}_${actor}_accepts_barber_swap`);
+        const swapping = game.newBool();
         game.addImplication(swapping, selectedActor);
         const targets = choose(
           game,
@@ -56,10 +55,7 @@ export function applyBarberSwaps(game: BOTCModel, doc: PuzzleDoc, facts: Timelin
           for (const [other, otherSelected] of targets.choices) {
             if (player === other) continue;
             for (const character of doc.script) {
-              const active = game.allOf(
-                [selected, otherSelected, game.characterBefore(other, character, timing)],
-                `${key}_${actor}_${player}_receives_${other}_${character}`,
-              );
+              const active = game.allOf([selected, otherSelected, game.characterBefore(other, character, timing)]);
               game.trace.replace({ player, character, timing, active, rule: "Barber" });
             }
           }

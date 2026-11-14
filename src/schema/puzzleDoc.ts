@@ -10,8 +10,6 @@ export interface PuzzleDoc {
   readonly claims: readonly Claim[];
 }
 
-export const KNIGHT_NO_DEMON_AMONG_MAX = 2;
-
 export interface PuzzleConstraintDoc {
   readonly source?: string;
   readonly kind?: "fact" | "assumption";
