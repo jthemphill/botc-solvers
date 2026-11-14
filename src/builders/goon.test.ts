@@ -292,3 +292,24 @@ test("the Butler acts before the Dreamer on the first night only", () => {
   expect(nightActionOrder("Butler", "night_2")).toBeGreaterThan(nightActionOrder("Dreamer", "night_2"));
   expect(() => nightActionOrder("Chef")).toThrow();
 });
+
+async function activeActions(doc: unknown) {
+  const worlds = await buildFromDoc(validatePuzzleDoc(doc), backend).solveAll();
+  expect(worlds).toHaveLength(1);
+  return worlds[0]!.actions
+    .filter((action) => action.active && action.selected.length > 0)
+    .map((action) => `${action.timing} ${action.actor} ${action.rule} ${action.selected.join("+")}`);
+}
+
+test("a witness shows the choice actions that the Goon rule reads", async () => {
+  // The Imp is the only player that can choose the Goon on night 2.
+  expect(await activeActions(scenario(IMP_TABLE, { timeline: noDeathOnNight2 }))).toContain("night_2 A Imp:targets B");
+  // A Demon kill and a reported choice are choice actions also.
+  const doc = scenario(IDIOT_TABLE, {
+    claims: idiotClaim(3, true),
+    timeline: (names) => [{ type: "nightDeath", timing: "night_2", players: [names[3]] }],
+  });
+  const actions = await activeActions(doc);
+  expect(actions).toContain("night_1 C Village Idiot:players D");
+  expect(actions).toContain("night_2 A Imp:targets D");
+});

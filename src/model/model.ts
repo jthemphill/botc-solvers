@@ -6,7 +6,7 @@ import { BooleanConstraints, BoolVar, lit, type BoolLike } from "./boolean";
 export { BoolVar, type BoolLike } from "./boolean";
 import { keyOf, addMapValue } from "./keys";
 import type { SatProblem } from "./sat";
-import { select, constrainSelection, type ChoiceAction, type ChoiceWitness, type PlayerChoice } from "./actions";
+import { select, constrainSelection, type ChoiceAction, type ChoiceWitness } from "./actions";
 import { CharacterTrace } from "./trace";
 import {
   Alignment,
@@ -90,7 +90,6 @@ export class BOTCModel extends BooleanConstraints {
     string,
     { readonly player: string; readonly role: string; readonly timing: Timing; readonly variable: BoolVar }
   >();
-  private readonly playerChoiceRecords: PlayerChoice[] = [];
   private readonly playerChoiceQueries = new Map<
     string,
     {
@@ -174,6 +173,7 @@ export class BOTCModel extends BooleanConstraints {
       actor: action.actor,
       timing: action.timing,
       count: action.count,
+      ...(action.minCount === undefined ? {} : { minCount: action.minCount }),
       active: model.has(Math.abs(lit(action.active))) === lit(action.active) > 0,
       candidates: [...action.choices.keys()],
       selected: [...action.choices]
@@ -546,19 +546,19 @@ export class BOTCModel extends BooleanConstraints {
     }
   }
 
-  /** Adds the Widow poison. Returns the Widow choice of each player. */
-  addWidowEffect(timings: readonly Timing[], activeIf: BoolLike): ReadonlyMap<string, BoolLike> {
+  /**
+   * Adds the Widow choice and its poison. Returns the choice of each player.
+   * The Widow chooses while `chooses` is true. The poison applies while `effective` is also true.
+   */
+  addWidowEffect(timings: readonly Timing[], chooses: BoolLike, effective: BoolLike): ReadonlyMap<string, BoolLike> {
     this.assertBuilding();
-    const widowActive = this.activeRole("Widow", activeIf);
-    const targets = new Map<string, BoolLike>();
-    if (timings.length === 0) return targets;
-    this.addOnePlayerDroisonSource(widowActive, (player, target) => {
-      targets.set(player, target);
-      for (const timing of timings) this.registerPoisonSourceTarget(player, timing, target);
-    });
+    const targets = select(this, this.players, this.activeRole("Widow", chooses), 1);
+    const poisons = this.activeRole("Widow", this.allOf([chooses, effective]));
     for (const timing of timings) {
       this.droisonTimingKeys.add(timing);
-      this.registerActivePoisonSource(timing, widowActive);
+      this.registerActivePoisonSource(timing, poisons);
+      for (const [player, target] of targets)
+        this.registerPoisonSourceTarget(player, timing, this.allOf([target, poisons]));
     }
     return targets;
   }
@@ -756,15 +756,6 @@ export class BOTCModel extends BooleanConstraints {
     return query.variable;
   }
 
-  /** Records that an actor chooses a target with an ability at night. Each consumer reads all records. */
-  registerPlayerChoice(choice: PlayerChoice): void {
-    this.assertBuilding();
-    this.checkPlayer(choice.actor);
-    this.checkPlayer(choice.target);
-    this.checkRole(choice.role);
-    this.playerChoiceRecords.push(choice);
-  }
-
   playerChosenAt(actor: string, role: RoleRef, target: string, timing: Timing): BoolVar {
     this.checkPlayer(actor);
     this.checkPlayer(target);
@@ -779,8 +770,11 @@ export class BOTCModel extends BooleanConstraints {
     return query.variable;
   }
 
-  playerChoices(): readonly PlayerChoice[] {
-    return this.playerChoiceRecords;
+  /** Returns the actions in which an actor chooses players at night with a character's ability. */
+  abilityChoices(): readonly (ChoiceAction & { readonly ability: string })[] {
+    return this.choiceActions.filter(
+      (action): action is ChoiceAction & { readonly ability: string } => action.ability !== undefined,
+    );
   }
 
   preventWakeAt(player: string, timing: Timing, activeIf: BoolLike): void {
@@ -1531,15 +1525,11 @@ export class BOTCModel extends BooleanConstraints {
       this.constrainToAnySource(query, this.conditionalWakeSources.get(key) ?? []);
     }
     for (const query of this.playerChoiceQueries.values()) {
-      const sources = this.playerChoiceRecords
+      const sources = this.choiceActions
         .filter(
-          (choice) =>
-            choice.actor === query.actor &&
-            choice.role === query.role &&
-            choice.target === query.target &&
-            choice.timing === query.timing,
+          (action) => action.actor === query.actor && action.ability === query.role && action.timing === query.timing,
         )
-        .map((choice) => choice.chosen);
+        .flatMap((action) => action.choices.get(query.target) ?? []);
       this.constrainToAnySource(query.variable, sources);
     }
   }

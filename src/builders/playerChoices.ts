@@ -92,9 +92,9 @@ function reportedChoices(claim: Claim): readonly ReportedChoice[] {
 }
 
 /**
- * Makes the night choices of each character that has a night choice rule.
+ * Makes a choice action for each character that has a night choice rule.
  * A reported choice fixes the targets of its night. A night without a report has an unknown choice.
- * Characters with other choice variables register those variables themselves.
+ * Characters with other choice variables register their own choice actions.
  */
 export function generateNightChoices(
   game: BOTCModel,
@@ -134,11 +134,19 @@ export function generateNightChoices(
           game.addImplication(acts, canAct);
         }
         if (rule.once === true) usesByActor.set(actor, [...(usesByActor.get(actor) ?? []), acts]);
-        const targets =
+        const choices =
           reported === undefined
             ? select(game, doc.players, acts, rule.count)
-            : new Map(doc.players.map((player) => [player, reported.has(player) ? acts : game.constantBool(false)]));
-        for (const [target, chosen] of targets) game.registerPlayerChoice({ actor, role, target, timing, chosen });
+            : new Map([...reported].map((player) => [player, acts]));
+        game.registerChoiceAction({
+          rule: `${role}:players`,
+          actor,
+          timing,
+          active: acts,
+          count: reported === undefined ? rule.count : choices.size,
+          choices,
+          ability: role,
+        });
       }
     }
     for (const uses of usesByActor.values()) game.addEnforcedAtMostN(uses, 1, game.constantBool(true));

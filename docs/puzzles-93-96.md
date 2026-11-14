@@ -65,18 +65,19 @@ A second candidate has Matthew as the Imp, Anna as the Poisoner, and Hannah as a
 
 ### Player choices
 
-Choosing a player at night is now one concept with three parts.
+A choice action is the one abstraction for a choice: an actor, a night, a list of candidates, a truth value for each candidate, and the least and greatest number of selections. An action with an `ability` is a choice of players that the actor makes at night with that character's ability. Witnesses show these actions, and the witness checker validates their counts.
 
 - `src/model/nightOrder.ts` holds the night order of each character that chooses players or causes deaths at night.
-- The model keeps one registry of player choices: actor, character, target, night, and a truth value. Each character gives its choices to this registry. `src/builders/goon.ts` reads the registry after the last choice is registered; no character has Goon-specific registration.
-- A character class can declare a night choice rule: the number of players, the nights, and a one-use limit. `src/builders/playerChoices.ts` makes the choices for each such character. A reported choice fixes the targets of its night. A night without a report has an unknown choice.
+- Each character registers its own choice actions. `src/builders/goon.ts` reads the actions that have an ability after the last one is registered; no character has Goon-specific registration.
+- A character class can declare a night choice rule: the number of players, the nights, and a one-use limit. `src/builders/playerChoices.ts` makes the choice actions for each such character. A reported choice fixes the targets of its night. A night without a report has an unknown choice.
 
-The Sailor, Innkeeper, Gambler, Acrobat, Snake Charmer, Monk, Exorcist, Professor, Ravenkeeper, Fortune Teller, Dreamer, Seamstress, Village Idiot, Butler, Chambermaid, and Witch use a night choice rule. The Poisoner, Widow, Pukka, Devil's Advocate, Godfather, Shabaloth, Assassin, Nightwatchman, Cerenovus, Pit-Hag, and Lleech register the choice variables that they already had. A Demon kill registers the victim as a choice of the Demon.
+The Sailor, Innkeeper, Gambler, Acrobat, Snake Charmer, Monk, Exorcist, Professor, Ravenkeeper, Fortune Teller, Dreamer, Seamstress, Village Idiot, Butler, Chambermaid, and Witch use a night choice rule. The Poisoner, Widow, Pukka, Devil's Advocate, Godfather, Shabaloth, Assassin, Nightwatchman, Cerenovus, Pit-Hag, Lleech, and Barber have choice actions over the variables that they already had. The other Demons have one action for each night: a kill selects the victim, and a drunk or poisoned Demon selects a player with no effect.
 
 Rule changes that result:
 
 - The first player to choose the Goon is drunk, whatever character made the choice. A Poisoner or Widow that is drunk this way poisons nobody.
-- A Demon can choose the Goon first. The Demon is then drunk and kills nobody that night, and the Goon becomes evil. The previous Demon-specific rule for a kill of the Goon is removed; it now follows from the registered kill.
+- A Demon can choose the Goon first. The Demon is then drunk and kills nobody that night, and the Goon becomes evil. The previous Demon-specific rule for a kill of the Goon is removed; it now follows from the Demon action.
+- The Widow selection no longer depends on the Widow being sober, so a Widow can choose the Goon.
 - A player that the Demon kills does not make a later choice that night.
 - The Assassin choice was registered after the Goon rule ran and had no effect. The Goon rule now runs last.
 - Demon kills used a default position after the Godfather. They now use their own positions.
@@ -90,8 +91,10 @@ One existing test changed. It expected a Shabaloth kill of the Goon to be illega
 
 The [existing engine limits](rules-first-engine.md#coverage-that-still-needs-migration) still apply. In addition:
 
-- Choices are generated only when a Goon is on the script, because the Goon is the only rule that reads them.
-- These choices are not registered: the Demon choice that the Barber gives, the Kazali choice of Minions, and the choices of a Lunatic. The Monk has a night choice rule but no claim type.
+- Unknown choices are made only when a Goon is on the script, because the Goon is the only rule that reads them. These are the choices from night choice rules and the no-effect choice of a drunk or poisoned Demon. Actions over existing variables, which include Demon kills, are always registered and appear in every witness.
+- These choices are not actions: the Kazali choice of Minions and the choices of a Lunatic. The Monk has a night choice rule but no claim type.
+- A Fang Gu jump records the dead Fang Gu as the selection, not the Outsider that the Fang Gu chose.
+- A Demon action selects only victims and no-effect targets. A sober Demon that chooses a dead or protected player has no selection.
 - A drunk or poisoned player still chooses. A player that believes it has a character, such as the Drunk, does not choose.
 - The first night uses the same order as other nights, except for the Lleech and the Butler.
 - The Xaan death timing treats every Townsfolk as acting after the Demon. A Townsfolk that acts before the Demon on night X is still poisoned by the rules; no catalog puzzle needs this distinction.

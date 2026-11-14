@@ -3,6 +3,7 @@ import type { Timing } from "./timing";
 /**
  * The order of night actions on nights after the first night.
  * The list includes each supported character that chooses players or causes deaths at night.
+ * The Demon makes the Barber choice at the Barber position.
  * It follows the official night sheet.
  */
 const OTHER_NIGHTS: readonly string[] = [
@@ -38,6 +39,7 @@ const OTHER_NIGHTS: readonly string[] = [
   "Assassin",
   "Godfather",
   "Gossip",
+  "Barber",
   "Professor",
   "Tinker",
   "Moonchild",

@@ -34,11 +34,9 @@ export function applyNightwatchmanActions(game: BOTCModel, doc: PuzzleDoc, facts
             game.addImplication(used, game.hasAbilityAt(actor, "Nightwatchman", timing));
             const target = choose(
               game,
-              { rule: "Nightwatchman:target", actor, timing, active: used, count: 1 },
+              { rule: "Nightwatchman:target", actor, timing, active: used, count: 1, ability: "Nightwatchman" },
               doc.players,
             );
-            for (const [player, chosen] of target.choices)
-              game.registerPlayerChoice({ actor, role: "Nightwatchman", target: player, timing, chosen });
             game.registerAbilityUse(actor, "Nightwatchman", timing, used);
             const sends = game.allOf([used, game.soberAndHealthy(actor, timing)]);
             const shown = choose(

@@ -242,6 +242,17 @@ test("the independent choice checker rejects changing a rule's required count", 
   ).not.toEqual([]);
 });
 
+test("the independent choice checker accepts a selection count in the range of the action", async () => {
+  const { validateChoiceWitness } = await import("./actions");
+  const action = { rule: "Assassin:target", actor: "A", timing: "night_2", active: true, count: 1 } as const;
+  const candidates = ["A", "B", "C"];
+  expect(validateChoiceWitness({ ...action, candidates, selected: [] })).not.toEqual([]);
+  expect(validateChoiceWitness({ ...action, minCount: 0, candidates, selected: [] })).toEqual([]);
+  expect(validateChoiceWitness({ ...action, minCount: 0, candidates, selected: ["B"] })).toEqual([]);
+  expect(validateChoiceWitness({ ...action, minCount: 0, candidates, selected: ["B", "C"] })).not.toEqual([]);
+  expect(validateChoiceWitness({ ...action, minCount: 0, active: false, candidates, selected: ["B"] })).not.toEqual([]);
+});
+
 test("intrinsic Drunk state follows character replacement instead of the starting token", async () => {
   const game = new BOTCModel(["A"], { characters: ["Chef", "Drunk"].map(roleByName), backend });
   game.fixActual("A", "Chef");
