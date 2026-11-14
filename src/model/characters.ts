@@ -1,6 +1,7 @@
 import {
   Alignment,
   CharacterType,
+  type NightChoiceRule,
   type RoleClass,
   type RoleRef,
   type WakeRule,
@@ -509,6 +510,7 @@ export class Xaan extends MinionRole {
 }
 export class Witch extends MinionRole {
   static readonly roleName = "Witch";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "every" };
   static readonly wake = Wakes.everyNight;
 }
 export class Lunatic extends OutsiderRole {
@@ -609,6 +611,7 @@ export class Golem extends OutsiderRole {
 }
 export class Butler extends OutsiderRole {
   static readonly roleName = "Butler";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "every" };
   static readonly wake = Wakes.everyNight;
 }
 export class Barber extends OutsiderRole {
@@ -818,6 +821,7 @@ export class Prodigy extends TownsfolkRole {
 
 export class Acrobat extends TownsfolkRole {
   static readonly roleName = "Acrobat";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "exceptFirst" };
   static readonly wake = Wakes.everyNightExceptFirst;
   readonly choices: readonly AcrobatChoice[];
 
@@ -875,6 +879,7 @@ export interface SailorChoice {
 
 export class Sailor extends TownsfolkRole {
   static readonly roleName = "Sailor";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "every" };
   static readonly wake = Wakes.everyNight;
   readonly choices: readonly SailorChoice[];
 
@@ -903,6 +908,7 @@ export interface InnkeeperChoice {
 
 export class Innkeeper extends TownsfolkRole {
   static readonly roleName = "Innkeeper";
+  static readonly nightChoice: NightChoiceRule = { count: 2, nights: "exceptFirst" };
   static readonly wake = Wakes.everyNightExceptFirst;
   readonly choices: readonly InnkeeperChoice[];
 
@@ -939,6 +945,7 @@ export class Innkeeper extends TownsfolkRole {
 
 export class Professor extends TownsfolkRole {
   static readonly roleName = "Professor";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "exceptFirst", once: true };
   static readonly wake = Wakes.untilAbilityUsed("Professor", Wakes.everyNightExceptFirst);
 }
 
@@ -965,6 +972,7 @@ export interface AcrobatChoice {
 
 export class Gambler extends TownsfolkRole {
   static readonly roleName = "Gambler";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "exceptFirst" };
   static readonly wake = Wakes.everyNightExceptFirst;
   readonly guesses: readonly GamblerGuess[];
 
@@ -990,6 +998,7 @@ export interface ExorcistChoice {
 
 export class Exorcist extends TownsfolkRole {
   static readonly roleName = "Exorcist";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "exceptFirst" };
   static readonly wake = Wakes.everyNightExceptFirst;
   readonly choices: readonly ExorcistChoice[];
 
@@ -1137,6 +1146,7 @@ export class Princess extends TownsfolkRole {
 
 export class Ravenkeeper extends TownsfolkRole {
   static readonly roleName = "Ravenkeeper";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "whenKilledAtNight" };
   static readonly wake = Wakes.never;
   readonly player?: string;
   readonly role?: RoleRef;
@@ -1176,6 +1186,7 @@ export class Sage extends TownsfolkRole {
 
 export class SnakeCharmer extends TownsfolkRole {
   static readonly roleName = "Snake Charmer";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "every" };
   static readonly wake = Wakes.everyNight;
   readonly checked?: string;
   readonly demon?: boolean;
@@ -1246,6 +1257,7 @@ export interface ChambermaidCheck {
 
 export class Chambermaid extends TownsfolkRole {
   static readonly roleName = "Chambermaid";
+  static readonly nightChoice: NightChoiceRule = { count: 2, nights: "every" };
   static readonly wake = Wakes.everyNight;
   readonly checks: readonly ChambermaidCheck[];
 
@@ -1373,6 +1385,7 @@ export class Courtier extends TownsfolkRole {
 
 export class Dreamer extends TownsfolkRole {
   static readonly roleName = "Dreamer";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "every" };
   static readonly wake = Wakes.everyNight;
   readonly player?: string;
   readonly roles: readonly RoleRef[];
@@ -1518,6 +1531,7 @@ export interface FortuneTellerCheck {
 
 export class FortuneTeller extends TownsfolkRole {
   static readonly roleName = "Fortune Teller";
+  static readonly nightChoice: NightChoiceRule = { count: 2, nights: "every" };
   static readonly wake = Wakes.everyNight;
   readonly checks: readonly FortuneTellerCheck[];
   constructor(
@@ -1705,6 +1719,7 @@ export interface VillageIdiotCheck {
 
 export class VillageIdiot extends TownsfolkRole {
   static readonly roleName = "Village Idiot";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "every" };
   static readonly wake = Wakes.everyNight;
   static readonly maxCopies = 3;
   readonly checks: readonly VillageIdiotCheck[];
@@ -1881,6 +1896,7 @@ export class Mayor extends TownsfolkRole {
 
 export class Monk extends TownsfolkRole {
   static readonly roleName = "Monk";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "exceptFirst" };
   static readonly wake = Wakes.everyNightExceptFirst;
 }
 
@@ -2018,6 +2034,7 @@ export class Savant extends TownsfolkRole {
 
 export class Seamstress extends TownsfolkRole {
   static readonly roleName = "Seamstress";
+  static readonly nightChoice: NightChoiceRule = { count: 2, nights: "every", once: true };
   static readonly wake = Wakes.untilAbilityUsed("Seamstress", Wakes.everyNight);
   readonly among: readonly string[];
   readonly aligned?: boolean;

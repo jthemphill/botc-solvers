@@ -1399,23 +1399,24 @@ describe("buildFromDoc", () => {
       ],
       claims: [],
     };
+    const sailorChooses = (player: string): TestPuzzleDoc => ({
+      ...baseDoc,
+      claims: [
+        {
+          type: "Sailor",
+          name: "A",
+          choices: [{ player, timing: "night_2" }],
+          possibleActualRoles: ["Sailor"],
+        },
+      ],
+    });
 
-    expect(await buildFromDoc(baseDoc, backend).solveAll()).toEqual([]);
+    // The Sailor chose the Shabaloth, so no player chose the Goon before the Shabaloth.
+    expect(await buildFromDoc(sailorChooses("C"), backend).solveAll()).toEqual([]);
+    // The Sailor choice is unknown without a report. The Sailor can be the first to choose the Goon.
+    expect(await buildFromDoc(baseDoc, backend).solveAll()).toHaveLength(1);
 
-    const worlds = await buildFromDoc(
-      {
-        ...baseDoc,
-        claims: [
-          {
-            type: "Sailor",
-            name: "A",
-            choices: [{ player: "B", timing: "night_2" }],
-            possibleActualRoles: ["Sailor"],
-          },
-        ],
-      },
-      backend,
-    ).solveAll();
+    const worlds = await buildFromDoc(sailorChooses("B"), backend).solveAll();
     expect(worlds).toHaveLength(1);
     expect(worlds[0]?.isDrunk("A", "night_2")).toBe(true);
   });

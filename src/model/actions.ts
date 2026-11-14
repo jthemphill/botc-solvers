@@ -10,6 +10,15 @@ export interface ChoiceAction {
   readonly choices: ReadonlyMap<string, BoolLike>;
 }
 
+/** One player chooses one target with an ability at night. */
+export interface PlayerChoice {
+  readonly actor: string;
+  readonly role: string;
+  readonly target: string;
+  readonly timing: Timing;
+  readonly chosen: BoolLike;
+}
+
 export function constrainSelection(
   game: BooleanConstraints,
   choices: readonly BoolLike[],

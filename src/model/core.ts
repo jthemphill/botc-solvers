@@ -16,12 +16,22 @@ export interface WakeRule {
   wakes(game: BOTCModel, player: string, timing: Timing): BoolLike;
 }
 
+/** Tells how a character chooses players at night. */
+export interface NightChoiceRule {
+  /** The number of players that the character chooses in one use. */
+  readonly count: number;
+  readonly nights: "every" | "exceptFirst" | "whenKilledAtNight";
+  /** The character uses the ability one time, on a night that it selects. */
+  readonly once?: boolean;
+}
+
 export interface RoleClass {
   readonly roleName: string;
   readonly alignment: Alignment;
   readonly characterType: CharacterType;
   readonly maxCopies?: number;
   readonly wake: WakeRule;
+  readonly nightChoice?: NightChoiceRule;
 }
 
 export interface RoleInstance {
@@ -87,6 +97,10 @@ export function roleMaxCopies(role: RoleRef): number {
   if (Number.isInteger(maxCopies) && (maxCopies as number) > 0) return maxCopies as number;
   if (roleName(role) === "Village Idiot") return 3;
   return 1;
+}
+
+export function roleNightChoice(role: RoleRef): NightChoiceRule | undefined {
+  return (role as { nightChoice?: NightChoiceRule }).nightChoice;
 }
 
 export function roleWakeRule(role: RoleRef): WakeRule {

@@ -63,20 +63,36 @@ Check of the assignment:
 
 A second candidate has Matthew as the Imp, Anna as the Poisoner, and Hannah as an evil Goon. It needs a poisoned Village Idiot to choose the Goon on night 3 without changing her alignment. The engine treats a choice by a poisoned or drunk player as a choice, so Hannah becomes good and must then report truthfully. This reading gives the puzzle its single answer. The wiki ruling for this interaction was not retrieved.
 
-### Rule changes
+### Player choices
 
-- The hidden Poisoner choice of each night is an ability target. A Poisoner that chooses the Goon first is drunk until dusk and poisons nobody.
-- A Demon can choose the Goon first. The Demon is then drunk and kills nobody that night, and the Goon becomes evil. A Demon that chooses the Goon later kills it, as before.
-- Reported Village Idiot and Seamstress choices are ability targets.
+Choosing a player at night is now one concept with three parts.
+
+- `src/model/nightOrder.ts` holds the night order of each character that chooses players or causes deaths at night.
+- The model keeps one registry of player choices: actor, character, target, night, and a truth value. Each character gives its choices to this registry. `src/builders/goon.ts` reads the registry after the last choice is registered; no character has Goon-specific registration.
+- A character class can declare a night choice rule: the number of players, the nights, and a one-use limit. `src/builders/playerChoices.ts` makes the choices for each such character. A reported choice fixes the targets of its night. A night without a report has an unknown choice.
+
+The Sailor, Innkeeper, Gambler, Acrobat, Snake Charmer, Monk, Exorcist, Professor, Ravenkeeper, Fortune Teller, Dreamer, Seamstress, Village Idiot, Butler, Chambermaid, and Witch use a night choice rule. The Poisoner, Widow, Pukka, Devil's Advocate, Godfather, Shabaloth, Assassin, Nightwatchman, Cerenovus, Pit-Hag, and Lleech register the choice variables that they already had. A Demon kill registers the victim as a choice of the Demon.
+
+Rule changes that result:
+
+- The first player to choose the Goon is drunk, whatever character made the choice. A Poisoner or Widow that is drunk this way poisons nobody.
+- A Demon can choose the Goon first. The Demon is then drunk and kills nobody that night, and the Goon becomes evil. The previous Demon-specific rule for a kill of the Goon is removed; it now follows from the registered kill.
+- A player that the Demon kills does not make a later choice that night.
+- The Assassin choice was registered after the Goon rule ran and had no effect. The Goon rule now runs last.
+- Demon kills used a default position after the Godfather. They now use their own positions.
 - The DSL function `alignment_at(player, Good | Evil, timing)` reads the alignment at a given time.
 
-`src/builders/goon.test.ts` covers legal and illegal histories for each of these, the interaction between Poisoner and Village Idiot choices on one night, the change back to good, renamed players with seating preserved, duplicate reports, and redundant facts. These tests fail on the previous engine. The [Goon](https://wiki.bloodontheclocktower.com/Goon) page revision was not retrieved.
+One existing test changed. It expected a Shabaloth kill of the Goon to be illegal when a Sailor made no report. A Sailor without a report has an unknown choice, so that history is legal. The test now uses a Sailor report of another player for the illegal case.
+
+`src/builders/goon.test.ts` covers legal and illegal histories for these rules. One test runs for each character with a night choice rule and shows that its unreported choice can make it drunk only when a Goon is in play. Other tests cover reported choices, unknown nights, the night order, death before a choice, the one-use limit, renamed players with seating preserved, duplicate reports, and redundant facts. The night order follows the official night sheet from memory; the sheet and the [Goon](https://wiki.bloodontheclocktower.com/Goon) page revision were not retrieved.
 
 ## Support limits
 
 The [existing engine limits](rules-first-engine.md#coverage-that-still-needs-migration) still apply. In addition:
 
-- Hidden Demon choices of the Goon cover Imp, Fang Gu, Vigormortis, No Dashii, and Vortox. Other Demons keep their existing target models.
-- Only reported Seamstress and Village Idiot choices are ability targets. Unreported choices by these characters are not generated.
+- Choices are generated only when a Goon is on the script, because the Goon is the only rule that reads them.
+- These choices are not registered: the Demon choice that the Barber gives, the Kazali choice of Minions, and the choices of a Lunatic. The Monk has a night choice rule but no claim type.
+- A drunk or poisoned player still chooses. A player that believes it has a character, such as the Drunk, does not choose.
+- The first night uses the same order as other nights, except for the Lleech and the Butler.
 - The Xaan death timing treats every Townsfolk as acting after the Demon. A Townsfolk that acts before the Demon on night X is still poisoned by the rules; no catalog puzzle needs this distinction.
 - The fixtures check initial assignments against hand derivations. They do not certify every hidden history admitted by the model.

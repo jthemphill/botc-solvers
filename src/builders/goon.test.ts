@@ -2,6 +2,8 @@ import { beforeAll, expect, test } from "bun:test";
 import { buildFromDoc } from "./buildFromDoc";
 import { KissatBackend } from "../model/sat";
 import { validatePuzzleDoc } from "../schema/validate";
+import { nightActionOrder } from "../model/nightOrder";
+import { ROLE_CLASSES } from "../model/roleRegistry";
 
 let backend: KissatBackend;
 beforeAll(async () => {
@@ -18,19 +20,28 @@ interface Options {
   readonly timeline?: (names: readonly string[]) => readonly Record<string, unknown>[];
 }
 
+/** Returns a claim without reports. The Monk has no claim type, so a Mayor claim holds its place. */
+function bareClaim(role: string): Record<string, unknown> {
+  if (role === "Fortune Teller") return { type: "FortuneTeller", checks: [] };
+  if (role === "Village Idiot") return { type: "VillageIdiot", checks: [] };
+  if (role === "Snake Charmer") return { type: role, checks: [] };
+  if (role === "Monk") return { type: "Mayor" };
+  return { type: role };
+}
+
 function scenario(roles: readonly string[], options: Options = {}) {
   const names = options.names ?? roles.map((_, index) => "ABCDEF"[index] as string);
   const extraClaims = options.claims?.(names) ?? [];
   const described = new Set(extraClaims.map((claim) => claim["name"]));
   return {
     players: names,
-    script: [...new Set(roles)],
+    script: [...new Set([...roles, ...(roles.includes("Monk") ? ["Mayor"] : [])])],
     setup: "none",
     timeline: options.timeline?.(names) ?? [],
     constraints: (options.constraints ?? []).map((expression) => ({ kind: "fact", expression })),
     claims: [
       ...roles.flatMap((role, index) =>
-        described.has(names[index]) ? [] : [{ type: role, name: names[index], possibleActualRoles: [role] }],
+        described.has(names[index]) ? [] : [{ ...bareClaim(role), name: names[index], possibleActualRoles: [role] }],
       ),
       ...extraClaims,
     ],
@@ -169,4 +180,115 @@ test("Goon results do not change with new names, duplicate reports, or redundant
   expect(await worldCount(scenario(IDIOT_TABLE, { claims: twice }))).toBe(0);
   const redundant = ["B.initial_role == Goon", "one Goon.~initial_role"];
   expect(await worldCount(scenario(IDIOT_TABLE, { claims: idiotClaim(1, false), constraints: redundant }))).toBe(1);
+});
+
+// The tests below use the player choices of all characters that choose players at night.
+const CHOOSING_ROLES = [...ROLE_CLASSES.values()]
+  .filter((role) => role.nightChoice !== undefined)
+  .map((role) => role.roleName);
+
+function chooserTable(role: string, outsider = "Goon"): Options & { readonly roles: readonly string[] } {
+  // The chooser dies on night 2 when its ability needs that death. If not, the Imp kills the Empath.
+  const victim = role === "Ravenkeeper" ? 0 : 4;
+  return {
+    roles: [role, outsider, "Imp", "Chef", "Empath"],
+    timeline: (names) => [{ type: "nightDeath", timing: "night_2", players: [names[victim]] }],
+  };
+}
+
+async function worldCountWithDrunk(doc: unknown, player: string, timing: "night_1" | "night_2"): Promise<number> {
+  const game = buildFromDoc(validatePuzzleDoc(doc), backend);
+  game.addTruth(game.drunk(player, timing));
+  return (await game.solveAll()).length;
+}
+
+test("each character with a night choice rule has a position in the night order", () => {
+  expect(CHOOSING_ROLES.length).toBeGreaterThan(10);
+  for (const role of CHOOSING_ROLES) {
+    expect(() => nightActionOrder(role, "night_1"), role).not.toThrow();
+    expect(() => nightActionOrder(role, "night_2"), role).not.toThrow();
+  }
+});
+
+test.each(CHOOSING_ROLES)("an unreported %s choice can make its chooser drunk", async (role) => {
+  const withGoon = chooserTable(role);
+  expect(await worldCountWithDrunk(scenario(withGoon.roles, withGoon), "A", "night_2"), role).toBe(1);
+  // Without a Goon, no ability makes the chooser drunk.
+  const withSaint = chooserTable(role, "Saint");
+  expect(await worldCountWithDrunk(scenario(withSaint.roles, withSaint), "A", "night_2"), role).toBe(0);
+});
+
+test("a reported choice of other players does not make the chooser drunk", async () => {
+  const table = ["Fortune Teller", "Goon", "Imp", "Chef", "Empath"];
+  const check = (left: number, right: number) => (names: readonly string[]) => [
+    {
+      type: "FortuneTeller",
+      name: names[0],
+      possibleActualRoles: ["Fortune Teller"],
+      checks: [{ timing: "night_1", left: names[left], right: names[right], yes: true }],
+    },
+  ];
+  // The Fortune Teller chose the Imp and the Chef. The yes is correct.
+  expect(await worldCountWithDrunk(scenario(table, { claims: check(2, 3) }), "A", "night_1")).toBe(0);
+  expect(await worldCountWithDrunk(scenario(table, { claims: check(1, 2) }), "A", "night_1")).toBe(1);
+});
+
+test("a night without a report has an unknown choice", async () => {
+  const doc = scenario(IDIOT_TABLE, {
+    claims: idiotClaim(3, true),
+    timeline: (names) => [{ type: "nightDeath", timing: "night_2", players: [names[3]] }],
+  });
+  expect(await worldCountWithDrunk(doc, "C", "night_1")).toBe(0);
+  expect(await worldCountWithDrunk(doc, "C", "night_2")).toBe(1);
+});
+
+test("a player that the Demon kills does not choose after the kill", async () => {
+  const killed = (role: string): Options & { readonly roles: readonly string[] } => ({
+    roles: [role, "Goon", "Imp", "Chef", "Empath"],
+    timeline: (names) => [{ type: "nightDeath", timing: "night_2", players: [names[0]] }],
+  });
+  // The Village Idiot acts after the Demon. The Sailor acts before the Demon.
+  const idiot = killed("Village Idiot");
+  expect(await worldCountWithDrunk(scenario(idiot.roles, idiot), "A", "night_2")).toBe(0);
+  const sailor = killed("Sailor");
+  expect(await worldCountWithDrunk(scenario(sailor.roles, sailor), "A", "night_2")).toBe(1);
+});
+
+test("a Seamstress chooses players on one night only", async () => {
+  const table = ["Imp", "Goon", "Seamstress", "Chef", "Empath"];
+  const timeline = (names: readonly string[]) => [{ type: "nightDeath", timing: "night_2", players: [names[4]] }];
+  expect(await worldCountWithDrunk(scenario(table, { timeline }), "C", "night_2")).toBe(1);
+  const used = scenario(table, { timeline, claims: seamstressClaim(3, 4, true) });
+  expect(await worldCountWithDrunk(used, "C", "night_2")).toBe(0);
+});
+
+test("the night order decides the first player that chooses the Goon", async () => {
+  const table = ["Fortune Teller", "Goon", "Dreamer", "Imp", "Chef"];
+  const doc = scenario(table, {
+    claims: (names) => [
+      {
+        type: "FortuneTeller",
+        name: names[0],
+        possibleActualRoles: ["Fortune Teller"],
+        checks: [{ timing: "night_1", left: names[1], right: names[4], yes: true }],
+      },
+      {
+        type: "Dreamer",
+        name: names[2],
+        possibleActualRoles: ["Dreamer"],
+        timing: "night_1",
+        player: names[1],
+        roles: ["Goon", "Imp"],
+      },
+    ],
+  });
+  // The Fortune Teller acts before the Dreamer.
+  expect(await worldCountWithDrunk(doc, "A", "night_1")).toBe(1);
+  expect(await worldCountWithDrunk(doc, "C", "night_1")).toBe(0);
+});
+
+test("the Butler acts before the Dreamer on the first night only", () => {
+  expect(nightActionOrder("Butler", "night_1")).toBeLessThan(nightActionOrder("Dreamer", "night_1"));
+  expect(nightActionOrder("Butler", "night_2")).toBeGreaterThan(nightActionOrder("Dreamer", "night_2"));
+  expect(() => nightActionOrder("Chef")).toThrow();
 });
