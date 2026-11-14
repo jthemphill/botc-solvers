@@ -161,6 +161,20 @@ describe("DSL", () => {
     expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
   });
 
+  test("alignment_at reads the alignment at the given time", async () => {
+    const game = buildPuzzleModel({ players: ["A", "B"], characters: [Goon, Imp], setup: false }, backend);
+    const ctx: CompileCtx = { players: ["A", "B"], script: ["Goon", "Imp"], nameRoot: "alignment_at" };
+    game.fixActual("A", Goon);
+    game.fixActual("B", Imp);
+    game.setGoodAt("A", "night_2", game.constantBool(false));
+    game.setGoodAt("A", "night_3", game.constantBool(true));
+
+    game.addTruth(compile("alignment_at(A, Evil, night_2) && alignment_at(A, Good, night_3)", game, ctx) as BoolLike);
+    expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
+    expect(() => compile("alignment_at(A, Imp, night_2)", game, ctx)).toThrow(DslError);
+    expect(() => compile("alignment_at(A, Evil)", game, ctx)).toThrow(DslError);
+  });
+
   test("cardinality comprehensions count roles in play", async () => {
     const game = buildPuzzleModel(
       { players: ["A", "B", "C"], characters: [Imp, Savant, Clockmaker, Klutz], setup: false },

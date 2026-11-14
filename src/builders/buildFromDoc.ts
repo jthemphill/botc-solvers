@@ -63,14 +63,21 @@ export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
   game.withProvenance({ kind: "rule", id: "applyRiotTransformations" }, () => applyRiotTransformations(game, doc));
   const pukkaContext = doc.setup === "atheist" ? emptyPukkaContext() : applyPukkaPoisonChoices(game, doc);
   let nightDeathTiming = emptyNightDeathTimingContext();
+  let goonContext = emptyGoonContext();
   if (doc.setup !== "atheist") {
     registerDevilsAdvocateTargets(game, doc);
     const godfatherContext = applyGodfatherChoices(game, doc);
     const shabalothContext = registerShabalothChoices(game, doc);
-    let goonContext = emptyGoonContext();
     if (doc.script.includes("Goon")) {
       registerDeclaredAbilityTargets(game, doc);
+      registerPoisonerTargets(game, doc);
+      const demonGoonChoices = registerDemonGoonChoices(game, doc);
       goonContext = applyGoonInteractions(game, doc);
+      for (const choice of demonGoonChoices)
+        game.addImplication(
+          choice.chosen,
+          game.not(goonWasTargetedBefore(game, goonContext, choice.timing, DEMON_KILL_ORDER)),
+        );
     }
     game.withProvenance(
       {
@@ -115,9 +122,9 @@ export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
     applyPhilosopherDrunking(game, doc);
     applyNightwatchmanActions(game, doc, doc.facts);
     applyChangedRoleClaimExplanations(game, doc, characterActions);
-    applyXaanActivity(game, doc);
+    applyXaanActivity(game, doc, nightDeathTiming);
     applyVigormortisPoisonSources(game, doc, nightDeathTiming);
-    applyPoisonerSources(game, doc, nightDeathTiming);
+    applyPoisonerSources(game, doc, nightDeathTiming, goonContext);
     applyWidowSources(game, doc);
     applyWidowCallClaims(game, doc);
     applyEvilTwinKnowledgeClaims(game, doc);
@@ -461,8 +468,70 @@ function registerDeclaredAbilityTargets(game: BOTCModel, doc: BuildDoc): void {
       case "Sailor":
         for (const choice of claim.choices ?? []) register(claim.name, "Sailor", choice.player, choice.timing);
         break;
+      case "Seamstress":
+        for (const target of claim.among) register(claim.name, "Seamstress", target, claim.timing);
+        break;
+      case "VillageIdiot":
+        for (const check of claim.checks) register(claim.name, "Village Idiot", check.player, check.timing);
+        break;
     }
   }
+}
+
+/** Registers the hidden Poisoner choice of each night as an ability target. */
+function registerPoisonerTargets(game: BOTCModel, doc: BuildDoc): void {
+  if (!doc.script.includes("Poisoner")) return;
+  for (const timing of doc.facts.nights) {
+    const targets = game.poisonerTargetsAt(timing);
+    for (const actor of doc.facts.livingAt(timing)) {
+      const isPoisoner = game.hasAbilityAt(actor, "Poisoner", timing);
+      for (const [target, chosen] of targets)
+        game.registerAbilityTarget(
+          actor,
+          "Poisoner",
+          target,
+          timing,
+          game.allOf([isPoisoner, chosen]),
+          nightActionOrder("Poisoner"),
+        );
+    }
+  }
+}
+
+interface DemonGoonChoice {
+  readonly timing: Timing;
+  readonly chosen: BoolLike;
+}
+
+const DEMON_KILL_ORDER = 75;
+
+/**
+ * Adds the hidden choice of a Demon that chooses the Goon first.
+ * This choice makes the Demon drunk, and the drunk Demon does not kill.
+ * A Demon that chooses the Goon later kills the Goon as a usual night death.
+ */
+function registerDemonGoonChoices(game: BOTCModel, doc: BuildDoc): readonly DemonGoonChoice[] {
+  const demonRoles = doc.script.filter((role) =>
+    ["Imp", "Fang Gu", "Vigormortis", "No Dashii", "Vortox"].includes(role),
+  );
+  if (demonRoles.length === 0) return [];
+  const choices: DemonGoonChoice[] = [];
+  for (const timing of doc.facts.nights) {
+    if (timing === "night_1") continue;
+    const living = doc.facts.livingAt(timing);
+    for (const actor of living) {
+      const isDemon = game.anyOf(demonRoles.map((role) => game.hasAbilityAt(actor, role, timing)));
+      for (const target of living) {
+        if (target === actor) continue;
+        const chosen = game.newBool();
+        game.addImplication(chosen, isDemon);
+        game.addImplication(chosen, game.hasAbilityAt(target, "Goon", timing));
+        game.registerAbilityTarget(actor, demonRoles[0] as string, target, timing, chosen, DEMON_KILL_ORDER);
+        choices.push({ timing, chosen });
+      }
+    }
+  }
+  return choices;
 }
 
 interface GoonContext {
@@ -613,6 +682,7 @@ function goonWasTargetedBefore(game: BOTCModel, context: GoonContext, timing: Ti
 function nightActionOrder(role: string): number {
   const order: Readonly<Record<string, number>> = {
     Sailor: 10,
+    Poisoner: 15,
     Courtier: 20,
     Innkeeper: 30,
     Gambler: 40,
@@ -628,6 +698,8 @@ function nightActionOrder(role: string): number {
     Professor: 130,
     Tinker: 140,
     Moonchild: 150,
+    Seamstress: 160,
+    "Village Idiot": 170,
     Chambermaid: 200,
   };
   return order[role] ?? 150;
@@ -2281,7 +2353,12 @@ function livingNeighborOptionsAt(
   }));
 }
 
-function applyPoisonerSources(game: BOTCModel, doc: BuildDoc, nightDeathTiming: NightDeathTimingContext): void {
+function applyPoisonerSources(
+  game: BOTCModel,
+  doc: BuildDoc,
+  nightDeathTiming: NightDeathTimingContext,
+  goonContext: GoonContext,
+): void {
   if (!doc.script.includes("Poisoner")) return;
   const timings = new Set([
     ...game.droisonTimingKeys,
@@ -2290,7 +2367,19 @@ function applyPoisonerSources(game: BOTCModel, doc: BuildDoc, nightDeathTiming: 
   for (const timing of timings) {
     const poisonerCanAct = roleCanUseAbilityAt(game, doc, "Poisoner", timing as Timing, nightDeathTiming);
     const poisonerDiesBeforeInfo = roleDiesBeforeInfoAt(game, "Poisoner", timing as Timing, nightDeathTiming);
-    game.addPoisonerEffect(timing as Timing, game.allOf([poisonerCanAct, game.not(poisonerDiesBeforeInfo)]));
+    // A Poisoner that chooses the Goon first is drunk until dusk. A drunk Poisoner does not poison.
+    const night = timing.replace("day_", "night_") as Timing;
+    const poisonerDrunkByGoon = game.anyOf(
+      doc.players.flatMap((player) =>
+        (goonContext.drunkSourcesByActorTiming.get(`${player}\u0000${night}`) ?? []).map((drunk) =>
+          game.allOf([drunk, game.hasAbilityAt(player, "Poisoner", night)]),
+        ),
+      ),
+    );
+    game.addPoisonerEffect(
+      timing as Timing,
+      game.allOf([poisonerCanAct, game.not(poisonerDiesBeforeInfo), game.not(poisonerDrunkByGoon)]),
+    );
   }
 }
 
@@ -2402,11 +2491,17 @@ function applyWidowSources(game: BOTCModel, doc: BuildDoc): void {
   game.addWidowEffect(timings, roleAliveAt(game, doc, "Widow", "night_1"));
 }
 
-function applyXaanActivity(game: BOTCModel, doc: BuildDoc): void {
+function applyXaanActivity(game: BOTCModel, doc: BuildDoc, nightDeathTiming: NightDeathTimingContext): void {
   if (!doc.script.includes("Xaan")) return;
   for (let count = 1; count <= doc.players.length; count += 1) {
     const timing = `night_${count}` as Timing;
-    game.setRoleActiveAt("Xaan", timing, roleAliveAt(game, doc, "Xaan", timing));
+    // The Xaan poison stops when the Xaan dies. A Demon kill occurs before later information that night.
+    const xaanDiesBeforeInfo = roleDiesBeforeInfoAt(game, "Xaan", timing, nightDeathTiming);
+    game.setRoleActiveAt(
+      "Xaan",
+      timing,
+      game.allOf([roleAliveAt(game, doc, "Xaan", timing), game.not(xaanDiesBeforeInfo)]),
+    );
   }
 }
 

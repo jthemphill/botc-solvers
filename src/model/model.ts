@@ -520,16 +520,21 @@ export class BOTCModel extends BooleanConstraints {
     this.assertBuilding();
     const poisonerRole = "Poisoner";
     const poisonerActive = this.activeRole(poisonerRole, activeIf);
-    const choiceTiming = timing.replace("day_", "night_") as Timing;
-    const key = choiceTiming;
-    let targets = this.poisonerTargetsByNight.get(key);
-    if (targets === undefined) {
-      targets = select(this, this.players, this.roleInPlay(poisonerRole), 1);
-      this.poisonerTargetsByNight.set(key, targets);
-    }
+    const targets = this.poisonerTargetsAt(timing.replace("day_", "night_") as Timing);
     this.registerActivePoisonSource(timing, poisonerActive);
     for (const [player, target] of targets)
       this.registerPoisonSourceTarget(player, timing, this.allOf([target, poisonerActive]));
+  }
+
+  /** Returns the Poisoner choice for one night. The choice exists while a Poisoner is in play. */
+  poisonerTargetsAt(night: Timing): ReadonlyMap<string, BoolLike> {
+    this.assertBuilding();
+    let targets = this.poisonerTargetsByNight.get(night);
+    if (targets === undefined) {
+      targets = select(this, this.players, this.roleInPlay("Poisoner"), 1);
+      this.poisonerTargetsByNight.set(night, targets);
+    }
+    return targets;
   }
 
   addPersistentPoisonSource(timings: readonly Timing[], candidates: readonly string[], activeIf: BoolLike): void {

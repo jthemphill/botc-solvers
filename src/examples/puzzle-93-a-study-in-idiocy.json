@@ -1,0 +1,172 @@
+{
+  "title": "Puzzle 93 - A Study in Idiocy",
+  "players": ["Charlotte", "Jasmine", "Hannah", "Olivia", "Tim", "You", "Fraser", "Aoife", "Sarah"],
+  "script": [
+    "Imp",
+    "Spy",
+    "Xaan",
+    "Mutant",
+    "Saint",
+    "Butler",
+    "Village Idiot",
+    "Chambermaid",
+    "Town Crier",
+    "Undertaker",
+    "Juggler"
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["You"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["Charlotte"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Aoife"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Olivia"]
+    },
+    {
+      "timing": "day_3",
+      "type": "execution",
+      "players": ["Sarah"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": ["Jasmine"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Chambermaid",
+      "name": "Charlotte",
+      "checks": [
+        {
+          "timing": "night_1",
+          "left": "Aoife",
+          "right": "Tim",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "type": "Town Crier",
+      "name": "Jasmine",
+      "checks": [
+        {
+          "timing": "night_2",
+          "nominators": ["You", "Olivia"],
+          "minionNominated": false
+        },
+        {
+          "timing": "night_3",
+          "nominators": ["Fraser", "Sarah"],
+          "minionNominated": false
+        }
+      ]
+    },
+    {
+      "type": "Undertaker",
+      "name": "Hannah",
+      "timing": "night_2",
+      "player": "You",
+      "role": "Village Idiot",
+      "possibleActualRoles": ["Undertaker", "Imp", "Spy", "Xaan", "Mutant"]
+    },
+    {
+      "type": "Undertaker",
+      "name": "Hannah",
+      "timing": "night_3",
+      "player": "Aoife",
+      "role": "Village Idiot",
+      "possibleActualRoles": ["Undertaker", "Imp", "Spy", "Xaan", "Mutant"]
+    },
+    {
+      "type": "Undertaker",
+      "name": "Hannah",
+      "timing": "night_4",
+      "player": "Sarah",
+      "role": "Spy",
+      "possibleActualRoles": ["Undertaker", "Imp", "Spy", "Xaan", "Mutant"]
+    },
+    {
+      "type": "Juggler",
+      "name": "Olivia",
+      "timing": "night_2",
+      "guesses": {
+        "Fraser": "Imp",
+        "Sarah": "Xaan",
+        "Charlotte": "Imp",
+        "Jasmine": "Town Crier"
+      },
+      "correctCount": 1
+    },
+    {
+      "type": "Butler",
+      "name": "Tim"
+    },
+    {
+      "type": "VillageIdiot",
+      "name": "You",
+      "checks": [
+        {
+          "timing": "night_1",
+          "player": "Olivia",
+          "good": false
+        }
+      ],
+      "possibleActualRoles": ["Village Idiot"]
+    },
+    {
+      "type": "Saint",
+      "name": "Fraser"
+    },
+    {
+      "type": "VillageIdiot",
+      "name": "Aoife",
+      "checks": [
+        {
+          "timing": "night_1",
+          "player": "Hannah",
+          "good": true
+        },
+        {
+          "timing": "night_2",
+          "player": "Jasmine",
+          "good": false
+        }
+      ]
+    },
+    {
+      "type": "VillageIdiot",
+      "name": "Sarah",
+      "checks": [
+        {
+          "timing": "night_1",
+          "player": "Olivia",
+          "good": true
+        },
+        {
+          "timing": "night_2",
+          "player": "Tim",
+          "good": true
+        },
+        {
+          "timing": "night_3",
+          "player": "Jasmine",
+          "good": true
+        }
+      ]
+    }
+  ]
+}
