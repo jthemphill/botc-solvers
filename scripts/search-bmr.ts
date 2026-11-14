@@ -451,15 +451,11 @@ async function everyWorldHasEvilGoon(doc: PuzzleDoc): Promise<boolean> {
   goodGoon.addTruth(
     goodGoon.anyOf(
       doc.players.map((player) =>
-        goodGoon.allOf(
-          [
-            goodGoon.actualIs(player, "Goon"),
-            goodGoon.not(goodGoon.isEvilAt(player, "night_4" as Timing), `${player}_good_at_puzzle_time`),
-          ],
-          `${player}_is_good_goon`,
-        ),
+        goodGoon.allOf([
+          goodGoon.actualIs(player, "Goon"),
+          goodGoon.not(goodGoon.isEvilAt(player, "night_4" as Timing)),
+        ]),
       ),
-      "some_good_goon_at_puzzle_time",
     ),
   );
   return (await goodGoon.solveAll({ limit: 1 })).length === 0;
@@ -477,7 +473,6 @@ async function everyWorldHasLyingEvilGoon(doc: PuzzleDoc): Promise<boolean> {
       doc.players
         .filter((player) => !eligibleClaimants.has(player))
         .map((player) => ineligibleGoon.actualIs(player, "Goon")),
-      "an_ineligible_player_is_the_goon",
     ),
   );
   return (await ineligibleGoon.solveAll({ limit: 1 })).length === 0;

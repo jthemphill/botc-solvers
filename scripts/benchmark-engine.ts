@@ -7,7 +7,7 @@ const results = [];
 for (const size of [10, 20, 40, 80]) {
   const game = new BOTCModel(["A"], { characters: [roleByName("Chef")], backend });
   const start = performance.now();
-  const values = Array.from({ length: size }, (_, i) => game.newBool(`choice_${i}`));
+  const values = Array.from({ length: size }, (_) => game.newBool());
   game.addExactlyN(values, Math.floor(size / 2));
   const buildMs = performance.now() - start;
   const result = await game.solve();

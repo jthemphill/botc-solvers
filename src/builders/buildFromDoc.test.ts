@@ -1528,7 +1528,7 @@ describe("buildFromDoc", () => {
       player: "B",
       role: "Goon",
       timing: "day_1",
-      learned: game.constantBool(false, "evil_goon_lie"),
+      learned: game.constantBool(false),
     });
 
     const worlds = await game.solveAll();
@@ -1628,7 +1628,7 @@ describe("buildFromDoc", () => {
       player: "B",
       role: "Goon",
       timing: "day_1",
-      learned: lyingGame.constantBool(false, "good_goon_lie"),
+      learned: lyingGame.constantBool(false),
     });
     expect(await lyingGame.solveAll()).toEqual([]);
 
@@ -1637,7 +1637,7 @@ describe("buildFromDoc", () => {
       player: "B",
       role: "Goon",
       timing: "day_1",
-      learned: honestGame.constantBool(true, "good_goon_truth"),
+      learned: honestGame.constantBool(true),
     });
     const worlds = await honestGame.solveAll();
 

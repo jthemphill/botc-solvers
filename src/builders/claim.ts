@@ -401,14 +401,13 @@ function philosopherInfoClaims(claim: Extract<Claim, { readonly type: "Philosoph
 }
 
 function snakeCharmerInfoClaims(claim: Extract<Claim, { readonly type: "Snake Charmer" }>): InfoClaimBuilder[] {
-  const checkClaims = claim.checks.map((check, index): InfoClaimBuilder => {
-    const nameRoot = `${slug(claim.name)}_snake_charmer_check_${index + 1}`;
+  const checkClaims = claim.checks.map((check): InfoClaimBuilder => {
     const timing = timingOf(check.timing) as Timing;
     return {
       timing,
       learned: (game) => {
         const checkedIsDemon = game.isDemonAt(check.player, timing);
-        return check.demon ? checkedIsDemon : game.not(checkedIsDemon, `${nameRoot}_not_demon`);
+        return check.demon ? checkedIsDemon : game.not(checkedIsDemon);
       },
     };
   });

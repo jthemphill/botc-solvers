@@ -1,7 +1,7 @@
 import type { ConstraintOrigin } from "../model/sat";
-import { CharacterType, type RoleClass } from "../model/core";
+import { CharacterType } from "../model/core";
 import { SemanticBuilder, lower, type TypedProgram } from "./ir";
-import type { BoolLike, BoolVar, BOTCModel, Timing } from "../model/model";
+import type { BoolLike, BOTCModel, Timing } from "../model/model";
 import { roleByName } from "../model/roleRegistry";
 import type { AstCall, AstJoin, AstNode, AstPath } from "./ast";
 import { DslError, lex } from "./lex";
@@ -70,17 +70,10 @@ const ROLE_SET_TYPES: Readonly<Record<string, CharacterType>> = {
 const ALIGNMENTS: readonly AlignmentName[] = ["Good", "Evil"];
 
 class Compiler {
-  private counter = 0;
-
   constructor(
     private readonly game: SemanticBuilder,
     private readonly ctx: CompileCtx,
   ) {}
-
-  private freshName(label: string): string {
-    this.counter += 1;
-    return `${this.ctx.nameRoot}_${label}_${this.counter}`;
-  }
 
   private goodAtContext(player: string): BoolLike {
     return this.ctx.timing === undefined ? this.game.isGood(player) : this.game.isGoodAt(player, this.ctx.timing);
@@ -105,7 +98,7 @@ class Compiler {
       case "boollit":
         return {
           kind: "bool",
-          value: this.game.constantBool(node.value, this.freshName(`lit_${node.value}`)),
+          value: this.game.constantBool(node.value),
           span: node.span,
         };
       case "number":
@@ -133,7 +126,7 @@ class Compiler {
         return this.evalCall(node, env);
       case "not": {
         const inner = this.expectBool(this.evalNode(node.inner, env));
-        return { kind: "bool", value: this.game.not(inner.value, this.freshName("not")), span: node.span };
+        return { kind: "bool", value: this.game.not(inner.value), span: node.span };
       }
       case "quant":
         return this.evalQuant(node, env);
@@ -189,7 +182,7 @@ class Compiler {
                 : this.goodAtContext(player);
         return {
           atom: { kind: "player" as const, name: player, span: fullSpan },
-          present: this.game.allOf([entry.present, matches], this.freshName(`inverse_${field}`)),
+          present: this.game.allOf([entry.present, matches]),
         };
       }),
     );
@@ -275,10 +268,10 @@ class Compiler {
       const elements = playerEntries.flatMap((entry) =>
         this.ctx.script.map((name) => ({
           atom: { kind: "role" as const, name, span: fullSpan },
-          present: this.game.allOf(
-            [entry.present, this.game.characterAt(entry.atom.name, name, initial ? undefined : this.ctx.timing)],
-            this.freshName("join_role"),
-          ),
+          present: this.game.allOf([
+            entry.present,
+            this.game.characterAt(entry.atom.name, name, initial ? undefined : this.ctx.timing),
+          ]),
         })),
       );
       return { kind: "dynamicSet", atomKind: "role", elements: this.mergeElements(elements), span: fullSpan };
@@ -288,10 +281,10 @@ class Compiler {
       const elements = playerEntries.flatMap((entry) =>
         ALL_CHARACTER_TYPES.map((type) => ({
           atom: { kind: "type" as const, value: type, span: fullSpan },
-          present: this.game.allOf(
-            [entry.present, this.game.hasCharacterTypeAt(entry.atom.name, type, initial ? undefined : this.ctx.timing)],
-            this.freshName("join_type"),
-          ),
+          present: this.game.allOf([
+            entry.present,
+            this.game.hasCharacterTypeAt(entry.atom.name, type, initial ? undefined : this.ctx.timing),
+          ]),
         })),
       );
       return { kind: "dynamicSet", atomKind: "type", elements: this.mergeElements(elements), span: fullSpan };
@@ -301,13 +294,10 @@ class Compiler {
       const elements = playerEntries.flatMap((entry) =>
         ALIGNMENTS.map((alignment) => ({
           atom: { kind: "alignment" as const, value: alignment, span: fullSpan },
-          present: this.game.allOf(
-            [
-              entry.present,
-              alignment === "Evil" ? this.evilAtContext(entry.atom.name) : this.goodAtContext(entry.atom.name),
-            ],
-            this.freshName("join_alignment"),
-          ),
+          present: this.game.allOf([
+            entry.present,
+            alignment === "Evil" ? this.evilAtContext(entry.atom.name) : this.goodAtContext(entry.atom.name),
+          ]),
         })),
       );
       return { kind: "dynamicSet", atomKind: "alignment", elements: this.mergeElements(elements), span: fullSpan };
@@ -370,40 +360,23 @@ class Compiler {
       const body = this.expectBool(this.evalNode(node.body, newEnv)).value;
       return { present: entry.present, body };
     });
-    const label = `${node.quantifier}_${node.variable}`;
-    const matches = entries.map((entry) =>
-      this.game.allOf([entry.present, entry.body], this.freshName(`${label}_entry`)),
-    );
+    const matches = entries.map((entry) => this.game.allOf([entry.present, entry.body]));
     let result: BoolLike;
     switch (node.quantifier) {
       case "some":
-        result = this.game.anyOf(matches, this.freshName(label));
+        result = this.game.anyOf(matches);
         break;
       case "all":
-        result = this.game.allOf(
-          entries.map((entry) =>
-            this.game.anyOf(
-              [this.game.not(entry.present, this.freshName(`${label}_absent`)), entry.body],
-              this.freshName(`${label}_present_implies_body`),
-            ),
-          ),
-          this.freshName(label),
-        );
+        result = this.game.allOf(entries.map((entry) => this.game.anyOf([this.game.not(entry.present), entry.body])));
         break;
       case "no":
-        result = this.game.not(this.game.anyOf(matches, this.freshName(`${label}_any`)), this.freshName(label));
+        result = this.game.not(this.game.anyOf(matches));
         break;
       case "one":
-        result = this.game.boolSumEquals(matches, 1, this.freshName(label));
+        result = this.game.boolSumEquals(matches, 1);
         break;
       case "lone":
-        result = this.game.anyOf(
-          [
-            this.game.boolSumEquals(matches, 0, this.freshName(`${label}_zero`)),
-            this.game.boolSumEquals(matches, 1, this.freshName(`${label}_one`)),
-          ],
-          this.freshName(label),
-        );
+        result = this.game.anyOf([this.game.boolSumEquals(matches, 0), this.game.boolSumEquals(matches, 1)]);
         break;
     }
     return { kind: "bool", value: result, span: node.span };
@@ -419,22 +392,16 @@ class Compiler {
     let result: BoolLike;
     switch (node.quantifier) {
       case "some":
-        result = this.game.anyOf(literals, this.freshName("some_set"));
+        result = this.game.anyOf(literals);
         break;
       case "no":
-        result = this.game.not(this.game.anyOf(literals, this.freshName("no_set_any")), this.freshName("no_set"));
+        result = this.game.not(this.game.anyOf(literals));
         break;
       case "one":
-        result = this.game.boolSumEquals(literals, 1, this.freshName("one_set"));
+        result = this.game.boolSumEquals(literals, 1);
         break;
       case "lone":
-        result = this.game.anyOf(
-          [
-            this.game.boolSumEquals(literals, 0, this.freshName("lone_set_zero")),
-            this.game.boolSumEquals(literals, 1, this.freshName("lone_set_one")),
-          ],
-          this.freshName("lone_set"),
-        );
+        result = this.game.anyOf([this.game.boolSumEquals(literals, 0), this.game.boolSumEquals(literals, 1)]);
         break;
     }
     return { kind: "bool", value: result, span: node.span };
@@ -451,7 +418,7 @@ class Compiler {
       const body = this.expectBool(this.evalNode(node.body, newEnv)).value;
       return {
         atom: entry.atom,
-        present: this.game.allOf([entry.present, body], this.freshName(`comprehension_${node.variable}`)),
+        present: this.game.allOf([entry.present, body]),
       };
     });
     return { kind: "dynamicSet", atomKind: source.kind, elements, span: node.span };
@@ -467,52 +434,52 @@ class Compiler {
         kind: "player",
         elements: value.names.map((name) => ({
           atom: { kind: "player", name, span },
-          present: this.game.constantBool(true, this.freshName("static_player_set")),
+          present: this.game.constantBool(true),
         })),
       };
     if (value.kind === "player")
       return {
         kind: "player",
-        elements: [{ atom: value, present: this.game.constantBool(true, this.freshName("static_player")) }],
+        elements: [{ atom: value, present: this.game.constantBool(true) }],
       };
     if (value.kind === "roleSet")
       return {
         kind: "role",
         elements: value.names.map((name) => ({
           atom: { kind: "role", name, span },
-          present: this.game.constantBool(true, this.freshName("static_role_set")),
+          present: this.game.constantBool(true),
         })),
       };
     if (value.kind === "role")
       return {
         kind: "role",
-        elements: [{ atom: value, present: this.game.constantBool(true, this.freshName("static_role")) }],
+        elements: [{ atom: value, present: this.game.constantBool(true) }],
       };
     if (value.kind === "typeSet")
       return {
         kind: "type",
         elements: value.values.map((type) => ({
           atom: { kind: "type", value: type, span },
-          present: this.game.constantBool(true, this.freshName("static_type_set")),
+          present: this.game.constantBool(true),
         })),
       };
     if (value.kind === "type")
       return {
         kind: "type",
-        elements: [{ atom: value, present: this.game.constantBool(true, this.freshName("static_type")) }],
+        elements: [{ atom: value, present: this.game.constantBool(true) }],
       };
     if (value.kind === "alignmentSet")
       return {
         kind: "alignment",
         elements: value.values.map((alignment) => ({
           atom: { kind: "alignment", value: alignment, span },
-          present: this.game.constantBool(true, this.freshName("static_alignment_set")),
+          present: this.game.constantBool(true),
         })),
       };
     if (value.kind === "alignment")
       return {
         kind: "alignment",
-        elements: [{ atom: value, present: this.game.constantBool(true, this.freshName("static_alignment")) }],
+        elements: [{ atom: value, present: this.game.constantBool(true) }],
       };
     if (value.kind === "playerRole")
       return {
@@ -544,8 +511,7 @@ class Compiler {
   private mergeElements(elements: readonly SetElement[]): readonly SetElement[] {
     return [...this.groupElements(elements).values()].map(({ atom, presences }) => ({
       atom,
-      present:
-        presences.length === 1 ? (presences[0] as BoolLike) : this.game.anyOf(presences, this.freshName("set_merge")),
+      present: presences.length === 1 ? (presences[0] as BoolLike) : this.game.anyOf(presences),
     }));
   }
 
@@ -553,8 +519,7 @@ class Compiler {
     const groups = this.groupElements([...left, ...right]);
     return [...groups.values()].map(({ atom, presences }) => ({
       atom,
-      present:
-        presences.length === 1 ? (presences[0] as BoolLike) : this.game.anyOf(presences, this.freshName("set_union")),
+      present: presences.length === 1 ? (presences[0] as BoolLike) : this.game.anyOf(presences),
     }));
   }
 
@@ -566,16 +531,14 @@ class Compiler {
       const rightGroup = rightGroups.get(key);
       if (rightGroup === undefined) continue;
       const leftPresent =
-        leftGroup.presences.length === 1
-          ? (leftGroup.presences[0] as BoolLike)
-          : this.game.anyOf(leftGroup.presences, this.freshName("set_intersect_left"));
+        leftGroup.presences.length === 1 ? (leftGroup.presences[0] as BoolLike) : this.game.anyOf(leftGroup.presences);
       const rightPresent =
         rightGroup.presences.length === 1
           ? (rightGroup.presences[0] as BoolLike)
-          : this.game.anyOf(rightGroup.presences, this.freshName("set_intersect_right"));
+          : this.game.anyOf(rightGroup.presences);
       elements.push({
         atom: leftGroup.atom,
-        present: this.game.allOf([leftPresent, rightPresent], this.freshName("set_intersect")),
+        present: this.game.allOf([leftPresent, rightPresent]),
       });
     }
     return elements;
@@ -587,9 +550,7 @@ class Compiler {
     const elements: SetElement[] = [];
     for (const [key, leftGroup] of leftGroups) {
       const leftPresent =
-        leftGroup.presences.length === 1
-          ? (leftGroup.presences[0] as BoolLike)
-          : this.game.anyOf(leftGroup.presences, this.freshName("set_minus_left"));
+        leftGroup.presences.length === 1 ? (leftGroup.presences[0] as BoolLike) : this.game.anyOf(leftGroup.presences);
       const rightGroup = rightGroups.get(key);
       if (rightGroup === undefined) {
         elements.push({ atom: leftGroup.atom, present: leftPresent });
@@ -598,13 +559,10 @@ class Compiler {
       const rightPresent =
         rightGroup.presences.length === 1
           ? (rightGroup.presences[0] as BoolLike)
-          : this.game.anyOf(rightGroup.presences, this.freshName("set_minus_right"));
+          : this.game.anyOf(rightGroup.presences);
       elements.push({
         atom: leftGroup.atom,
-        present: this.game.allOf(
-          [leftPresent, this.game.not(rightPresent, this.freshName("set_minus_absent"))],
-          this.freshName("set_minus"),
-        ),
+        present: this.game.allOf([leftPresent, this.game.not(rightPresent)]),
       });
     }
     return elements;
@@ -634,19 +592,19 @@ class Compiler {
       if (op === "and")
         return {
           kind: "bool",
-          value: this.game.allOf([left.value, right.value], this.freshName("and")),
+          value: this.game.allOf([left.value, right.value]),
           span: node.span,
         };
       if (op === "or")
         return {
           kind: "bool",
-          value: this.game.anyOf([left.value, right.value], this.freshName("or")),
+          value: this.game.anyOf([left.value, right.value]),
           span: node.span,
         };
-      const notLeft = this.game.not(left.value, this.freshName("implies_lhs"));
+      const notLeft = this.game.not(left.value);
       return {
         kind: "bool",
-        value: this.game.anyOf([notLeft, right.value], this.freshName("implies")),
+        value: this.game.anyOf([notLeft, right.value]),
         span: node.span,
       };
     }
@@ -654,7 +612,7 @@ class Compiler {
       const lhs = this.evalNode(node.left, env);
       const rhs = this.evalNode(node.right, env);
       const eq = this.compileEquality(lhs, rhs, node.span);
-      if (op === "neq") return { kind: "bool", value: this.game.not(eq, this.freshName("neq")), span: node.span };
+      if (op === "neq") return { kind: "bool", value: this.game.not(eq), span: node.span };
       return { kind: "bool", value: eq, span: node.span };
     }
     if (op === "in") {
@@ -690,45 +648,32 @@ class Compiler {
     const pair = orderPair(lhs, rhs);
     const a = pair[0];
     const b = pair[1];
-    if (a.kind === "cardinality" && b.kind === "number")
-      return this.game.boolSumEquals(a.literals, b.value, this.freshName(`cardinality_${b.value}`));
-    if (a.kind === "number" && b.kind === "number")
-      return this.game.constantBool(a.value === b.value, this.freshName("number_eq"));
+    if (a.kind === "cardinality" && b.kind === "number") return this.game.boolSumEquals(a.literals, b.value);
+    if (a.kind === "number" && b.kind === "number") return this.game.constantBool(a.value === b.value);
     if (a.kind === "playerRole" && b.kind === "role")
       return this.game.characterAt(a.player, b.name, a.initial ? undefined : this.ctx.timing);
     if (a.kind === "playerAlignment" && b.kind === "alignment")
       return b.value === "Evil" ? this.evilAtContext(a.player) : this.goodAtContext(a.player);
     if (a.kind === "playerAlignment" && b.kind === "playerAlignment")
-      return this.game.anyOf(
-        [
-          this.game.allOf([this.goodAtContext(a.player), this.goodAtContext(b.player)], this.freshName("both_good")),
-          this.game.allOf([this.evilAtContext(a.player), this.evilAtContext(b.player)], this.freshName("both_evil")),
-        ],
-        this.freshName("same_alignment"),
-      );
+      return this.game.anyOf([
+        this.game.allOf([this.goodAtContext(a.player), this.goodAtContext(b.player)]),
+        this.game.allOf([this.evilAtContext(a.player), this.evilAtContext(b.player)]),
+      ]);
     if (a.kind === "playerType" && b.kind === "type")
       return this.game.hasCharacterTypeAt(a.player, b.value, a.initial ? undefined : this.ctx.timing);
     if (a.kind === "playerType" && b.kind === "playerType")
       return this.game.anyOf(
         Object.values(CharacterType).map((type) =>
-          this.game.allOf(
-            [
-              this.game.hasCharacterTypeAt(a.player, type, a.initial ? undefined : this.ctx.timing),
-              this.game.hasCharacterTypeAt(b.player, type, b.initial ? undefined : this.ctx.timing),
-            ],
-            this.freshName(`both_${type}`),
-          ),
+          this.game.allOf([
+            this.game.hasCharacterTypeAt(a.player, type, a.initial ? undefined : this.ctx.timing),
+            this.game.hasCharacterTypeAt(b.player, type, b.initial ? undefined : this.ctx.timing),
+          ]),
         ),
-        this.freshName("same_type"),
       );
-    if (a.kind === "player" && b.kind === "player")
-      return this.game.constantBool(a.name === b.name, this.freshName("player_eq"));
-    if (a.kind === "role" && b.kind === "role")
-      return this.game.constantBool(a.name === b.name, this.freshName("role_eq"));
-    if (a.kind === "alignment" && b.kind === "alignment")
-      return this.game.constantBool(a.value === b.value, this.freshName("alignment_eq"));
-    if (a.kind === "type" && b.kind === "type")
-      return this.game.constantBool(a.value === b.value, this.freshName("type_eq"));
+    if (a.kind === "player" && b.kind === "player") return this.game.constantBool(a.name === b.name);
+    if (a.kind === "role" && b.kind === "role") return this.game.constantBool(a.name === b.name);
+    if (a.kind === "alignment" && b.kind === "alignment") return this.game.constantBool(a.value === b.value);
+    if (a.kind === "type" && b.kind === "type") return this.game.constantBool(a.value === b.value);
     const setKinds = ["dynamicSet", "playerSet", "roleSet", "typeSet", "alignmentSet"];
     if (setKinds.includes(a.kind) && setKinds.includes(b.kind)) {
       const left = this.setElements(a, a.span),
@@ -738,40 +683,26 @@ class Compiler {
         ...this.subtractElements(left.elements, right.elements),
         ...this.subtractElements(right.elements, left.elements),
       ];
-      return this.game.not(
-        this.game.anyOf(
-          differences.map((entry) => entry.present),
-          this.freshName("set_difference"),
-        ),
-        this.freshName("set_equal"),
-      );
+      return this.game.not(this.game.anyOf(differences.map((entry) => entry.present)));
     }
     throw new DslError(`Cannot compare ${lhs.kind} with ${rhs.kind}`, span);
   }
 
   private compileMembership(lhs: DslValue, rhs: DslValue, span: Span): BoolLike {
     if (lhs.kind === "cardinality" && rhs.kind === "numberSet") {
-      return this.game.anyOf(
-        rhs.values.map((value) =>
-          this.game.boolSumEquals(lhs.literals, value, this.freshName(`cardinality_in_${value}`)),
-        ),
-        this.freshName("cardinality_in_set"),
-      );
+      return this.game.anyOf(rhs.values.map((value) => this.game.boolSumEquals(lhs.literals, value)));
     }
     if (lhs.kind === "playerRole" || lhs.kind === "playerType" || lhs.kind === "playerAlignment") {
       const lhsSet = this.setElements(lhs, lhs.span);
       const rhsSet = this.setElements(rhs, rhs.span);
       if (lhsSet.kind !== rhsSet.kind) throw new DslError(`'in' requires matching set types`, span);
-      return this.game.anyOf(
-        this.intersectElements(lhsSet.elements, rhsSet.elements).map((entry) => entry.present),
-        this.freshName("field_in_set"),
-      );
+      return this.game.anyOf(this.intersectElements(lhsSet.elements, rhsSet.elements).map((entry) => entry.present));
     }
     if (isSetAtom(lhs)) {
       const rhsSet = this.setElements(rhs, rhs.span);
       if (rhsSet.kind !== lhs.kind) throw new DslError(`'in' requires matching atom and set types`, span);
       const matches = rhsSet.elements.filter((entry) => sameAtom(entry.atom, lhs)).map((entry) => entry.present);
-      return this.game.anyOf(matches, this.freshName("in_set"));
+      return this.game.anyOf(matches);
     }
     throw new DslError(`'in' requires an atom on the left and a set on the right`, span);
   }
@@ -798,7 +729,7 @@ class Compiler {
       }
       return {
         kind: "bool",
-        value: this.game.boolSumEquals(literals, countVal.value, this.freshName(`role_count_${countVal.value}`)),
+        value: this.game.boolSumEquals(literals, countVal.value),
         span: node.span,
       };
     }
@@ -843,7 +774,7 @@ class Compiler {
       if (countVal.kind !== "number") throw new DslError(`malfunctions expects a number second`, countArg.span);
       return {
         kind: "bool",
-        value: this.game.malfunctionCountAt(timing, countVal.value, this.freshName(`malfunctions_${timing}`)),
+        value: this.game.malfunctionCountAt(timing, countVal.value),
         span: node.span,
       };
     }
@@ -859,7 +790,7 @@ class Compiler {
       if (role.kind !== "role") throw new DslError(`registers_as expected a role`, role.span);
       return {
         kind: "bool",
-        value: this.game.registersAsRole(player.name, role.name, this.freshName("registers_as"), this.ctx.timing),
+        value: this.game.registersAsRole(player.name, role.name, this.ctx.timing),
         span: node.span,
       };
     }
@@ -927,7 +858,7 @@ class Compiler {
       if (player.kind !== "player") throw new DslError(`lleech_host expected a player`, player.span);
       return {
         kind: "bool",
-        value: this.game.lleechHost(player.name, this.freshName("lleech_host")),
+        value: this.game.lleechHost(player.name),
         span: node.span,
       };
     }
@@ -937,9 +868,7 @@ class Compiler {
       if (countArg.name !== undefined) throw new DslError(`chef's first argument is positional`, countArg.span);
       const countVal = this.evalNode(countArg.value, env);
       if (countVal.kind !== "number") throw new DslError(`chef expects a number`, countArg.span);
-      const name = this.freshName(`chef_${countVal.value}`);
-      const bv = this.game.chefCount(countVal.value, name);
-      return { kind: "bool", value: bv, span: node.span };
+      return { kind: "bool", value: this.game.chefCount(countVal.value), span: node.span };
     }
     throw new DslError(`Unknown function '${node.name}'`, node.nameSpan);
   }
@@ -952,17 +881,13 @@ class Compiler {
         this.ctx.players.map((rightPlayer, rightIndex) => {
           const clockwise = (rightIndex - leftIndex + this.ctx.players.length) % this.ctx.players.length;
           const seatingDistance = Math.min(clockwise, this.ctx.players.length - clockwise);
-          return this.game.allOf(
-            [
-              this.game.characterAt(leftPlayer, leftRole, this.ctx.timing),
-              this.game.characterAt(rightPlayer, rightRole, this.ctx.timing),
-              this.game.constantBool(seatingDistance === distance, this.freshName(`distance_${distance}`)),
-            ],
-            this.freshName(`role_distance_${distance}`),
-          );
+          return this.game.allOf([
+            this.game.characterAt(leftPlayer, leftRole, this.ctx.timing),
+            this.game.characterAt(rightPlayer, rightRole, this.ctx.timing),
+            this.game.constantBool(seatingDistance === distance),
+          ]);
         }),
       ),
-      this.freshName(`roles_at_distance_${distance}`),
     );
   }
 
@@ -971,17 +896,11 @@ class Compiler {
       throw new DslError(`Chain length must be a positive integer`, { start: 0, end: 0 });
     const atLeastLength = this.hasCharacterTypeChain(characterType, length);
     if (length >= this.ctx.players.length) return atLeastLength;
-    return this.game.allOf(
-      [
-        atLeastLength,
-        this.game.not(this.hasCharacterTypeChain(characterType, length + 1), this.freshName("longer_chain_absent")),
-      ],
-      this.freshName(`${characterType}_chain_length_${length}`),
-    );
+    return this.game.allOf([atLeastLength, this.game.not(this.hasCharacterTypeChain(characterType, length + 1))]);
   }
 
   private hasCharacterTypeChain(characterType: CharacterType, length: number): BoolLike {
-    if (length > this.ctx.players.length) return this.game.constantBool(false, this.freshName("chain_too_long"));
+    if (length > this.ctx.players.length) return this.game.constantBool(false);
     return this.game.anyOf(
       this.ctx.players.map((_player, startIndex) =>
         this.game.allOf(
@@ -989,10 +908,8 @@ class Compiler {
             const player = this.ctx.players[(startIndex + offset) % this.ctx.players.length] as string;
             return this.game.hasCharacterTypeAt(player, characterType, this.ctx.timing);
           }),
-          this.freshName(`${characterType}_chain_${length}`),
         ),
       ),
-      this.freshName(`${characterType}_chain_at_least_${length}`),
     );
   }
 

@@ -4,7 +4,7 @@ export { World, KeyError, forcedRoleHolders } from "./world";
 export type { SolveReport } from "./solve";
 import { BooleanConstraints, BoolVar, lit, type BoolLike } from "./boolean";
 export { BoolVar, type BoolLike } from "./boolean";
-import { slug, keyOf, addMapValue } from "./keys";
+import { keyOf, addMapValue } from "./keys";
 import type { SatProblem } from "./sat";
 import { simplify } from "./simplify";
 import { select, constrainSelection, type ChoiceAction, type ChoiceWitness } from "./actions";
@@ -19,7 +19,7 @@ import {
   roleMaxCopies,
   roleName,
 } from "./core";
-import { type SatBackend, combinations, negate } from "./sat";
+import { type SatBackend, combinations } from "./sat";
 
 export { day, night, type Timing } from "./timing";
 import { night, timingOrder, type Timing } from "./timing";
@@ -31,7 +31,7 @@ export interface TimingQuery {
 }
 
 export type RedHerrings = ReadonlyMap<string, BoolVar>;
-export type DemonPredicate = (player: string, name: string) => BoolLike;
+export type DemonPredicate = (player: string) => BoolLike;
 
 export interface InfoClaimConstraint {
   readonly player: string;
@@ -148,7 +148,7 @@ export class BOTCModel extends BooleanConstraints {
 
     for (const player of this.players) {
       for (const role of this.characters.keys()) {
-        this.actual.set(this.actualKey(player, role), this.newBool(`${slug(player)}__actual__${slug(role)}`));
+        this.actual.set(this.actualKey(player, role), this.newBool());
       }
     }
     for (const player of this.players)
@@ -173,7 +173,7 @@ export class BOTCModel extends BooleanConstraints {
   }
 
   pitHagCreatedDemon(timing: Timing): BoolVar {
-    return this.anyOf(this.pitHagDemonCreations.get(timing) ?? [], `${timing}_pit_hag_created_demon`);
+    return this.anyOf(this.pitHagDemonCreations.get(timing) ?? []);
   }
 
   private decodeActions(model: ReadonlySet<number>): readonly ChoiceWitness[] {
@@ -204,7 +204,7 @@ export class BOTCModel extends BooleanConstraints {
     const key = this.timingPlayerKey(droisonTiming, player);
     let result = this.droisonedVars.get(key);
     if (result === undefined) {
-      result = this.newBool(`${slug(player)}__droisoned__${slug(droisonTiming)}`);
+      result = this.newBool();
       this.droisonedVars.set(key, result);
     }
     return result;
@@ -212,26 +212,21 @@ export class BOTCModel extends BooleanConstraints {
 
   poisoned(player: string, timing?: Timing): BoolVar {
     this.droisonTimingKeys.add(timing ?? DEFAULT_TIMING_KEY);
-    return this.flavorQueryVar(this.poisonQueryVars, player, timing, "poisoned");
+    return this.flavorQueryVar(this.poisonQueryVars, player, timing);
   }
 
   drunk(player: string, timing?: Timing): BoolVar {
     this.droisonTimingKeys.add(timing ?? DEFAULT_TIMING_KEY);
-    return this.flavorQueryVar(this.drunkQueryVars, player, timing, "drunk");
+    return this.flavorQueryVar(this.drunkQueryVars, player, timing);
   }
 
-  private flavorQueryVar(
-    vars: Map<string, BoolVar>,
-    player: string,
-    timing: Timing | undefined,
-    flavor: string,
-  ): BoolVar {
+  private flavorQueryVar(vars: Map<string, BoolVar>, player: string, timing: Timing | undefined): BoolVar {
     this.checkPlayer(player);
     const flavorTiming = timing ?? DEFAULT_TIMING_KEY;
     const key = this.timingPlayerKey(flavorTiming, player);
     let result = vars.get(key);
     if (result === undefined) {
-      result = this.newBool(`${slug(player)}__${flavor}__${slug(flavorTiming)}`);
+      result = this.newBool();
       vars.set(key, result);
     }
     return result;
@@ -241,7 +236,7 @@ export class BOTCModel extends BooleanConstraints {
     this.checkPlayer(player);
     let result = this.globalDrunkVars.get(player);
     if (result === undefined) {
-      result = this.newBool(`${slug(player)}__globally_drunk`);
+      result = this.newBool();
       this.globalDrunkVars.set(player, result);
     }
     return result;
@@ -333,15 +328,10 @@ export class BOTCModel extends BooleanConstraints {
     this.addImplication(this.actualIs(player, hiddenRole), this.roleInPlay(apparentRole).not());
   }
 
-  outsiderCountIs(
-    count: number,
-    options: { readonly players?: readonly string[]; readonly name?: string } = {},
-  ): BoolVar {
-    const players = options.players ?? this.players;
+  outsiderCountIs(count: number): BoolVar {
     return this.boolSumEquals(
-      players.map((player) => this.hasCharacterType(player, CharacterType.Outsider)),
+      this.players.map((player) => this.hasCharacterType(player, CharacterType.Outsider)),
       count,
-      options.name ?? `outsider_count_${count}`,
     );
   }
 
@@ -367,34 +357,27 @@ export class BOTCModel extends BooleanConstraints {
       readonly activeIf?: BoolLike | boolean;
       readonly activeByTiming?: readonly { readonly timing: Timing; readonly activeIf: BoolLike | boolean }[];
       readonly excludedPlayers?: readonly string[];
-      readonly sourceName?: string;
     } = {},
   ): void {
     this.assertBuilding();
     if (timings.length === 0) return;
-
-    const sourceName = options.sourceName ?? "persistent";
     const excludedPlayers = new Set(options.excludedPlayers ?? []);
     const candidates = this.players.filter((player) => !excludedPlayers.has(player));
-    const sourceTargets = new Map(
-      candidates.map((player) => [player, this.newBool(`${sourceName}_${player}_drunk_target`)] as const),
-    );
+    const sourceTargets = new Map(candidates.map((player) => [player, this.newBool()] as const));
     const targetVars = [...sourceTargets.values()];
     const activeByTiming = new Map(
       (options.activeByTiming ?? []).map((entry) => [
         entry.timing,
-        typeof entry.activeIf === "boolean"
-          ? this.constantBool(entry.activeIf, `${sourceName}_${entry.timing}_drunking_active`)
-          : entry.activeIf,
+        typeof entry.activeIf === "boolean" ? this.constantBool(entry.activeIf) : entry.activeIf,
       ]),
     );
     const active =
       options.activeIf === undefined
         ? activeByTiming.size === 0
-          ? this.constantBool(true, `${sourceName}_drunking_active`)
-          : this.anyOf([...activeByTiming.values()], `${sourceName}_drunking_active`)
+          ? this.constantBool(true)
+          : this.anyOf([...activeByTiming.values()])
         : typeof options.activeIf === "boolean"
-          ? this.constantBool(options.activeIf, `${sourceName}_drunking_active`)
+          ? this.constantBool(options.activeIf)
           : options.activeIf;
 
     constrainSelection(this, targetVars, 1, active);
@@ -404,10 +387,7 @@ export class BOTCModel extends BooleanConstraints {
       for (const player of this.players) {
         const sourceTarget = sourceTargets.get(player);
         if (sourceTarget === undefined) continue;
-        const activeTarget = this.allOf(
-          [activeAtTiming, sourceTarget],
-          `${sourceName}_${timing}_${player}_drunk_active_target`,
-        );
+        const activeTarget = this.allOf([activeAtTiming, sourceTarget]);
         this.registerDrunkSourceTarget(player, timing, activeTarget);
       }
     }
@@ -419,35 +399,21 @@ export class BOTCModel extends BooleanConstraints {
     timing: Timing,
     candidates: readonly string[],
     affectedTimings: readonly Timing[],
-    sourceName: string,
   ): BoolLike {
     const uniqueCandidates = [...new Set(candidates)];
     for (const player of uniqueCandidates) this.checkPlayer(player);
-    const active = this.newBool(`${sourceName}_active`);
-    const targets = uniqueCandidates.map(
-      (player) => [player, this.newBool(`${sourceName}_${slug(player)}_target`)] as const,
-    );
+    const active = this.newBool();
+    const targets = uniqueCandidates.map((player) => [player, this.newBool()] as const);
     const ownSourcesAtAbilityTiming: BoolLike[] = [];
     for (const affectedTiming of affectedTimings) {
       for (const [player, target] of targets) {
-        const activeTarget = this.allOf(
-          [active, target],
-          `${sourceName}_${affectedTiming}_${slug(player)}_active_target`,
-        );
+        const activeTarget = this.allOf([active, target]);
         this.registerDrunkSourceTarget(player, affectedTiming, activeTarget);
         if (affectedTiming === timing) ownSourcesAtAbilityTiming.push(activeTarget);
       }
     }
-    const preAbilityHealthy = this.soberAndHealthyBeforeOwnDrunking(
-      actor,
-      timing,
-      ownSourcesAtAbilityTiming,
-      `${sourceName}_actor_healthy_before_choice`,
-    );
-    const shouldBeActive = this.allOf(
-      [this.hasAbilityAt(actor, role, timing), preAbilityHealthy],
-      `${sourceName}_should_be_active`,
-    );
+    const preAbilityHealthy = this.soberAndHealthyBeforeOwnDrunking(actor, timing, ownSourcesAtAbilityTiming);
+    const shouldBeActive = this.allOf([this.hasAbilityAt(actor, role, timing), preAbilityHealthy]);
     this.equate(active, shouldBeActive);
     constrainSelection(
       this,
@@ -462,15 +428,12 @@ export class BOTCModel extends BooleanConstraints {
     options: {
       readonly excludedPlayers?: readonly string[];
       readonly activeIf?: BoolLike;
-      readonly sourceName?: string;
     } = {},
   ): void {
     this.assertBuilding();
     const excluded = new Set(options.excludedPlayers ?? []);
-    const sourceName = options.sourceName ?? "puzzlemaster";
     this.addOnePlayerDroisonSource(
       options.activeIf,
-      (player) => `${sourceName}_${slug(player)}_global_drunk`,
       (player, target) => {
         this.registerGlobalDrunkSourceTarget(player, target);
         addMapValue(this.puzzlemasterDrunkSourceTargetsByPlayer, player, target);
@@ -485,14 +448,9 @@ export class BOTCModel extends BooleanConstraints {
     this.checkRole(villageIdiotRole);
 
     const villageIdiotPlayers = this.players.map((player) => this.actualIs(player, villageIdiotRole));
-    const atLeastTwoVillageIdiots = this.anyOf(
-      combinations(villageIdiotPlayers, 2).map((pair, index) =>
-        this.allOf(pair, `village_idiot_pair_${index + 1}_in_play`),
-      ),
-      "at_least_two_village_idiots_in_play",
-    );
+    const atLeastTwoVillageIdiots = this.anyOf(combinations(villageIdiotPlayers, 2).map((pair) => this.allOf(pair)));
     const drunkPlayers = this.players.map((player) => {
-      const drunk = this.newBool(`village_idiot_${slug(player)}_global_drunk`);
+      const drunk = this.newBool();
       this.registerGlobalDrunkSourceTarget(player, drunk);
       this.addImplication(drunk, this.actualIs(player, villageIdiotRole));
       return drunk;
@@ -507,20 +465,19 @@ export class BOTCModel extends BooleanConstraints {
     addMapValue(this.globalDrunkSourceTargetsByPlayer, player, target);
   }
 
-  puzzlemasterDrunk(player: string, name: string): BoolVar {
+  puzzlemasterDrunk(player: string): BoolVar {
     this.checkPlayer(player);
     const sources = this.puzzlemasterDrunkSourceTargetsByPlayer.get(player) ?? [];
-    return this.anyOf(sources, name);
+    return this.anyOf(sources);
   }
 
-  addLleechHostChoice(options: { readonly role?: RoleRef; readonly sourceName?: string } = {}): void {
+  addLleechHostChoice(options: { readonly role?: RoleRef } = {}): void {
     this.assertBuilding();
     const role = roleName(options.role ?? "Lleech");
-    const sourceName = options.sourceName ?? "lleech_host";
     this.checkRole(role);
     const active = this.roleInPlay(role);
     const targets = this.players.map((player) => {
-      const target = this.newBool(`${sourceName}_${slug(player)}`);
+      const target = this.newBool();
       this.addImplication(target, active);
       this.addImplication(target, this.actualIs(player, role).not());
       addMapValue(this.lleechHostTargetsByPlayer, player, target);
@@ -529,9 +486,9 @@ export class BOTCModel extends BooleanConstraints {
     constrainSelection(this, targets, 1, active);
   }
 
-  lleechHost(player: string, name: string): BoolVar {
+  lleechHost(player: string): BoolVar {
     this.checkPlayer(player);
-    return this.anyOf(this.lleechHostTargetsByPlayer.get(player) ?? [], name);
+    return this.anyOf(this.lleechHostTargetsByPlayer.get(player) ?? []);
   }
 
   addLleechHostPoisoning(timings: readonly Timing[], options: { readonly role?: RoleRef } = {}): void {
@@ -559,25 +516,21 @@ export class BOTCModel extends BooleanConstraints {
     this.checkRole(roleRef);
     const excludedPlayers = new Set(options.excludedPlayers ?? []);
     for (const timing of timings) {
-      const active = this.activeRole(roleRef, `${timing}_${roleRef}_drunking`, options.activeIf);
+      const active = this.activeRole(roleRef, options.activeIf);
 
       for (const player of this.players) {
         if (excludedPlayers.has(player)) continue;
         const hasRole = this.hasAbilityAt(player, roleRef, timing);
-        this.registerDrunkSourceTarget(
-          player,
-          timing,
-          this.allOf([active, hasRole], `${timing}_${player}_${roleRef}_is_drunked_role`),
-        );
+        this.registerDrunkSourceTarget(player, timing, this.allOf([active, hasRole]));
       }
     }
   }
 
-  private activeRole(role: RoleRef, name: string, activeIf?: BoolLike | boolean): BoolVar {
+  private activeRole(role: RoleRef, activeIf?: BoolLike | boolean): BoolVar {
     const roleInPlay = this.roleInPlay(role);
     if (activeIf === undefined) return roleInPlay;
-    const condition = typeof activeIf === "boolean" ? this.constantBool(activeIf, `${name}_active_if`) : activeIf;
-    return this.allOf([roleInPlay, condition], `${name}_active`);
+    const condition = typeof activeIf === "boolean" ? this.constantBool(activeIf) : activeIf;
+    return this.allOf([roleInPlay, condition]);
   }
 
   addPoisonerEffect(
@@ -585,35 +538,25 @@ export class BOTCModel extends BooleanConstraints {
     options: { readonly poisonerRole?: RoleRef; readonly activeIf?: BoolLike | boolean } = {},
   ): void {
     this.assertBuilding();
-    const poisonTiming = timing;
     const poisonerRole = options.poisonerRole ?? "Poisoner";
-    const poisonerActive = this.activeRole(poisonerRole, `${poisonTiming}_${roleName(poisonerRole)}`, options.activeIf);
+    const poisonerActive = this.activeRole(poisonerRole, options.activeIf);
     const choiceTiming = timing.replace("day_", "night_") as Timing;
     const key = keyOf([roleName(poisonerRole), choiceTiming]);
     let targets = this.poisonerTargetsByNight.get(key);
     if (targets === undefined) {
-      targets = select(this, this.players, this.roleInPlay(poisonerRole), `${key}_poisoner_target`, 1);
+      targets = select(this, this.players, this.roleInPlay(poisonerRole), 1);
       this.poisonerTargetsByNight.set(key, targets);
     }
     this.registerActivePoisonSource(timing, poisonerActive);
     for (const [player, target] of targets)
-      this.registerPoisonSourceTarget(
-        player,
-        timing,
-        this.allOf([target, poisonerActive], `${timing}_${player}_poisoner_effect`),
-      );
+      this.registerPoisonSourceTarget(player, timing, this.allOf([target, poisonerActive]));
   }
 
-  addPersistentPoisonSource(
-    timings: readonly Timing[],
-    candidates: readonly string[],
-    activeIf: BoolLike,
-    sourceName: string,
-  ): void {
+  addPersistentPoisonSource(timings: readonly Timing[], candidates: readonly string[], activeIf: BoolLike): void {
     this.assertBuilding();
     const targets = candidates.map((player) => {
       this.checkPlayer(player);
-      const target = this.newBool(`${sourceName}_poisons_${slug(player)}`);
+      const target = this.newBool();
       this.addImplication(target, this.hasCharacterType(player, CharacterType.Townsfolk));
       for (const timing of timings) this.registerPoisonSourceTarget(player, timing, target);
       return target;
@@ -634,15 +577,11 @@ export class BOTCModel extends BooleanConstraints {
   ): void {
     this.assertBuilding();
     const widowRole = options.widowRole ?? "Widow";
-    const widowActive = this.activeRole(widowRole, roleName(widowRole), options.activeIf);
+    const widowActive = this.activeRole(widowRole, options.activeIf);
     if ((options.timings ?? []).length === 0) return;
-    this.addOnePlayerDroisonSource(
-      widowActive,
-      (player) => `${slug(roleName(widowRole))}_poisons_${slug(player)}`,
-      (player, target) => {
-        for (const timing of options.timings ?? []) this.registerPoisonSourceTarget(player, timing, target);
-      },
-    );
+    this.addOnePlayerDroisonSource(widowActive, (player, target) => {
+      for (const timing of options.timings ?? []) this.registerPoisonSourceTarget(player, timing, target);
+    });
     for (const timing of options.timings ?? []) {
       this.droisonTimingKeys.add(timing);
       this.registerActivePoisonSource(timing, widowActive);
@@ -656,14 +595,13 @@ export class BOTCModel extends BooleanConstraints {
 
   private addOnePlayerDroisonSource(
     activeIf: BoolLike | undefined,
-    targetName: (player: string) => string,
     registerTarget: (player: string, target: BoolVar) => void,
     excludedPlayers: ReadonlySet<string> = new Set(),
   ): void {
     this.assertBuilding();
     const candidates = this.players.filter((player) => !excludedPlayers.has(player));
     const targets = candidates.map((player) => {
-      const target = this.newBool(targetName(player));
+      const target = this.newBool();
       registerTarget(player, target);
       return target;
     });
@@ -698,7 +636,6 @@ export class BOTCModel extends BooleanConstraints {
       [...this.characters.entries()]
         .filter(([, character]) => roleAlignment(character) === Alignment.Evil)
         .map(([role]) => this.actualIs(player, role)),
-      `is_evil_${player}`,
     );
   }
 
@@ -708,7 +645,6 @@ export class BOTCModel extends BooleanConstraints {
       [...this.characters.entries()]
         .filter(([, character]) => roleAlignment(character) === Alignment.Good)
         .map(([role]) => this.actualIs(player, role)),
-      `is_good_${player}`,
     );
   }
 
@@ -717,14 +653,14 @@ export class BOTCModel extends BooleanConstraints {
     const key = this.timingPlayerKey(timing, player);
     let result = this.goodAtVars.get(key);
     if (result === undefined) {
-      result = this.newBool(`${slug(player)}_good_at_${timing}`);
+      result = this.newBool();
       this.goodAtVars.set(key, result);
     }
     return result;
   }
 
   isEvilAt(player: string, timing: Timing): BoolVar {
-    return this.not(this.isGoodAt(player, timing), `${slug(player)}_evil_at_${timing}`);
+    return this.not(this.isGoodAt(player, timing));
   }
 
   setGoodAt(player: string, timing: Timing, goodIf: BoolLike): void {
@@ -746,10 +682,10 @@ export class BOTCModel extends BooleanConstraints {
     for (const timing of timings) this.registerDrunkSourceTarget(player, timing, activeIf);
   }
 
-  addPoisonState(timing: Timing, targets: ReadonlyMap<string, BoolLike>, sourceName: string): void {
+  addPoisonState(timing: Timing, targets: ReadonlyMap<string, BoolLike>): void {
     this.assertBuilding();
     for (const player of targets.keys()) this.checkPlayer(player);
-    const active = this.anyOf([...targets.values()], `${sourceName}_active`);
+    const active = this.anyOf([...targets.values()]);
     this.droisonTimingKeys.add(timing);
     this.registerActivePoisonSource(timing, active);
     for (const [player, targeted] of targets) this.registerPoisonSourceTarget(player, timing, targeted);
@@ -765,7 +701,6 @@ export class BOTCModel extends BooleanConstraints {
       [...this.characters.entries()]
         .filter(([, character]) => roleCharacterType(character) === characterType)
         .map(([role]) => this.actualIs(player, role)),
-      `is_${characterType}_${player}`,
     );
   }
 
@@ -780,10 +715,7 @@ export class BOTCModel extends BooleanConstraints {
   roleInPlay(role: RoleRef): BoolVar {
     const roleRef = roleName(role);
     this.checkRole(roleRef);
-    return this.anyOf(
-      this.players.map((player) => this.actualIs(player, roleRef)),
-      `${roleRef}_in_play`,
-    );
+    return this.anyOf(this.players.map((player) => this.actualIs(player, roleRef)));
   }
 
   setRoleActiveAt(role: RoleRef, timing: Timing, activeIf: BoolLike): void {
@@ -808,7 +740,7 @@ export class BOTCModel extends BooleanConstraints {
     const key = this.abilityAtKey(roleTiming, player, roleRef);
     let result = this.abilityAtVars.get(key);
     if (result === undefined) {
-      result = this.newBool(`${player}_${roleRef}_${roleTiming}`);
+      result = this.newBool();
       this.abilityAtVars.set(key, result);
     }
     return result;
@@ -826,7 +758,7 @@ export class BOTCModel extends BooleanConstraints {
     this.assertBuilding();
     const roleRef = roleName(role);
     this.checkRole(roleRef);
-    const always = this.constantBool(true, `${slug(roleRef)}_ability_use_limit_active`);
+    const always = this.constantBool(true);
     for (const player of this.players) {
       this.addEnforcedAtMostN(
         this.abilityUses.filter((use) => use.player === player && use.role === roleRef).map((use) => use.activeIf),
@@ -836,14 +768,14 @@ export class BOTCModel extends BooleanConstraints {
     }
   }
 
-  abilityUsedBefore(player: string, role: RoleRef, timing: Timing, name: string): BoolVar {
+  abilityUsedBefore(player: string, role: RoleRef, timing: Timing): BoolVar {
     this.checkPlayer(player);
     const roleRef = roleName(role);
     this.checkRole(roleRef);
     const key = keyOf(["ability_used_before", player, roleRef, timing]);
     let query = this.abilityUsedBeforeQueries.get(key);
     if (query === undefined) {
-      query = { player, role: roleRef, timing, variable: this.newBool(name) };
+      query = { player, role: roleRef, timing, variable: this.newBool() };
       this.abilityUsedBeforeQueries.set(key, query);
     }
     return query.variable;
@@ -865,7 +797,7 @@ export class BOTCModel extends BooleanConstraints {
     this.abilityTargets.push({ actor, role: roleRef, target, timing, order, activeIf });
   }
 
-  abilityTargetedAt(actor: string, role: RoleRef, target: string, timing: Timing, name: string): BoolVar {
+  abilityTargetedAt(actor: string, role: RoleRef, target: string, timing: Timing): BoolVar {
     this.checkPlayer(actor);
     this.checkPlayer(target);
     const roleRef = roleName(role);
@@ -873,7 +805,7 @@ export class BOTCModel extends BooleanConstraints {
     const key = keyOf(["ability_target", actor, roleRef, target, timing]);
     let query = this.abilityTargetQueries.get(key);
     if (query === undefined) {
-      query = { actor, role: roleRef, target, timing, variable: this.newBool(name) };
+      query = { actor, role: roleRef, target, timing, variable: this.newBool() };
       this.abilityTargetQueries.set(key, query);
     }
     return query.variable;
@@ -896,12 +828,12 @@ export class BOTCModel extends BooleanConstraints {
     addMapValue(this.wakePreventionSources, keyOf(["wake_prevented", player, timing]), activeIf);
   }
 
-  wakePreventedAt(player: string, timing: Timing, name: string): BoolVar {
+  wakePreventedAt(player: string, timing: Timing): BoolVar {
     this.checkPlayer(player);
     const key = keyOf(["wake_prevented", player, timing]);
     let result = this.wakePreventionQueries.get(key);
     if (result === undefined) {
-      result = this.newBool(name);
+      result = this.newBool();
       this.wakePreventionQueries.set(key, result);
     }
     return result;
@@ -915,14 +847,14 @@ export class BOTCModel extends BooleanConstraints {
     addMapValue(this.conditionalWakeSources, keyOf(["conditional_wake", player, roleRef, timing]), activeIf);
   }
 
-  conditionalWakeAt(player: string, role: RoleRef, timing: Timing, name: string): BoolVar {
+  conditionalWakeAt(player: string, role: RoleRef, timing: Timing): BoolVar {
     this.checkPlayer(player);
     const roleRef = roleName(role);
     this.checkRole(roleRef);
     const key = keyOf(["conditional_wake", player, roleRef, timing]);
     let result = this.conditionalWakeQueries.get(key);
     if (result === undefined) {
-      result = this.newBool(name);
+      result = this.newBool();
       this.conditionalWakeQueries.set(key, result);
     }
     return result;
@@ -941,7 +873,6 @@ export class BOTCModel extends BooleanConstraints {
       [...this.characters]
         .filter(([, role]) => roleCharacterType(role) === type)
         .map(([role]) => this.characterAt(player, role, timing)),
-      `${player}_${type}_${timing}`,
     );
   }
 
@@ -960,23 +891,13 @@ export class BOTCModel extends BooleanConstraints {
     this.acquiredAbilities.push({ player, role: roleName(role), timing, active, sourceRole });
   }
 
-  replaceCharacter(
-    player: string,
-    role: RoleRef,
-    timing: Timing,
-    active: BoolLike = this.constantBool(true, "character_transition"),
-  ): BoolVar {
+  replaceCharacter(player: string, role: RoleRef, timing: Timing, active: BoolLike = this.constantBool(true)): BoolVar {
     this.assertBuilding();
     this.trace.replace({ player, character: roleName(role), timing, active, rule: "character-change" });
     return this.hasAbilityAt(player, role, timing);
   }
 
-  removeAbility(
-    player: string,
-    role: RoleRef,
-    timing: Timing,
-    active: BoolLike = this.constantBool(true, "ability_removal"),
-  ): BoolVar {
+  removeAbility(player: string, role: RoleRef, timing: Timing, active: BoolLike = this.constantBool(true)): BoolVar {
     this.assertBuilding();
     const roleRef = roleName(role);
     const ability = this.hasAbilityAt(player, roleRef, timing);
@@ -989,10 +910,7 @@ export class BOTCModel extends BooleanConstraints {
     const demonRoles = [...this.characters.entries()]
       .filter(([, character]) => roleCharacterType(character) === CharacterType.Demon)
       .map(([role]) => role);
-    return this.anyOf(
-      demonRoles.map((role) => this.hasAbilityAt(player, role, timing)),
-      `${player}_demon_at_${timing ?? DEFAULT_TIMING_KEY}`,
-    );
+    return this.anyOf(demonRoles.map((role) => this.hasAbilityAt(player, role, timing)));
   }
 
   isDroisonedAt(player: string, timing: Timing): BoolVar {
@@ -1001,16 +919,12 @@ export class BOTCModel extends BooleanConstraints {
       sources.push(this.characterAt(player, "Drunk", timing));
       if (this.characters.has("Hermit")) sources.push(this.characterAt(player, "Hermit", timing));
     }
-    return this.anyOf(sources, `${player}_droisoned_at_${timing}`);
+    return this.anyOf(sources);
   }
 
   soberAndHealthy(player: string, timing: Timing): BoolVar {
-    const timingName = timing;
-    const unhealthy = this.anyOf(
-      [this.isDroisonedAt(player, timing), this.noDashiiPoisonedAt(player, timing)],
-      `${player}_unhealthy_at_${timingName}`,
-    );
-    return this.not(unhealthy, `${player}_sober_healthy_at_${timingName}`);
+    const unhealthy = this.anyOf([this.isDroisonedAt(player, timing), this.noDashiiPoisonedAt(player, timing)]);
+    return this.not(unhealthy);
   }
 
   soberAndHealthyBeforeCharacterChange(player: string, timing: Timing): BoolVar {
@@ -1018,27 +932,18 @@ export class BOTCModel extends BooleanConstraints {
       .filter((role) => this.characters.has(role))
       .map((role) => this.characterBefore(player, role, timing));
     return this.not(
-      this.anyOf(
-        [
-          this.droisoned(player, timing),
-          this.globalDrunk(player),
-          this.noDashiiPoisonedAt(player, timing, { beforeCharacterChange: true }),
-          ...intrinsic,
-        ],
-        "unhealthy_before_character_change",
-      ),
-      "healthy_before_character_change",
+      this.anyOf([
+        this.droisoned(player, timing),
+        this.globalDrunk(player),
+        this.noDashiiPoisonedAt(player, timing, { beforeCharacterChange: true }),
+        ...intrinsic,
+      ]),
     );
   }
 
-  soberAndHealthyBeforeOwnDrunking(
-    player: string,
-    timing: Timing,
-    ownDrunkSources: readonly BoolLike[],
-    name: string,
-  ): BoolVar {
+  soberAndHealthyBeforeOwnDrunking(player: string, timing: Timing, ownDrunkSources: readonly BoolLike[]): BoolVar {
     this.checkPlayer(player);
-    const variable = this.newBool(name);
+    const variable = this.newBool();
     this.preDroisonHealthQueries.push({
       player,
       timing,
@@ -1049,14 +954,9 @@ export class BOTCModel extends BooleanConstraints {
     return variable;
   }
 
-  soberAndHealthyBeforeOwnPoisoning(
-    player: string,
-    timing: Timing,
-    ownPoisonSources: readonly BoolLike[],
-    name: string,
-  ): BoolVar {
+  soberAndHealthyBeforeOwnPoisoning(player: string, timing: Timing, ownPoisonSources: readonly BoolLike[]): BoolVar {
     this.checkPlayer(player);
-    const variable = this.newBool(name);
+    const variable = this.newBool();
     this.preDroisonHealthQueries.push({
       player,
       timing,
@@ -1072,7 +972,6 @@ export class BOTCModel extends BooleanConstraints {
     timing: Timing,
     affectedTimings: readonly Timing[],
     activeIf: BoolLike,
-    sourceName: string,
   ): {
     readonly active: BoolLike;
     readonly choiceActive: BoolLike;
@@ -1082,49 +981,36 @@ export class BOTCModel extends BooleanConstraints {
   } {
     const roleRef = roleName(role);
     this.checkRole(roleRef);
-    const active = this.newBool(`${sourceName}_active`);
-    const choiceActive = this.newBool(`${sourceName}_choice_active`);
-    const targets = select(this, this.players, choiceActive, sourceName, 1);
+    const active = this.newBool();
+    const choiceActive = this.newBool();
+    const targets = select(this, this.players, choiceActive, 1);
     const activeTargetsByTimingPlayer = new Map<string, BoolLike>();
     for (const affectedTiming of affectedTimings) {
       this.registerActivePoisonSource(affectedTiming, active);
       for (const [player, target] of targets) {
-        const activeTarget = this.allOf(
-          [active, target],
-          `${sourceName}_${affectedTiming}_${slug(player)}_active_target`,
-        );
+        const activeTarget = this.allOf([active, target]);
         activeTargetsByTimingPlayer.set(this.timingPlayerKey(affectedTiming, player), activeTarget);
         this.registerPoisonSourceTarget(player, affectedTiming, activeTarget);
       }
     }
     const healthyRoleHolders = this.players.map((player) =>
-      this.allOf(
-        [
-          this.hasAbilityAt(player, roleRef, timing),
-          this.soberAndHealthyBeforeOwnPoisoning(
-            player,
-            timing,
-            [activeTargetsByTimingPlayer.get(this.timingPlayerKey(timing, player))].filter(
-              (source): source is BoolLike => source !== undefined,
-            ),
-            `${sourceName}_${slug(player)}_healthy_before_own_poisoning`,
+      this.allOf([
+        this.hasAbilityAt(player, roleRef, timing),
+        this.soberAndHealthyBeforeOwnPoisoning(
+          player,
+          timing,
+          [activeTargetsByTimingPlayer.get(this.timingPlayerKey(timing, player))].filter(
+            (source): source is BoolLike => source !== undefined,
           ),
-        ],
-        `${sourceName}_${slug(player)}_healthy_role_holder`,
-      ),
-    );
-    const healthyRoleInPlay = this.anyOf(healthyRoleHolders, `${sourceName}_healthy_role_in_play`);
-    const shouldBeActive = this.allOf([healthyRoleInPlay, choiceActive], `${sourceName}_should_be_active`);
-    const shouldChoose = this.allOf(
-      [
-        this.anyOf(
-          this.players.map((player) => this.hasAbilityAt(player, roleRef, timing)),
-          `${sourceName}_role_in_play`,
         ),
-        activeIf,
-      ],
-      `${sourceName}_should_choose`,
+      ]),
     );
+    const healthyRoleInPlay = this.anyOf(healthyRoleHolders);
+    const shouldBeActive = this.allOf([healthyRoleInPlay, choiceActive]);
+    const shouldChoose = this.allOf([
+      this.anyOf(this.players.map((player) => this.hasAbilityAt(player, roleRef, timing))),
+      activeIf,
+    ]);
     this.equate(choiceActive, shouldChoose);
     this.equate(active, shouldBeActive);
     return {
@@ -1141,105 +1027,76 @@ export class BOTCModel extends BooleanConstraints {
     };
   }
 
-  registersAsEvil(player: string, name: string, timing = this.observationTiming ?? night(1)): BoolVar {
+  registersAsEvil(player: string, timing = this.observationTiming ?? night(1)): BoolVar {
     this.assertBuilding();
-    return this.registersAsAlignment(player, Alignment.Evil, name, timing);
+    return this.registersAsAlignment(player, Alignment.Evil, timing);
   }
 
-  registersAsGood(player: string, name: string, timing = this.observationTiming ?? night(1)): BoolVar {
+  registersAsGood(player: string, timing = this.observationTiming ?? night(1)): BoolVar {
     this.assertBuilding();
-    return this.registersAsAlignment(player, Alignment.Good, name, timing);
+    return this.registersAsAlignment(player, Alignment.Good, timing);
   }
 
-  registersAsCharacterType(
-    player: string,
-    type: CharacterType,
-    name: string,
-    timing = this.observationTiming ?? night(1),
-  ): BoolVar {
+  registersAsCharacterType(player: string, type: CharacterType, timing = this.observationTiming ?? night(1)): BoolVar {
     this.assertBuilding();
-    return this.registersAsCharacterTypeAt(player, type, timing, name);
+    return this.registersAsCharacterTypeAt(player, type, timing);
   }
 
-  private registration(
-    player: string,
-    timing: Timing,
-    name: string,
-    actual: BoolLike,
-    flexibleRoles: readonly string[],
-  ): BoolVar {
-    const result = this.newBool(name);
-    const flexibility = this.allOf(
-      [
-        this.anyOf(
-          flexibleRoles.map((role) => this.characterAt(player, role, timing)),
-          `${name}_flexible_character`,
-        ),
-        // The Hermit keeps its other Outsider abilities while it has the Drunk ability.
-        // External drunkenness or poison disables these abilities (Hermit oldid=2805).
-        this.anyOf(
-          [
-            this.soberAndHealthy(player, timing),
-            this.characters.has("Hermit") && this.characters.has("Drunk")
-              ? this.allOf(
-                  [
-                    this.characterAt(player, "Hermit", timing),
-                    this.droisoned(player, timing).not(),
-                    this.globalDrunk(player).not(),
-                    this.noDashiiPoisonedAt(player, timing).not(),
-                  ],
-                  `${name}_hermit_outsider_ability`,
-                )
-              : this.constantBool(false, "no_hermit_exception"),
-          ],
-          `${name}_registration_health`,
-        ),
-      ],
-      `${name}_registration_ability_active`,
-    );
-    this.addImplication(this.allOf([flexibility.not(), actual], `${name}_normal_positive`), result);
-    this.addImplication(
-      this.allOf([flexibility.not(), this.not(actual, `${name}_actual_false`)], `${name}_normal_negative`),
-      result.not(),
-    );
+  private registration(player: string, timing: Timing, actual: BoolLike, flexibleRoles: readonly string[]): BoolVar {
+    const result = this.newBool();
+    const flexibility = this.allOf([
+      this.anyOf(flexibleRoles.map((role) => this.characterAt(player, role, timing))),
+      // The Hermit keeps its other Outsider abilities while it has the Drunk ability.
+      // External drunkenness or poison disables these abilities (Hermit oldid=2805).
+      this.anyOf([
+        this.soberAndHealthy(player, timing),
+        this.characters.has("Hermit") && this.characters.has("Drunk")
+          ? this.allOf([
+              this.characterAt(player, "Hermit", timing),
+              this.droisoned(player, timing).not(),
+              this.globalDrunk(player).not(),
+              this.noDashiiPoisonedAt(player, timing).not(),
+            ])
+          : this.constantBool(false),
+      ]),
+    ]);
+    this.addImplication(this.allOf([flexibility.not(), actual]), result);
+    this.addImplication(this.allOf([flexibility.not(), this.not(actual)]), result.not());
     return result;
   }
 
-  registersAsCharacterTypeAt(player: string, type: CharacterType, timing: Timing, name: string): BoolVar {
+  registersAsCharacterTypeAt(player: string, type: CharacterType, timing: Timing): BoolVar {
     this.assertBuilding();
     return this.registration(
       player,
       timing,
-      name,
       this.hasCharacterTypeAt(player, type, timing),
       [...this.characters.keys()].filter((role) => this.roleCanFlexiblyRegisterAsType(role, type)),
     );
   }
 
-  registersAsRole(player: string, role: RoleRef, name: string, timing = this.observationTiming ?? night(1)): BoolVar {
+  registersAsRole(player: string, role: RoleRef, timing = this.observationTiming ?? night(1)): BoolVar {
     this.assertBuilding();
-    return this.registersAsRoleAt(player, role, timing, name);
+    return this.registersAsRoleAt(player, role, timing);
   }
 
-  registersAsRoleAt(player: string, role: RoleRef, timing: Timing, name: string): BoolVar {
+  registersAsRoleAt(player: string, role: RoleRef, timing: Timing): BoolVar {
     this.assertBuilding();
     const observed = roleName(role);
     this.checkRole(observed);
     return this.registration(
       player,
       timing,
-      name,
       this.characterAt(player, observed, timing),
       [...this.characters.keys()].filter((actual) => this.roleCanFlexiblyRegisterAsRole(actual, observed)),
     );
   }
 
-  registeredEvilCount(players: readonly string[], count: number, name: string): BoolVar {
+  registeredEvilCount(players: readonly string[], count: number): BoolVar {
     this.assertBuilding();
     return this.boolSumEquals(
-      players.map((player) => this.registersAsEvil(player, `${name}_${player}`)),
+      players.map((player) => this.registersAsEvil(player)),
       count,
-      name,
     );
   }
 
@@ -1253,7 +1110,7 @@ export class BOTCModel extends BooleanConstraints {
     const key = keyOf([fortuneTeller, roleName(fortuneTellerRole), ...players]);
     const cached = this.fortuneTellerRedHerringVars.get(key);
     if (cached !== undefined) return cached;
-    const entries = players.map((player) => [player, this.newBool(`${player}_fortune_teller_red_herring`)] as const);
+    const entries = players.map((player) => [player, this.newBool()] as const);
     const redHerrings = new Map(entries);
     this.addEnforcedExactlyN(
       entries.map(([, variable]) => variable),
@@ -1276,25 +1133,18 @@ export class BOTCModel extends BooleanConstraints {
   fortuneTellerYes(
     redHerrings: RedHerrings,
     players: readonly [string, string],
-    name: string,
-    isDemon: DemonPredicate = (player, predicateName) =>
-      this.registersAsCharacterType(player, CharacterType.Demon, predicateName),
+    isDemon: DemonPredicate = (player) => this.registersAsCharacterType(player, CharacterType.Demon),
   ): BoolVar {
     const checkedRedHerrings = players.map((player) => {
       const redHerring = redHerrings.get(player);
       if (redHerring === undefined) throw new KeyError(`No Fortune Teller red herring variable for ${player}.`);
       return redHerring;
     });
-    return this.anyOf([...players.map((player) => isDemon(player, `${name}_${player}`)), ...checkedRedHerrings], name);
+    return this.anyOf([...players.map((player) => isDemon(player)), ...checkedRedHerrings]);
   }
 
-  fortuneTellerNo(
-    redHerrings: RedHerrings,
-    players: readonly [string, string],
-    name: string,
-    isDemon?: DemonPredicate,
-  ): BoolVar {
-    return this.not(this.fortuneTellerYes(redHerrings, players, `${name}_yes`, isDemon), name);
+  fortuneTellerNo(redHerrings: RedHerrings, players: readonly [string, string], isDemon?: DemonPredicate): BoolVar {
+    return this.not(this.fortuneTellerYes(redHerrings, players, isDemon));
   }
 
   addTruthfulInfoClaim(
@@ -1321,37 +1171,24 @@ export class BOTCModel extends BooleanConstraints {
     this.assertBuilding();
     const roleRef = roleName(claim.role);
     const claimTiming = claim.timing;
-    const claimTimingName = claimTiming;
     const activeRole = this.hasAbilityAt(claim.player, roleRef, claimTiming);
     this.addImplication(
-      this.allOf(
-        [this.actualIs(claim.player, roleRef), this.isGoodAt(claim.player, claimTiming)],
-        "truthful_starting_character_report",
-      ),
-      this.anyOf(
-        [
-          activeRole,
-          ...["Drunk", "Marionette"]
-            .filter((role) => this.characters.has(role))
-            .map((role) => this.characterAt(claim.player, role, claimTiming)),
-        ],
-        "possesses_or_believes_reported_ability",
-      ),
+      this.allOf([this.actualIs(claim.player, roleRef), this.isGoodAt(claim.player, claimTiming)]),
+      this.anyOf([
+        activeRole,
+        ...["Drunk", "Marionette"]
+          .filter((role) => this.characters.has(role))
+          .map((role) => this.characterAt(claim.player, role, claimTiming)),
+      ]),
     );
     const healthy = this.soberAndHealthy(claim.player, claimTiming);
     const honest = this.hasAlignmentOverrideAt(claim.player, claimTiming)
       ? this.isGoodAt(claim.player, claimTiming)
       : undefined;
-    const activeHealthy = this.allOf(
-      honest === undefined ? [activeRole, healthy] : [activeRole, healthy, honest],
-      honest === undefined
-        ? `${claim.player}_${roleRef}_${claimTimingName}_sober_healthy_claim`
-        : `${claim.player}_${roleRef}_${claimTimingName}_sober_healthy_honest_claim`,
-    );
+    const activeHealthy = this.allOf(honest === undefined ? [activeRole, healthy] : [activeRole, healthy, honest]);
     const vortoxAffected = this.infoClaimAffectedByVortox(roleRef) || (claim.vortoxAffected ?? false);
     this.recordInfoMalfunctions(
       claim.player,
-      roleRef,
       claimTiming,
       activeRole,
       honest,
@@ -1365,17 +1202,11 @@ export class BOTCModel extends BooleanConstraints {
       return;
     }
 
-    const activeVortox = this.roleSoberAndHealthyAt("Vortox", claimTiming, `${claim.player}_${roleRef}_vortox`);
+    const activeVortox = this.roleSoberAndHealthyAt("Vortox", claimTiming);
+    this.addImplication(this.allOf([activeHealthy, activeVortox.not()]), claim.learned);
     this.addImplication(
-      this.allOf([activeHealthy, activeVortox.not()], `${claim.player}_${roleRef}_${claimTimingName}_normal`),
-      claim.learned,
-    );
-    this.addImplication(
-      this.allOf(
-        honest === undefined ? [activeRole, activeVortox] : [activeRole, honest, activeVortox],
-        `${claim.player}_${roleRef}_${claimTimingName}_vortox`,
-      ),
-      this.not(claim.learned, `${claim.player}_${roleRef}_${claimTimingName}_vortox_false`),
+      this.allOf(honest === undefined ? [activeRole, activeVortox] : [activeRole, honest, activeVortox]),
+      this.not(claim.learned),
     );
   }
 
@@ -1395,12 +1226,10 @@ export class BOTCModel extends BooleanConstraints {
     timing: Timing,
     options: { readonly noDashiiRole?: RoleRef; readonly beforeCharacterChange?: boolean } = {},
   ): BoolVar {
-    const timingName = timing;
     const players = this.players;
     const noDashiiRole = options.noDashiiRole ?? "No Dashii";
     this.checkPlayer(player);
-    if (!this.characters.has(roleName(noDashiiRole)))
-      return this.constantBool(false, `${player}_no_no_dashii_${timingName}`);
+    if (!this.characters.has(roleName(noDashiiRole))) return this.constantBool(false);
     return this.anyOf(
       players.flatMap((demon) => [
         this.closestTownfolkInDirectionIs(
@@ -1422,7 +1251,6 @@ export class BOTCModel extends BooleanConstraints {
           options.beforeCharacterChange,
         ),
       ]),
-      `${player}_poisoned_by_no_dashii_${timingName}`,
     );
   }
 
@@ -1439,27 +1267,18 @@ export class BOTCModel extends BooleanConstraints {
     const interval = timing.startsWith("night_") && round > 1 ? [`day_${round - 1}`, timing] : [timing];
     return this.players
       .filter((player) => player !== observer)
-      .map((player) =>
-        this.anyOf(
-          interval.flatMap((when) => this.malfunctions.get(when)?.get(player) ?? []),
-          `${timing}_${player}_abnormal`,
-        ),
-      );
+      .map((player) => this.anyOf(interval.flatMap((when) => this.malfunctions.get(when)?.get(player) ?? [])));
   }
 
-  malfunctionCountAt(timing: Timing, count: number, name: string, observer?: string): BoolVar {
-    const variable = this.newBool(name);
+  malfunctionCountAt(timing: Timing, count: number, observer?: string): BoolVar {
+    const variable = this.newBool();
     this.malfunctionQueries.push({ timing, count, observer, variable });
     return variable;
   }
 
   private applyMalfunctionConstraints(): void {
     for (const query of this.malfunctionQueries) {
-      const count = this.boolSumEquals(
-        this.infoMalfunctions(query.timing, query.observer),
-        query.count,
-        "abnormal_player_count",
-      );
+      const count = this.boolSumEquals(this.infoMalfunctions(query.timing, query.observer), query.count);
       this.equate(query.variable, count);
     }
   }
@@ -1479,7 +1298,7 @@ export class BOTCModel extends BooleanConstraints {
 
   sitsNextToEvil(player: string): BoolVar {
     const [left, right] = this.neighbors(player);
-    return this.anyOf([this.isEvil(left), this.isEvil(right)], `${player}_sits_next_to_evil`);
+    return this.anyOf([this.isEvil(left), this.isEvil(right)]);
   }
 
   /** Complete the source sets once. Each solver call uses the same fixed set of constraints. */
@@ -1614,12 +1433,11 @@ export class BOTCModel extends BooleanConstraints {
     return keyOf(["role_at", timing, player, role]);
   }
 
-  private registersAsAlignment(player: string, alignment: Alignment, name: string, timing: Timing): BoolVar {
+  private registersAsAlignment(player: string, alignment: Alignment, timing: Timing): BoolVar {
     this.assertBuilding();
     return this.registration(
       player,
       timing,
-      name,
       alignment === Alignment.Good ? this.isGoodAt(player, timing) : this.isEvilAt(player, timing),
       [...this.characters.keys()].filter((role) => this.roleCanFlexiblyRegisterAsAlignment(role)),
     );
@@ -1673,13 +1491,12 @@ export class BOTCModel extends BooleanConstraints {
     timing: Timing,
     beforeCharacterChange = false,
   ): BoolVar {
-    const timingName = timing;
     const demonIndex = players.indexOf(demon);
     const targetIndex = players.indexOf(target);
     const distance =
       (direction === 1 ? targetIndex - demonIndex + players.length : demonIndex - targetIndex + players.length) %
       players.length;
-    if (distance <= 0) return this.constantBool(false, `${demon}_${target}_not_in_direction_${direction}`);
+    if (distance <= 0) return this.constantBool(false);
     const between = Array.from({ length: distance - 1 }, (_ignored, offset) => {
       const index = (demonIndex + direction * (offset + 1) + players.length) % players.length;
       return players[index] as string;
@@ -1690,24 +1507,19 @@ export class BOTCModel extends BooleanConstraints {
             [...this.characters]
               .filter(([, role]) => roleCharacterType(role) === CharacterType.Townsfolk)
               .map(([role]) => this.characterBefore(player, role, timing)),
-            `${player}_townsfolk_before_${timing}`,
           )
         : this.hasCharacterTypeAt(player, CharacterType.Townsfolk, timing);
-    return this.allOf(
-      [
-        beforeCharacterChange
-          ? this.characterBefore(demon, noDashiiRole, timing)
-          : this.hasAbilityAt(demon, noDashiiRole, timing),
-        townsfolk(target),
-        ...between.map((betweenPlayer) => townsfolk(betweenPlayer).not()),
-      ],
-      `${target}_closest_townsfolk_${direction}_of_${demon}_${timingName}`,
-    );
+    return this.allOf([
+      beforeCharacterChange
+        ? this.characterBefore(demon, noDashiiRole, timing)
+        : this.hasAbilityAt(demon, noDashiiRole, timing),
+      townsfolk(target),
+      ...between.map((betweenPlayer) => townsfolk(betweenPlayer).not()),
+    ]);
   }
 
   private recordInfoMalfunctions(
     player: string,
-    role: string,
     timing: Timing,
     activeRole: BoolVar,
     honest: BoolVar | undefined,
@@ -1716,68 +1528,33 @@ export class BOTCModel extends BooleanConstraints {
     registrationIndependentInfo?: BoolLike,
   ): void {
     this.assertBuilding();
-    const timingName = timing;
     const honesty = honest === undefined ? [] : [honest];
-    const falseInfo = this.not(
-      registrationIndependentInfo ?? reportedInfo,
-      `${player}_${role}_${timingName}_reported_info_false`,
-    );
+    const falseInfo = this.not(registrationIndependentInfo ?? reportedInfo);
     const actualDrunkUsingClaimedAbility =
       this.characters.has("Drunk") && this.characters.has("Mathematician")
         ? this.actualIs(player, "Drunk")
-        : this.constantBool(false, `${player}_${role}_${timingName}_no_mathematician_drunk_jinx`);
+        : this.constantBool(false);
     const causes: BoolVar[] = [
-      this.allOf(
-        [activeRole, ...honesty, this.isDroisonedAt(player, timing), falseInfo],
-        `${player}_${role}_${timingName}_droison_malfunction`,
-      ),
-      this.allOf(
-        [activeRole, ...honesty, this.noDashiiPoisonedAt(player, timing), falseInfo],
-        `${player}_${role}_${timingName}_nodashii_malfunction`,
-      ),
-      this.allOf(
-        [...honesty, actualDrunkUsingClaimedAbility, falseInfo],
-        `${player}_${role}_${timingName}_drunk_role_malfunction`,
-      ),
+      this.allOf([activeRole, ...honesty, this.isDroisonedAt(player, timing), falseInfo]),
+      this.allOf([activeRole, ...honesty, this.noDashiiPoisonedAt(player, timing), falseInfo]),
+      this.allOf([...honesty, actualDrunkUsingClaimedAbility, falseInfo]),
     ];
     if (registrationIndependentInfo !== undefined) {
-      causes.push(
-        this.allOf(
-          [
-            activeRole,
-            ...honesty,
-            reportedInfo,
-            this.not(
-              registrationIndependentInfo,
-              `${player}_${role}_${timingName}_registration_independent_info_false`,
-            ),
-          ],
-          `${player}_${role}_${timingName}_registration_malfunction`,
-        ),
-      );
+      causes.push(this.allOf([activeRole, ...honesty, reportedInfo, this.not(registrationIndependentInfo)]));
     }
     if (vortoxAffected && this.characters.has(roleName("Vortox"))) {
-      causes.push(
-        this.allOf(
-          [activeRole, ...honesty, this.roleSoberAndHealthyAt("Vortox", timing, `${player}_${role}_vortox`), falseInfo],
-          `${player}_${role}_${timingName}_vortox_malfunction`,
-        ),
-      );
+      causes.push(this.allOf([activeRole, ...honesty, this.roleSoberAndHealthyAt("Vortox", timing), falseInfo]));
     }
-    const malfunction = this.anyOf(causes, `${player}_${role}_${timingName}_info_malfunction`);
+    const malfunction = this.anyOf(causes);
     this.recordAbilityMalfunction(player, timing, malfunction);
   }
 
-  roleSoberAndHealthyAt(role: RoleRef, timing: Timing, name: string): BoolVar {
+  roleSoberAndHealthyAt(role: RoleRef, timing: Timing): BoolVar {
     const roleRef = roleName(role);
     return this.anyOf(
       this.players.map((player) =>
-        this.allOf(
-          [this.hasAbilityAt(player, roleRef, timing), this.soberAndHealthy(player, timing)],
-          `${name}_${player}_${timing}_sober_healthy`,
-        ),
+        this.allOf([this.hasAbilityAt(player, roleRef, timing), this.soberAndHealthy(player, timing)]),
       ),
-      `${name}_${timing}_sober_healthy_in_play`,
     );
   }
 
@@ -1792,26 +1569,20 @@ export class BOTCModel extends BooleanConstraints {
         .map((ability) =>
           ability.sourceRole === undefined
             ? ability.active
-            : this.allOf(
-                [
-                  ability.active,
-                  this.characterAt(player, ability.sourceRole, timing),
-                  this.trace.retainedThrough(player, ability.sourceRole, ability.timing, timing),
-                ],
-                "retains_acquired_ability",
-              ),
+            : this.allOf([
+                ability.active,
+                this.characterAt(player, ability.sourceRole, timing),
+                this.trace.retainedThrough(player, ability.sourceRole, ability.timing, timing),
+              ]),
         );
       const removals = [...this.abilityRemovals.entries()].flatMap(([removalKey, sources]) => {
         const [, when, who, what] = removalKey.split("\u0000") as [string, Timing, string, string];
         return who === player && what === role && timingOrder(when) <= timingOrder(timing) ? sources : [];
       });
-      const state = this.allOf(
-        [
-          this.anyOf([this.characterAt(player, role, timing), ...acquired], "possesses_ability"),
-          this.anyOf(removals, "ability_removed").not(),
-        ],
-        "ability_at",
-      );
+      const state = this.allOf([
+        this.anyOf([this.characterAt(player, role, timing), ...acquired]),
+        this.anyOf(removals).not(),
+      ]);
       this.equate(roleAt, state);
     }
   }
@@ -1882,11 +1653,8 @@ export class BOTCModel extends BooleanConstraints {
         unhealthySources.push(this.actualIs(query.player, "Drunk"));
         if (this.characters.has("Hermit")) unhealthySources.push(this.actualIs(query.player, "Hermit"));
       }
-      const unhealthy = this.anyOf(
-        unhealthySources,
-        `${query.player}_unhealthy_before_own_drunking_at_${query.timing}`,
-      );
-      const healthy = this.not(unhealthy, `${query.player}_healthy_before_own_drunking_at_${query.timing}`);
+      const unhealthy = this.anyOf(unhealthySources);
+      const healthy = this.not(unhealthy);
       return [query.variable, healthy] as const;
     });
   }
@@ -1898,12 +1666,9 @@ export class BOTCModel extends BooleanConstraints {
       .reduce((total, role) => total + roleMaxCopies(role), 0);
     for (let count = 1; count <= maxOutsiders; count += 1) {
       const timing = `night_${count}` as Timing;
-      const xaanPoisoning = this.allOf(
-        [this.roleActiveAt("Xaan", timing), this.outsiderCountIs(count, { name: `xaan_${count}_outsiders` })],
-        `xaan_${count}_outsiders_poisoning`,
-      );
+      const xaanPoisoning = this.allOf([this.roleActiveAt("Xaan", timing), this.outsiderCountIs(count)]);
       for (const player of this.players) {
-        const poisoned = this.allOf([xaanPoisoning, this.isTownsfolk(player)], `${timing}_${player}_xaan_poisoned`);
+        const poisoned = this.allOf([xaanPoisoning, this.isTownsfolk(player)]);
         this.registerPoisonOverride(player, timing, poisoned);
       }
     }
@@ -1921,7 +1686,7 @@ export class BOTCModel extends BooleanConstraints {
       const activeSources = this.activePoisonSourcesByTiming.get(timing) ?? [];
       const cappedPoisonedPlayers = this.players.map((player) => {
         const sourceTargets = this.poisonSourceTargetsByTimingPlayer.get(this.timingPlayerKey(timing, player)) ?? [];
-        return this.anyOf(sourceTargets, `${timing}_${player}_capacity_counted_poison`);
+        return this.anyOf(sourceTargets);
       });
       this.addCountAtMostCount(cappedPoisonedPlayers, activeSources);
     }

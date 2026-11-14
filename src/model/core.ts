@@ -17,7 +17,7 @@ export enum StatusEffect {
 }
 
 export interface WakeRule {
-  wakes(game: BOTCModel, player: string, timing: Timing, name: string): BoolLike;
+  wakes(game: BOTCModel, player: string, timing: Timing): BoolLike;
 }
 
 export interface RoleClass {

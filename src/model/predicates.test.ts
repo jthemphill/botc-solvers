@@ -1,6 +1,6 @@
 import { day } from "./model";
 import { beforeAll, describe, expect, test } from "bun:test";
-import { Alignment, CharacterType } from "./core";
+import { Alignment } from "./core";
 import { formatSolution, forcedRole } from "./display";
 import { BOTCModel } from "./model";
 import {
@@ -43,7 +43,7 @@ import {
   applyClaims,
   script,
 } from "./characters";
-import { chefCountRegistersAs, drunkBetweenTwoTownsfolk, registersAsRoleAmong } from "./predicates";
+import { chefCountRegistersAs, registersAsRoleAmong } from "./predicates";
 import { World, night, type Timing } from "./model";
 import { KissatBackend, type SatBackend } from "./sat";
 import { ROLE_CLASSES } from "./roleRegistry";
@@ -195,7 +195,7 @@ describe("predicates and helpers", () => {
     drunk.fixActual("B", Imp);
     drunk.fixActual("C", Chef);
     applyClaims(drunk, [new Empath({ name: "A", count: 0 })]);
-    drunk.addTruth(drunk.malfunctionCountAt(night(1), 1, "drunk_math_one"));
+    drunk.addTruth(drunk.malfunctionCountAt(night(1), 1));
     expect(await drunk.solveAll({ limit: 1 })).toHaveLength(1);
 
     const sober = new BOTCModel(["A", "B", "C"], { characters: script(Imp, Drunk, Empath), backend });
@@ -212,7 +212,7 @@ describe("predicates and helpers", () => {
     game.fixActual("B", Imp);
     game.fixActual("C", Chef);
     game.addTruth(game.isDroisonedAt("A", night(1)));
-    game.addTruth(game.registersAsEvil("A", "hermit_registers_evil"));
+    game.addTruth(game.registersAsEvil("A"));
     expect(await game.solveAll({ limit: 1 })).toHaveLength(1);
   });
 
@@ -226,7 +226,7 @@ describe("predicates and helpers", () => {
     trueInfo.fixActual("C", Witch);
     trueInfo.fixActual("D", Chef);
     trueInfo.addTruthfulInfoClaim("B", Seamstress, trueInfo.actualIs("C", Witch), { timing: night(1) });
-    trueInfo.addTruth(trueInfo.malfunctionCountAt(night(1), 0, "math_zero"));
+    trueInfo.addTruth(trueInfo.malfunctionCountAt(night(1), 0));
     expect(await trueInfo.solveAll({ limit: 1 })).toHaveLength(1);
 
     const falseInfo = new BOTCModel(["A", "B", "C", "D"], {
@@ -238,7 +238,7 @@ describe("predicates and helpers", () => {
     falseInfo.fixActual("C", Witch);
     falseInfo.fixActual("D", Chef);
     falseInfo.addTruthfulInfoClaim("B", Seamstress, falseInfo.actualIs("D", Witch), { timing: night(1) });
-    falseInfo.addTruth(falseInfo.malfunctionCountAt(night(1), 1, "math_one"));
+    falseInfo.addTruth(falseInfo.malfunctionCountAt(night(1), 1));
     expect(await falseInfo.solveAll({ limit: 1 })).toHaveLength(1);
   });
 
@@ -311,7 +311,7 @@ describe("predicates and helpers", () => {
     const spy = new BOTCModel(["A", "B"], { characters: REGISTRATION_CHARACTERS, backend });
     spy.fixActual("A", "Spy");
     spy.fixActual("B", "Imp");
-    spy.addTruth(spy.registersAsRole("A", "Drunk", "librarian"));
+    spy.addTruth(spy.registersAsRole("A", "Drunk"));
     spy.addFalse(spy.roleInPlay("Drunk"));
     expect((await spy.solveAll())[0]?.holder("Spy")).toBe("A");
 
@@ -319,19 +319,14 @@ describe("predicates and helpers", () => {
     recluse.fixActual("A", "Recluse");
     recluse.fixActual("B", "Chef");
     recluse.fixActual("C", "Librarian");
-    recluse.addTruth(registersAsRoleAmong(recluse, ["A", "B"], "Imp", "investigator"));
+    recluse.addTruth(registersAsRoleAmong(recluse, ["A", "B"], "Imp"));
     recluse.addFalse(recluse.roleInPlay("Imp"));
     expect((await recluse.solveAll())[0]?.holder("Recluse")).toBe("A");
 
     const dedup = new BOTCModel(["A", "B"], { characters: REGISTRATION_CHARACTERS, backend });
     dedup.fixActual("A", "Spy");
     dedup.fixActual("B", "Imp");
-    dedup.addTruth(
-      dedup.anyOf(
-        [dedup.registersAsRole("A", "Drunk", "librarian"), dedup.registersAsRole("A", "Chef", "washerwoman")],
-        "at_least_one_registration_choice",
-      ),
-    );
+    dedup.addTruth(dedup.anyOf([dedup.registersAsRole("A", "Drunk"), dedup.registersAsRole("A", "Chef")]));
     expect(await dedup.solveAll()).toHaveLength(1);
   });
 
@@ -357,7 +352,7 @@ describe("predicates and helpers", () => {
     game.fixActual("Juggler", "Juggler");
     game.fixActual("Spy", "Spy");
     game.fixActual("Demon", "Imp");
-    game.addTruth(Juggler.learnsCorrectCount(game, { Spy: "Drunk", Demon: "Imp" }, 2, "juggler"));
+    game.addTruth(Juggler.learnsCorrectCount(game, { Spy: "Drunk", Demon: "Imp" }, 2));
 
     expect(await game.solveAll()).toHaveLength(1);
   });
@@ -388,7 +383,7 @@ describe("predicates and helpers", () => {
     game.fixActual("You", "Chef");
     game.fixActual("Aoife", "Spy");
     game.fixActual("Tim", "Drunk");
-    game.addTruth(chefCountRegistersAs(game, 1, "chef"));
+    game.addTruth(chefCountRegistersAs(game, 1));
 
     expect(await game.solveAll()).toHaveLength(1);
   });
@@ -401,7 +396,7 @@ describe("predicates and helpers", () => {
     game.fixActual("A", Investigator);
     game.fixActual("B", Legion);
     game.fixActual("C", Legion);
-    game.addTruth(Investigator.learnsRoleAmong(game, ["B", "C"], Spy, "investigator"));
+    game.addTruth(Investigator.learnsRoleAmong(game, ["B", "C"], Spy));
 
     expect(await game.solveAll()).toHaveLength(1);
   });
@@ -537,8 +532,8 @@ describe("predicates and helpers", () => {
     game.fixActual("B", ScarletWoman);
     game.fixActual("C", Chef);
     game.fixActual("D", Empath);
-    game.addTruth(Chef.learnsCount(game, 1, "chef"));
-    game.addTruth(Empath.learnsCount(game, "D", 1, "empath"));
+    game.addTruth(Chef.learnsCount(game, 1));
+    game.addTruth(Empath.learnsCount(game, "D", 1));
     expect(await game.solveAll()).toHaveLength(1);
 
     const clockmakerScript = script(Imp, ScarletWoman, Baron, Clockmaker, Chef);
@@ -551,7 +546,7 @@ describe("predicates and helpers", () => {
     nearestTwo.fixActual("Minion A", ScarletWoman);
     nearestTwo.fixActual("Minion B", Baron);
     nearestTwo.fixActual("Clockmaker", Clockmaker);
-    nearestTwo.addTruth(Clockmaker.learnsDemonMinionDistance(nearestTwo, 2, "clockmaker_two"));
+    nearestTwo.addTruth(Clockmaker.learnsDemonMinionDistance(nearestTwo, 2));
     expect(await nearestTwo.solveAll({ limit: 1 })).toHaveLength(1);
 
     const closerMinion = new BOTCModel(["Demon", "Minion A", "Townsfolk", "Minion B", "Clockmaker"], {
@@ -563,7 +558,7 @@ describe("predicates and helpers", () => {
     closerMinion.fixActual("Townsfolk", Chef);
     closerMinion.fixActual("Minion B", Baron);
     closerMinion.fixActual("Clockmaker", Clockmaker);
-    closerMinion.addTruth(Clockmaker.learnsDemonMinionDistance(closerMinion, 2, "clockmaker_two"));
+    closerMinion.addTruth(Clockmaker.learnsDemonMinionDistance(closerMinion, 2));
     expect(await closerMinion.solveAll({ limit: 1 })).toEqual([]);
 
     const claims = [

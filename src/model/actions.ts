@@ -24,10 +24,9 @@ export function select(
   game: BooleanConstraints,
   candidates: readonly string[],
   active: BoolLike,
-  name: string,
   count: number,
 ): ReadonlyMap<string, BoolVar> {
-  const choices = new Map(candidates.map((candidate) => [candidate, game.newBool(`${name}_${candidate}`)]));
+  const choices = new Map(candidates.map((candidate) => [candidate, game.newBool()]));
   constrainSelection(game, [...choices.values()], count, active);
   return choices;
 }
@@ -38,13 +37,7 @@ export function choose(
   action: Omit<ChoiceAction, "choices">,
   candidates: readonly string[],
 ): ChoiceAction {
-  const choices = select(
-    game,
-    candidates,
-    action.active,
-    `${action.rule}_${action.actor}_${action.timing}`,
-    action.count,
-  );
+  const choices = select(game, candidates, action.active, action.count);
   const result = { ...action, choices };
   game.registerChoiceAction(result);
   return result;

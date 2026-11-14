@@ -12,7 +12,7 @@ test("shared selection requires one active target and no inactive targets", asyn
   for (const active of [false, true])
     for (let mask = 0; mask < 8; mask += 1) {
       const game = new BooleanConstraints();
-      const targets = select(game, ["A", "B", "C"], game.constantBool(active, "active"), "target", 1);
+      const targets = select(game, ["A", "B", "C"], game.constantBool(active), 1);
       [...targets.values()].forEach((target, index) => game.addTruth(mask & (1 << index) ? target : target.not()));
       const selected = [0, 1, 2].filter((bit) => (mask & (1 << bit)) !== 0).length;
       expect((await backend.solve(game.finalize())).sat).toBe(selected === (active ? 1 : 0));
@@ -21,7 +21,7 @@ test("shared selection requires one active target and no inactive targets", asyn
 
 test("constraint snapshots retain nested origins and reject later writes", () => {
   const game = new BooleanConstraints();
-  const value = game.newBool("value");
+  const value = game.newBool();
   game.withProvenance({ kind: "fact", id: "outer" }, () => {
     game.withProvenance({ kind: "rule", id: "inner" }, () => game.addTruth(value));
     game.addFalse(value);
@@ -40,7 +40,7 @@ test("finalized clauses stay immutable and do not share the caller's array", () 
     }
   }
   const game = new Constraints();
-  const variable = game.newBool("input");
+  const variable = game.newBool();
   const input = [variable.lit];
   game.addInput(input);
   input[0] = variable.not();
@@ -57,8 +57,8 @@ test("reified counts agree with arithmetic in both directions", async () => {
   for (const inputs of [[], [1], [1, 2, 3, 4], [1, -2, 1, 3, -3, 2, 1]]) {
     for (let count = -1; count <= inputs.length + 1; count += 1) {
       const game = new BooleanConstraints();
-      const variables = Array.from({ length: 4 }, (_, i) => game.newBool(`input_${i}`));
-      const result = game.boolSumEquals(inputs, count, "count");
+      const variables = Array.from({ length: 4 }, (_) => game.newBool());
+      const result = game.boolSumEquals(inputs, count);
       const problem = game.finalize();
       for (let mask = 0; mask < 16; mask += 1) {
         const value = (literal: number) => Boolean(mask & (1 << (Math.abs(literal) - 1))) === literal > 0;
@@ -81,8 +81,8 @@ test("reified counts agree with arithmetic in both directions", async () => {
 test("boundary counts use a single gate", () => {
   for (const count of [0, 20]) {
     const game = new BooleanConstraints();
-    const inputs = Array.from({ length: 20 }, (_, i) => game.newBool(`input_${i}`));
-    game.boolSumEquals(inputs, count, "boundary");
+    const inputs = Array.from({ length: 20 }, (_) => game.newBool());
+    game.boolSumEquals(inputs, count);
     expect(game.finalize().variableCount).toBe(21);
     expect(game.finalize().clauses).toHaveLength(21);
   }
@@ -91,8 +91,8 @@ test("boundary counts use a single gate", () => {
 test("complementary counts have the same counter size", () => {
   const size = (count: number) => {
     const game = new BooleanConstraints();
-    const inputs = Array.from({ length: 20 }, (_, i) => game.newBool(`input_${i}`));
-    game.boolSumEquals(inputs, count, "count");
+    const inputs = Array.from({ length: 20 }, (_) => game.newBool());
+    game.boolSumEquals(inputs, count);
     return game.finalize().variableCount;
   };
   expect(size(19)).toBe(size(1));

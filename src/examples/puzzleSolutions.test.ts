@@ -74,10 +74,10 @@ describe("JSON puzzle solutions", () => {
     // The published answer places the No Dashii with Aoife after night 2.
     // https://www.reddit.com/r/BloodOnTheClocktower/comments/1vhyfy0/comment/p294awr/
     game.addTruth(
-      game.anyOf(
-        [game.characterAt("Aoife", "No Dashii", "night_2").not(), game.characterAt("Sarah", "Witch", "night_2").not()],
-        "published_barber_swap_missing",
-      ),
+      game.anyOf([
+        game.characterAt("Aoife", "No Dashii", "night_2").not(),
+        game.characterAt("Sarah", "Witch", "night_2").not(),
+      ]),
     );
     expect(await game.solveAll()).toHaveLength(0);
   });
@@ -104,8 +104,8 @@ function serializeWorlds(worlds: readonly World[], players: readonly string[]): 
 }
 
 function serializeWorld(world: World, players: readonly string[]): SerializedWorld {
-  const poisoned = serializeTimedPlayers(world.poisonedByTiming, players);
-  const drunkByTiming = serializeTimedPlayers(world.drunkByTiming, players);
+  const poisoned = serializeTimedPlayers(world.poisonedByTiming);
+  const drunkByTiming = serializeTimedPlayers(world.drunkByTiming);
   const drunk = players.filter((player) => world.drunk.has(player)).sort(compareStrings);
 
   return {
@@ -118,7 +118,6 @@ function serializeWorld(world: World, players: readonly string[]): SerializedWor
 
 function serializeTimedPlayers(
   playersByTiming: ReadonlyMap<string, ReadonlySet<string>>,
-  players: readonly string[],
 ): Record<Timing, readonly string[]> {
   return Object.fromEntries(
     [...playersByTiming.entries()]
