@@ -1,4 +1,5 @@
 import { timingOrder } from "./timing";
+import { lit } from "./boolean";
 import type { BoolLike, BoolVar, BOTCModel, Timing } from "./model";
 
 export interface CharacterTransition {
@@ -120,8 +121,7 @@ export class CharacterTrace {
   }
 
   decode(model: ReadonlySet<number>, initial: ReadonlyMap<string, string>): TraceWitness {
-    const trueIn = (value: BoolLike) =>
-      typeof value === "number" ? model.has(Math.abs(value)) === value > 0 : model.has(value.id);
+    const trueIn = (value: BoolLike) => model.has(Math.abs(lit(value))) === lit(value) > 0;
     const timings = [
       ...new Set([...this.queries.values()].filter((query) => !query.before).map((query) => query.timing)),
     ].sort((a, b) => timingOrder(a) - timingOrder(b));
