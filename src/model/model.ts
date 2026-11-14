@@ -1,6 +1,6 @@
 import { World, KeyError, flavorByTiming } from "./world";
 import { enumerateWorlds, type SolveReport } from "./solve";
-export { World, KeyError, forcedRoleHolders } from "./world";
+export { World, KeyError } from "./world";
 export type { SolveReport } from "./solve";
 import { BooleanConstraints, BoolVar, lit, type BoolLike } from "./boolean";
 export { BoolVar, type BoolLike } from "./boolean";

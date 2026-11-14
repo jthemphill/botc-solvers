@@ -52,17 +52,6 @@ export function formatSolution(
   return lines.join("\n");
 }
 
-export function printSolution(
-  worlds: readonly World[],
-  players: readonly string[],
-  options: {
-    readonly forcedRoles?: readonly ForcedRoleSpec[];
-    readonly forcedMissing?: string;
-  } & TimingQuery = {},
-): void {
-  console.log(formatSolution(worlds, players, options));
-}
-
 function coerceForcedRole(role: ForcedRoleSpec, forcedMissing: string): ForcedRole {
   if (typeof role === "object" && role !== null && "roles" in role && "label" in role) return role as ForcedRole;
   return forcedRole(role as RoleRef, undefined, { missing: forcedMissing });

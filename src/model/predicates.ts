@@ -1,12 +1,5 @@
-import { CharacterType, type RoleRef, roleCharacterType, roleName } from "./core";
+import { type RoleRef, roleCharacterType, roleName } from "./core";
 import type { BoolVar, BOTCModel, Timing } from "./model";
-
-export function exactlyNEvil(game: BOTCModel, players: readonly string[], count: number): BoolVar {
-  return game.boolSumEquals(
-    players.map((player) => game.isEvil(player)),
-    count,
-  );
-}
 
 export function exactlyNRegisteredEvil(game: BOTCModel, players: readonly string[], count: number): BoolVar {
   return game.boolSumEquals(
@@ -44,11 +37,6 @@ export function differentCharacterTypes(game: BOTCModel, left: string, right: st
   return game.not(game.anyOf(sameTypeOptions));
 }
 
-export function chefCountIs(game: BOTCModel, count: number): BoolVar {
-  const evilPairs = game.adjacentPairs().map(([left, right]) => game.allOf([game.isEvil(left), game.isEvil(right)]));
-  return game.boolSumEquals(evilPairs, count);
-}
-
 export function chefCountRegistersAs(game: BOTCModel, count: number): BoolVar {
   const evilPairs = game
     .adjacentPairs()
@@ -61,10 +49,6 @@ export function registersAsRoleAmong(game: BOTCModel, players: readonly string[]
   return game.anyOf(players.map((player) => game.registersAsRole(player, roleRef)));
 }
 
-export function sitsNextToEvil(game: BOTCModel, player: string): BoolVar {
-  return game.sitsNextToEvil(player);
-}
-
 export function drunkBetweenTwoTownsfolk(game: BOTCModel): BoolVar {
   const possibilities = game.players.map((player) => {
     const [left, right] = game.neighbors(player);
@@ -72,5 +56,3 @@ export function drunkBetweenTwoTownsfolk(game: BOTCModel): BoolVar {
   });
   return game.anyOf(possibilities);
 }
-
-export { CharacterType };

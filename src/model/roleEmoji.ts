@@ -117,8 +117,6 @@ if (missingRoles.length > 0) {
   throw new Error(`Missing role emoji for: ${missingRoles.join(", ")}`);
 }
 
-export const ROLE_EMOJI_BY_NAME: ReadonlyMap<string, string> = ROLE_EMOJIS;
-
 export function canonicalEmojiRoleName(role: string | undefined): string | undefined {
   if (!role) return undefined;
   if (ROLE_EMOJIS.has(role)) return role;

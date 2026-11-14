@@ -2127,38 +2127,10 @@ export class Washerwoman extends TownsfolkRole {
   }
 }
 
-export type ClaimRef = string | Role;
-
-export function playerName(player: ClaimRef): string {
-  return player instanceof Role ? player.name : player;
-}
-
-export function playerNames(players: readonly ClaimRef[]): string[] {
-  const names: string[] = [];
-  for (const player of players) {
-    const name = playerName(player);
-    if (!names.includes(name)) names.push(name);
-  }
-  return names;
-}
-
 export function applyClaims(game: BOTCModel, claims: readonly Role[], options: ApplyClaimsOptions = {}): void {
   for (const claim of claims) claim.apply(game, options);
 }
 
 export function script(...characters: RoleRef[]): RoleRef[] {
   return characters;
-}
-
-export function roleNames(
-  characters: readonly RoleRef[],
-  options: { readonly alignment?: Alignment; readonly characterType?: CharacterType } = {},
-): string[] {
-  return characters
-    .filter(
-      (character) =>
-        (options.alignment === undefined || roleAlignment(character) === options.alignment) &&
-        (options.characterType === undefined || roleCharacterType(character) === options.characterType),
-    )
-    .map(roleName);
 }

@@ -12,10 +12,6 @@ export enum CharacterType {
   Demon = "demon",
 }
 
-export enum StatusEffect {
-  Poisoned = "poisoned",
-}
-
 export interface WakeRule {
   wakes(game: BOTCModel, player: string, timing: Timing): BoolLike;
 }
@@ -37,12 +33,6 @@ export interface RoleInstance {
 }
 
 export type RoleRef = string | RoleClass | RoleInstance;
-
-export interface Character {
-  readonly name: string;
-  readonly alignment: Alignment;
-  readonly characterType: CharacterType;
-}
 
 export interface RoleClaim {
   readonly player: string;
