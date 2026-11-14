@@ -354,8 +354,8 @@ export class BOTCModel extends BooleanConstraints {
   addPersistentDrunking(
     timings: readonly Timing[],
     options: {
-      readonly activeIf?: BoolLike | boolean;
-      readonly activeByTiming?: readonly { readonly timing: Timing; readonly activeIf: BoolLike | boolean }[];
+      readonly activeIf?: BoolLike;
+      readonly activeByTiming?: readonly { readonly timing: Timing; readonly activeIf: BoolLike }[];
       readonly excludedPlayers?: readonly string[];
     } = {},
   ): void {
@@ -365,20 +365,10 @@ export class BOTCModel extends BooleanConstraints {
     const candidates = this.players.filter((player) => !excludedPlayers.has(player));
     const sourceTargets = new Map(candidates.map((player) => [player, this.newBool()] as const));
     const targetVars = [...sourceTargets.values()];
-    const activeByTiming = new Map(
-      (options.activeByTiming ?? []).map((entry) => [
-        entry.timing,
-        typeof entry.activeIf === "boolean" ? this.constantBool(entry.activeIf) : entry.activeIf,
-      ]),
-    );
+    const activeByTiming = new Map((options.activeByTiming ?? []).map((entry) => [entry.timing, entry.activeIf]));
     const active =
-      options.activeIf === undefined
-        ? activeByTiming.size === 0
-          ? this.constantBool(true)
-          : this.anyOf([...activeByTiming.values()])
-        : typeof options.activeIf === "boolean"
-          ? this.constantBool(options.activeIf)
-          : options.activeIf;
+      options.activeIf ??
+      (activeByTiming.size === 0 ? this.constantBool(true) : this.anyOf([...activeByTiming.values()]));
 
     constrainSelection(this, targetVars, 1, active);
 
@@ -442,9 +432,9 @@ export class BOTCModel extends BooleanConstraints {
     );
   }
 
-  addVillageIdiotDrunking(options: { readonly villageIdiotRole?: RoleRef } = {}): void {
+  addVillageIdiotDrunking(): void {
     this.assertBuilding();
-    const villageIdiotRole = roleName(options.villageIdiotRole ?? "Village Idiot");
+    const villageIdiotRole = "Village Idiot";
     this.checkRole(villageIdiotRole);
 
     const villageIdiotPlayers = this.players.map((player) => this.actualIs(player, villageIdiotRole));
@@ -471,10 +461,9 @@ export class BOTCModel extends BooleanConstraints {
     return this.anyOf(sources);
   }
 
-  addLleechHostChoice(options: { readonly role?: RoleRef } = {}): void {
+  addLleechHostChoice(): void {
     this.assertBuilding();
-    const role = roleName(options.role ?? "Lleech");
-    this.checkRole(role);
+    const role = "Lleech";
     const active = this.roleInPlay(role);
     const targets = this.players.map((player) => {
       const target = this.newBool();
@@ -491,11 +480,9 @@ export class BOTCModel extends BooleanConstraints {
     return this.anyOf(this.lleechHostTargetsByPlayer.get(player) ?? []);
   }
 
-  addLleechHostPoisoning(timings: readonly Timing[], options: { readonly role?: RoleRef } = {}): void {
+  addLleechHostPoisoning(timings: readonly Timing[]): void {
     this.assertBuilding();
-    const role = roleName(options.role ?? "Lleech");
-    this.checkRole(role);
-    const active = this.roleInPlay(role);
+    const active = this.roleInPlay("Lleech");
     for (const timing of timings) {
       this.registerActivePoisonSource(timing, active);
       for (const player of this.players) {
@@ -509,7 +496,7 @@ export class BOTCModel extends BooleanConstraints {
   addRoleDrunking(
     role: RoleRef,
     timings: readonly Timing[],
-    options: { readonly activeIf?: BoolLike | boolean; readonly excludedPlayers?: readonly string[] } = {},
+    options: { readonly activeIf?: BoolLike; readonly excludedPlayers?: readonly string[] } = {},
   ): void {
     this.assertBuilding();
     const roleRef = roleName(role);
@@ -526,22 +513,16 @@ export class BOTCModel extends BooleanConstraints {
     }
   }
 
-  private activeRole(role: RoleRef, activeIf?: BoolLike | boolean): BoolVar {
-    const roleInPlay = this.roleInPlay(role);
-    if (activeIf === undefined) return roleInPlay;
-    const condition = typeof activeIf === "boolean" ? this.constantBool(activeIf) : activeIf;
-    return this.allOf([roleInPlay, condition]);
+  private activeRole(role: RoleRef, activeIf?: BoolLike): BoolVar {
+    return this.allOf([this.roleInPlay(role), ...(activeIf === undefined ? [] : [activeIf])]);
   }
 
-  addPoisonerEffect(
-    timing: Timing,
-    options: { readonly poisonerRole?: RoleRef; readonly activeIf?: BoolLike | boolean } = {},
-  ): void {
+  addPoisonerEffect(timing: Timing, activeIf?: BoolLike): void {
     this.assertBuilding();
-    const poisonerRole = options.poisonerRole ?? "Poisoner";
-    const poisonerActive = this.activeRole(poisonerRole, options.activeIf);
+    const poisonerRole = "Poisoner";
+    const poisonerActive = this.activeRole(poisonerRole, activeIf);
     const choiceTiming = timing.replace("day_", "night_") as Timing;
-    const key = keyOf([roleName(poisonerRole), choiceTiming]);
+    const key = choiceTiming;
     let targets = this.poisonerTargetsByNight.get(key);
     if (targets === undefined) {
       targets = select(this, this.players, this.roleInPlay(poisonerRole), 1);
@@ -568,21 +549,14 @@ export class BOTCModel extends BooleanConstraints {
     }
   }
 
-  addWidowEffect(
-    options: {
-      readonly widowRole?: RoleRef;
-      readonly activeIf?: BoolLike | boolean;
-      readonly timings?: readonly Timing[];
-    } = {},
-  ): void {
+  addWidowEffect(timings: readonly Timing[], activeIf: BoolLike): void {
     this.assertBuilding();
-    const widowRole = options.widowRole ?? "Widow";
-    const widowActive = this.activeRole(widowRole, options.activeIf);
-    if ((options.timings ?? []).length === 0) return;
+    const widowActive = this.activeRole("Widow", activeIf);
+    if (timings.length === 0) return;
     this.addOnePlayerDroisonSource(widowActive, (player, target) => {
-      for (const timing of options.timings ?? []) this.registerPoisonSourceTarget(player, timing, target);
+      for (const timing of timings) this.registerPoisonSourceTarget(player, timing, target);
     });
-    for (const timing of options.timings ?? []) {
+    for (const timing of timings) {
       this.droisonTimingKeys.add(timing);
       this.registerActivePoisonSource(timing, widowActive);
     }
@@ -935,7 +909,7 @@ export class BOTCModel extends BooleanConstraints {
       this.anyOf([
         this.droisoned(player, timing),
         this.globalDrunk(player),
-        this.noDashiiPoisonedAt(player, timing, { beforeCharacterChange: true }),
+        this.noDashiiPoisonedAt(player, timing, true),
         ...intrinsic,
       ]),
     );
@@ -1100,25 +1074,14 @@ export class BOTCModel extends BooleanConstraints {
     );
   }
 
-  addFortuneTellerRedHerring(
-    fortuneTeller: string,
-    options: { readonly players?: readonly string[]; readonly fortuneTellerRole?: RoleRef } = {},
-  ): RedHerrings {
+  addFortuneTellerRedHerring(fortuneTeller: string): RedHerrings {
     this.assertBuilding();
-    const players = options.players ?? this.players;
-    const fortuneTellerRole = options.fortuneTellerRole ?? "Fortune Teller";
-    const key = keyOf([fortuneTeller, roleName(fortuneTellerRole), ...players]);
-    const cached = this.fortuneTellerRedHerringVars.get(key);
+    const cached = this.fortuneTellerRedHerringVars.get(fortuneTeller);
     if (cached !== undefined) return cached;
-    const entries = players.map((player) => [player, this.newBool()] as const);
-    const redHerrings = new Map(entries);
-    this.addEnforcedExactlyN(
-      entries.map(([, variable]) => variable),
-      1,
-      this.actualIs(fortuneTeller, fortuneTellerRole),
-    );
-    for (const [player, redHerring] of entries) this.addImplication(redHerring, this.isGood(player));
-    this.fortuneTellerRedHerringVars.set(key, redHerrings);
+    const redHerrings = new Map(this.players.map((player) => [player, this.newBool()]));
+    this.addEnforcedExactlyN([...redHerrings.values()], 1, this.actualIs(fortuneTeller, "Fortune Teller"));
+    for (const [player, redHerring] of redHerrings) this.addImplication(redHerring, this.isGood(player));
+    this.fortuneTellerRedHerringVars.set(fortuneTeller, redHerrings);
     return redHerrings;
   }
 
@@ -1221,36 +1184,15 @@ export class BOTCModel extends BooleanConstraints {
     }
   }
 
-  noDashiiPoisonedAt(
-    player: string,
-    timing: Timing,
-    options: { readonly noDashiiRole?: RoleRef; readonly beforeCharacterChange?: boolean } = {},
-  ): BoolVar {
-    const players = this.players;
-    const noDashiiRole = options.noDashiiRole ?? "No Dashii";
+  noDashiiPoisonedAt(player: string, timing: Timing, beforeCharacterChange = false): BoolVar {
     this.checkPlayer(player);
-    if (!this.characters.has(roleName(noDashiiRole))) return this.constantBool(false);
+    if (!this.characters.has("No Dashii")) return this.constantBool(false);
     return this.anyOf(
-      players.flatMap((demon) => [
-        this.closestTownfolkInDirectionIs(
-          players,
-          demon,
-          player,
-          1,
-          noDashiiRole,
-          timing,
-          options.beforeCharacterChange,
+      this.players.flatMap((demon) =>
+        ([1, -1] as const).map((direction) =>
+          this.closestTownfolkInDirectionIs(demon, player, direction, timing, beforeCharacterChange),
         ),
-        this.closestTownfolkInDirectionIs(
-          players,
-          demon,
-          player,
-          -1,
-          noDashiiRole,
-          timing,
-          options.beforeCharacterChange,
-        ),
-      ]),
+      ),
     );
   }
 
@@ -1483,14 +1425,13 @@ export class BOTCModel extends BooleanConstraints {
   }
 
   private closestTownfolkInDirectionIs(
-    players: readonly string[],
     demon: string,
     target: string,
     direction: 1 | -1,
-    noDashiiRole: RoleRef,
     timing: Timing,
-    beforeCharacterChange = false,
+    beforeCharacterChange: boolean,
   ): BoolVar {
+    const players = this.players;
     const demonIndex = players.indexOf(demon);
     const targetIndex = players.indexOf(target);
     const distance =
@@ -1511,8 +1452,8 @@ export class BOTCModel extends BooleanConstraints {
         : this.hasCharacterTypeAt(player, CharacterType.Townsfolk, timing);
     return this.allOf([
       beforeCharacterChange
-        ? this.characterBefore(demon, noDashiiRole, timing)
-        : this.hasAbilityAt(demon, noDashiiRole, timing),
+        ? this.characterBefore(demon, "No Dashii", timing)
+        : this.hasAbilityAt(demon, "No Dashii", timing),
       townsfolk(target),
       ...between.map((betweenPlayer) => townsfolk(betweenPlayer).not()),
     ]);

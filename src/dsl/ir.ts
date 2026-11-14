@@ -144,30 +144,9 @@ export function lower(program: TypedProgram, game: BOTCModel): BoolLike {
             return game.boolSumEquals(node.inputs.map(resolve), node.count);
           case "chef":
             return Chef.learnsCount(game, node.count);
-          case "characterAt":
-            return game.characterAt(...node.args);
-          case "hasCharacterTypeAt":
-            return game.hasCharacterTypeAt(...node.args);
-          case "isGood":
-            return game.isGood(...node.args);
-          case "isEvil":
-            return game.isEvil(...node.args);
-          case "isGoodAt":
-            return game.isGoodAt(...node.args);
-          case "isEvilAt":
-            return game.isEvilAt(...node.args);
-          case "registersAsRole":
-            return game.registersAsRole(...node.args);
-          case "fortuneTellerRedHerring":
-            return game.fortuneTellerRedHerring(...node.args);
-          case "lleechHost":
-            return game.lleechHost(...node.args);
-          case "globalDrunk":
-            return game.globalDrunk(...node.args);
-          case "poisoned":
-            return game.poisoned(...node.args);
-          case "malfunctionCountAt":
-            return game.malfunctionCountAt(...node.args);
+          default:
+            // Each query node has the name and the arguments of one model method.
+            return (game[node.op] as (...args: readonly unknown[]) => BoolVar).apply(game, node.args);
         }
       },
     );

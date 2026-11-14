@@ -2290,9 +2290,7 @@ function applyPoisonerSources(game: BOTCModel, doc: BuildDoc, nightDeathTiming: 
   for (const timing of timings) {
     const poisonerCanAct = roleCanUseAbilityAt(game, doc, "Poisoner", timing as Timing, nightDeathTiming);
     const poisonerDiesBeforeInfo = roleDiesBeforeInfoAt(game, "Poisoner", timing as Timing, nightDeathTiming);
-    game.addPoisonerEffect(timing as Timing, {
-      activeIf: game.allOf([poisonerCanAct, game.not(poisonerDiesBeforeInfo)]),
-    });
+    game.addPoisonerEffect(timing as Timing, game.allOf([poisonerCanAct, game.not(poisonerDiesBeforeInfo)]));
   }
 }
 
@@ -2401,7 +2399,7 @@ function roleDiesBeforeInfoAt(
 function applyWidowSources(game: BOTCModel, doc: BuildDoc): void {
   if (!doc.script.includes("Widow")) return;
   const timings = [...game.droisonTimingKeys].filter((timing): timing is Timing => timing !== "default");
-  game.addWidowEffect({ timings, activeIf: roleAliveAt(game, doc, "Widow", "night_1") });
+  game.addWidowEffect(timings, roleAliveAt(game, doc, "Widow", "night_1"));
 }
 
 function applyXaanActivity(game: BOTCModel, doc: BuildDoc): void {
