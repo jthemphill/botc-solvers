@@ -6,7 +6,6 @@ import { BooleanConstraints, BoolVar, lit, type BoolLike } from "./boolean";
 export { BoolVar, type BoolLike } from "./boolean";
 import { keyOf, addMapValue } from "./keys";
 import type { SatProblem } from "./sat";
-import { simplify } from "./simplify";
 import { select, constrainSelection, type ChoiceAction, type ChoiceWitness } from "./actions";
 import { CharacterTrace } from "./trace";
 import {
@@ -1270,15 +1269,11 @@ export class BOTCModel extends BooleanConstraints {
   async solve(options: { readonly limit?: number } = {}): Promise<SolveReport> {
     if (options.limit !== undefined && (!Number.isSafeInteger(options.limit) || options.limit < 1))
       throw new Error("Solution limit must be a positive integer.");
-    const { problem, projection, expand } = simplify(
-      this.finalize(),
-      [...this.actual.values()].map((variable) => variable.id),
-    );
     return enumerateWorlds(
-      problem,
+      this.finalize(),
       this.backend,
-      projection,
-      (model) => this.decodeWorld(expand(model)),
+      [...this.actual.values()].map((variable) => variable.id),
+      (model) => this.decodeWorld(model),
       this.finalizeMs,
       options.limit,
     );
