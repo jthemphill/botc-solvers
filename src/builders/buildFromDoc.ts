@@ -44,6 +44,7 @@ export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
   const ctx = { players: doc.players, script: doc.script };
   game.withProvenance({ kind: "rule", id: "applyLleechHostChoice" }, () => applyLleechHostChoice(game, doc));
   game.withProvenance({ kind: "rule", id: "applyGlobalConstraints" }, () => applyGlobalConstraints(game, doc, ctx));
+  game.withProvenance({ kind: "rule", id: "applyAtheistRule" }, () => applyAtheistRule(game, doc));
   if (doc.setup === "atheist")
     game.withProvenance({ kind: "rule", id: "applyAtheistSetup" }, () => applyAtheistSetup(game, doc));
   const characterActions = game.withProvenance({ kind: "rule", id: "nightlyCharacterChoices" }, () =>
@@ -734,6 +735,18 @@ function applyPhilosopherDrunking(game: BOTCModel, doc: BuildDoc): void {
       });
     }
   }
+}
+
+/**
+ * A game with the Atheist has no evil characters.
+ * https://wiki.bloodontheclocktower.com/Atheist
+ */
+function applyAtheistRule(game: BOTCModel, doc: BuildDoc): void {
+  if (!doc.script.includes("Atheist")) return;
+  const atheistInPlay = game.roleInPlay("Atheist");
+  const evilRoles = doc.script.map(resolveRoleRef).filter((role) => roleAlignment(role) === Alignment.Evil);
+  for (const player of doc.players)
+    for (const role of evilRoles) game.addImplication(atheistInPlay, game.actualIs(player, role).not());
 }
 
 function applyAtheistSetup(game: BOTCModel, doc: BuildDoc): void {

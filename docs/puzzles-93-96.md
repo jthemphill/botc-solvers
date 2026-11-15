@@ -122,10 +122,13 @@ Puzzle 60 had a list that made Olivia the Poppy Grower. Its [image](../puzzle-im
 
 Puzzles 58 and 67 had lists that let a Politician claim a different character. Their images ([58](../puzzle-images/puzzle-58-minus-one-thats-three.webp), [67](../puzzle-images/puzzle-67-minus-one-thats-three-times-two.webp)) say that the Politician might claim a different character and lie with its information. The shared claim convention now has this rule, so the documents need no lists. Both documents match their images, and their answers are unchanged.
 
-These lists stay, because each one changes its answer and its image was not available to check:
+Puzzle 30 has two games, and its [image](../puzzle-images/puzzle-30-the-babel-fish-is-a-dead-giveaway.png) asks which one has the genuine Atheist. The documents gave the answer as an input: each player of the left game had a fixed character, and the Atheist claimant of the right game had a list.
 
-- Puzzle 30 fixes each character in its Atheist game, and makes the Atheist claimant of the other game evil or the Drunk.
-- Puzzle 76 uses a custom setup with three characters for each player.
+- A game with the Atheist has no evil characters ([Atheist](https://wiki.bloodontheclocktower.com/Atheist), revision not retrieved). The engine now has this rule, so an Atheist claimant in a standard game is evil or the Drunk, and the right game needs no list.
+- `src/builders/atheist.test.ts` solves each game as a standard game. The left game has no solution and the right game has one. This is the deduction of the puzzle; the left document still records its conclusion with the Atheist setup.
+- The left game has no lists now. The image says that all its players are good and receive arbitrary information, and it does not rule out the Drunk. The fixture has six assignments: nobody is the Drunk, or one of the five players other than the Atheist is the Drunk.
+
+Puzzle 76 keeps its lists and constraints. Its [image](../puzzle-images/puzzle-76-three-for-three.webp) gives the evil team and has each good player name three characters, and the document records those statements.
 
 ## Support limits
 

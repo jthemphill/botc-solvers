@@ -9,8 +9,7 @@
       "name": "Sarah",
       "timing": "night_1",
       "among": ["Oli", "Callum"],
-      "aligned": true,
-      "possibleActualRoles": ["Seamstress"]
+      "aligned": true
     },
     {
       "type": "Artist",
@@ -21,31 +20,26 @@
           "timing": "day_1",
           "expression": "Erika.initial_role == Drunk"
         }
-      ],
-      "possibleActualRoles": ["Artist"]
+      ]
     },
     {
       "type": "Noble",
       "name": "Erika",
-      "oneEvilAmong": ["Lav", "Callum", "Sarah"],
-      "possibleActualRoles": ["Noble"]
+      "oneEvilAmong": ["Lav", "Callum", "Sarah"]
     },
     {
       "type": "Clockmaker",
       "name": "Lav",
-      "distance": 3,
-      "possibleActualRoles": ["Clockmaker"]
+      "distance": 3
     },
     {
       "type": "Atheist",
-      "name": "Oli",
-      "possibleActualRoles": ["Atheist"]
+      "name": "Oli"
     },
     {
       "type": "Knight",
       "name": "Callum",
-      "noDemonAmong": ["Lav", "Max"],
-      "possibleActualRoles": ["Knight"]
+      "noDemonAmong": ["Lav", "Max"]
     }
   ]
 }

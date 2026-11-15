@@ -2,9 +2,59 @@
   "solutions": [
     {
       "roles": {
+        "Callum": "Drunk",
+        "Erika": "Noble",
+        "Lav": "Clockmaker",
+        "Max": "Artist",
+        "Oli": "Atheist",
+        "Sarah": "Seamstress"
+      }
+    },
+    {
+      "roles": {
+        "Callum": "Knight",
+        "Erika": "Drunk",
+        "Lav": "Clockmaker",
+        "Max": "Artist",
+        "Oli": "Atheist",
+        "Sarah": "Seamstress"
+      }
+    },
+    {
+      "roles": {
         "Callum": "Knight",
         "Erika": "Noble",
         "Lav": "Clockmaker",
+        "Max": "Artist",
+        "Oli": "Atheist",
+        "Sarah": "Drunk"
+      }
+    },
+    {
+      "roles": {
+        "Callum": "Knight",
+        "Erika": "Noble",
+        "Lav": "Clockmaker",
+        "Max": "Artist",
+        "Oli": "Atheist",
+        "Sarah": "Seamstress"
+      }
+    },
+    {
+      "roles": {
+        "Callum": "Knight",
+        "Erika": "Noble",
+        "Lav": "Clockmaker",
+        "Max": "Drunk",
+        "Oli": "Atheist",
+        "Sarah": "Seamstress"
+      }
+    },
+    {
+      "roles": {
+        "Callum": "Knight",
+        "Erika": "Noble",
+        "Lav": "Drunk",
         "Max": "Artist",
         "Oli": "Atheist",
         "Sarah": "Seamstress"

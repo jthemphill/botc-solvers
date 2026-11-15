@@ -22,8 +22,7 @@
     },
     {
       "type": "Atheist",
-      "name": "Finn",
-      "possibleActualRoles": ["Imp", "Spy", "Drunk"]
+      "name": "Finn"
     },
     {
       "type": "Knight",
