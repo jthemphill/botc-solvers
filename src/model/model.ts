@@ -248,6 +248,7 @@ export class BOTCModel extends BooleanConstraints {
       readonly evilRoles?: readonly RoleRef[];
       readonly drunkRole?: RoleRef;
       readonly possibleActualRoles?: readonly RoleRef[];
+      readonly mutantBluff?: boolean;
       readonly timing?: Timing;
     } = {},
   ): void {
@@ -289,6 +290,7 @@ export class BOTCModel extends BooleanConstraints {
     if (claimedTownsfolk && options.possibleActualRoles === undefined) {
       possibleRoles.push(...drunkLikeRoles);
       if (this.characters.has("Goon")) possibleRoles.push("Goon");
+      if (options.mutantBluff === true && this.characters.has("Mutant")) possibleRoles.push("Mutant");
     }
     this.setPossibleActualRoles(claim.player, possibleRoles);
     if (claimedTownsfolk)

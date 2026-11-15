@@ -56,22 +56,19 @@
         "Fraser": "Mathematician",
         "Steph": "Witch",
         "Tim": "Fang Gu"
-      },
-      "possibleActualRoles": ["Juggler", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      }
     },
     {
       "type": "Oracle",
       "name": "Anna",
       "timing": "night_2",
-      "count": 0,
-      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "count": 0
     },
     {
       "type": "Oracle",
       "name": "Anna",
       "timing": "night_3",
-      "count": 0,
-      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "count": 0
     },
     {
       "type": "Dreamer",
@@ -150,8 +147,7 @@
           "timing": "night_3",
           "count": 2
         }
-      ],
-      "possibleActualRoles": ["Mathematician", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Sweetheart",

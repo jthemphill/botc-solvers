@@ -76,8 +76,7 @@
           "timing": "night_3",
           "count": 2
         }
-      ],
-      "possibleActualRoles": ["Mathematician", "Fang Gu", "Vigormortis", "Vortox", "No Dashii", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Juggler",
@@ -153,8 +152,7 @@
           "player": "Marsh",
           "demon": false
         }
-      ],
-      "possibleActualRoles": ["Snake Charmer", "Fang Gu", "Vigormortis", "Vortox", "No Dashii", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Seamstress",

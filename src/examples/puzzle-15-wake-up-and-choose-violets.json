@@ -18,16 +18,14 @@
     {
       "type": "Clockmaker",
       "name": "Fraser",
-      "distance": 3,
-      "possibleActualRoles": ["Clockmaker", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
+      "distance": 3
     },
     {
       "type": "Seamstress",
       "name": "Aoife",
       "timing": "night_1",
       "among": ["Oscar", "Hannah"],
-      "aligned": false,
-      "possibleActualRoles": ["Seamstress", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
+      "aligned": false
     },
     {
       "type": "Artist",
@@ -38,8 +36,7 @@
           "timing": "day_1",
           "expression": "no p: {You, Oscar, Sarah} | p.initial_role == Vortox"
         }
-      ],
-      "possibleActualRoles": ["Artist", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
+      ]
     },
     {
       "type": "Snake Charmer",
@@ -51,8 +48,7 @@
           "timing": "night_1"
         }
       ],
-      "knownEvilTwin": "Hannah",
-      "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
+      "knownEvilTwin": "Hannah"
     },
     {
       "type": "Snake Charmer",
@@ -63,8 +59,7 @@
           "demon": false,
           "timing": "night_2"
         }
-      ],
-      "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
+      ]
     },
     {
       "type": "Snake Charmer",
@@ -75,8 +70,7 @@
           "demon": false,
           "timing": "night_3"
         }
-      ],
-      "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
+      ]
     },
     {
       "type": "Savant",
@@ -106,8 +100,7 @@
         "Aoife": "Seamstress",
         "Jasmine": "Snake Charmer"
       },
-      "correctCount": 3,
-      "possibleActualRoles": ["Juggler", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
+      "correctCount": 3
     },
     {
       "type": "Snake Charmer",
@@ -119,8 +112,7 @@
           "timing": "night_1"
         }
       ],
-      "knownEvilTwin": "Jasmine",
-      "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
+      "knownEvilTwin": "Jasmine"
     },
     {
       "type": "Snake Charmer",
@@ -131,8 +123,7 @@
           "demon": false,
           "timing": "night_2"
         }
-      ],
-      "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
+      ]
     },
     {
       "type": "Snake Charmer",
@@ -143,8 +134,7 @@
           "demon": false,
           "timing": "night_3"
         }
-      ],
-      "possibleActualRoles": ["Snake Charmer", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
+      ]
     }
   ]
 }

@@ -56,6 +56,8 @@ export interface ApplyClaimsOptions extends TimedOptions {
   readonly drunkRole?: RoleRef;
   readonly evilRoles?: readonly RoleRef[];
   readonly possibleActualRoles?: readonly RoleRef[];
+  /** The claimant can be a Mutant that claims a Townsfolk character. */
+  readonly mutantBluff?: boolean;
   readonly info?: ApplyInfoClaim;
   readonly context?: unknown;
 }
@@ -227,6 +229,7 @@ export abstract class Role {
         drunkRole,
         evilRoles: options.evilRoles,
         possibleActualRoles: this.possibleActualRoles ?? options.possibleActualRoles,
+        mutantBluff: options.mutantBluff,
         timing: this.roleTiming ?? night(1),
       },
     );

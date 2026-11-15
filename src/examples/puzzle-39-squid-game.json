@@ -106,8 +106,7 @@
         "timing": "night_1",
         "among": ["Aoife", "Tom"],
         "aligned": false
-      },
-      "possibleActualRoles": ["Philosopher", "No Dashii", "Witch", "Mutant"]
+      }
     },
     {
       "type": "Seamstress",

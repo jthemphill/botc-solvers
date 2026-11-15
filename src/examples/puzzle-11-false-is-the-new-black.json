@@ -120,8 +120,7 @@
       "type": "Philosopher",
       "name": "Sula",
       "timing": "night_2",
-      "role": "Snake Charmer",
-      "possibleActualRoles": ["Philosopher", "Vortox", "Cerenovus", "Pit-Hag"]
+      "role": "Snake Charmer"
     },
     {
       "type": "Snake Charmer",

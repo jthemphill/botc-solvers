@@ -62,8 +62,7 @@
           "timing": "day_3",
           "expression": "Fraser.initial_role != Artist"
         }
-      ],
-      "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Juggler",
@@ -93,8 +92,7 @@
           "timing": "night_3",
           "count": 2
         }
-      ],
-      "possibleActualRoles": ["Mathematician", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Seamstress",
@@ -140,15 +138,13 @@
       "type": "Oracle",
       "name": "Adam",
       "timing": "night_2",
-      "count": 1,
-      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "count": 1
     },
     {
       "type": "Oracle",
       "name": "Adam",
       "timing": "night_3",
-      "count": 1,
-      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "count": 1
     }
   ]
 }

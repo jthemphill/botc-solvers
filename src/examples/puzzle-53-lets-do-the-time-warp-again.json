@@ -48,8 +48,7 @@
     {
       "type": "Clockmaker",
       "name": "Tim",
-      "distance": 4,
-      "possibleActualRoles": ["Clockmaker", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "distance": 4
     },
     {
       "type": "Dreamer",
@@ -63,15 +62,13 @@
       "type": "Oracle",
       "name": "Fraser",
       "timing": "night_2",
-      "count": 0,
-      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "count": 0
     },
     {
       "type": "Oracle",
       "name": "Fraser",
       "timing": "night_3",
-      "count": 1,
-      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "count": 1
     },
     {
       "type": "Mathematician",

@@ -80,24 +80,21 @@
       "name": "Hannah",
       "timing": "night_2",
       "player": "You",
-      "role": "Village Idiot",
-      "possibleActualRoles": ["Undertaker", "Imp", "Spy", "Xaan", "Mutant"]
+      "role": "Village Idiot"
     },
     {
       "type": "Undertaker",
       "name": "Hannah",
       "timing": "night_3",
       "player": "Aoife",
-      "role": "Village Idiot",
-      "possibleActualRoles": ["Undertaker", "Imp", "Spy", "Xaan", "Mutant"]
+      "role": "Village Idiot"
     },
     {
       "type": "Undertaker",
       "name": "Hannah",
       "timing": "night_4",
       "player": "Sarah",
-      "role": "Spy",
-      "possibleActualRoles": ["Undertaker", "Imp", "Spy", "Xaan", "Mutant"]
+      "role": "Spy"
     },
     {
       "type": "Juggler",

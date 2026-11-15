@@ -106,7 +106,11 @@ export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
   }
   for (const [index, claim] of reportedClaims.entries())
     game.withProvenance({ kind: "assumption", id: `claims[${index}]`, source: doc.claims[index]?.source }, () =>
-      applyClaims(game, [claim], claimOptions),
+      // A Mutant that is alive at the last phase claims a Townsfolk character. A dead Mutant claims the Mutant.
+      applyClaims(game, [claim], {
+        ...claimOptions,
+        mutantBluff: doc.facts.finalLiving.includes(doc.claims[index]?.name ?? ""),
+      }),
     );
   game.withProvenance({ kind: "rule", id: "applyLleechHostPoisoning" }, () => applyLleechHostPoisoning(game, doc));
   if (doc.script.includes("Assassin")) game.enforceAbilityUseLimit("Assassin", 1);
@@ -619,13 +623,11 @@ function applyChangedRoleClaimExplanations(game: BOTCModel, doc: BuildDoc, actio
       if (doc.script.includes(hiddenRole) && roleCharacterType(claimedRole) === CharacterType.Townsfolk)
         explanations.push(game.characterAt(claim.name, hiddenRole, claimTiming));
     }
-    const repeatsStartingBluff = doc.claims.some(
-      (earlier) =>
-        earlier.name === claim.name &&
-        earlier.type === claim.type &&
-        earlier.roleTiming === undefined &&
-        earlier.possibleActualRoles?.includes("Mutant"),
-    );
+    const repeatsStartingBluff =
+      doc.script.includes("Mutant") &&
+      doc.claims.some(
+        (earlier) => earlier.name === claim.name && earlier.type === claim.type && earlier.roleTiming === undefined,
+      );
     if (repeatsStartingBluff && doc.facts.livingAt(claimTiming).includes(claim.name))
       explanations.push(
         game.allOf([game.actualIs(claim.name, "Mutant"), game.characterAt(claim.name, "Mutant", claimTiming)]),

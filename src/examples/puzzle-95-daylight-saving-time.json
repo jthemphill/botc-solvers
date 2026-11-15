@@ -44,8 +44,7 @@
       "name": "Jasmine",
       "timing": "night_1",
       "distance": 1,
-      "knownEvilTwin": "Tim",
-      "possibleActualRoles": ["Clockmaker", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
+      "knownEvilTwin": "Tim"
     },
     {
       "type": "Juggler",
@@ -67,8 +66,7 @@
           "timing": "day_3",
           "expression": "Oscar.role != Artist"
         }
-      ],
-      "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
+      ]
     },
     {
       "type": "Sweetheart",
@@ -87,8 +85,7 @@
       "name": "Tim",
       "timing": "night_1",
       "distance": 2,
-      "knownEvilTwin": "Jasmine",
-      "possibleActualRoles": ["Clockmaker", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
+      "knownEvilTwin": "Jasmine"
     },
     {
       "type": "Mathematician",
@@ -118,8 +115,7 @@
           "nominators": ["Jasmine", "Oscar"],
           "minionNominated": true
         }
-      ],
-      "possibleActualRoles": ["Town Crier", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
+      ]
     }
   ]
 }

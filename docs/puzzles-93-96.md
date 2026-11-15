@@ -10,7 +10,7 @@ The session could not reach Reddit or the official wiki. No author-confirmed sol
 
 Tim is the Imp, Aoife is the Xaan, and Hannah is the Mutant. Everyone else has their claimed character.
 
-The document records the six deaths and all reports. The image lets a living Mutant claim a Townsfolk character, and makes a dead Mutant reveal itself. Hannah is the only living Townsfolk claimant, so only Hannah can be the Mutant. Your character is Village Idiot. No custom constraint is used.
+The document records the six deaths and all reports. The image lets a living Mutant claim a Townsfolk character, and makes a dead Mutant reveal itself. The shared claim convention now has this rule, so no claim lists possible characters for it. Hannah is the only living Townsfolk claimant, so only Hannah can be the Mutant. Your character is Village Idiot, as a given. No custom constraint is used.
 
 Derivation:
 
@@ -32,7 +32,7 @@ The engine kept the Xaan poison for the full night when the Demon killed the Xaa
 
 Sarah is the No Dashii and Tim is the Evil Twin. Everyone else has their claimed character.
 
-Jasmine, Oscar, Tim, and Sarah are alive at the end. Each of them can be evil or the Mutant; a Mutant that became the Fang Gu is in the same list. No custom constraint is used. The image also lets a Sweetheart that became the Fang Gu hide its past. The document does not model that case, because it cannot occur: Charlotte's Sweetheart claim would then be false, and Charlotte can be neither the Demon, whose execution ends the game, nor the Evil Twin, who is Jasmine or Tim. Aoife's guesses are scored on night 2. Oscar asks his question on day 3.
+Jasmine, Oscar, Tim, and Sarah are alive at the end. By the shared claim convention, each of them can be evil or the Mutant; this includes a Mutant that became the Fang Gu. No custom constraint is used. The image also lets a Sweetheart that became the Fang Gu hide its past. The document does not model that case, because it cannot occur: Charlotte's Sweetheart claim would then be false, and Charlotte can be neither the Demon, whose execution ends the game, nor the Evil Twin, who is Jasmine or Tim. Aoife's guesses are scored on night 2. Oscar asks his question on day 3.
 
 Check of the assignment:
 
@@ -87,6 +87,18 @@ Rule changes that result:
 One existing test changed. It expected a Shabaloth kill of the Goon to be illegal when a Sailor made no report. A Sailor without a report has an unknown choice, so that history is legal. The test now uses a Sailor report of another player for the illegal case.
 
 `src/builders/goon.test.ts` covers legal and illegal histories for these rules. One test runs for each character with a night choice rule and shows that its unreported choice can make it drunk only when a Goon is in play. Other tests cover reported choices, unknown nights, the night order, death before a choice, the one-use limit, renamed players with seating preserved, duplicate reports, and redundant facts. The night order follows the official night sheet from memory; the sheet and the [Goon](https://wiki.bloodontheclocktower.com/Goon) page revision were not retrieved.
+
+## The Mutant in the claim convention
+
+The images of puzzles 91, 93, and 95 state the same rule: a living Mutant claims a Townsfolk character with any information, and a dead Mutant reveals itself. The engine now applies this as the default for each claim without a list of possible characters. `src/builders/mutant.test.ts` covers legal and illegal claims, a list that replaces the default, renamed players, and a duplicate death report.
+
+Nineteen catalog documents had lists that were equal to the engine default. Those lists are removed, and every answer is unchanged. The living Townsfolk claimants without a list in puzzles 11, 39, and 71 can now be the Mutant; their answers are unchanged also.
+
+Some lists stay, because they say something different from the default and the images were not available to check:
+
+- Puzzles 53, 61, 65, 75, 79, and 82 let some or all dead Townsfolk claimants be the Mutant. Their answers do not change if those lists are removed.
+- Puzzle 07 lets only one of its living claimants be the Mutant, and that list changes the answer.
+- A list on You is a given about one player.
 
 ## Support limits
 
