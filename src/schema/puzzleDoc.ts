@@ -150,7 +150,6 @@ export interface AssassinClaim extends BaseClaim {
 
 export interface InvestigatorClaim extends BaseClaim {
   readonly type: "Investigator";
-  readonly minionRole?: string;
   readonly role?: string;
   readonly among: readonly string[];
 }
@@ -350,10 +349,9 @@ export interface PhilosopherClaim extends BaseClaim {
   readonly gained?: GainedAbilityDoc;
 }
 
-/** Returns the claim about the gained ability, with the name of the Philosopher and a default time. */
+/** Returns the claim about the gained ability, with the name of the Philosopher. */
 export function gainedAbilityClaim(claim: PhilosopherClaim): Claim | undefined {
-  if (claim.gained === undefined) return undefined;
-  return { ...claim.gained, name: claim.name, timing: claim.gained.timing ?? claim.timing } as Claim;
+  return claim.gained === undefined ? undefined : ({ ...claim.gained, name: claim.name } as Claim);
 }
 
 export function withoutName(claim: Claim): GainedAbilityDoc {

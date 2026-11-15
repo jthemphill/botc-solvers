@@ -57,7 +57,7 @@ function abilitySummary(claim: Claim): string {
     case "Flowergirl":
       return flowergirlSummary(claim);
     case "Investigator": {
-      const role = claim.role ?? claim.minionRole ?? "a Minion";
+      const role = claim.role ?? "a Minion";
       return `${formatList(claim.among)} is ${rolePhrase(role, "a Minion")}.`;
     }
     case "Librarian":

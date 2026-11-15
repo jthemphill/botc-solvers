@@ -59,7 +59,7 @@
       "type": "Investigator",
       "name": "Sarah",
       "timing": "night_1",
-      "minionRole": "Baron",
+      "role": "Baron",
       "among": ["Aoife", "Fraser"]
     },
     {

@@ -130,6 +130,22 @@ Puzzle 30 has two games, and its [image](../puzzle-images/puzzle-30-the-babel-fi
 
 Puzzle 76 keeps its lists and constraints. Its [image](../puzzle-images/puzzle-76-three-for-three.webp) gives the evil team and has each good player name three characters, and the document records those statements.
 
+## Building each puzzle in the editor
+
+`tests/e2e/catalog-entry.spec.ts` builds each catalog puzzle in the editor and compares the export with the source document. It is slow, so it runs only on request:
+
+```sh
+CATALOG_ENTRY=1 bun run test:e2e -- tests/e2e/catalog-entry.spec.ts
+```
+
+The first run built 45 of 100 documents. All 100 build now. The run found these gaps:
+
+- The editor changed only the first check of a Fortune Teller or Snake Charmer claim, and the state layer split a claim with several checks into one claim for each check. The split also lost the night of a check without a time. Both editors now show the checks as a list, and a load keeps them in one claim.
+- A custom constraint had no controls for its source and kind. A claim had no control for its source.
+- A new claim started with reports that the user did not enter: a Clockmaker distance of 1, a Seamstress pair, a Mathematician count, a Town Crier check, a Juggler time, and a Nightwatchman time. A new claim now starts without them.
+- The Investigator had two fields for the learned character. The `minionRole` field is removed, and seven documents use `role`.
+- Some documents had values that the editor does not write, such as an empty `among` list or a setting equal to its default. Those values are removed.
+
 ## Support limits
 
 The [existing engine limits](rules-first-engine.md#coverage-that-still-needs-migration) still apply. In addition:

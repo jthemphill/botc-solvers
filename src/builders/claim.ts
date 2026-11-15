@@ -95,7 +95,6 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
     case "Investigator":
       return new Investigator({
         ...base,
-        minionRole: claim.minionRole ? resolveRoleRef(claim.minionRole) : undefined,
         role: claim.role ? resolveRoleRef(claim.role) : undefined,
         among: claim.among,
       });

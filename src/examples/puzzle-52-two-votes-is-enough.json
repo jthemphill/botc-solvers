@@ -92,7 +92,7 @@
       "type": "Investigator",
       "name": "Dan",
       "timing": "night_1",
-      "minionRole": "Spy",
+      "role": "Spy",
       "among": ["Anna", "Steph"]
     },
     {

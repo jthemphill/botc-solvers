@@ -222,7 +222,6 @@ function validateClaim(input: unknown, path: string): Claim {
       return {
         ...base,
         type: "Investigator",
-        minionRole: input["minionRole"] as string | undefined,
         role: input["role"] as string | undefined,
         among: expectStringArray(input["among"], `${path}.among`),
       };

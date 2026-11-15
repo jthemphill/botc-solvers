@@ -4077,7 +4077,7 @@ describe("buildFromDoc", () => {
     expect(doc.script).not.toContain("Seamstress");
     expect(doc.script).not.toContain("Washerwoman");
     expect(doc.players).toHaveLength(9);
-    expect(doc.setup).toBe("standard");
+    expect(doc.setup).toBeUndefined();
     expect(doc.constraints ?? []).toEqual([]);
     expect(doc.claims).toHaveLength(9);
     expect(doc.claims.some((claim) => claim.type === "Pacifist")).toBe(false);

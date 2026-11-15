@@ -421,27 +421,10 @@ function normalizeClaim(claim: Claim): Claim {
   return claim;
 }
 
-function normalizeClaims(claim: Claim): Claim[] {
-  const normalized = normalizeClaim(claim);
-  if (normalized.type === "FortuneTeller" && normalized.checks.length > 1) {
-    const { info: _info, ...claimWithoutInfo } = normalized;
-    return normalized.checks.map((check, index) =>
-      index === 0 ? { ...normalized, checks: [check] } : { ...claimWithoutInfo, checks: [check] },
-    );
-  }
-  if (normalized.type === "Snake Charmer" && normalized.checks.length > 1) {
-    const { info: _info, ...claimWithoutSharedInfo } = normalized;
-    return normalized.checks.map((check, index) =>
-      index === 0 ? { ...normalized, checks: [check] } : { ...claimWithoutSharedInfo, checks: [check] },
-    );
-  }
-  return [normalized];
-}
-
 export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc {
   switch (action.type) {
     case "load": {
-      const claims = action.doc.claims.flatMap(normalizeClaims);
+      const claims = action.doc.claims.map(normalizeClaim);
       return withProtectedScript({
         ...action.doc,
         timeline: normalizeTimeline(action.doc.timeline, action.doc.players),
@@ -546,11 +529,11 @@ export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc
     case "addClaim":
       return withProtectedScript({
         ...state,
-        claims: [...state.claims, ...normalizeClaims(action.claim)],
+        claims: [...state.claims, normalizeClaim(action.claim)],
         timeline: ensureSlayerShotEvent(state.timeline, action.claim, state.players),
       });
     case "updateClaim": {
-      const claims = state.claims.flatMap((c, i) => (i === action.index ? normalizeClaims(action.claim) : [c]));
+      const claims = state.claims.map((c, i) => (i === action.index ? normalizeClaim(action.claim) : c));
       return withProtectedScript({
         ...state,
         claims,

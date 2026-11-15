@@ -13,7 +13,8 @@ export function expandPhilosopherClaims(claims: readonly Claim[]): readonly Buil
     if (claim.type !== "Philosopher" || gained === undefined) return [claim];
     return [
       { ...claim, gained: undefined },
-      { ...gained, gainedByPhilosopher: { timing: claim.timing } },
+      // A report without a time uses the time of the Philosopher choice.
+      { ...gained, timing: gained.timing ?? claim.timing, gainedByPhilosopher: { timing: claim.timing } },
     ];
   });
 }

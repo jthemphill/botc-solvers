@@ -81,8 +81,7 @@
     {
       "type": "Librarian",
       "name": "Oscar",
-      "timing": "night_1",
-      "among": []
+      "timing": "night_1"
     }
   ]
 }

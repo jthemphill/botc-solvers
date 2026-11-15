@@ -79,8 +79,8 @@ function CustomConstraintList({
   constraints: readonly PuzzleConstraintDoc[];
   setConstraints: (next: readonly PuzzleConstraintDoc[]) => void;
 }) {
-  const updateConstraint = (index: number, expression: string) => {
-    setConstraints(constraints.map((constraint, i) => (i === index ? { ...constraint, expression } : constraint)));
+  const updateConstraint = (index: number, change: Partial<PuzzleConstraintDoc>) => {
+    setConstraints(constraints.map((constraint, i) => (i === index ? { ...constraint, ...change } : constraint)));
   };
 
   const addConstraint = () => {
@@ -106,8 +106,26 @@ function CustomConstraintList({
             <textarea
               aria-label={`Custom constraint ${index + 1} expression`}
               value={constraint.expression}
-              onChange={(event) => updateConstraint(index, event.target.value)}
+              onChange={(event) => updateConstraint(index, { expression: event.target.value })}
             />
+            <span>Source</span>
+            <input
+              aria-label={`Custom constraint ${index + 1} source`}
+              value={constraint.source ?? ""}
+              onChange={(event) => updateConstraint(index, { source: event.target.value || undefined })}
+            />
+            <span>Kind</span>
+            <select
+              aria-label={`Custom constraint ${index + 1} kind`}
+              value={constraint.kind ?? ""}
+              onChange={(event) =>
+                updateConstraint(index, { kind: (event.target.value || undefined) as PuzzleConstraintDoc["kind"] })
+              }
+            >
+              <option value="">-</option>
+              <option value="fact">fact</option>
+              <option value="assumption">assumption</option>
+            </select>
           </div>
         </div>
       ))}

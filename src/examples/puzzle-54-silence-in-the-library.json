@@ -97,7 +97,7 @@
       "type": "Investigator",
       "name": "Oscar",
       "timing": "night_1",
-      "minionRole": "Scarlet Woman",
+      "role": "Scarlet Woman",
       "among": ["Fraser", "Olivia"]
     }
   ]

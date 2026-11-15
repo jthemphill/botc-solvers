@@ -66,8 +66,7 @@
     {
       "type": "Noble",
       "name": "Tim",
-      "oneEvilAmong": ["Aoife", "Sula", "Fraser"],
-      "among": []
+      "oneEvilAmong": ["Aoife", "Sula", "Fraser"]
     },
     {
       "type": "Seamstress",

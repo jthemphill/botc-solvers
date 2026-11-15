@@ -81,7 +81,7 @@
       "type": "Investigator",
       "name": "You",
       "timing": "night_1",
-      "minionRole": "Xaan",
+      "role": "Xaan",
       "among": ["Fraser", "Hannah"],
       "possibleActualRoles": ["Investigator", "Drunk"]
     },

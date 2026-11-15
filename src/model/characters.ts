@@ -1617,25 +1617,21 @@ export class Investigator extends TownsfolkRole {
   static readonly wake = Wakes.firstNight;
   readonly among: readonly string[];
   readonly role?: RoleRef;
-  readonly minionRole?: RoleRef;
   constructor(
     options: RoleBaseOptions & {
       readonly among?: readonly string[];
       readonly role?: RoleRef;
-      readonly minionRole?: RoleRef;
     },
   ) {
     super(options);
     this.among = options.among ?? [];
     this.role = options.role;
-    this.minionRole = options.minionRole;
   }
   static learnsRoleAmong(game: BOTCModel, players: readonly string[], role: RoleRef): BoolVar {
     return learnsRoleAmong(game, players, role);
   }
   override learnedInfo(game: BOTCModel): BoolLike | undefined {
-    const role = this.role ?? this.minionRole;
-    return role === undefined ? undefined : Investigator.learnsRoleAmong(game, this.among, role);
+    return this.role === undefined ? undefined : Investigator.learnsRoleAmong(game, this.among, this.role);
   }
 }
 

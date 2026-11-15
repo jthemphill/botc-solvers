@@ -153,7 +153,7 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
     case "Flowergirl":
       return { type: "Flowergirl", name, votes: [] };
     case "FortuneTeller":
-      return { type: "FortuneTeller", name, checks: [{ left: "", right: "", yes: false }] };
+      return { type: "FortuneTeller", name, checks: [] };
     case "Undertaker":
       return { type: "Undertaker", name, player: "", role: "" };
     case "Legionary":
@@ -173,31 +173,27 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
     case "Prodigy":
       return { type: "Prodigy", name, checks: [] };
     case "Puzzlemaster":
-      return { type: "Puzzlemaster", name, guesses: [] };
+      return { type: "Puzzlemaster", name };
     case "Steward":
       return { type: "Steward", name, goodPlayer: "" };
     case "Knight":
       return { type: "Knight", name, noDemonAmong: [] };
     case "Seamstress":
-      return { type: "Seamstress", name, among: ["", ""], aligned: true };
+      return { type: "Seamstress", name, among: [] };
     case "Juggler":
-      return { type: "Juggler", name, timing: "night_2", guesses: {} };
+      return { type: "Juggler", name, guesses: {} };
     case "Dreamer":
       return { type: "Dreamer", name, player: "", roles: [] };
     case "Shugenja":
       return { type: "Shugenja", name, evilDirection: "clockwise" };
     case "Clockmaker":
-      return { type: "Clockmaker", name, distance: 1 };
+      return { type: "Clockmaker", name };
     case "Courtier":
       return { type: "Courtier", name, timing: "night_1", role: "", drunkTimings: ["night_1"] };
     case "Mathematician":
-      return { type: "Mathematician", name, malfunctions: [{ timing: "night_1", count: 0 }] };
+      return { type: "Mathematician", name };
     case "Town Crier":
-      return {
-        type: "Town Crier",
-        name,
-        checks: [{ timing: "night_2", nominators: [], minionNominated: false }],
-      };
+      return { type: "Town Crier", name, checks: [] };
     case "Ravenkeeper":
       return { type: "Ravenkeeper", name, player: "", role: "", timing: "night_2" };
     case "Sage":
@@ -205,7 +201,7 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
     case "Slayer":
       return { type: "Slayer", name, timing: "day_1", killed: false };
     case "Snake Charmer":
-      return { type: "Snake Charmer", name, checks: [{ player: "", demon: false, timing: "night_1" }] };
+      return { type: "Snake Charmer", name, checks: [] };
     case "VillageIdiot":
       return { type: "VillageIdiot", name, checks: [] };
     case "Klutz":
@@ -221,7 +217,7 @@ export function makeEmptyClaim(type: Claim["type"], name: string): Claim {
     case "Gossip":
       return { type: "Gossip", name, statements: [] };
     case "Nightwatchman":
-      return { type: "Nightwatchman", name, timing: "night_1" };
+      return { type: "Nightwatchman", name };
     case "Moonchild":
       return { type: "Moonchild", name, timing: "day_1" };
     default:
@@ -233,6 +229,8 @@ interface BodyProps {
   doc: PuzzleDoc;
   claim: Claim;
   onChange: (c: Claim) => void;
+  /** The claim is inside another claim, so it shows its reports only. */
+  nested?: boolean;
 }
 
 function TimingField({
@@ -357,10 +355,13 @@ function PlayerSelect({
   );
 }
 
-export function ClaimBody({ doc, claim, onChange }: BodyProps) {
-  const showWidowCall = doc.script.includes("Widow") && isGoodClaimType(claim.type);
-  const showEvilTwinKnowledge = doc.script.includes("Evil Twin");
-  const body = (() => {
+export function ClaimBody({ doc, claim, onChange, nested = false }: BodyProps) {
+  if (nested) return <div className={styles.root}>{claimReports({ doc, claim, onChange })}</div>;
+  return <ClaimWithOptions doc={doc} claim={claim} onChange={onChange} />;
+}
+
+function claimReports({ doc, claim, onChange }: BodyProps) {
+  return (() => {
     switch (claim.type) {
       case "Assassin":
         return <AssassinBody doc={doc} claim={claim} onChange={onChange} />;
@@ -473,10 +474,15 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         );
     }
   })();
+}
+
+function ClaimWithOptions({ doc, claim, onChange }: BodyProps) {
+  const showWidowCall = doc.script.includes("Widow") && isGoodClaimType(claim.type);
+  const showEvilTwinKnowledge = doc.script.includes("Evil Twin");
 
   return (
     <div className={styles.root}>
-      {body}
+      {claimReports({ doc, claim, onChange })}
       {doc.script.includes("Nightwatchman") && <NightwatchmanPingsBody doc={doc} claim={claim} onChange={onChange} />}
       <AdvancedClaimFields doc={doc} claim={claim} onChange={onChange} />
       {showWidowCall && (
@@ -589,9 +595,18 @@ function AdvancedClaimFields({ doc, claim, onChange }: BodyProps) {
   };
 
   return (
-    <details className="advanced-claim-fields" open={possibleActualRoles.length > 0 || claim.alignment !== undefined}>
+    <details
+      className="advanced-claim-fields"
+      open={possibleActualRoles.length > 0 || claim.alignment !== undefined || claim.source !== undefined}
+    >
       <summary>Advanced</summary>
       <div className="field-grid">
+        <span>Source</span>
+        <input
+          aria-label="Claim source"
+          value={claim.source ?? ""}
+          onChange={(event) => onChange({ ...claim, source: event.target.value || undefined })}
+        />
         <span>Character claim refers to</span>
         <select
           aria-label="Character claim refers to"
@@ -757,8 +772,8 @@ function InvestigatorBody({
       <span>Minion role</span>
       <RoleSelect
         script={doc.script}
-        value={claim.role ?? claim.minionRole}
-        onChange={(v) => onChange({ ...claim, role: v || undefined, minionRole: undefined })}
+        value={claim.role}
+        onChange={(v) => onChange({ ...claim, role: v || undefined })}
         allowEmpty
         options={roleOptionsByCharacterType(doc.script, [CharacterType.Minion])}
         ariaLabel="Investigator minion role"
@@ -1270,34 +1285,57 @@ function FortuneTellerBody({
   claim: FortuneTellerClaim;
   onChange: (c: Claim) => void;
 }) {
-  const check = claim.checks[0] ?? { left: "", right: "", yes: false };
-  const setCheck = (next: FortuneTellerCheckDoc) => onChange({ ...claim, checks: [next] });
+  const setCheck = (index: number, next: FortuneTellerCheckDoc) =>
+    onChange({ ...claim, checks: claim.checks.map((check, checkIndex) => (checkIndex === index ? next : check)) });
+  const addCheck = () =>
+    onChange({
+      ...claim,
+      checks: [...claim.checks, { left: doc.players[0] ?? "", right: doc.players[1] ?? "", yes: false }],
+    });
 
   return (
-    <div className="field-grid">
-      <span>Left</span>
-      <PlayerSelect
-        ariaLabel="Left"
-        players={doc.players}
-        value={check.left}
-        onChange={(v) => setCheck({ ...check, left: v })}
-      />
-      <span>Right</span>
-      <PlayerSelect
-        ariaLabel="Right"
-        players={doc.players}
-        value={check.right}
-        onChange={(v) => setCheck({ ...check, right: v })}
-      />
-      <span>Saw demon</span>
-      <input
-        aria-label="Saw demon"
-        type="checkbox"
-        checked={check.yes}
-        onChange={(e) => setCheck({ ...check, yes: e.target.checked })}
-      />
-      <span>Timing</span>
-      <TimingField ariaLabel="Timing" value={check.timing} onChange={(t) => setCheck({ ...check, timing: t })} />
+    <div>
+      {claim.checks.map((check, index) => (
+        <div key={index} className="field-grid">
+          <span>Left</span>
+          <PlayerSelect
+            ariaLabel="Left"
+            players={doc.players}
+            value={check.left}
+            onChange={(left) => setCheck(index, { ...check, left })}
+          />
+          <span>Right</span>
+          <PlayerSelect
+            ariaLabel="Right"
+            players={doc.players}
+            value={check.right}
+            onChange={(right) => setCheck(index, { ...check, right })}
+          />
+          <span>Saw demon</span>
+          <input
+            aria-label="Saw demon"
+            type="checkbox"
+            checked={check.yes}
+            onChange={(event) => setCheck(index, { ...check, yes: event.target.checked })}
+          />
+          <span>Timing</span>
+          <TimingField
+            ariaLabel="Timing"
+            value={check.timing}
+            onChange={(timing) => setCheck(index, { ...check, timing })}
+          />
+          <span />
+          <button
+            type="button"
+            onClick={() => onChange({ ...claim, checks: claim.checks.filter((_, checkIndex) => checkIndex !== index) })}
+          >
+            Remove check
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addCheck}>
+        + Add check
+      </button>
     </div>
   );
 }
@@ -1452,7 +1490,12 @@ function PhilosopherBody({
       )}
       {gained !== undefined && (
         <div className="gained-ability" role="group" aria-label="Gained ability">
-          <ClaimBody doc={doc} claim={gained} onChange={(next) => onChange({ ...claim, gained: withoutName(next) })} />
+          <ClaimBody
+            doc={doc}
+            claim={gained}
+            onChange={(next) => onChange({ ...claim, gained: withoutName(next) })}
+            nested
+          />
           <button type="button" onClick={() => onChange({ ...claim, gained: undefined })}>
             Remove gained ability report
           </button>
@@ -2115,33 +2158,56 @@ function SnakeCharmerBody({
   claim: SnakeCharmerClaim;
   onChange: (c: Claim) => void;
 }) {
-  const check = claim.checks[0] ?? { player: "", demon: false, timing: "night_1" };
-  const setCheck = (next: (typeof claim.checks)[number]) => onChange({ ...claim, checks: [next] });
+  type Check = (typeof claim.checks)[number];
+  const setCheck = (index: number, next: Check) =>
+    onChange({ ...claim, checks: claim.checks.map((check, checkIndex) => (checkIndex === index ? next : check)) });
+  const addCheck = () =>
+    onChange({
+      ...claim,
+      checks: [
+        ...claim.checks,
+        { player: doc.players[0] ?? "", demon: false, timing: `night_${claim.checks.length + 1}` },
+      ],
+    });
 
   return (
-    <div className="field-grid">
-      <span>Checked player</span>
-      <PlayerSelect
-        ariaLabel="Checked player"
-        players={doc.players}
-        value={check.player}
-        onChange={(player) => setCheck({ ...check, player })}
-      />
-      <span>Is Demon</span>
-      <select
-        aria-label="Is Demon"
-        value={check.demon ? "yes" : "no"}
-        onChange={(event) => setCheck({ ...check, demon: event.target.value === "yes" })}
-      >
-        <option value="yes">yes</option>
-        <option value="no">no</option>
-      </select>
-      <span>Timing</span>
-      <TimingField
-        ariaLabel="Timing"
-        value={check.timing}
-        onChange={(timing) => setCheck({ ...check, timing: timing ?? "night_1" })}
-      />
+    <div>
+      {claim.checks.map((check, index) => (
+        <div key={index} className="field-grid">
+          <span>Checked player</span>
+          <PlayerSelect
+            ariaLabel="Checked player"
+            players={doc.players}
+            value={check.player}
+            onChange={(player) => setCheck(index, { ...check, player })}
+          />
+          <span>Is Demon</span>
+          <select
+            aria-label="Is Demon"
+            value={check.demon ? "yes" : "no"}
+            onChange={(event) => setCheck(index, { ...check, demon: event.target.value === "yes" })}
+          >
+            <option value="yes">yes</option>
+            <option value="no">no</option>
+          </select>
+          <span>Timing</span>
+          <TimingField
+            ariaLabel="Timing"
+            value={check.timing}
+            onChange={(timing) => setCheck(index, { ...check, timing: timing ?? check.timing })}
+          />
+          <span />
+          <button
+            type="button"
+            onClick={() => onChange({ ...claim, checks: claim.checks.filter((_, checkIndex) => checkIndex !== index) })}
+          >
+            Remove check
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addCheck}>
+        + Add check
+      </button>
     </div>
   );
 }
