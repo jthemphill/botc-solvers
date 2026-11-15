@@ -92,7 +92,7 @@ One existing test changed. It expected a Shabaloth kill of the Goon to be illega
 
 The images of puzzles 91, 93, and 95 state the same rule: a living Mutant claims a Townsfolk character with any information, and a dead Mutant reveals itself. The engine now applies this as the default for each claim without a list of possible characters. `src/builders/mutant.test.ts` covers legal and illegal claims, a list that replaces the default, renamed players, and a duplicate death report.
 
-Twenty-one catalog documents had lists that the convention makes redundant. Those lists are removed, and every answer is unchanged.
+Twenty-two catalog documents had lists that the convention makes redundant. Those lists are removed, and every answer is unchanged.
 
 - Most lists were equal to the engine default.
 - Puzzles 53, 61, 65, 75, 79, and 82 let dead Townsfolk claimants be the Mutant. The repository owner confirmed that a dead Mutant always reveals itself, so those lists are removed also.
@@ -100,7 +100,7 @@ Twenty-one catalog documents had lists that the convention makes redundant. Thos
 
 Puzzle 07 let only one living claimant be the Mutant, and it had the Drunk on its script. Its [image](../puzzle-images/puzzle-07-the-savant-strikes-back.webp) says that the Mutant is the only Outsider and that it claims a Townsfolk character. The document now has no Drunk and no lists except the given about You. Each Townsfolk claimant can be the Mutant, and the answer is unchanged.
 
-Puzzle 11 keeps the lists for its Philosopher and for one Seamstress claimant. Its image was not available to check.
+Puzzle 11 had a list on Matthew's claims that let him be a starting Artist. Its [image](../puzzle-images/puzzle-11-false-is-the-new-black.webp) has Matthew claim a starting Seamstress, so a good Matthew cannot be a starting Artist. That list is removed, with the redundant `uniqueCharacters` setting, and the answer is unchanged. One list stays: Sula's Snake Charmer check is a second claim by a Philosopher, and its list names the characters that her Philosopher claim allows.
 
 A list on You is a given about one player.
 

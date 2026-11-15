@@ -15,7 +15,6 @@
     "Seamstress",
     "Snake Charmer"
   ],
-  "uniqueCharacters": true,
   "timeline": [
     {
       "timing": "day_1",
@@ -44,8 +43,7 @@
       "name": "Matthew",
       "timing": "night_1",
       "among": ["Aoife", "Tom"],
-      "aligned": true,
-      "possibleActualRoles": ["Seamstress", "Vortox", "Cerenovus", "Pit-Hag", "Artist", "Mutant"]
+      "aligned": true
     },
     {
       "type": "Artist",
@@ -57,7 +55,6 @@
           "expression": "You.initial_role == Clockmaker"
         }
       ],
-      "possibleActualRoles": ["Seamstress", "Vortox", "Cerenovus", "Pit-Hag", "Artist", "Mutant"],
       "roleTiming": "day_2"
     },
     {
