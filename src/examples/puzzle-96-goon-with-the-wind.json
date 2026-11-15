@@ -1,0 +1,140 @@
+{
+  "title": "Puzzle 96 - Goon with the Wind",
+  "players": ["Matthew", "Sula", "Tim", "Oscar", "You", "Dan", "Hannah", "Anna"],
+  "script": [
+    "Imp",
+    "Poisoner",
+    "Goon",
+    "Seamstress",
+    "Clockmaker",
+    "Artist",
+    "Investigator",
+    "Village Idiot",
+    "Chef",
+    "Juggler"
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Sula"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": []
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Dan"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Oscar"]
+    },
+    {
+      "timing": "day_3",
+      "type": "execution",
+      "players": ["Anna"]
+    },
+    {
+      "timing": "night_4",
+      "type": "nightDeath",
+      "players": ["You"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Seamstress",
+      "name": "Matthew",
+      "timing": "night_4",
+      "among": ["Hannah", "Tim"],
+      "aligned": true
+    },
+    {
+      "type": "Clockmaker",
+      "name": "Sula",
+      "timing": "night_1",
+      "distance": 1
+    },
+    {
+      "type": "Artist",
+      "name": "Tim",
+      "timing": "day_1",
+      "info": [
+        {
+          "timing": "day_1",
+          "expression": "no p: {Matthew, Sula} | poisoned(p, day_1)"
+        }
+      ]
+    },
+    {
+      "type": "Investigator",
+      "name": "Oscar",
+      "timing": "night_1",
+      "role": "Poisoner",
+      "among": ["Anna", "Matthew"]
+    },
+    {
+      "type": "VillageIdiot",
+      "name": "You",
+      "checks": [
+        {
+          "timing": "night_1",
+          "player": "Dan",
+          "good": true
+        },
+        {
+          "timing": "night_2",
+          "player": "Oscar",
+          "good": false
+        },
+        {
+          "timing": "night_3",
+          "player": "Hannah",
+          "good": true
+        }
+      ],
+      "possibleActualRoles": ["Village Idiot"]
+    },
+    {
+      "type": "Chef",
+      "name": "Dan",
+      "count": 0
+    },
+    {
+      "type": "Goon",
+      "name": "Hannah",
+      "alignments": [
+        {
+          "timing": "night_1",
+          "alignment": "evil"
+        },
+        {
+          "timing": "night_2",
+          "alignment": "evil"
+        },
+        {
+          "timing": "night_3",
+          "alignment": "good"
+        },
+        {
+          "timing": "night_4",
+          "alignment": "good"
+        }
+      ]
+    },
+    {
+      "type": "Juggler",
+      "name": "Anna",
+      "timing": "night_2",
+      "guesses": {
+        "Oscar": "Investigator",
+        "Sula": "Clockmaker"
+      },
+      "correctCount": 0
+    }
+  ]
+}

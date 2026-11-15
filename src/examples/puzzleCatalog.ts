@@ -94,6 +94,9 @@ import doc_89_the_bigger_picture from "./puzzle-89-the-bigger-picture.json";
 import doc_90_last_liar_standing from "./puzzle-90-last-liar-standing.json";
 import doc_91_mixed_signals from "./puzzle-91-mixed-signals.json";
 import doc_92_half_moon_rising from "./puzzle-92-half-moon-rising.json";
+import doc_93_a_study_in_idiocy from "./puzzle-93-a-study-in-idiocy.json";
+import doc_95_daylight_saving_time from "./puzzle-95-daylight-saving-time.json";
+import doc_96_goon_with_the_wind from "./puzzle-96-goon-with-the-wind.json";
 import doc_a_clean_sweep from "./a-clean-sweep.json";
 
 export interface PuzzleExample {
@@ -207,6 +210,9 @@ const PUZZLE_DOCS = [
   { id: "puzzle-90-last-liar-standing", data: doc_90_last_liar_standing },
   { id: "puzzle-91-mixed-signals", data: doc_91_mixed_signals },
   { id: "puzzle-92-half-moon-rising", data: doc_92_half_moon_rising },
+  { id: "puzzle-93-a-study-in-idiocy", data: doc_93_a_study_in_idiocy },
+  { id: "puzzle-95-daylight-saving-time", data: doc_95_daylight_saving_time },
+  { id: "puzzle-96-goon-with-the-wind", data: doc_96_goon_with_the_wind },
   { id: "a-clean-sweep", data: doc_a_clean_sweep },
 ] as const;
 

@@ -56,14 +56,12 @@
       "name": "Oscar",
       "timing": "night_1",
       "chosen": "Matthew",
-      "learned": false,
-      "possibleActualRoles": ["Nightwatchman", "Riot", "Spy", "Xaan", "Politician"]
+      "learned": false
     },
     {
       "type": "Shugenja",
       "name": "Sula",
-      "evilDirection": "anticlockwise",
-      "possibleActualRoles": ["Shugenja", "Riot", "Spy", "Xaan", "Politician"]
+      "evilDirection": "anticlockwise"
     },
     {
       "type": "Juggler",
@@ -75,24 +73,21 @@
         "Steph": "Nightwatchman",
         "Tom": "Xaan"
       },
-      "correctCount": 2,
-      "possibleActualRoles": ["Juggler", "Riot", "Spy", "Xaan", "Politician"]
+      "correctCount": 2
     },
     {
       "type": "Nightwatchman",
       "name": "Steph",
       "timing": "night_1",
       "chosen": "Sula",
-      "learned": false,
-      "possibleActualRoles": ["Nightwatchman", "Riot", "Spy", "Xaan", "Politician"]
+      "learned": false
     },
     {
       "type": "Seamstress",
       "name": "Tom",
       "timing": "night_3",
       "among": ["Adam", "Sula"],
-      "aligned": false,
-      "possibleActualRoles": ["Seamstress", "Riot", "Spy", "Xaan", "Politician"]
+      "aligned": false
     },
     {
       "type": "Dreamer",
@@ -132,14 +127,12 @@
           "player": "Oscar",
           "learnedDemon": "You"
         }
-      ],
-      "possibleActualRoles": ["Puzzlemaster", "Riot", "Spy", "Xaan", "Politician"]
+      ]
     },
     {
       "type": "Noble",
       "name": "Adam",
-      "oneEvilAmong": ["You", "Jasmine", "Matthew"],
-      "possibleActualRoles": ["Noble", "Riot", "Spy", "Xaan", "Politician"]
+      "oneEvilAmong": ["You", "Jasmine", "Matthew"]
     }
   ]
 }

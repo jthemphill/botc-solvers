@@ -77,8 +77,7 @@
     {
       "type": "Empath",
       "name": "Anna",
-      "count": 1,
-      "possibleActualRoles": ["Empath", "Vortox", "Spy", "Scarlet Woman", "Lunatic"]
+      "count": 1
     },
     {
       "type": "Mayor",

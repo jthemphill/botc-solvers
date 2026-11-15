@@ -37,6 +37,8 @@ export interface InfoClaimConstraint {
   readonly role: RoleRef;
   readonly learned: BoolLike;
   readonly malfunctionLearned?: BoolLike;
+  /** Is true when the report is false information for a Vortox. The default is the negation of `learned`. */
+  readonly vortoxFalse?: BoolLike;
   readonly timing: Timing;
   readonly vortoxAffected?: boolean;
 }
@@ -90,15 +92,7 @@ export class BOTCModel extends BooleanConstraints {
     string,
     { readonly player: string; readonly role: string; readonly timing: Timing; readonly variable: BoolVar }
   >();
-  private readonly abilityTargets: Array<{
-    readonly actor: string;
-    readonly role: string;
-    readonly target: string;
-    readonly timing: Timing;
-    readonly order: number;
-    readonly activeIf: BoolLike;
-  }> = [];
-  private readonly abilityTargetQueries = new Map<
+  private readonly playerChoiceQueries = new Map<
     string,
     {
       readonly actor: string;
@@ -181,6 +175,7 @@ export class BOTCModel extends BooleanConstraints {
       actor: action.actor,
       timing: action.timing,
       count: action.count,
+      ...(action.minCount === undefined ? {} : { minCount: action.minCount }),
       active: model.has(Math.abs(lit(action.active))) === lit(action.active) > 0,
       candidates: [...action.choices.keys()],
       selected: [...action.choices]
@@ -255,6 +250,7 @@ export class BOTCModel extends BooleanConstraints {
       readonly evilRoles?: readonly RoleRef[];
       readonly drunkRole?: RoleRef;
       readonly possibleActualRoles?: readonly RoleRef[];
+      readonly mutantBluff?: boolean;
       readonly timing?: Timing;
     } = {},
   ): void {
@@ -296,7 +292,13 @@ export class BOTCModel extends BooleanConstraints {
     if (claimedTownsfolk && options.possibleActualRoles === undefined) {
       possibleRoles.push(...drunkLikeRoles);
       if (this.characters.has("Goon")) possibleRoles.push("Goon");
+      if (options.mutantBluff === true && this.characters.has("Mutant")) possibleRoles.push("Mutant");
     }
+    // A Lunatic believes that it is the Demon, so it claims a different character as an evil player does.
+    // A Politician wants its team to lose, so it can claim a different character also.
+    if (options.possibleActualRoles === undefined)
+      for (const liar of ["Lunatic", "Politician"])
+        if (this.characters.has(liar) && apparentRole !== liar) possibleRoles.push(liar);
     this.setPossibleActualRoles(claim.player, possibleRoles);
     if (claimedTownsfolk)
       for (const hiddenRole of thinksRoleIsOutOfPlayRoles)
@@ -520,16 +522,21 @@ export class BOTCModel extends BooleanConstraints {
     this.assertBuilding();
     const poisonerRole = "Poisoner";
     const poisonerActive = this.activeRole(poisonerRole, activeIf);
-    const choiceTiming = timing.replace("day_", "night_") as Timing;
-    const key = choiceTiming;
-    let targets = this.poisonerTargetsByNight.get(key);
-    if (targets === undefined) {
-      targets = select(this, this.players, this.roleInPlay(poisonerRole), 1);
-      this.poisonerTargetsByNight.set(key, targets);
-    }
+    const targets = this.poisonerTargetsAt(timing.replace("day_", "night_") as Timing);
     this.registerActivePoisonSource(timing, poisonerActive);
     for (const [player, target] of targets)
       this.registerPoisonSourceTarget(player, timing, this.allOf([target, poisonerActive]));
+  }
+
+  /** Returns the Poisoner choice for one night. The choice exists while a Poisoner is in play. */
+  poisonerTargetsAt(night: Timing): ReadonlyMap<string, BoolLike> {
+    this.assertBuilding();
+    let targets = this.poisonerTargetsByNight.get(night);
+    if (targets === undefined) {
+      targets = select(this, this.players, this.roleInPlay("Poisoner"), 1);
+      this.poisonerTargetsByNight.set(night, targets);
+    }
+    return targets;
   }
 
   addPersistentPoisonSource(timings: readonly Timing[], candidates: readonly string[], activeIf: BoolLike): void {
@@ -548,17 +555,21 @@ export class BOTCModel extends BooleanConstraints {
     }
   }
 
-  addWidowEffect(timings: readonly Timing[], activeIf: BoolLike): void {
+  /**
+   * Adds the Widow choice and its poison. Returns the choice of each player.
+   * The Widow chooses while `chooses` is true. The poison applies while `effective` is also true.
+   */
+  addWidowEffect(timings: readonly Timing[], chooses: BoolLike, effective: BoolLike): ReadonlyMap<string, BoolLike> {
     this.assertBuilding();
-    const widowActive = this.activeRole("Widow", activeIf);
-    if (timings.length === 0) return;
-    this.addOnePlayerDroisonSource(widowActive, (player, target) => {
-      for (const timing of timings) this.registerPoisonSourceTarget(player, timing, target);
-    });
+    const targets = select(this, this.players, this.activeRole("Widow", chooses), 1);
+    const poisons = this.activeRole("Widow", this.allOf([chooses, effective]));
     for (const timing of timings) {
       this.droisonTimingKeys.add(timing);
-      this.registerActivePoisonSource(timing, widowActive);
+      this.registerActivePoisonSource(timing, poisons);
+      for (const [player, target] of targets)
+        this.registerPoisonSourceTarget(player, timing, this.allOf([target, poisons]));
     }
+    return targets;
   }
 
   private registerActivePoisonSource(timing: string, sourceActive: BoolLike): void {
@@ -754,45 +765,25 @@ export class BOTCModel extends BooleanConstraints {
     return query.variable;
   }
 
-  registerAbilityTarget(
-    actor: string,
-    role: RoleRef,
-    target: string,
-    timing: Timing,
-    activeIf: BoolLike,
-    order: number,
-  ): void {
-    this.assertBuilding();
-    this.checkPlayer(actor);
-    this.checkPlayer(target);
-    const roleRef = roleName(role);
-    this.checkRole(roleRef);
-    this.abilityTargets.push({ actor, role: roleRef, target, timing, order, activeIf });
-  }
-
-  abilityTargetedAt(actor: string, role: RoleRef, target: string, timing: Timing): BoolVar {
+  playerChosenAt(actor: string, role: RoleRef, target: string, timing: Timing): BoolVar {
     this.checkPlayer(actor);
     this.checkPlayer(target);
     const roleRef = roleName(role);
     this.checkRole(roleRef);
     const key = keyOf(["ability_target", actor, roleRef, target, timing]);
-    let query = this.abilityTargetQueries.get(key);
+    let query = this.playerChoiceQueries.get(key);
     if (query === undefined) {
       query = { actor, role: roleRef, target, timing, variable: this.newBool() };
-      this.abilityTargetQueries.set(key, query);
+      this.playerChoiceQueries.set(key, query);
     }
     return query.variable;
   }
 
-  registeredAbilityTargets(): readonly {
-    readonly actor: string;
-    readonly role: string;
-    readonly target: string;
-    readonly timing: Timing;
-    readonly order: number;
-    readonly activeIf: BoolLike;
-  }[] {
-    return this.abilityTargets;
+  /** Returns the actions in which an actor chooses players at night with a character's ability. */
+  abilityChoices(): readonly (ChoiceAction & { readonly ability: string })[] {
+    return this.choiceActions.filter(
+      (action): action is ChoiceAction & { readonly ability: string } => action.ability !== undefined,
+    );
   }
 
   preventWakeAt(player: string, timing: Timing, activeIf: BoolLike): void {
@@ -1053,6 +1044,11 @@ export class BOTCModel extends BooleanConstraints {
     return this.registersAsRoleAt(player, role, timing);
   }
 
+  /** Is true when the player has the character at the time of the current observation. */
+  isCharacterWhenObserved(player: string, role: RoleRef): BoolVar {
+    return this.characterAt(player, roleName(role), this.observationTiming ?? night(1));
+  }
+
   registersAsRoleAt(player: string, role: RoleRef, timing: Timing): BoolVar {
     this.assertBuilding();
     const observed = roleName(role);
@@ -1168,7 +1164,7 @@ export class BOTCModel extends BooleanConstraints {
     this.addImplication(this.allOf([activeHealthy, activeVortox.not()]), claim.learned);
     this.addImplication(
       this.allOf(honest === undefined ? [activeRole, activeVortox] : [activeRole, honest, activeVortox]),
-      this.not(claim.learned),
+      claim.vortoxFalse ?? this.not(claim.learned),
     );
   }
 
@@ -1542,16 +1538,12 @@ export class BOTCModel extends BooleanConstraints {
     for (const [key, query] of this.conditionalWakeQueries) {
       this.constrainToAnySource(query, this.conditionalWakeSources.get(key) ?? []);
     }
-    for (const query of this.abilityTargetQueries.values()) {
-      const sources = this.abilityTargets
+    for (const query of this.playerChoiceQueries.values()) {
+      const sources = this.choiceActions
         .filter(
-          (target) =>
-            target.actor === query.actor &&
-            target.role === query.role &&
-            target.target === query.target &&
-            target.timing === query.timing,
+          (action) => action.actor === query.actor && action.ability === query.role && action.timing === query.timing,
         )
-        .map((target) => target.activeIf);
+        .flatMap((action) => action.choices.get(query.target) ?? []);
       this.constrainToAnySource(query.variable, sources);
     }
   }

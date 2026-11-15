@@ -104,6 +104,7 @@ export type Claim =
   | SavantClaim
   | NightwatchmanClaim
   | MoonchildClaim
+  | GoonClaim
   | BareClaim;
 
 interface BaseClaim {
@@ -149,7 +150,6 @@ export interface AssassinClaim extends BaseClaim {
 
 export interface InvestigatorClaim extends BaseClaim {
   readonly type: "Investigator";
-  readonly minionRole?: string;
   readonly role?: string;
   readonly among: readonly string[];
 }
@@ -233,6 +233,17 @@ export interface GodfatherClaim extends BaseClaim {
   readonly type: "Godfather";
   readonly outsiderRoles?: readonly string[];
   readonly choices?: readonly NightlyPlayerChoiceDoc[];
+}
+
+export interface GoonAlignmentDoc {
+  readonly timing: string;
+  readonly alignment: "good" | "evil";
+}
+
+/** A Goon can report its alignment at given times. */
+export interface GoonClaim extends BaseClaim {
+  readonly type: "Goon";
+  readonly alignments?: readonly GoonAlignmentDoc[];
 }
 
 export interface MoonchildClaim extends BaseClaim {
@@ -328,11 +339,40 @@ export interface GossipClaim extends BaseClaim {
   readonly statements?: readonly GossipStatementDoc[];
 }
 
+/** A claim about the ability that a Philosopher gained. It uses the name of the Philosopher claim. */
+export type GainedAbilityDoc = Claim extends infer C ? (C extends Claim ? Omit<C, "name"> : never) : never;
+
 export interface PhilosopherClaim extends BaseClaim {
   readonly type: "Philosopher";
   readonly role?: string;
-  readonly seamstress?: PhilosopherSeamstressInfoDoc;
-  readonly nightwatchman?: { readonly chosen: string; readonly timing?: string };
+  /** The reports from the ability of the chosen character. */
+  readonly gained?: GainedAbilityDoc;
+}
+
+/** Returns the claim about the gained ability, with the name of the Philosopher. */
+export function gainedAbilityClaim(claim: PhilosopherClaim): Claim | undefined {
+  return claim.gained === undefined ? undefined : ({ ...claim.gained, name: claim.name } as Claim);
+}
+
+export function withoutName(claim: Claim): GainedAbilityDoc {
+  const { name: _name, ...rest } = claim;
+  return rest as GainedAbilityDoc;
+}
+
+const CLAIM_ROLE_NAMES: Readonly<Record<string, string>> = {
+  FortuneTeller: "Fortune Teller",
+  VillageIdiot: "Village Idiot",
+};
+
+/** Returns the character name for a claim type. */
+export function claimRoleName(type: string): string {
+  return CLAIM_ROLE_NAMES[type] ?? type;
+}
+
+/** Returns the structured claim type for a character, if the character has one. */
+export function structuredClaimTypeForRole(role: string): Claim["type"] | undefined {
+  return (STRUCTURED_CLAIM_TYPES as readonly string[]).find((type) => claimRoleName(type) === role) as
+    Claim["type"] | undefined;
 }
 
 export interface PrincessNominationDoc {
@@ -343,12 +383,6 @@ export interface PrincessNominationDoc {
 export interface PrincessClaim extends BaseClaim {
   readonly type: "Princess";
   readonly nominations?: readonly PrincessNominationDoc[];
-}
-
-export interface PhilosopherSeamstressInfoDoc {
-  readonly among: readonly string[];
-  readonly aligned?: boolean;
-  readonly timing?: string;
 }
 
 export interface ProdigyCheckDoc {
@@ -515,7 +549,6 @@ export const BARE_CLAIM_TYPES = [
   "Fool",
   "Golem",
   "Goblin",
-  "Goon",
   "Hermit",
   "Imp",
   "Kazali",
@@ -610,6 +643,7 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Savant",
   "Nightwatchman",
   "Moonchild",
+  "Goon",
 ] as const satisfies readonly Claim["type"][];
 
 export const SUPPORTED_CLAIM_TYPES = new Set<Claim["type"]>([...STRUCTURED_CLAIM_TYPES, ...BARE_CLAIM_TYPES]);

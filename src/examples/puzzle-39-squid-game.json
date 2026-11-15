@@ -102,12 +102,12 @@
       "name": "Matt",
       "timing": "night_1",
       "role": "Seamstress",
-      "seamstress": {
+      "gained": {
+        "type": "Seamstress",
         "timing": "night_1",
         "among": ["Aoife", "Tom"],
         "aligned": false
-      },
-      "possibleActualRoles": ["Philosopher", "No Dashii", "Witch", "Mutant"]
+      }
     },
     {
       "type": "Seamstress",

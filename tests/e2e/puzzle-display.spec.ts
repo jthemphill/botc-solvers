@@ -153,11 +153,12 @@ test("renders repeated, timed, and role-choice summaries", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByRole("button", { name: /N1: Aoife \+ Tim -> no; N2: Aoife \+ Olivia -> no/ })).toBeVisible();
   await selectPlayerClaims(page, "Olivia");
+  // This document has two Fortune Teller claims for Olivia. Each claim shows its checks as a list.
   await expect(page.getByText("Olivia — 🔮 Fortune Teller")).toHaveCount(2);
-  await expect(page.getByText("+ Add check")).toHaveCount(0);
+  await expect(page.getByText("+ Add check")).toHaveCount(2);
 
   await page.getByLabel("Load example puzzle").selectOption("puzzle-11-false-is-the-new-black");
-  await expect(page.getByLabel("Player claim summaries")).toContainText("Chose Snake Charmer.");
+  await expect(page.getByLabel("Player claim summaries")).toContainText("Chose Snake Charmer; N2: Sarah is not Demon");
 
   await page.getByLabel("Load example puzzle").selectOption("puzzle-24-the-ultimate-blunder");
   await expect(page.getByLabel("Player claim summaries")).toContainText("Chose Adam.");

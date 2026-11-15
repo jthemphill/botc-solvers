@@ -64,8 +64,7 @@
           "player": "Tom",
           "demon": false
         }
-      ],
-      "possibleActualRoles": ["Snake Charmer", "Fang Gu", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Juggler",
@@ -81,22 +80,19 @@
     {
       "type": "Clockmaker",
       "name": "Dan",
-      "distance": 4,
-      "possibleActualRoles": ["Clockmaker", "Fang Gu", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "distance": 4
     },
     {
       "type": "Oracle",
       "name": "Matt",
       "timing": "night_2",
-      "count": 0,
-      "possibleActualRoles": ["Oracle", "Fang Gu", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "count": 0
     },
     {
       "type": "Oracle",
       "name": "Matt",
       "timing": "night_3",
-      "count": 1,
-      "possibleActualRoles": ["Oracle", "Fang Gu", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "count": 1
     },
     {
       "type": "Klutz",
@@ -110,8 +106,7 @@
       "name": "Tom",
       "timing": "night_2",
       "among": ["Anna", "Dan"],
-      "aligned": false,
-      "possibleActualRoles": ["Seamstress", "Fang Gu", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "aligned": false
     },
     {
       "type": "Mathematician",

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { PuzzleDoc, TimelineEventDoc } from "../../src/schema/puzzleDoc";
-import { CLAIM_EDITOR_CASES } from "./claim-editor-cases";
+import { CLAIM_EDITOR_CASES } from "../../src/examples/editorCases";
 import {
   addAndFillClaims,
   addRoleToList,
@@ -157,13 +157,13 @@ test("switches conditional fields and preserves only the selected ability", asyn
         name: "Ada",
         role: "Seamstress",
         timing: "night_1",
-        seamstress: { among: ["Ben", "Cara"], aligned: true },
+        gained: { type: "Seamstress", among: ["Ben", "Cara"], aligned: true },
       },
     ],
   });
   const block = claimsPanel(page).locator(".claim-block");
   await fillRoleField(block, "Chosen role", "Chef");
-  await expect(block.getByText("Seamstress left", { exact: true })).toHaveCount(0);
+  await expect(block.getByRole("group", { name: "Gained ability" })).toHaveCount(0);
   expect((await exportPuzzleDoc(page)).claims).toEqual([
     { type: "Philosopher", name: "Ada", role: "Chef", timing: "night_1" },
   ]);

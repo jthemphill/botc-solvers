@@ -51,8 +51,7 @@
       "name": "Josh",
       "timing": "night_1",
       "among": ["You", "Aoife"],
-      "aligned": true,
-      "possibleActualRoles": ["Seamstress", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "aligned": true
     },
     {
       "type": "Clockmaker",
@@ -76,8 +75,7 @@
           "timing": "night_3",
           "count": 1
         }
-      ],
-      "possibleActualRoles": ["Mathematician", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Town Crier",
@@ -117,8 +115,7 @@
         "Fraser": "Fang Gu",
         "Charlotte": "Witch"
       },
-      "correctCount": 0,
-      "possibleActualRoles": ["Juggler", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "correctCount": 0
     },
     {
       "type": "Artist",

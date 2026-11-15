@@ -13,7 +13,7 @@ describe("puzzle document reducer", () => {
 
     const withClaim = reducer(doc, {
       type: "addClaim",
-      claim: { type: "Investigator", name: "A", minionRole: "Poisoner", among: ["B", "C"] },
+      claim: { type: "Investigator", name: "A", role: "Poisoner", among: ["B", "C"] },
     });
     const withCourtier = reducer(doc, {
       type: "addClaim",
@@ -137,7 +137,7 @@ describe("puzzle document reducer", () => {
     expect(doc.timeline).toEqual([{ timing: "night_2", type: "nightDeath", players: [] }]);
   });
 
-  test("Fortune Teller checks normalize into one claim per night", () => {
+  test("Fortune Teller checks stay in one claim", () => {
     const doc: PuzzleDoc = {
       players: ["A", "B", "C"],
       script: [],
@@ -155,21 +155,11 @@ describe("puzzle document reducer", () => {
 
     const loaded = reducer(doc, { type: "load", doc });
 
-    expect(loaded.claims).toEqual([
-      {
-        type: "FortuneTeller",
-        name: "A",
-        checks: [{ left: "B", right: "C", yes: true, timing: "night_1" }],
-      },
-      {
-        type: "FortuneTeller",
-        name: "A",
-        checks: [{ left: "A", right: "B", yes: false, timing: "night_2" }],
-      },
-    ]);
+    // The editor shows the checks of one claim as a list, so a load keeps them together.
+    expect(loaded.claims).toEqual(doc.claims);
   });
 
-  test("Snake Charmer checks normalize into one claim per night", () => {
+  test("Snake Charmer checks stay in one claim", () => {
     const doc: PuzzleDoc = {
       players: ["A", "B", "C"],
       script: [],
@@ -187,18 +177,8 @@ describe("puzzle document reducer", () => {
 
     const loaded = reducer(doc, { type: "load", doc });
 
-    expect(loaded.claims).toEqual([
-      {
-        type: "Snake Charmer",
-        name: "A",
-        checks: [{ player: "B", demon: false, timing: "night_1" }],
-      },
-      {
-        type: "Snake Charmer",
-        name: "A",
-        checks: [{ player: "C", demon: true, timing: "night_2" }],
-      },
-    ]);
+    // The editor shows the checks of one claim as a list, so a load keeps them together.
+    expect(loaded.claims).toEqual(doc.claims);
   });
 
   test("setPlayerCount removes affected player references", () => {

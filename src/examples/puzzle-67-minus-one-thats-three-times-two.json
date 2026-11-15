@@ -56,8 +56,7 @@
       "name": "Fraser",
       "timing": "night_1",
       "among": ["You", "Hannah"],
-      "aligned": true,
-      "possibleActualRoles": ["Seamstress", "Riot", "Spy", "Xaan", "Politician"]
+      "aligned": true
     },
     {
       "type": "Politician",
@@ -68,8 +67,7 @@
       "name": "Matthew",
       "timing": "night_3",
       "chosen": "Oscar",
-      "learned": false,
-      "possibleActualRoles": ["Nightwatchman", "Riot", "Spy", "Xaan", "Politician"]
+      "learned": false
     },
     {
       "type": "Puzzlemaster",
@@ -81,32 +79,28 @@
           "player": "Sarah",
           "learnedDemon": "Matthew"
         }
-      ],
-      "possibleActualRoles": ["Puzzlemaster", "Riot", "Spy", "Xaan", "Politician"]
+      ]
     },
     {
       "type": "Dreamer",
       "name": "Jasmine",
       "timing": "night_1",
       "player": "You",
-      "roles": ["Juggler", "Xaan"],
-      "possibleActualRoles": ["Dreamer", "Riot", "Spy", "Xaan", "Politician"]
+      "roles": ["Juggler", "Xaan"]
     },
     {
       "type": "Dreamer",
       "name": "Jasmine",
       "timing": "night_2",
       "player": "Oscar",
-      "roles": ["Shugenja", "Spy"],
-      "possibleActualRoles": ["Dreamer", "Riot", "Spy", "Xaan", "Politician"]
+      "roles": ["Shugenja", "Spy"]
     },
     {
       "type": "Dreamer",
       "name": "Jasmine",
       "timing": "night_3",
       "player": "Hannah",
-      "roles": ["Politician", "Xaan"],
-      "possibleActualRoles": ["Dreamer", "Riot", "Spy", "Xaan", "Politician"]
+      "roles": ["Politician", "Xaan"]
     },
     {
       "type": "Juggler",
@@ -125,20 +119,17 @@
       "name": "Adam",
       "timing": "night_1",
       "among": ["Sarah", "Tim"],
-      "aligned": true,
-      "possibleActualRoles": ["Seamstress", "Riot", "Spy", "Xaan", "Politician"]
+      "aligned": true
     },
     {
       "type": "Noble",
       "name": "Sarah",
-      "oneEvilAmong": ["You", "Adam", "Jasmine"],
-      "possibleActualRoles": ["Noble", "Riot", "Spy", "Xaan", "Politician"]
+      "oneEvilAmong": ["You", "Adam", "Jasmine"]
     },
     {
       "type": "Shugenja",
       "name": "Oscar",
-      "evilDirection": "anticlockwise",
-      "possibleActualRoles": ["Shugenja", "Riot", "Spy", "Xaan", "Politician"]
+      "evilDirection": "anticlockwise"
     }
   ]
 }

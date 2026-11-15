@@ -1,4 +1,4 @@
-import { type Claim, type PuzzleDoc, type TimelineEventDoc } from "../schema/puzzleDoc";
+import { type Claim, type PuzzleDoc, type TimelineEventDoc, withoutName } from "../schema/puzzleDoc";
 import type { SerializableWorld, SolveSummary } from "../worker/protocol";
 import { scriptWithProtectedRoles, withProtectedScript } from "./scriptRoles";
 
@@ -111,16 +111,16 @@ function rewriteName(claim: Claim, oldName: string, newName: string): Claim {
         oneEvilAmong: claim.oneEvilAmong ? remapArr(claim.oneEvilAmong) : claim.oneEvilAmong,
         among: claim.among ? remapArr(claim.among) : claim.among,
       };
+    case "Nightwatchman":
+      return { ...claim, name, chosen: claim.chosen === undefined ? undefined : remap(claim.chosen) };
     case "Philosopher":
       return {
         ...claim,
         name,
-        nightwatchman:
-          claim.nightwatchman === undefined
+        gained:
+          claim.gained === undefined
             ? undefined
-            : { ...claim.nightwatchman, chosen: remap(claim.nightwatchman.chosen) },
-        seamstress:
-          claim.seamstress === undefined ? undefined : { ...claim.seamstress, among: remapArr(claim.seamstress.among) },
+            : withoutName(rewriteName({ ...claim.gained, name: claim.name } as Claim, oldName, newName)),
       };
     case "Undertaker":
       return { ...claim, name, player: claim.player ? remap(claim.player) : claim.player };
@@ -224,12 +224,15 @@ function removeNameFromClaim(claim: Claim, name: string): Claim | undefined {
         oneEvilAmong: stripArr(claim.oneEvilAmong),
         among: stripArr(claim.among),
       };
-    case "Philosopher":
-      return {
-        ...claim,
-        seamstress: claim.seamstress?.among.includes(name) ? undefined : claim.seamstress,
-        nightwatchman: claim.nightwatchman?.chosen === name ? undefined : claim.nightwatchman,
-      };
+    case "Nightwatchman":
+      return claim.chosen === name ? { ...claim, chosen: undefined } : claim;
+    case "Philosopher": {
+      const gained =
+        claim.gained === undefined
+          ? undefined
+          : removeNameFromClaim({ ...claim.gained, name: claim.name } as Claim, name);
+      return { ...claim, gained: gained === undefined ? undefined : withoutName(gained) };
+    }
     case "Steward":
       return claim.goodPlayer === name ? { ...claim, goodPlayer: undefined } : claim;
     case "Juggler": {
@@ -418,27 +421,10 @@ function normalizeClaim(claim: Claim): Claim {
   return claim;
 }
 
-function normalizeClaims(claim: Claim): Claim[] {
-  const normalized = normalizeClaim(claim);
-  if (normalized.type === "FortuneTeller" && normalized.checks.length > 1) {
-    const { info: _info, ...claimWithoutInfo } = normalized;
-    return normalized.checks.map((check, index) =>
-      index === 0 ? { ...normalized, checks: [check] } : { ...claimWithoutInfo, checks: [check] },
-    );
-  }
-  if (normalized.type === "Snake Charmer" && normalized.checks.length > 1) {
-    const { info: _info, ...claimWithoutSharedInfo } = normalized;
-    return normalized.checks.map((check, index) =>
-      index === 0 ? { ...normalized, checks: [check] } : { ...claimWithoutSharedInfo, checks: [check] },
-    );
-  }
-  return [normalized];
-}
-
 export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc {
   switch (action.type) {
     case "load": {
-      const claims = action.doc.claims.flatMap(normalizeClaims);
+      const claims = action.doc.claims.map(normalizeClaim);
       return withProtectedScript({
         ...action.doc,
         timeline: normalizeTimeline(action.doc.timeline, action.doc.players),
@@ -543,11 +529,11 @@ export function docReducer(state: PuzzleDoc, action: PuzzleDocAction): PuzzleDoc
     case "addClaim":
       return withProtectedScript({
         ...state,
-        claims: [...state.claims, ...normalizeClaims(action.claim)],
+        claims: [...state.claims, normalizeClaim(action.claim)],
         timeline: ensureSlayerShotEvent(state.timeline, action.claim, state.players),
       });
     case "updateClaim": {
-      const claims = state.claims.flatMap((c, i) => (i === action.index ? normalizeClaims(action.claim) : [c]));
+      const claims = state.claims.map((c, i) => (i === action.index ? normalizeClaim(action.claim) : c));
       return withProtectedScript({
         ...state,
         claims,

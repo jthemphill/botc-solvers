@@ -45,19 +45,16 @@
     {
       "type": "Chef",
       "name": "Josef",
-      "count": 1,
-      "possibleActualRoles": ["Chef", "Imp", "Witch", "Lunatic", "Drunk"]
+      "count": 1
     },
     {
       "type": "Noble",
       "name": "Gina",
-      "oneEvilAmong": ["Edd", "Riley", "Chris"],
-      "possibleActualRoles": ["Noble", "Imp", "Witch", "Lunatic", "Drunk"]
+      "oneEvilAmong": ["Edd", "Riley", "Chris"]
     },
     {
       "type": "Poppy Grower",
-      "name": "Katharine",
-      "possibleActualRoles": ["Poppy Grower", "Imp", "Witch", "Lunatic", "Drunk"]
+      "name": "Katharine"
     },
     {
       "type": "Artist",
@@ -68,8 +65,7 @@
           "timing": "day_1",
           "expression": "Riley.initial_type != Townsfolk"
         }
-      ],
-      "possibleActualRoles": ["Artist", "Imp", "Witch", "Lunatic", "Drunk"]
+      ]
     },
     {
       "type": "Imp",
@@ -98,24 +94,21 @@
           "yes": false,
           "timing": "night_3"
         }
-      ],
-      "possibleActualRoles": ["Fortune Teller", "Imp", "Witch", "Lunatic", "Drunk"]
+      ]
     },
     {
       "type": "Seamstress",
       "name": "Edd",
       "timing": "night_1",
       "among": ["Katharine", "Chris"],
-      "aligned": true,
-      "possibleActualRoles": ["Seamstress", "Imp", "Witch", "Lunatic", "Drunk"]
+      "aligned": true
     },
     {
       "type": "Slayer",
       "name": "Riley",
       "timing": "day_1",
       "target": "Katharine",
-      "killed": false,
-      "possibleActualRoles": ["Slayer", "Imp", "Witch", "Lunatic", "Drunk"]
+      "killed": false
     }
   ]
 }

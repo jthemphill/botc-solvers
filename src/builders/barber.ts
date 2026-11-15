@@ -41,7 +41,7 @@ export function applyBarberSwaps(game: BOTCModel, doc: PuzzleDoc, facts: Timelin
         game.addImplication(swapping, selectedActor);
         const targets = choose(
           game,
-          { rule: "Barber:players", actor, timing, active: swapping, count: 2 },
+          { rule: "Barber:players", actor, timing, active: swapping, count: 2, ability: "Barber" },
           doc.players,
         );
         for (const [player, selected] of targets.choices) {

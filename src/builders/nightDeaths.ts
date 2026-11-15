@@ -9,6 +9,8 @@ export interface NightDeathSource {
   readonly targetCountWhenAvailable?: number;
   readonly requiredWhenAvailable?: boolean;
   readonly kind?: "demon" | "po";
+  /** The Demon characters that can use this source. */
+  readonly roles?: readonly string[];
   readonly succession?: readonly ("Imp" | "Fang Gu")[];
   readonly deathTiming?: "beforeInfo" | "afterInfo";
   readonly resolutionOrder?: number;

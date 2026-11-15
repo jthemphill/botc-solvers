@@ -48,30 +48,26 @@
     {
       "type": "Clockmaker",
       "name": "Tim",
-      "distance": 4,
-      "possibleActualRoles": ["Clockmaker", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "distance": 4
     },
     {
       "type": "Dreamer",
       "name": "Aoife",
       "timing": "night_1",
       "player": "Olivia",
-      "roles": ["Mutant", "Witch"],
-      "possibleActualRoles": ["Dreamer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "roles": ["Mutant", "Witch"]
     },
     {
       "type": "Oracle",
       "name": "Fraser",
       "timing": "night_2",
-      "count": 0,
-      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "count": 0
     },
     {
       "type": "Oracle",
       "name": "Fraser",
       "timing": "night_3",
-      "count": 1,
-      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "count": 1
     },
     {
       "type": "Mathematician",
@@ -81,8 +77,7 @@
           "timing": "night_1",
           "count": 2
         }
-      ],
-      "possibleActualRoles": ["Mathematician", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Artist",
@@ -114,8 +109,7 @@
           "player": "Sarah",
           "demon": false
         }
-      ],
-      "possibleActualRoles": ["Snake Charmer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Juggler",
@@ -127,8 +121,7 @@
         "Tim": "Mutant",
         "Fraser": "Mutant",
         "Sarah": "Vortox"
-      },
-      "possibleActualRoles": ["Juggler", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      }
     }
   ]
 }

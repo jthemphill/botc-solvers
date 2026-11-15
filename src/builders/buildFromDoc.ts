@@ -4,6 +4,10 @@ import { slug, addMapValue } from "../model/keys";
 import { TimelineFacts, deathEventOrder } from "./timeline";
 import { applyBarberSwaps } from "./barber";
 import { applyNightwatchmanActions } from "./nightwatchman";
+import { GoonRule } from "./goon";
+import { type BuildClaim, expandPhilosopherClaims } from "./philosopher";
+import { generateNightChoices } from "./playerChoices";
+import { nightActionOrder } from "../model/nightOrder";
 import {
   timingOrder,
   followingNight,
@@ -23,12 +27,13 @@ import { buildClaim, type ClaimWithTimelineContext } from "./claim";
 import { resolveRoleRef } from "./roleRef";
 
 interface BuildDoc extends PuzzleDoc {
+  readonly claims: readonly BuildClaim[];
   readonly facts: TimelineFacts;
 }
 
 export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
   input = { ...input, claims: [...new Map(input.claims.map((claim) => [JSON.stringify(claim), claim])).values()] };
-  const doc: BuildDoc = { ...input, facts: new TimelineFacts(input) };
+  const doc: BuildDoc = { ...input, claims: expandPhilosopherClaims(input.claims), facts: new TimelineFacts(input) };
   const spec: PuzzleSpec = {
     players: doc.players,
     characters: doc.script.map(resolveRoleRef),
@@ -39,6 +44,7 @@ export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
   const ctx = { players: doc.players, script: doc.script };
   game.withProvenance({ kind: "rule", id: "applyLleechHostChoice" }, () => applyLleechHostChoice(game, doc));
   game.withProvenance({ kind: "rule", id: "applyGlobalConstraints" }, () => applyGlobalConstraints(game, doc, ctx));
+  game.withProvenance({ kind: "rule", id: "applyAtheistRule" }, () => applyAtheistRule(game, doc));
   if (doc.setup === "atheist")
     game.withProvenance({ kind: "rule", id: "applyAtheistSetup" }, () => applyAtheistSetup(game, doc));
   const characterActions = game.withProvenance({ kind: "rule", id: "nightlyCharacterChoices" }, () =>
@@ -63,15 +69,11 @@ export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
   game.withProvenance({ kind: "rule", id: "applyRiotTransformations" }, () => applyRiotTransformations(game, doc));
   const pukkaContext = doc.setup === "atheist" ? emptyPukkaContext() : applyPukkaPoisonChoices(game, doc);
   let nightDeathTiming = emptyNightDeathTimingContext();
+  const goon = new GoonRule(game, doc);
   if (doc.setup !== "atheist") {
     registerDevilsAdvocateTargets(game, doc);
     const godfatherContext = applyGodfatherChoices(game, doc);
     const shabalothContext = registerShabalothChoices(game, doc);
-    let goonContext = emptyGoonContext();
-    if (doc.script.includes("Goon")) {
-      registerDeclaredAbilityTargets(game, doc);
-      goonContext = applyGoonInteractions(game, doc);
-    }
     game.withProvenance(
       {
         kind: "rule",
@@ -86,7 +88,7 @@ export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
       ctx,
       pukkaContext,
       godfatherContext,
-      goonContext,
+      goon,
       shabalothContext,
     );
     applyResurrectionConstraints(game, doc, nightDeathTiming);
@@ -107,7 +109,12 @@ export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
   }
   for (const [index, claim] of reportedClaims.entries())
     game.withProvenance({ kind: "assumption", id: `claims[${index}]`, source: doc.claims[index]?.source }, () =>
-      applyClaims(game, [claim], claimOptions),
+      // A Mutant that is alive at the last phase claims a Townsfolk character. A dead Mutant claims the Mutant.
+      applyClaims(game, [claim], {
+        ...claimOptions,
+        mutantBluff: doc.facts.finalLiving.includes(doc.claims[index]?.name ?? ""),
+        infoOnly: doc.claims[index]?.gainedByPhilosopher !== undefined,
+      }),
     );
   game.withProvenance({ kind: "rule", id: "applyLleechHostPoisoning" }, () => applyLleechHostPoisoning(game, doc));
   if (doc.script.includes("Assassin")) game.enforceAbilityUseLimit("Assassin", 1);
@@ -115,13 +122,29 @@ export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
     applyPhilosopherDrunking(game, doc);
     applyNightwatchmanActions(game, doc, doc.facts);
     applyChangedRoleClaimExplanations(game, doc, characterActions);
-    applyXaanActivity(game, doc);
+    applyGoonClaimConvention(game, doc);
+    applyXaanActivity(game, doc, nightDeathTiming);
     applyVigormortisPoisonSources(game, doc, nightDeathTiming);
-    applyPoisonerSources(game, doc, nightDeathTiming);
-    applyWidowSources(game, doc);
+    applyPoisonerSources(game, doc, nightDeathTiming, goon);
+    applyWidowSources(game, doc, goon);
     applyWidowCallClaims(game, doc);
     applyEvilTwinKnowledgeClaims(game, doc);
     applyVillageIdiotSources(game, doc);
+  }
+  if (doc.script.includes("Lleech")) {
+    const hosts = new Map(doc.players.map((player) => [player, game.lleechHost(player)]));
+    registerRoleChoices(game, doc, "Lleech", "night_1", hosts);
+  }
+  // The Goon is the only rule that reads unknown choices. Without a Goon, the builder does not make them.
+  if (doc.setup !== "atheist") registerDemonChoices(game, doc, nightDeathTiming, goon.inPlay);
+  if (goon.inPlay) {
+    generateNightChoices(
+      game,
+      doc,
+      (player, timing) =>
+        nightDeathTiming.beforeInfoDeathsByTiming.get(timing)?.get(player) ?? game.constantBool(false),
+    );
+    goon.resolve();
   }
   return game;
 }
@@ -206,7 +229,7 @@ function applyGodfatherChoices(game: BOTCModel, doc: BuildDoc): GodfatherContext
       const targets = new Map<string, BoolLike>();
       const selection = choose(
         game,
-        { rule: "Godfather:targets", actor, timing, active: choiceActive, count: 1 },
+        { rule: "Godfather:targets", actor, timing, active: choiceActive, count: 1, ability: "Godfather" },
         living,
       );
       for (const [target, selected] of selection.choices) {
@@ -216,7 +239,6 @@ function applyGodfatherChoices(game: BOTCModel, doc: BuildDoc): GodfatherContext
           if (target === declaredTarget) game.addImplication(choiceActive, selected);
           else game.addFalse(selected);
         }
-        game.registerAbilityTarget(actor, "Godfather", target, timing, selected, nightActionOrder("Godfather"));
         if (!publicDeaths.has(target)) {
           game.addImplication(
             effectiveTarget,
@@ -276,17 +298,7 @@ function applyPukkaPoisonChoices(game: BOTCModel, doc: BuildDoc): PukkaContext {
     });
     const notBlocked = game.not(blocked);
     game.equate(unblocked, notBlocked);
-    for (const actor of doc.players)
-      for (const [target, targeted] of choice.targets) {
-        game.registerAbilityTarget(
-          actor,
-          "Pukka",
-          target,
-          timing,
-          game.allOf([choice.choiceActive, targeted, game.hasAbilityAt(actor, "Pukka", timing)]),
-          nightActionOrder("Pukka"),
-        );
-      }
+    registerRoleChoices(game, doc, "Pukka", timing, choice.targets, choice.choiceActive);
     choicesByTiming.set(timing, choice);
     resolvesByTiming.set(timing, game.allOf([livingPukka, choice.healthyRoleInPlay]));
   }
@@ -385,17 +397,18 @@ function registerDevilsAdvocateTargets(game: BOTCModel, doc: BuildDoc): void {
           if (target === declaredTarget) game.addImplication(active, selected);
           else game.addFalse(selected);
         }
-        game.registerAbilityTarget(
-          actor,
-          "Devil's Advocate",
-          target,
-          timing,
-          selected,
-          nightActionOrder("Devil's Advocate"),
-        );
       }
       game.addEnforcedExactlyN([...targets.values()], 1, active);
       game.addEnforcedExactlyN([...targets.values()], 0, active.not());
+      game.registerChoiceAction({
+        rule: "Devil's Advocate:target",
+        actor,
+        timing,
+        active,
+        count: 1,
+        choices: targets,
+        ability: "Devil's Advocate",
+      });
       choicesByActorTiming.set(`${actor}\u0000${timing}`, targets);
     }
   }
@@ -414,60 +427,6 @@ function registerDevilsAdvocateTargets(game: BOTCModel, doc: BuildDoc): void {
       }
     }
   }
-}
-
-function registerDeclaredAbilityTargets(game: BOTCModel, doc: BuildDoc): void {
-  const register = (actor: string, role: string, target: string, timing: string | undefined): void => {
-    if (!/^(night)_\d+$/.test(timing ?? "") || !doc.players.includes(target)) return;
-    const resolvedTiming = timing as Timing;
-    if (!doc.facts.livingAt(resolvedTiming).includes(actor)) return;
-    game.registerAbilityTarget(
-      actor,
-      role,
-      target,
-      resolvedTiming,
-      game.hasAbilityAt(actor, role, resolvedTiming),
-      nightActionOrder(role),
-    );
-  };
-  for (const claim of doc.claims) {
-    switch (claim.type) {
-      case "Assassin":
-        if (claim.target !== undefined) register(claim.name, "Assassin", claim.target, claim.timing);
-        break;
-      case "Chambermaid":
-        for (const check of claim.checks ?? []) {
-          register(claim.name, "Chambermaid", check.left, check.timing);
-          register(claim.name, "Chambermaid", check.right, check.timing);
-        }
-        break;
-      case "Devil's Advocate":
-        break;
-      case "Exorcist":
-        for (const choice of claim.choices ?? []) register(claim.name, "Exorcist", choice.player, choice.timing);
-        break;
-      case "Gambler":
-        for (const guess of claim.guesses ?? []) register(claim.name, "Gambler", guess.player, guess.timing);
-        break;
-      case "Godfather":
-        break;
-      case "Innkeeper":
-        for (const choice of claim.choices ?? [])
-          for (const target of choice.players) register(claim.name, "Innkeeper", target, choice.timing);
-        break;
-      case "Professor":
-        if (claim.target !== undefined) register(claim.name, "Professor", claim.target, claim.timing);
-        break;
-      case "Sailor":
-        for (const choice of claim.choices ?? []) register(claim.name, "Sailor", choice.player, choice.timing);
-        break;
-    }
-  }
-}
-
-interface GoonContext {
-  readonly drunkSourcesByActorTiming: ReadonlyMap<string, readonly BoolLike[]>;
-  readonly targetings: readonly { readonly timing: Timing; readonly order: number; readonly active: BoolLike }[];
 }
 
 interface ShabalothChoice {
@@ -490,7 +449,6 @@ function registerShabalothChoices(game: BOTCModel, doc: BuildDoc): ShabalothCont
         const selected = game.newBool();
         targets.set(target, selected);
         game.addImplication(selected, game.hasAbilityAt(actor, "Shabaloth", timing));
-        game.registerAbilityTarget(actor, "Shabaloth", target, timing, selected, nightActionOrder("Shabaloth"));
       }
       choices.push({ actor, timing, targets });
     }
@@ -513,6 +471,7 @@ function applyShabalothChoiceConstraints(game: BOTCModel, doc: BuildDoc, context
       count: 2,
       active: shouldChoose,
       choices: choice.targets,
+      ability: "Shabaloth",
     });
     constrainSelection(game, [...choice.targets.values()], 2, shouldChoose);
 
@@ -539,98 +498,6 @@ function shabalothTargetedAt(game: BOTCModel, context: ShabalothContext, player:
       choice.timing === timing && choice.targets.has(player) ? [choice.targets.get(player) as BoolLike] : [],
     ),
   );
-}
-
-function emptyGoonContext(): GoonContext {
-  return { drunkSourcesByActorTiming: new Map(), targetings: [] };
-}
-
-function applyGoonInteractions(game: BOTCModel, doc: BuildDoc): GoonContext {
-  if (!doc.script.includes("Goon")) return emptyGoonContext();
-  const actions = [...game.registeredAbilityTargets()].sort(
-    (left, right) => timingOrder(left.timing) - timingOrder(right.timing) || left.order - right.order,
-  );
-  const firstGoonTargets: Array<(typeof actions)[number] & { readonly triggers: BoolLike }> = [];
-  const targetings: Array<{ readonly timing: Timing; readonly order: number; readonly active: BoolLike }> = [];
-  const drunkSourcesByActorTiming = new Map<string, BoolLike[]>();
-  for (const timing of doc.facts.nights) {
-    const earlier: BoolLike[] = [];
-    for (const action of actions.filter((candidate) => candidate.timing === timing)) {
-      if (!doc.facts.livingAt(timing).includes(action.target)) continue;
-      const targetsGoon = game.allOf([action.activeIf, game.hasAbilityAt(action.target, "Goon", timing)]);
-      const triggers = game.allOf([targetsGoon, ...earlier.map((prior) => game.not(prior))]);
-      firstGoonTargets.push({ ...action, triggers });
-      targetings.push({ timing, order: action.order, active: targetsGoon });
-      earlier.push(targetsGoon);
-      const match = /^night_(\d+)$/.exec(timing);
-      game.addTimedDrunkSource(
-        action.actor,
-        match === null ? [timing] : [timing, `day_${match[1]}` as Timing],
-        triggers,
-      );
-      const key = `${action.actor}\u0000${timing}`;
-      drunkSourcesByActorTiming.set(key, [...(drunkSourcesByActorTiming.get(key) ?? []), triggers]);
-    }
-  }
-
-  for (const timing of doc.facts.nights) {
-    const priorTiming = previousNight(timing);
-    for (const player of doc.players) {
-      const priorGood = priorTiming === undefined ? game.isGood(player) : game.isGoodAt(player, priorTiming);
-      const playerTriggers = firstGoonTargets.filter((target) => target.timing === timing && target.target === player);
-      const turnsGood = game.anyOf(
-        playerTriggers.map((target) => {
-          const actorWasGood =
-            priorTiming === undefined ? game.isGood(target.actor) : game.isGoodAt(target.actor, priorTiming);
-          return game.allOf([target.triggers, actorWasGood]);
-        }),
-      );
-      const turnsEvil = game.anyOf(
-        playerTriggers.map((target) => {
-          const actorWasEvil = game.not(
-            priorTiming === undefined ? game.isGood(target.actor) : game.isGoodAt(target.actor, priorTiming),
-          );
-          return game.allOf([target.triggers, actorWasEvil]);
-        }),
-      );
-      const goodAtTiming = game.anyOf([turnsGood, game.allOf([priorGood, game.not(turnsEvil)])]);
-      game.setGoodAt(player, timing, goodAtTiming);
-      const match = /^night_(\d+)$/.exec(timing);
-      if (match !== null) game.setGoodAt(player, `day_${match[1]}` as Timing, goodAtTiming);
-    }
-  }
-  return { drunkSourcesByActorTiming, targetings };
-}
-
-function goonWasTargetedBefore(game: BOTCModel, context: GoonContext, timing: Timing, order: number): BoolLike {
-  return game.anyOf(
-    context.targetings
-      .filter((targeting) => targeting.timing === timing && targeting.order < order)
-      .map((targeting) => targeting.active),
-  );
-}
-
-function nightActionOrder(role: string): number {
-  const order: Readonly<Record<string, number>> = {
-    Sailor: 10,
-    Courtier: 20,
-    Innkeeper: 30,
-    Gambler: 40,
-    "Devil's Advocate": 50,
-    Exorcist: 60,
-    Zombuul: 70,
-    Pukka: 80,
-    Shabaloth: 90,
-    Po: 100,
-    Assassin: 110,
-    Godfather: 120,
-    Gossip: 125,
-    Professor: 130,
-    Tinker: 140,
-    Moonchild: 150,
-    Chambermaid: 200,
-  };
-  return order[role] ?? 150;
 }
 
 function applyConditionalWakeSources(game: BOTCModel, doc: BuildDoc): void {
@@ -676,7 +543,11 @@ function applyCharacterActions(game: BOTCModel, doc: BuildDoc): CharacterActions
       if (!doc.script.includes(role) || (role === "Pit-Hag" && timing === "night_1")) continue;
       for (const actor of doc.facts.livingAt(timing)) {
         const active = game.characterBefore(actor, role, timing);
-        const target = choose(game, { rule: `${role}:player`, actor, timing, count: 1, active }, doc.players);
+        const target = choose(
+          game,
+          { rule: `${role}:player`, actor, timing, count: 1, active, ability: role },
+          doc.players,
+        );
         const roles = doc.script.filter(
           (candidate) => role === "Pit-Hag" || roleAlignment(resolveRoleRef(candidate)) === Alignment.Good,
         );
@@ -707,6 +578,28 @@ function applyCharacterActions(game: BOTCModel, doc: BuildDoc): CharacterActions
   return { madness };
 }
 
+/**
+ * Applies the shared claim convention to the Goon: a good player reports honestly.
+ * A Goon that claims a different character is evil at the last phase of the timeline.
+ * A Goon that is good at the last phase reports its alignments correctly.
+ */
+function applyGoonClaimConvention(game: BOTCModel, doc: BuildDoc): void {
+  if (!doc.script.includes("Goon")) return;
+  const lastTiming = doc.facts.timings.at(-1) ?? "night_1";
+  for (const claim of doc.claims) {
+    const isGoon = game.actualIs(claim.name, "Goon");
+    if (claim.type !== "Goon") {
+      if (claim.roleTiming === undefined) game.addImplication(isGoon, game.isEvilAt(claim.name, lastTiming));
+      continue;
+    }
+    const honest = game.allOf([isGoon, game.isGoodAt(claim.name, lastTiming)]);
+    for (const report of claim.alignments ?? []) {
+      const good = game.isGoodAt(claim.name, report.timing as Timing);
+      game.addImplication(honest, report.alignment === "good" ? good : game.not(good));
+    }
+  }
+}
+
 function applyChangedRoleClaimExplanations(game: BOTCModel, doc: BuildDoc, actions: CharacterActions): void {
   for (const claim of doc.claims) {
     const claimTiming = claim.roleTiming as Timing | undefined;
@@ -734,13 +627,11 @@ function applyChangedRoleClaimExplanations(game: BOTCModel, doc: BuildDoc, actio
       if (doc.script.includes(hiddenRole) && roleCharacterType(claimedRole) === CharacterType.Townsfolk)
         explanations.push(game.characterAt(claim.name, hiddenRole, claimTiming));
     }
-    const repeatsStartingBluff = doc.claims.some(
-      (earlier) =>
-        earlier.name === claim.name &&
-        earlier.type === claim.type &&
-        earlier.roleTiming === undefined &&
-        earlier.possibleActualRoles?.includes("Mutant"),
-    );
+    const repeatsStartingBluff =
+      doc.script.includes("Mutant") &&
+      doc.claims.some(
+        (earlier) => earlier.name === claim.name && earlier.type === claim.type && earlier.roleTiming === undefined,
+      );
     if (repeatsStartingBluff && doc.facts.livingAt(claimTiming).includes(claim.name))
       explanations.push(
         game.allOf([game.actualIs(claim.name, "Mutant"), game.characterAt(claim.name, "Mutant", claimTiming)]),
@@ -844,6 +735,18 @@ function applyPhilosopherDrunking(game: BOTCModel, doc: BuildDoc): void {
       });
     }
   }
+}
+
+/**
+ * A game with the Atheist has no evil characters.
+ * https://wiki.bloodontheclocktower.com/Atheist
+ */
+function applyAtheistRule(game: BOTCModel, doc: BuildDoc): void {
+  if (!doc.script.includes("Atheist")) return;
+  const atheistInPlay = game.roleInPlay("Atheist");
+  const evilRoles = doc.script.map(resolveRoleRef).filter((role) => roleAlignment(role) === Alignment.Evil);
+  for (const player of doc.players)
+    for (const role of evilRoles) game.addImplication(atheistInPlay, game.actualIs(player, role).not());
 }
 
 function applyAtheistSetup(game: BOTCModel, doc: BuildDoc): void {
@@ -1152,7 +1055,7 @@ function devilsAdvocateProtectsExecutionAt(game: BOTCModel, doc: BuildDoc, playe
       game.allOf([
         game.hasAbilityAt(candidate, "Devil's Advocate", abilityTiming),
         game.soberAndHealthy(candidate, abilityTiming),
-        game.abilityTargetedAt(candidate, "Devil's Advocate", player, abilityTiming),
+        game.playerChosenAt(candidate, "Devil's Advocate", player, abilityTiming),
       ]),
     );
   return game.anyOf(protectors);
@@ -1321,10 +1224,19 @@ function mastermindExtraDayPaths(
 interface NightDeathTimingContext {
   readonly beforeInfoDeathsByTiming: ReadonlyMap<Timing, ReadonlyMap<string, BoolLike>>;
   readonly demonKillAssignmentsByEventPlayer: ReadonlyMap<string, BoolLike>;
+  /** The kills of each Demon character on each night. The key is the night and the character. */
+  readonly demonKillsByNightRole: ReadonlyMap<
+    string,
+    { readonly most: ReadonlyMap<string, number>; readonly victims: ReadonlyMap<string, readonly BoolLike[]> }
+  >;
 }
 
 function emptyNightDeathTimingContext(): NightDeathTimingContext {
-  return { beforeInfoDeathsByTiming: new Map(), demonKillAssignmentsByEventPlayer: new Map() };
+  return {
+    beforeInfoDeathsByTiming: new Map(),
+    demonKillAssignmentsByEventPlayer: new Map(),
+    demonKillsByNightRole: new Map(),
+  };
 }
 
 function applyNightDeathSourceConstraints(
@@ -1333,11 +1245,12 @@ function applyNightDeathSourceConstraints(
   ctx: Omit<CompileCtx, "nameRoot">,
   pukkaContext: PukkaContext,
   godfatherContext: GodfatherContext,
-  goonContext: GoonContext,
+  goon: GoonRule,
   shabalothContext: ShabalothContext,
 ): NightDeathTimingContext {
   const beforeInfoAssignments = new Map<Timing, Map<string, BoolLike[]>>();
   const demonKillAssignments = new Map<string, BoolLike[]>();
+  const demonKillsByNightRole = new Map<string, { most: Map<string, number>; victims: Map<string, BoolLike[]> }>();
   const po = new PoChoices(game);
   for (const [eventIndex, event] of (doc.timeline ?? []).entries()) {
     if (event.type !== "nightDeath") continue;
@@ -1350,7 +1263,7 @@ function applyNightDeathSourceConstraints(
       po.chargedAt(timing),
       pukkaContext,
       godfatherContext,
-      goonContext,
+      goon,
       shabalothContext,
     );
     const resolution = new DeathAssignments(
@@ -1376,6 +1289,13 @@ function applyNightDeathSourceConstraints(
         game.addImplication(value, game.anyOf(resolution.demonKills.get(source.requiresDemonKillOf) ?? []));
       if (source.kind !== undefined)
         addMapValue(demonKillAssignments, timelineEventPlayerKey(eventIndex, player), value);
+      for (const role of source.roles ?? []) {
+        const key = `${timing}\u0000${role}`;
+        let kills = demonKillsByNightRole.get(key);
+        if (kills === undefined) demonKillsByNightRole.set(key, (kills = { most: new Map(), victims: new Map() }));
+        kills.most.set(source.id, source.maxAssignments ?? 1);
+        addMapValue(kills.victims, player, value);
+      }
       if (source.deathTiming === "beforeInfo") {
         let players = beforeInfoAssignments.get(timing);
         if (players === undefined) beforeInfoAssignments.set(timing, (players = new Map()));
@@ -1408,6 +1328,7 @@ function applyNightDeathSourceConstraints(
       [...beforeInfoAssignments].map(([timing, players]) => [timing, unionAssignments(game, players)]),
     ),
     demonKillAssignmentsByEventPlayer: unionAssignments(game, demonKillAssignments),
+    demonKillsByNightRole,
   };
 }
 
@@ -1455,7 +1376,7 @@ function nightDeathSources(
   poCharged: BoolLike,
   pukkaContext: PukkaContext,
   godfatherContext: GodfatherContext,
-  goonContext: GoonContext,
+  goon: GoonRule,
   shabalothContext: ShabalothContext,
 ): readonly NightDeathSource[] {
   const timing = event.timing as Timing;
@@ -1472,11 +1393,11 @@ function nightDeathSources(
         ]
       : []),
     ...atNightResolutionOrder(
-      demonKillDeathSources(game, doc, event, poCharged, goonContext, shabalothContext),
+      demonKillDeathSources(game, doc, event, poCharged, shabalothContext),
       nightActionOrder("Po"),
     ),
     ...atNightResolutionOrder(pukkaDeathSources(game, doc, event, pukkaContext), nightActionOrder("Pukka")),
-    ...atNightResolutionOrder(assassinDeathSources(game, doc, timing, goonContext), nightActionOrder("Assassin")),
+    ...atNightResolutionOrder(assassinDeathSources(game, doc, timing, goon), nightActionOrder("Assassin")),
     ...atNightResolutionOrder(godfatherDeathSources(timing, godfatherContext), nightActionOrder("Godfather")),
     ...atNightResolutionOrder(grandmotherDeathSources(game, doc, event), nightActionOrder("Godfather") + 1),
     ...atNightResolutionOrder(gossipDeathSources(game, doc, event, ctx), nightActionOrder("Gossip")),
@@ -1498,7 +1419,7 @@ function assassinDeathSources(
   game: BOTCModel,
   doc: BuildDoc,
   timing: Timing,
-  goonContext: GoonContext,
+  goon: GoonRule,
 ): readonly NightDeathSource[] {
   if (!doc.script.includes("Assassin")) return [];
   return doc.facts.livingAt(timing).flatMap((actor): NightDeathSource[] => {
@@ -1514,7 +1435,7 @@ function assassinDeathSources(
     const preGoonHealthy = game.soberAndHealthyBeforeOwnDrunking(
       actor,
       timing,
-      goonContext.drunkSourcesByActorTiming.get(`${actor}\u0000${timing}`) ?? [],
+      goon.inPlay ? [goon.firstChoiceBy(actor, timing)] : [],
     );
     const activeHealthy = game.allOf([
       game.hasAbilityAt(actor, "Assassin", timing),
@@ -1523,6 +1444,18 @@ function assassinDeathSources(
     ]);
     if (declaredClaim !== undefined && !doc.facts.nightDeaths(timing).has(declaredClaim.target))
       game.addFalse(activeHealthy);
+    // The Assassin can keep the ability for a later night, so the action can select nobody.
+    const victims = new Map<string, BoolLike>();
+    game.registerChoiceAction({
+      rule: "Assassin:target",
+      actor,
+      timing,
+      active: activeHealthy,
+      count: 1,
+      minCount: 0,
+      choices: victims,
+      ability: "Assassin",
+    });
     if (declaredClaim !== undefined) {
       return [
         {
@@ -1531,6 +1464,7 @@ function assassinDeathSources(
           available: activeHealthy,
           bypassesProtection: true,
           deathTiming: "beforeInfo",
+          constrainAssignment: (target, assignment) => victims.set(target, assignment),
         },
       ];
     }
@@ -1543,7 +1477,7 @@ function assassinDeathSources(
         deathTiming: "beforeInfo",
         constrainAssignment: (target, assignment) => {
           game.registerAbilityUse(actor, "Assassin", timing, assignment);
-          game.registerAbilityTarget(actor, "Assassin", target, timing, assignment, nightActionOrder("Assassin"));
+          victims.set(target, assignment);
         },
       },
     ];
@@ -1683,7 +1617,6 @@ function demonKillDeathSources(
   doc: BuildDoc,
   event: NonNullable<PuzzleDoc["timeline"]>[number],
   poCharged: BoolLike,
-  goonContext: GoonContext,
   shabalothContext: ShabalothContext,
 ): readonly NightDeathSource[] {
   const timing = event.timing as Timing;
@@ -1764,6 +1697,7 @@ function demonKillDeathSources(
     targetCountWhenAvailable: source.targetCountWhenAvailable,
     requiredWhenAvailable: source.requiredWhenAvailable,
     kind: source.roles.includes("Po") ? "po" : "demon",
+    roles: source.roles,
     succession: source.roles.filter((role): role is "Imp" | "Fang Gu" => role === "Imp" || role === "Fang Gu"),
     deathTiming: "beforeInfo",
     constrainAssignment: (player, assignment) => {
@@ -1774,12 +1708,6 @@ function demonKillDeathSources(
         game.addImplication(assignment, shabalothTargetedAt(game, shabalothContext, player, timing));
       }
       constrainDemonKillVictim(game, doc, timing, player, assignment);
-      if (doc.script.includes("Goon")) {
-        const firstDemonOrder = Math.min(...source.roles.map((role) => nightActionOrder(role)));
-        const goonTargetedEarlier = goonWasTargetedBefore(game, goonContext, timing, firstDemonOrder);
-        const killsGoon = game.allOf([assignment, game.hasAbilityAt(player, "Goon", timing)]);
-        game.addImplication(killsGoon, goonTargetedEarlier);
-      }
     },
   }));
 }
@@ -2281,8 +2209,15 @@ function livingNeighborOptionsAt(
   }));
 }
 
-function applyPoisonerSources(game: BOTCModel, doc: BuildDoc, nightDeathTiming: NightDeathTimingContext): void {
+function applyPoisonerSources(
+  game: BOTCModel,
+  doc: BuildDoc,
+  nightDeathTiming: NightDeathTimingContext,
+  goon: GoonRule,
+): void {
   if (!doc.script.includes("Poisoner")) return;
+  for (const night of doc.facts.nights)
+    registerRoleChoices(game, doc, "Poisoner", night, game.poisonerTargetsAt(night));
   const timings = new Set([
     ...game.droisonTimingKeys,
     ...doc.facts.nights.flatMap((timing) => [timing, timing.replace("night_", "day_")]),
@@ -2290,7 +2225,15 @@ function applyPoisonerSources(game: BOTCModel, doc: BuildDoc, nightDeathTiming: 
   for (const timing of timings) {
     const poisonerCanAct = roleCanUseAbilityAt(game, doc, "Poisoner", timing as Timing, nightDeathTiming);
     const poisonerDiesBeforeInfo = roleDiesBeforeInfoAt(game, "Poisoner", timing as Timing, nightDeathTiming);
-    game.addPoisonerEffect(timing as Timing, game.allOf([poisonerCanAct, game.not(poisonerDiesBeforeInfo)]));
+    // A Poisoner that chooses the Goon first is drunk until dusk. A drunk Poisoner does not poison.
+    const night = timing.replace("day_", "night_") as Timing;
+    const poisonerDrunkByGoon = /^night_\d+$/.test(night)
+      ? goon.firstChoiceByRole("Poisoner", night)
+      : game.constantBool(false);
+    game.addPoisonerEffect(
+      timing as Timing,
+      game.allOf([poisonerCanAct, game.not(poisonerDiesBeforeInfo), game.not(poisonerDrunkByGoon)]),
+    );
   }
 }
 
@@ -2396,17 +2339,113 @@ function roleDiesBeforeInfoAt(
   );
 }
 
-function applyWidowSources(game: BOTCModel, doc: BuildDoc): void {
+function applyWidowSources(game: BOTCModel, doc: BuildDoc, goon: GoonRule): void {
   if (!doc.script.includes("Widow")) return;
   const timings = [...game.droisonTimingKeys].filter((timing): timing is Timing => timing !== "default");
-  game.addWidowEffect(timings, roleAliveAt(game, doc, "Widow", "night_1"));
+  // A Widow that chooses the Goon first is drunk. A drunk Widow does not poison.
+  const widowDrunkByGoon = goon.firstChoiceByRole("Widow", "night_1");
+  const targets = game.addWidowEffect(timings, roleAliveAt(game, doc, "Widow", "night_1"), game.not(widowDrunkByGoon));
+  registerRoleChoices(game, doc, "Widow", "night_1", targets);
 }
 
-function applyXaanActivity(game: BOTCModel, doc: BuildDoc): void {
+/** Registers the choice action of each living player that can hold the role. */
+function registerRoleChoices(
+  game: BOTCModel,
+  doc: BuildDoc,
+  role: string,
+  timing: Timing,
+  targets: ReadonlyMap<string, BoolLike>,
+  chooses: BoolLike = game.roleInPlay(role),
+): void {
+  for (const actor of doc.facts.livingAt(timing)) {
+    const active = game.allOf([game.hasAbilityAt(actor, role, timing), chooses]);
+    game.registerChoiceAction({
+      rule: `${role}:target`,
+      actor,
+      timing,
+      active,
+      count: 1,
+      choices: new Map([...targets].map(([target, selected]) => [target, game.allOf([active, selected])])),
+      ability: role,
+    });
+  }
+}
+
+/** These Demons have their own choice actions or make no night choice. */
+const DEMONS_WITH_OWN_CHOICE = new Set(["Pukka", "Shabaloth", "Leviathan"]);
+
+/**
+ * Registers the night choice of each Demon. A Demon kill is a choice of the victim.
+ * A drunk or poisoned Demon chooses a player and kills nobody. That choice is made only for a reader.
+ */
+function registerDemonChoices(
+  game: BOTCModel,
+  doc: BuildDoc,
+  nightDeathTiming: NightDeathTimingContext,
+  withUnknownChoices: boolean,
+): void {
+  const demons = doc.script.filter(
+    (role) => roleCharacterType(resolveRoleRef(role)) === CharacterType.Demon && !DEMONS_WITH_OWN_CHOICE.has(role),
+  );
+  for (const role of demons)
+    for (const timing of doc.facts.nights) {
+      if (timing === "night_1") continue;
+      const previous = doc.facts.previousTiming(timing);
+      const kills = nightDeathTiming.demonKillsByNightRole.get(`${timing}\u0000${role}`);
+      if (kills === undefined && !withUnknownChoices) continue;
+      for (const actor of doc.facts.livingAt(timing)) {
+        const heldBefore =
+          previous === undefined ? game.actualIs(actor, role) : game.hasAbilityAt(actor, role, previous);
+        const holds = game.hasAbilityAt(actor, role, timing);
+        const choices = new Map<string, BoolLike>();
+        for (const [victim, values] of kills?.victims ?? [])
+          choices.set(victim, game.allOf([game.anyOf(values), heldBefore]));
+        if (withUnknownChoices) {
+          const wakes = game.allOf([
+            game.not(demonKillBlockedAt(game, doc, timing)),
+            ...(role === "Zombuul" ? [nobodyDiedDuringPreviousDay(game, doc, timing)] : []),
+          ]);
+          const impaired = game.allOf([holds, wakes, game.not(game.soberAndHealthy(actor, timing))]);
+          const targets = doc.players
+            .filter((player) => player !== actor)
+            .map((player) => [player, game.newBool()] as const);
+          for (const [, chosen] of targets) game.addImplication(chosen, impaired);
+          game.addEnforcedAtMostN(
+            targets.map(([, chosen]) => chosen),
+            1,
+            game.constantBool(true),
+          );
+          for (const [player, chosen] of targets)
+            choices.set(player, game.anyOf([choices.get(player) ?? game.constantBool(false), chosen]));
+        }
+        game.registerChoiceAction({
+          rule: `${role}:targets`,
+          actor,
+          timing,
+          active: game.anyOf([heldBefore, holds]),
+          count: Math.max(
+            1,
+            [...(kills?.most.values() ?? [])].reduce((sum, most) => sum + most, 0),
+          ),
+          minCount: 0,
+          choices,
+          ability: role,
+        });
+      }
+    }
+}
+
+function applyXaanActivity(game: BOTCModel, doc: BuildDoc, nightDeathTiming: NightDeathTimingContext): void {
   if (!doc.script.includes("Xaan")) return;
   for (let count = 1; count <= doc.players.length; count += 1) {
     const timing = `night_${count}` as Timing;
-    game.setRoleActiveAt("Xaan", timing, roleAliveAt(game, doc, "Xaan", timing));
+    // The Xaan poison stops when the Xaan dies. A Demon kill occurs before later information that night.
+    const xaanDiesBeforeInfo = roleDiesBeforeInfoAt(game, "Xaan", timing, nightDeathTiming);
+    game.setRoleActiveAt(
+      "Xaan",
+      timing,
+      game.allOf([roleAliveAt(game, doc, "Xaan", timing), game.not(xaanDiesBeforeInfo)]),
+    );
   }
 }
 

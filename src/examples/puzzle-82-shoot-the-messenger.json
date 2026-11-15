@@ -52,8 +52,7 @@
     {
       "type": "Clockmaker",
       "name": "Dan",
-      "distance": 3,
-      "possibleActualRoles": ["Clockmaker", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch"]
+      "distance": 3
     },
     {
       "type": "Artist",
@@ -64,8 +63,7 @@
           "timing": "day_2",
           "expression": "Sarah.initial_type == Townsfolk"
         }
-      ],
-      "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Town Crier",
@@ -81,22 +79,19 @@
           "nominators": ["Charlotte", "Sarah"],
           "minionNominated": false
         }
-      ],
-      "possibleActualRoles": ["Town Crier", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Oracle",
       "name": "Hannah",
       "timing": "night_2",
-      "count": 1,
-      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "count": 1
     },
     {
       "type": "Oracle",
       "name": "Hannah",
       "timing": "night_3",
-      "count": 1,
-      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "count": 1
     },
     {
       "type": "Mathematician",
@@ -114,8 +109,7 @@
       "name": "Josh",
       "timing": "night_2",
       "among": ["You", "Dan"],
-      "aligned": true,
-      "possibleActualRoles": ["Seamstress", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "aligned": true
     },
     {
       "type": "Snake Charmer",
@@ -136,8 +130,7 @@
           "player": "Hannah",
           "demon": false
         }
-      ],
-      "possibleActualRoles": ["Snake Charmer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Juggler",
@@ -147,15 +140,13 @@
         "Aoife": "Klutz",
         "Hannah": "No Dashii"
       },
-      "correctCount": 1,
-      "possibleActualRoles": ["Juggler", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "correctCount": 1
     },
     {
       "type": "Klutz",
       "name": "Aoife",
       "timing": "night_2",
-      "chosen": "Olivia",
-      "possibleActualRoles": ["Klutz", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch"]
+      "chosen": "Olivia"
     }
   ]
 }

@@ -95,7 +95,6 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
     case "Investigator":
       return new Investigator({
         ...base,
-        minionRole: claim.minionRole ? resolveRoleRef(claim.minionRole) : undefined,
         role: claim.role ? resolveRoleRef(claim.role) : undefined,
         among: claim.among,
       });
@@ -242,7 +241,6 @@ export function buildClaim(claim: ClaimWithTimelineContext, ctx: Omit<CompileCtx
       return new Philosopher({
         ...base,
         role: claim.role ? resolveRoleRef(claim.role) : undefined,
-        infoClaims: [...base.infoClaims, ...philosopherInfoClaims(claim)],
       });
     case "Princess":
       return new Princess({
@@ -380,24 +378,6 @@ function customInfoClaims(claim: Claim, ctx: Omit<CompileCtx, "nameRoot">): Info
       },
     ];
   });
-}
-
-function philosopherInfoClaims(claim: Extract<Claim, { readonly type: "Philosopher" }>): InfoClaimBuilder[] {
-  const seamstress = claim.seamstress;
-  if (seamstress === undefined || seamstress.aligned === undefined) return [];
-  const [left, right] = seamstress.among;
-  if (left === undefined || right === undefined) return [];
-
-  return [
-    {
-      timing: timingOf(seamstress.timing ?? claim.timing),
-      role: resolveRoleRef("Seamstress"),
-      learned: (game) =>
-        seamstress.aligned
-          ? Seamstress.learnsSameAlignment(game, left, right)
-          : Seamstress.learnsDifferentAlignment(game, left, right),
-    },
-  ];
 }
 
 function snakeCharmerInfoClaims(claim: Extract<Claim, { readonly type: "Snake Charmer" }>): InfoClaimBuilder[] {

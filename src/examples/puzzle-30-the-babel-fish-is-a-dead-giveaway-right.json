@@ -6,33 +6,28 @@
     {
       "type": "Clockmaker",
       "name": "Ben",
-      "distance": 3,
-      "possibleActualRoles": ["Clockmaker", "Imp", "Spy", "Drunk"]
+      "distance": 3
     },
     {
       "type": "Noble",
       "name": "Owen",
-      "oneEvilAmong": ["Lydia", "Louisa", "Shan"],
-      "possibleActualRoles": ["Noble", "Imp", "Spy", "Drunk"]
+      "oneEvilAmong": ["Lydia", "Louisa", "Shan"]
     },
     {
       "type": "Seamstress",
       "name": "Lydia",
       "timing": "night_1",
       "among": ["Finn", "Ben"],
-      "aligned": true,
-      "possibleActualRoles": ["Seamstress", "Imp", "Spy", "Drunk"]
+      "aligned": true
     },
     {
       "type": "Atheist",
-      "name": "Finn",
-      "possibleActualRoles": ["Imp", "Spy", "Drunk"]
+      "name": "Finn"
     },
     {
       "type": "Knight",
       "name": "Louisa",
-      "noDemonAmong": ["Lydia", "Shan"],
-      "possibleActualRoles": ["Knight", "Imp", "Spy", "Drunk"]
+      "noDemonAmong": ["Lydia", "Shan"]
     },
     {
       "type": "Artist",
@@ -43,8 +38,7 @@
           "timing": "day_1",
           "expression": "registers_as(Louisa, Drunk)"
         }
-      ],
-      "possibleActualRoles": ["Artist", "Imp", "Spy", "Drunk"]
+      ]
     }
   ]
 }

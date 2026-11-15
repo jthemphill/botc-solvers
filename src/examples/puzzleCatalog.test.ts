@@ -37,6 +37,7 @@ describe("puzzle catalog", () => {
   test("reserves custom constraints for rules specified by the source image", () => {
     const expected = new Set([
       "puzzle-56-meanwhile-at-the-legion-of-doom", // The setup includes standard games and Legion games.
+      "puzzle-60-whats-a-mind-goblin", // You are the Goblin and do not know your Demon, so a Poppy Grower is in play.
       "puzzle-62-have-you-ever-seen-the-rain", // The Storm Catcher lets the Drunk die only by execution.
       "puzzle-64-copycatholic", // With the Pope, the setup must have a duplicate good character.
       "puzzle-72-one-digit-too-many", // The setup includes standard games and Legion games.

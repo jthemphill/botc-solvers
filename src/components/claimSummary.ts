@@ -1,4 +1,4 @@
-import type { Claim } from "../schema/puzzleDoc";
+import { type Claim, gainedAbilityClaim } from "../schema/puzzleDoc";
 import type { AstNode } from "../dsl/ast";
 import { lex } from "../dsl/lex";
 import { parse } from "../dsl/parse";
@@ -33,6 +33,10 @@ function abilitySummary(claim: Claim): string {
       return exorcistSummary(claim);
     case "Innkeeper":
       return innkeeperSummary(claim);
+    case "Goon":
+      return (claim.alignments ?? []).length === 0
+        ? "I am the Goon"
+        : (claim.alignments ?? []).map((entry) => `${compactTimingLabel(entry.timing)}: ${entry.alignment}`).join("; ");
     case "Devil's Advocate":
       return nightlyChoiceSummary(claim.choices, "protected");
     case "Sailor":
@@ -53,7 +57,7 @@ function abilitySummary(claim: Claim): string {
     case "Flowergirl":
       return flowergirlSummary(claim);
     case "Investigator": {
-      const role = claim.role ?? claim.minionRole ?? "a Minion";
+      const role = claim.role ?? "a Minion";
       return `${formatList(claim.among)} is ${rolePhrase(role, "a Minion")}.`;
     }
     case "Librarian":
@@ -490,14 +494,8 @@ function gossipSummary(claim: Extract<Claim, { readonly type: "Gossip" }>): stri
 
 function philosopherSummary(claim: Extract<Claim, { readonly type: "Philosopher" }>): string {
   if (claim.role === undefined) return "No Philosopher choice";
-  if (claim.role === "Nightwatchman" && claim.nightwatchman?.chosen) {
-    return `Chose Nightwatchman; ${compactTimingLabel(claim.nightwatchman.timing ?? claim.timing ?? "night_1")}: chose ${claim.nightwatchman.chosen}.`;
-  }
-  const seamstress = claim.seamstress;
-  if (claim.role !== "Seamstress" || seamstress === undefined) return `Chose ${claim.role}.`;
-  const [left, right] = seamstress.among;
-  const alignment = seamstress.aligned === undefined ? "unknown alignment" : seamstress.aligned ? "same" : "different";
-  return `Chose Seamstress; ${left}/${right} ${alignment}.`;
+  const gained = gainedAbilityClaim(claim);
+  return gained === undefined ? `Chose ${claim.role}.` : `Chose ${claim.role}; ${claimSummary(gained)}`;
 }
 
 function puzzlemasterSummary(claim: Extract<Claim, { readonly type: "Puzzlemaster" }>): string {

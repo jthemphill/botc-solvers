@@ -67,8 +67,7 @@
       "name": "Sarah",
       "timing": "day_4",
       "target": "Olivia",
-      "killed": false,
-      "possibleActualRoles": ["Slayer", "Imp", "Poisoner", "Spy", "Baron", "Scarlet Woman", "Mutant"]
+      "killed": false
     },
     {
       "type": "Saint",
@@ -107,8 +106,7 @@
       "name": "Adam",
       "timing": "night_1",
       "role": "Mutant",
-      "among": ["Dan", "Tim"],
-      "possibleActualRoles": ["Librarian", "Imp", "Poisoner", "Spy", "Baron", "Scarlet Woman", "Mutant"]
+      "among": ["Dan", "Tim"]
     },
     {
       "type": "Slayer",

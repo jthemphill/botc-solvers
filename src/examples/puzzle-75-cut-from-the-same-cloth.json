@@ -51,31 +51,27 @@
       "name": "Sarah",
       "timing": "night_1",
       "player": "Adam",
-      "roles": ["Artist", "Vigormortis"],
-      "possibleActualRoles": ["Dreamer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "roles": ["Artist", "Vigormortis"]
     },
     {
       "type": "Dreamer",
       "name": "Sarah",
       "timing": "night_2",
       "player": "You",
-      "roles": ["Seamstress", "Vigormortis"],
-      "possibleActualRoles": ["Dreamer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "roles": ["Seamstress", "Vigormortis"]
     },
     {
       "type": "Dreamer",
       "name": "Sarah",
       "timing": "night_3",
       "player": "Tom",
-      "roles": ["Juggler", "No Dashii"],
-      "possibleActualRoles": ["Dreamer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "roles": ["Juggler", "No Dashii"]
     },
     {
       "type": "Clockmaker",
       "name": "Matt",
       "timing": "night_1",
-      "distance": 2,
-      "possibleActualRoles": ["Clockmaker", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "distance": 2
     },
     {
       "type": "Artist",
@@ -86,8 +82,7 @@
           "timing": "day_1",
           "expression": "Fraser.initial_type == Demon"
         }
-      ],
-      "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Juggler",
@@ -97,8 +92,7 @@
         "You": "No Dashii",
         "Matt": "Vigormortis"
       },
-      "correctCount": 0,
-      "possibleActualRoles": ["Juggler", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "correctCount": 0
     },
     {
       "type": "Seamstress",
@@ -120,8 +114,7 @@
           "timing": "night_2",
           "count": 0
         }
-      ],
-      "possibleActualRoles": ["Mathematician", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Snake Charmer",
@@ -142,8 +135,7 @@
           "player": "Fraser",
           "demon": false
         }
-      ],
-      "possibleActualRoles": ["Snake Charmer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Klutz",

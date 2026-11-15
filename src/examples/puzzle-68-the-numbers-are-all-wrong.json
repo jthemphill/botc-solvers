@@ -47,15 +47,13 @@
       "type": "Oracle",
       "name": "Sarah",
       "timing": "night_2",
-      "count": 0,
-      "possibleActualRoles": ["Oracle", "Vortox", "Witch", "Mutant"]
+      "count": 0
     },
     {
       "type": "Oracle",
       "name": "Sarah",
       "timing": "night_3",
-      "count": 0,
-      "possibleActualRoles": ["Oracle", "Vortox", "Witch", "Mutant"]
+      "count": 0
     },
     {
       "type": "Artist",
@@ -66,8 +64,7 @@
           "timing": "day_3",
           "expression": "Tom.initial_type == Townsfolk"
         }
-      ],
-      "possibleActualRoles": ["Artist", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Snake Charmer",
@@ -88,8 +85,7 @@
           "player": "Sarah",
           "demon": false
         }
-      ],
-      "possibleActualRoles": ["Snake Charmer", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Clockmaker",

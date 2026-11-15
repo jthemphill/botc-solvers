@@ -1,13 +1,21 @@
 import { type BooleanConstraints, type BoolVar } from "./boolean";
 import type { BoolLike, BOTCModel, Timing } from "./model";
 
+/**
+ * One selection from a list of candidates.
+ * An action with `ability` is a choice of players that the actor makes at night with that character's ability.
+ */
 export interface ChoiceAction {
   readonly rule: string;
   readonly actor: string;
   readonly timing: Timing;
   readonly active: BoolLike;
+  /** The largest number of selections while the action is active. */
   readonly count: number;
+  /** The smallest number of selections while the action is active. The default is `count`. */
+  readonly minCount?: number;
   readonly choices: ReadonlyMap<string, BoolLike>;
+  readonly ability?: string;
 }
 
 export function constrainSelection(
@@ -49,6 +57,7 @@ export interface ChoiceWitness {
   readonly timing: Timing;
   readonly active: boolean;
   readonly count: number;
+  readonly minCount?: number;
   readonly candidates: readonly string[];
   readonly selected: readonly string[];
 }
@@ -68,7 +77,10 @@ export function validateChoiceWitness(action: ChoiceWitness): readonly string[] 
     (action.rule.startsWith("Pit-Hag:") || action.rule.startsWith("Shabaloth:"))
   )
     return [`${action.rule} cannot act on the first night.`];
-  if (action.selected.length !== (action.active ? action.count : 0)) return [`Wrong choice count for ${action.rule}.`];
+  const least = action.active ? (action.minCount ?? action.count) : 0;
+  const most = action.active ? action.count : 0;
+  if (action.selected.length < least || action.selected.length > most)
+    return [`Wrong choice count for ${action.rule}.`];
   if (new Set(action.selected).size !== action.selected.length) return [`Duplicate choice for ${action.rule}.`];
   if (action.selected.some((candidate) => !action.candidates.includes(candidate)))
     return [`Illegal target for ${action.rule}.`];

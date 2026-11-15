@@ -20,7 +20,13 @@ function scenario(demon = "Imp", shown = "A", philosopher = false) {
     constraints: Object.entries(roles).map(([player, role]) => ({ expression: `${player}.initial_role == ${role}` })),
     claims: [
       philosopher
-        ? { type: "Philosopher", name: "A", role: "Nightwatchman", timing: "night_1", nightwatchman: { chosen: "B" } }
+        ? {
+            type: "Philosopher",
+            name: "A",
+            role: "Nightwatchman",
+            timing: "night_1",
+            gained: { type: "Nightwatchman", chosen: "B" },
+          }
         : { type: "Nightwatchman", name: "A", timing: "night_1", chosen: "B" },
       { type: "Chef", name: "B", nightwatchmanPings: [{ player: shown, timing: "night_1" }] },
     ],
@@ -85,7 +91,7 @@ test("a Philosopher can use Nightwatchman after gaining it, but not before", asy
   for (const timing of ["night_1", "night_2", "night_3"]) {
     const game = build({
       ...doc,
-      claims: [{ ...doc.claims[0], timing: "night_2", nightwatchman: { chosen: "B", timing } }],
+      claims: [{ ...doc.claims[0], timing: "night_2", gained: { type: "Nightwatchman", chosen: "B", timing } }],
     });
     expect(await game.solveAll()).toHaveLength(timing === "night_1" ? 0 : 1);
   }

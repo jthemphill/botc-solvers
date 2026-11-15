@@ -2,6 +2,7 @@ import { choose, type ChoiceAction } from "../model/actions";
 import type { BoolLike, BOTCModel, Timing } from "../model/model";
 import { timingOrder } from "../model/timing";
 import type { PuzzleDoc } from "../schema/puzzleDoc";
+import type { BuildClaim } from "./philosopher";
 import type { TimelineFacts } from "./timeline";
 
 interface Signal {
@@ -13,7 +14,11 @@ interface Signal {
 // A Vortox changes the information, but does not change the recipient.
 // https://wiki.bloodontheclocktower.com/index.php?title=Nightwatchman&oldid=2827
 // https://wiki.bloodontheclocktower.com/index.php?title=Vortox&oldid=3017
-export function applyNightwatchmanActions(game: BOTCModel, doc: PuzzleDoc, facts: TimelineFacts): void {
+export function applyNightwatchmanActions(
+  game: BOTCModel,
+  doc: Omit<PuzzleDoc, "claims"> & { readonly claims: readonly BuildClaim[] },
+  facts: TimelineFacts,
+): void {
   const signals = new Map<Timing, Map<string, Signal>>();
   if (doc.script.includes("Nightwatchman")) {
     game.withProvenance(
@@ -34,7 +39,7 @@ export function applyNightwatchmanActions(game: BOTCModel, doc: PuzzleDoc, facts
             game.addImplication(used, game.hasAbilityAt(actor, "Nightwatchman", timing));
             const target = choose(
               game,
-              { rule: "Nightwatchman:target", actor, timing, active: used, count: 1 },
+              { rule: "Nightwatchman:target", actor, timing, active: used, count: 1, ability: "Nightwatchman" },
               doc.players,
             );
             game.registerAbilityUse(actor, "Nightwatchman", timing, used);
@@ -75,20 +80,17 @@ export function applyNightwatchmanActions(game: BOTCModel, doc: PuzzleDoc, facts
   };
   for (const [index, claim] of doc.claims.entries()) {
     game.withProvenance({ kind: "assumption", id: `claims[${index}]`, source: claim.source }, () => {
-      const choice =
-        claim.type === "Nightwatchman"
-          ? claim
-          : claim.type === "Philosopher" && claim.role === "Nightwatchman"
-            ? claim.nightwatchman
-            : undefined;
+      const choice = claim.type === "Nightwatchman" ? claim : undefined;
       if (choice?.chosen) {
         const timing = (choice.timing ?? claim.timing ?? "night_1") as Timing;
-        if (claim.type === "Philosopher") {
+        if (claim.gainedByPhilosopher !== undefined) {
           // The Philosopher must gain the ability before using it.
           // https://wiki.bloodontheclocktower.com/index.php?title=Philosopher&oldid=2421
           game.addImplication(
             game.allOf([honest(claim.name), game.actualIs(claim.name, "Philosopher")]),
-            game.constantBool(timingOrder(timing) >= timingOrder((claim.timing ?? "night_1") as Timing)),
+            game.constantBool(
+              timingOrder(timing) >= timingOrder((claim.gainedByPhilosopher.timing ?? "night_1") as Timing),
+            ),
           );
         }
         const signal = signals.get(timing)?.get(claim.name);

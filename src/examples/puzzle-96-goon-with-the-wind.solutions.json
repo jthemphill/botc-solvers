@@ -1,0 +1,16 @@
+{
+  "solutions": [
+    {
+      "roles": {
+        "Anna": "Poisoner",
+        "Dan": "Chef",
+        "Hannah": "Imp",
+        "Matthew": "Goon",
+        "Oscar": "Investigator",
+        "Sula": "Clockmaker",
+        "Tim": "Artist",
+        "You": "Village Idiot"
+      }
+    }
+  ]
+}

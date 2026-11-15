@@ -14,6 +14,13 @@
     "Sage",
     "Knight"
   ],
+  "constraints": [
+    {
+      "source": "You are the Goblin and you do not know your Demon.",
+      "kind": "fact",
+      "expression": "some p: players | p.initial_role == `Poppy Grower` && not poisoned(p, night_1)"
+    }
+  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -93,8 +100,7 @@
     },
     {
       "type": "Poppy Grower",
-      "name": "Olivia",
-      "possibleActualRoles": ["Poppy Grower"]
+      "name": "Olivia"
     },
     {
       "type": "Goblin",

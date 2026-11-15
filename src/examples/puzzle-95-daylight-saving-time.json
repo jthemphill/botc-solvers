@@ -1,0 +1,121 @@
+{
+  "title": "Puzzle 95 - Daylight Saving Time",
+  "players": ["Jasmine", "Aoife", "Oscar", "Charlotte", "You", "Tim", "Fraser", "Sarah"],
+  "script": [
+    "Fang Gu",
+    "Vigormortis",
+    "No Dashii",
+    "Vortox",
+    "Evil Twin",
+    "Mutant",
+    "Sweetheart",
+    "Clockmaker",
+    "Juggler",
+    "Artist",
+    "Seamstress",
+    "Mathematician",
+    "Town Crier"
+  ],
+  "timeline": [
+    {
+      "timing": "day_1",
+      "type": "execution",
+      "players": ["Charlotte"]
+    },
+    {
+      "timing": "night_2",
+      "type": "nightDeath",
+      "players": ["You"]
+    },
+    {
+      "timing": "day_2",
+      "type": "execution",
+      "players": ["Fraser"]
+    },
+    {
+      "timing": "night_3",
+      "type": "nightDeath",
+      "players": ["Aoife"]
+    }
+  ],
+  "claims": [
+    {
+      "type": "Clockmaker",
+      "name": "Jasmine",
+      "timing": "night_1",
+      "distance": 1,
+      "knownEvilTwin": "Tim"
+    },
+    {
+      "type": "Juggler",
+      "name": "Aoife",
+      "timing": "night_2",
+      "guesses": {
+        "Fraser": "Mutant",
+        "Jasmine": "Evil Twin",
+        "Oscar": "Fang Gu"
+      },
+      "correctCount": 0
+    },
+    {
+      "type": "Artist",
+      "name": "Oscar",
+      "timing": "day_3",
+      "info": [
+        {
+          "timing": "day_3",
+          "expression": "Oscar.role != Artist"
+        }
+      ]
+    },
+    {
+      "type": "Sweetheart",
+      "name": "Charlotte"
+    },
+    {
+      "type": "Seamstress",
+      "name": "You",
+      "timing": "night_1",
+      "among": ["Tim", "Aoife"],
+      "aligned": false,
+      "possibleActualRoles": ["Seamstress"]
+    },
+    {
+      "type": "Clockmaker",
+      "name": "Tim",
+      "timing": "night_1",
+      "distance": 2,
+      "knownEvilTwin": "Jasmine"
+    },
+    {
+      "type": "Mathematician",
+      "name": "Fraser",
+      "malfunctions": [
+        {
+          "timing": "night_1",
+          "count": 0
+        },
+        {
+          "timing": "night_2",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "type": "Town Crier",
+      "name": "Sarah",
+      "checks": [
+        {
+          "timing": "night_2",
+          "nominators": ["You", "Oscar"],
+          "minionNominated": true
+        },
+        {
+          "timing": "night_3",
+          "nominators": ["Jasmine", "Oscar"],
+          "minionNominated": true
+        }
+      ]
+    }
+  ]
+}

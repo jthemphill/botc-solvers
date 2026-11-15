@@ -56,38 +56,33 @@
         "Fraser": "Mathematician",
         "Steph": "Witch",
         "Tim": "Fang Gu"
-      },
-      "possibleActualRoles": ["Juggler", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      }
     },
     {
       "type": "Oracle",
       "name": "Anna",
       "timing": "night_2",
-      "count": 0,
-      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "count": 0
     },
     {
       "type": "Oracle",
       "name": "Anna",
       "timing": "night_3",
-      "count": 0,
-      "possibleActualRoles": ["Oracle", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "count": 0
     },
     {
       "type": "Dreamer",
       "name": "Tim",
       "timing": "night_1",
       "player": "Fraser",
-      "roles": ["Mathematician", "Witch"],
-      "possibleActualRoles": ["Dreamer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "roles": ["Mathematician", "Witch"]
     },
     {
       "type": "Dreamer",
       "name": "Tim",
       "timing": "night_2",
       "player": "Josh",
-      "roles": ["Mutant", "Fang Gu"],
-      "possibleActualRoles": ["Dreamer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "roles": ["Mutant", "Fang Gu"]
     },
     {
       "type": "Snake Charmer",
@@ -98,8 +93,7 @@
           "player": "Fraser",
           "demon": false
         }
-      ],
-      "possibleActualRoles": ["Snake Charmer", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Savant",
@@ -131,8 +125,7 @@
       "name": "Matthew",
       "timing": "night_1",
       "among": ["Fraser", "Anna"],
-      "aligned": true,
-      "possibleActualRoles": ["Seamstress", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "aligned": true
     },
     {
       "type": "Mathematician",
@@ -150,8 +143,7 @@
           "timing": "night_3",
           "count": 2
         }
-      ],
-      "possibleActualRoles": ["Mathematician", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Sweetheart",

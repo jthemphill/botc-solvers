@@ -335,7 +335,7 @@ describe("DSL", () => {
       const g = buildPuzzleModel(PUZZLE, backend);
       g.fixActual("You", Savant);
       const PLAYERS_HAND = [
-        new Investigator({ name: "Oscar", minionRole: ScarletWoman, among: ["Anna", "Sula"] }),
+        new Investigator({ name: "Oscar", role: ScarletWoman, among: ["Anna", "Sula"] }),
         new Noble({ name: "Matt", oneEvilAmong: ["Tim", "Oscar", "Sula"] }),
         new Seamstress({ timing: "night_1", name: "Anna", aligned: false, among: ["Oscar", "Sula"] }),
         new Knight({ name: "Tim", noDemonAmong: ["Anna", "Sula"] }),

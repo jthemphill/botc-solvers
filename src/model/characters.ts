@@ -1,6 +1,7 @@
 import {
   Alignment,
   CharacterType,
+  type NightChoiceRule,
   type RoleClass,
   type RoleRef,
   type WakeRule,
@@ -26,6 +27,7 @@ export interface InfoClaim {
   readonly role?: RoleRef;
   readonly learned: BoolLike | ClaimPredicate;
   readonly malfunctionLearned?: BoolLike | ClaimPredicate;
+  readonly vortoxFalse?: BoolLike | ClaimPredicate;
   readonly timing?: Timing;
   readonly vortoxAffected?: boolean;
 }
@@ -44,6 +46,7 @@ export interface AppliedInfoClaim {
   readonly role: RoleRef;
   readonly learned: BoolLike;
   readonly malfunctionLearned?: BoolLike;
+  readonly vortoxFalse?: BoolLike;
   readonly timing: Timing;
   readonly vortoxAffected?: boolean;
   readonly context?: unknown;
@@ -55,6 +58,10 @@ export interface ApplyClaimsOptions extends TimedOptions {
   readonly drunkRole?: RoleRef;
   readonly evilRoles?: readonly RoleRef[];
   readonly possibleActualRoles?: readonly RoleRef[];
+  /** The claim gives reports only. It is not a claim of a starting character. */
+  readonly infoOnly?: boolean;
+  /** The claimant can be a Mutant that claims a Townsfolk character. */
+  readonly mutantBluff?: boolean;
   readonly info?: ApplyInfoClaim;
   readonly context?: unknown;
 }
@@ -99,6 +106,7 @@ function addDefaultInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
     role: claim.role,
     learned: claim.learned,
     malfunctionLearned: claim.malfunctionLearned,
+    vortoxFalse: claim.vortoxFalse,
     timing: claim.timing,
     vortoxAffected: claim.vortoxAffected,
   });
@@ -219,6 +227,7 @@ export abstract class Role {
   }
 
   protected applyRoleClaim(game: BOTCModel, role: RoleRef, options: ApplyClaimsOptions = {}): void {
+    if (options.infoOnly === true) return;
     const drunkRole = options.drunkRole ?? "Drunk";
     game.addRoleClaim(
       { player: this.name, apparentRole: role, alignment: this.claimAlignment },
@@ -226,6 +235,7 @@ export abstract class Role {
         drunkRole,
         evilRoles: options.evilRoles,
         possibleActualRoles: this.possibleActualRoles ?? options.possibleActualRoles,
+        mutantBluff: options.mutantBluff,
         timing: this.roleTiming ?? night(1),
       },
     );
@@ -251,6 +261,12 @@ export abstract class Role {
             : resolveInfoClaim(game, options.context, {
                 learned: resolvedClaim.malfunctionLearned,
               }),
+        vortoxFalse:
+          resolvedClaim.vortoxFalse === undefined
+            ? undefined
+            : game.withTiming(timing, () =>
+                resolveInfoClaim(game, options.context, { learned: resolvedClaim.vortoxFalse as BoolLike }),
+              ),
         timing,
         vortoxAffected: resolvedClaim.vortoxAffected,
         context: options.context,
@@ -509,6 +525,7 @@ export class Xaan extends MinionRole {
 }
 export class Witch extends MinionRole {
   static readonly roleName = "Witch";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "every" };
   static readonly wake = Wakes.everyNight;
 }
 export class Lunatic extends OutsiderRole {
@@ -609,6 +626,7 @@ export class Golem extends OutsiderRole {
 }
 export class Butler extends OutsiderRole {
   static readonly roleName = "Butler";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "every" };
   static readonly wake = Wakes.everyNight;
 }
 export class Barber extends OutsiderRole {
@@ -818,6 +836,7 @@ export class Prodigy extends TownsfolkRole {
 
 export class Acrobat extends TownsfolkRole {
   static readonly roleName = "Acrobat";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "exceptFirst" };
   static readonly wake = Wakes.everyNightExceptFirst;
   readonly choices: readonly AcrobatChoice[];
 
@@ -875,6 +894,7 @@ export interface SailorChoice {
 
 export class Sailor extends TownsfolkRole {
   static readonly roleName = "Sailor";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "every" };
   static readonly wake = Wakes.everyNight;
   readonly choices: readonly SailorChoice[];
 
@@ -903,6 +923,7 @@ export interface InnkeeperChoice {
 
 export class Innkeeper extends TownsfolkRole {
   static readonly roleName = "Innkeeper";
+  static readonly nightChoice: NightChoiceRule = { count: 2, nights: "exceptFirst" };
   static readonly wake = Wakes.everyNightExceptFirst;
   readonly choices: readonly InnkeeperChoice[];
 
@@ -939,6 +960,7 @@ export class Innkeeper extends TownsfolkRole {
 
 export class Professor extends TownsfolkRole {
   static readonly roleName = "Professor";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "exceptFirst", once: true };
   static readonly wake = Wakes.untilAbilityUsed("Professor", Wakes.everyNightExceptFirst);
 }
 
@@ -965,6 +987,7 @@ export interface AcrobatChoice {
 
 export class Gambler extends TownsfolkRole {
   static readonly roleName = "Gambler";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "exceptFirst" };
   static readonly wake = Wakes.everyNightExceptFirst;
   readonly guesses: readonly GamblerGuess[];
 
@@ -990,6 +1013,7 @@ export interface ExorcistChoice {
 
 export class Exorcist extends TownsfolkRole {
   static readonly roleName = "Exorcist";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "exceptFirst" };
   static readonly wake = Wakes.everyNightExceptFirst;
   readonly choices: readonly ExorcistChoice[];
 
@@ -1137,6 +1161,7 @@ export class Princess extends TownsfolkRole {
 
 export class Ravenkeeper extends TownsfolkRole {
   static readonly roleName = "Ravenkeeper";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "whenKilledAtNight" };
   static readonly wake = Wakes.never;
   readonly player?: string;
   readonly role?: RoleRef;
@@ -1176,6 +1201,7 @@ export class Sage extends TownsfolkRole {
 
 export class SnakeCharmer extends TownsfolkRole {
   static readonly roleName = "Snake Charmer";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "every" };
   static readonly wake = Wakes.everyNight;
   readonly checked?: string;
   readonly demon?: boolean;
@@ -1246,6 +1272,7 @@ export interface ChambermaidCheck {
 
 export class Chambermaid extends TownsfolkRole {
   static readonly roleName = "Chambermaid";
+  static readonly nightChoice: NightChoiceRule = { count: 2, nights: "every" };
   static readonly wake = Wakes.everyNight;
   readonly checks: readonly ChambermaidCheck[];
 
@@ -1373,6 +1400,7 @@ export class Courtier extends TownsfolkRole {
 
 export class Dreamer extends TownsfolkRole {
   static readonly roleName = "Dreamer";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "every" };
   static readonly wake = Wakes.everyNight;
   readonly player?: string;
   readonly roles: readonly RoleRef[];
@@ -1392,10 +1420,21 @@ export class Dreamer extends TownsfolkRole {
       1,
     );
   }
-  override learnedInfo(game: BOTCModel): BoolLike | undefined {
-    return this.player === undefined || this.roles.length === 0
-      ? undefined
-      : Dreamer.learnsOneOf(game, this.player, this.roles);
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Dreamer, options);
+    const { player, roles } = this;
+    const report: InfoClaim[] =
+      player === undefined || roles.length === 0
+        ? []
+        : [
+            {
+              learned: (model) => Dreamer.learnsOneOf(model, player, roles),
+              // A Vortox shows two characters that the player does not have.
+              vortoxFalse: (model) =>
+                model.allOf(roles.map((role) => model.isCharacterWhenObserved(player, role).not())),
+            },
+          ];
+    this.applyInfoClaimBuilders(game, Dreamer, [...report, ...this.infoClaims], options);
   }
 }
 
@@ -1518,6 +1557,7 @@ export interface FortuneTellerCheck {
 
 export class FortuneTeller extends TownsfolkRole {
   static readonly roleName = "Fortune Teller";
+  static readonly nightChoice: NightChoiceRule = { count: 2, nights: "every" };
   static readonly wake = Wakes.everyNight;
   readonly checks: readonly FortuneTellerCheck[];
   constructor(
@@ -1577,25 +1617,21 @@ export class Investigator extends TownsfolkRole {
   static readonly wake = Wakes.firstNight;
   readonly among: readonly string[];
   readonly role?: RoleRef;
-  readonly minionRole?: RoleRef;
   constructor(
     options: RoleBaseOptions & {
       readonly among?: readonly string[];
       readonly role?: RoleRef;
-      readonly minionRole?: RoleRef;
     },
   ) {
     super(options);
     this.among = options.among ?? [];
     this.role = options.role;
-    this.minionRole = options.minionRole;
   }
   static learnsRoleAmong(game: BOTCModel, players: readonly string[], role: RoleRef): BoolVar {
     return learnsRoleAmong(game, players, role);
   }
   override learnedInfo(game: BOTCModel): BoolLike | undefined {
-    const role = this.role ?? this.minionRole;
-    return role === undefined ? undefined : Investigator.learnsRoleAmong(game, this.among, role);
+    return this.role === undefined ? undefined : Investigator.learnsRoleAmong(game, this.among, this.role);
   }
 }
 
@@ -1705,6 +1741,7 @@ export interface VillageIdiotCheck {
 
 export class VillageIdiot extends TownsfolkRole {
   static readonly roleName = "Village Idiot";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "every" };
   static readonly wake = Wakes.everyNight;
   static readonly maxCopies = 3;
   readonly checks: readonly VillageIdiotCheck[];
@@ -1881,6 +1918,7 @@ export class Mayor extends TownsfolkRole {
 
 export class Monk extends TownsfolkRole {
   static readonly roleName = "Monk";
+  static readonly nightChoice: NightChoiceRule = { count: 1, nights: "exceptFirst" };
   static readonly wake = Wakes.everyNightExceptFirst;
 }
 
@@ -2018,6 +2056,7 @@ export class Savant extends TownsfolkRole {
 
 export class Seamstress extends TownsfolkRole {
   static readonly roleName = "Seamstress";
+  static readonly nightChoice: NightChoiceRule = { count: 2, nights: "every", once: true };
   static readonly wake = Wakes.untilAbilityUsed("Seamstress", Wakes.everyNight);
   readonly among: readonly string[];
   readonly aligned?: boolean;

@@ -1,9 +1,11 @@
 import {
   type Claim,
+  claimRoleName,
   type PuzzleDoc,
   SUPPORTED_CLAIM_TYPES,
   TIMELINE_EVENT_TYPES,
   type TimelineEventDoc,
+  withoutName,
 } from "./puzzleDoc";
 
 export class ValidationError extends Error {
@@ -220,7 +222,6 @@ function validateClaim(input: unknown, path: string): Claim {
       return {
         ...base,
         type: "Investigator",
-        minionRole: input["minionRole"] as string | undefined,
         role: input["role"] as string | undefined,
         among: expectStringArray(input["among"], `${path}.among`),
       };
@@ -314,6 +315,18 @@ function validateClaim(input: unknown, path: string): Claim {
                 };
               }),
       };
+    }
+    case "Goon": {
+      if (input["alignments"] === undefined) return { ...base, type: "Goon" };
+      const alignments = expectArray(input["alignments"], `${path}.alignments`).map((entry, index) => {
+        const entryPath = `${path}.alignments[${index}]`;
+        if (!isObject(entry)) throw new ValidationError(`Expected object`, entryPath);
+        const reported = entry["alignment"];
+        if (reported !== "good" && reported !== "evil")
+          throw new ValidationError(`alignment must be "good" or "evil"`, `${entryPath}.alignment`);
+        return { timing: expectString(entry["timing"], `${entryPath}.timing`), alignment: reported } as const;
+      });
+      return { ...base, type: "Goon", alignments };
     }
     case "Devil's Advocate":
       return { ...base, type: "Devil's Advocate", choices: validateNightlyPlayerChoices(input["choices"], path) };
@@ -488,20 +501,15 @@ function validateClaim(input: unknown, path: string): Claim {
               }),
       };
     }
-    case "Philosopher":
-      return {
-        ...base,
-        type: "Philosopher",
-        nightwatchman:
-          input["nightwatchman"] === undefined
-            ? undefined
-            : validateNightwatchmanChoice(input["nightwatchman"], `${path}.nightwatchman`),
-        role: input["role"] === undefined ? undefined : expectString(input["role"], `${path}.role`),
-        seamstress:
-          input["seamstress"] === undefined
-            ? undefined
-            : validatePhilosopherSeamstress(input["seamstress"], `${path}.seamstress`),
-      };
+    case "Philosopher": {
+      const role = input["role"] === undefined ? undefined : expectString(input["role"], `${path}.role`);
+      if (input["gained"] === undefined) return { ...base, type: "Philosopher", role };
+      if (!isObject(input["gained"])) throw new ValidationError(`Expected object`, `${path}.gained`);
+      const gained = validateClaim({ ...input["gained"], name }, `${path}.gained`);
+      if (claimRoleName(gained.type) !== role)
+        throw new ValidationError(`The gained ability must be the chosen role`, `${path}.gained.type`);
+      return { ...base, type: "Philosopher", role, gained: withoutName(gained) };
+    }
     case "Princess": {
       const nominations = input["nominations"];
       return {
@@ -759,14 +767,6 @@ function validateClaim(input: unknown, path: string): Claim {
   }
 }
 
-function validateNightwatchmanChoice(input: unknown, path: string) {
-  if (!isObject(input)) throw new ValidationError("Expected object", path);
-  return {
-    chosen: expectString(input["chosen"], `${path}.chosen`),
-    timing: input["timing"] === undefined ? undefined : expectString(input["timing"], `${path}.timing`),
-  };
-}
-
 function validateNightlyPlayerChoices(
   input: unknown,
   path: string,
@@ -795,18 +795,6 @@ function validateCustomInfo(input: unknown, path: string, claimType: string): Cl
         entry["expression"] === undefined ? undefined : expectString(entry["expression"], `${entryPath}.expression`),
     };
   });
-}
-
-function validatePhilosopherSeamstress(
-  input: unknown,
-  path: string,
-): NonNullable<Extract<Claim, { type: "Philosopher" }>["seamstress"]> {
-  if (!isObject(input)) throw new ValidationError(`Expected object`, path);
-  return {
-    among: expectStringArray(input["among"], `${path}.among`),
-    aligned: input["aligned"] === undefined ? undefined : expectBool(input["aligned"], `${path}.aligned`),
-    timing: input["timing"] === undefined ? undefined : expectString(input["timing"], `${path}.timing`),
-  };
 }
 
 function expectPositiveInteger(v: unknown, path: string): number {
