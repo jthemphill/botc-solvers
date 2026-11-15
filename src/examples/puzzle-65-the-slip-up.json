@@ -106,8 +106,7 @@
       "name": "Tom",
       "timing": "night_2",
       "among": ["Anna", "Dan"],
-      "aligned": false,
-      "possibleActualRoles": ["Seamstress", "Fang Gu", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "aligned": false
     },
     {
       "type": "Mathematician",

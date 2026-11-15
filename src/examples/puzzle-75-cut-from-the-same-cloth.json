@@ -82,8 +82,7 @@
           "timing": "day_1",
           "expression": "Fraser.initial_type == Demon"
         }
-      ],
-      "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Juggler",
@@ -93,8 +92,7 @@
         "You": "No Dashii",
         "Matt": "Vigormortis"
       },
-      "correctCount": 0,
-      "possibleActualRoles": ["Juggler", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "correctCount": 0
     },
     {
       "type": "Seamstress",
@@ -116,8 +114,7 @@
           "timing": "night_2",
           "count": 0
         }
-      ],
-      "possibleActualRoles": ["Mathematician", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Snake Charmer",

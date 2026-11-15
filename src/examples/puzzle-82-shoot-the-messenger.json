@@ -63,8 +63,7 @@
           "timing": "day_2",
           "expression": "Sarah.initial_type == Townsfolk"
         }
-      ],
-      "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Town Crier",
@@ -110,8 +109,7 @@
       "name": "Josh",
       "timing": "night_2",
       "among": ["You", "Dan"],
-      "aligned": true,
-      "possibleActualRoles": ["Seamstress", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Witch", "Mutant"]
+      "aligned": true
     },
     {
       "type": "Snake Charmer",

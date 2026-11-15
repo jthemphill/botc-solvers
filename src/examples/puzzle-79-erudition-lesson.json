@@ -55,14 +55,12 @@
           "timing": "day_2",
           "expression": "Goose.initial_type != Townsfolk"
         }
-      ],
-      "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "Vortox", "No Dashii", "Witch", "Mutant"]
+      ]
     },
     {
       "type": "Clockmaker",
       "name": "Marc",
-      "distance": 1,
-      "possibleActualRoles": ["Clockmaker", "Fang Gu", "Vigormortis", "Vortox", "No Dashii", "Witch", "Mutant"]
+      "distance": 1
     },
     {
       "type": "Mathematician",
@@ -87,8 +85,7 @@
         "Edd": "Vigormortis",
         "Marc": "Mutant"
       },
-      "correctCount": 1,
-      "possibleActualRoles": ["Juggler", "Fang Gu", "Vigormortis", "Vortox", "No Dashii", "Witch", "Mutant"]
+      "correctCount": 1
     },
     {
       "type": "Savant",
@@ -159,8 +156,7 @@
       "name": "Seb",
       "timing": "night_1",
       "among": ["You", "Chris"],
-      "aligned": false,
-      "possibleActualRoles": ["Seamstress", "Fang Gu", "Vigormortis", "Vortox", "No Dashii", "Witch", "Mutant"]
+      "aligned": false
     }
   ]
 }
