@@ -116,14 +116,15 @@ Puzzles 12a and 12b let only one claimant be the Lunatic, and that claimant was 
 
 Without its list, puzzle 12b had a second answer with Steph as the Spy. A Dreamer report of "Lunatic or Spy" was accepted for a real Spy with a Vortox in play, because the Spy could register as both characters. With a Vortox, a Dreamer learns two characters that the player does not have ([Vortox, revision 3017](https://wiki.bloodontheclocktower.com/index.php?title=Vortox&oldid=3017), not fetched again in this session). The engine now uses that rule, and puzzle 12b has its one answer again. `src/builders/vortoxDreamer.test.ts` covers legal and illegal reports, the Spy without a Vortox, renamed players, and a duplicate report. The image of 12b was not available; its document follows the same rules text as 12a.
 
-The Lunatic rule makes the lists in puzzles 23 and 41 redundant. Puzzle 23's list is removed. Puzzle 41's lists were removed earlier, and the convention restores what they allowed.
+The Lunatic rule makes the lists in puzzles 23 and 41 redundant. Puzzle 23's list is removed, and its document matches its [image](../puzzle-images/puzzle-23-goblincore.webp), which says that the Lunatic claims another character. Puzzle 41's lists were removed earlier, and the convention restores what they allowed.
+
+Puzzle 60 had a list that made Olivia the Poppy Grower. Its [image](../puzzle-images/puzzle-60-whats-a-mind-goblin.webp) does not say that. It says that You are the Goblin and asks who your Demon is, so You do not know the Demon, and a healthy Poppy Grower is in play on night 1. The document now gives that as a fact with its source, and the solver finds that Olivia is the Poppy Grower. Without the fact, Olivia can be a No Dashii that claims the Poppy Grower.
 
 Puzzles 58 and 67 had lists that let a Politician claim a different character. Those lists are removed at the request of the repository owner. Their answers are unchanged.
 
 These lists stay, because each one changes its answer and its image was not available to check:
 
 - Puzzle 30 fixes each character in its Atheist game, and makes the Atheist claimant of the other game evil or the Drunk.
-- Puzzle 60 fixes its Poppy Grower.
 - Puzzle 76 uses a custom setup with three characters for each player.
 
 ## Support limits
