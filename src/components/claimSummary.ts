@@ -33,6 +33,10 @@ function abilitySummary(claim: Claim): string {
       return exorcistSummary(claim);
     case "Innkeeper":
       return innkeeperSummary(claim);
+    case "Goon":
+      return (claim.alignments ?? []).length === 0
+        ? "I am the Goon"
+        : (claim.alignments ?? []).map((entry) => `${compactTimingLabel(entry.timing)}: ${entry.alignment}`).join("; ");
     case "Devil's Advocate":
       return nightlyChoiceSummary(claim.choices, "protected");
     case "Sailor":

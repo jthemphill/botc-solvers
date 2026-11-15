@@ -104,6 +104,7 @@ export type Claim =
   | SavantClaim
   | NightwatchmanClaim
   | MoonchildClaim
+  | GoonClaim
   | BareClaim;
 
 interface BaseClaim {
@@ -233,6 +234,17 @@ export interface GodfatherClaim extends BaseClaim {
   readonly type: "Godfather";
   readonly outsiderRoles?: readonly string[];
   readonly choices?: readonly NightlyPlayerChoiceDoc[];
+}
+
+export interface GoonAlignmentDoc {
+  readonly timing: string;
+  readonly alignment: "good" | "evil";
+}
+
+/** A Goon can report its alignment at given times. */
+export interface GoonClaim extends BaseClaim {
+  readonly type: "Goon";
+  readonly alignments?: readonly GoonAlignmentDoc[];
 }
 
 export interface MoonchildClaim extends BaseClaim {
@@ -515,7 +527,6 @@ export const BARE_CLAIM_TYPES = [
   "Fool",
   "Golem",
   "Goblin",
-  "Goon",
   "Hermit",
   "Imp",
   "Kazali",
@@ -610,6 +621,7 @@ export const STRUCTURED_CLAIM_TYPES = [
   "Savant",
   "Nightwatchman",
   "Moonchild",
+  "Goon",
 ] as const satisfies readonly Claim["type"][];
 
 export const SUPPORTED_CLAIM_TYPES = new Set<Claim["type"]>([...STRUCTURED_CLAIM_TYPES, ...BARE_CLAIM_TYPES]);

@@ -41,8 +41,6 @@ describe("puzzle catalog", () => {
       "puzzle-64-copycatholic", // With the Pope, the setup must have a duplicate good character.
       "puzzle-72-one-digit-too-many", // The setup includes standard games and Legion games.
       "puzzle-76-three-for-three", // This puzzle uses a custom setup with three roles.
-      "puzzle-95-daylight-saving-time", // An Outsider that becomes the Fang Gu may lie about its past character.
-      "puzzle-96-goon-with-the-wind", // The alignment on day 4 decides who reports truthfully.
     ]);
     const actual = new Set(
       PUZZLE_EXAMPLES.filter((example) => (validatePuzzleDoc(example.data).constraints?.length ?? 0) > 0).map(

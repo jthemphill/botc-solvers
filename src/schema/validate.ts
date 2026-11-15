@@ -315,6 +315,18 @@ function validateClaim(input: unknown, path: string): Claim {
               }),
       };
     }
+    case "Goon": {
+      if (input["alignments"] === undefined) return { ...base, type: "Goon" };
+      const alignments = expectArray(input["alignments"], `${path}.alignments`).map((entry, index) => {
+        const entryPath = `${path}.alignments[${index}]`;
+        if (!isObject(entry)) throw new ValidationError(`Expected object`, entryPath);
+        const reported = entry["alignment"];
+        if (reported !== "good" && reported !== "evil")
+          throw new ValidationError(`alignment must be "good" or "evil"`, `${entryPath}.alignment`);
+        return { timing: expectString(entry["timing"], `${entryPath}.timing`), alignment: reported } as const;
+      });
+      return { ...base, type: "Goon", alignments };
+    }
     case "Devil's Advocate":
       return { ...base, type: "Devil's Advocate", choices: validateNightlyPlayerChoices(input["choices"], path) };
     case "Sailor":

@@ -114,6 +114,7 @@ export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
     applyPhilosopherDrunking(game, doc);
     applyNightwatchmanActions(game, doc, doc.facts);
     applyChangedRoleClaimExplanations(game, doc, characterActions);
+    applyGoonClaimConvention(game, doc);
     applyXaanActivity(game, doc, nightDeathTiming);
     applyVigormortisPoisonSources(game, doc, nightDeathTiming);
     applyPoisonerSources(game, doc, nightDeathTiming, goon);
@@ -289,18 +290,7 @@ function applyPukkaPoisonChoices(game: BOTCModel, doc: BuildDoc): PukkaContext {
     });
     const notBlocked = game.not(blocked);
     game.equate(unblocked, notBlocked);
-    for (const actor of doc.facts.livingAt(timing)) {
-      const active = game.allOf([choice.choiceActive, game.hasAbilityAt(actor, "Pukka", timing)]);
-      game.registerChoiceAction({
-        rule: "Pukka:target",
-        actor,
-        timing,
-        active,
-        count: 1,
-        choices: new Map([...choice.targets].map(([target, targeted]) => [target, game.allOf([active, targeted])])),
-        ability: "Pukka",
-      });
-    }
+    registerRoleChoices(game, doc, "Pukka", timing, choice.targets, choice.choiceActive);
     choicesByTiming.set(timing, choice);
     resolvesByTiming.set(timing, game.allOf([livingPukka, choice.healthyRoleInPlay]));
   }
@@ -578,6 +568,28 @@ function applyCharacterActions(game: BOTCModel, doc: BuildDoc): CharacterActions
     }
   }
   return { madness };
+}
+
+/**
+ * Applies the shared claim convention to the Goon: a good player reports honestly.
+ * A Goon that claims a different character is evil at the last phase of the timeline.
+ * A Goon that is good at the last phase reports its alignments correctly.
+ */
+function applyGoonClaimConvention(game: BOTCModel, doc: BuildDoc): void {
+  if (!doc.script.includes("Goon")) return;
+  const lastTiming = doc.facts.timings.at(-1) ?? "night_1";
+  for (const claim of doc.claims) {
+    const isGoon = game.actualIs(claim.name, "Goon");
+    if (claim.type !== "Goon") {
+      if (claim.roleTiming === undefined) game.addImplication(isGoon, game.isEvilAt(claim.name, lastTiming));
+      continue;
+    }
+    const honest = game.allOf([isGoon, game.isGoodAt(claim.name, lastTiming)]);
+    for (const report of claim.alignments ?? []) {
+      const good = game.isGoodAt(claim.name, report.timing as Timing);
+      game.addImplication(honest, report.alignment === "good" ? good : game.not(good));
+    }
+  }
 }
 
 function applyChangedRoleClaimExplanations(game: BOTCModel, doc: BuildDoc, actions: CharacterActions): void {
@@ -2325,9 +2337,10 @@ function registerRoleChoices(
   role: string,
   timing: Timing,
   targets: ReadonlyMap<string, BoolLike>,
+  chooses: BoolLike = game.roleInPlay(role),
 ): void {
   for (const actor of doc.facts.livingAt(timing)) {
-    const active = game.allOf([game.hasAbilityAt(actor, role, timing), game.roleInPlay(role)]);
+    const active = game.allOf([game.hasAbilityAt(actor, role, timing), chooses]);
     game.registerChoiceAction({
       rule: `${role}:target`,
       actor,

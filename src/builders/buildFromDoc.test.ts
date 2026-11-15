@@ -1621,7 +1621,7 @@ describe("buildFromDoc", () => {
           checks: [{ left: "B", right: "C", timing: "night_1", count: 0 }],
           possibleActualRoles: ["Chambermaid"],
         },
-        { type: "Chef", name: "B", count: 0 },
+        { type: "Goon", name: "B" },
       ],
     };
     const lyingGame = buildFromDoc(doc, backend);
@@ -1644,7 +1644,7 @@ describe("buildFromDoc", () => {
 
     expect(worlds).toHaveLength(1);
     expect(worlds[0]?.actualRole("B")).toBe("Goon");
-    expect(worlds[0]?.apparent.get("B")).toBe("Chef");
+    expect(worlds[0]?.apparent.get("B")).toBe("Goon");
     expect(worlds[0]?.isDrunk("A", "night_1")).toBe(true);
     expect(worlds[0]?.isDrunk("A", "day_1")).toBe(true);
   });

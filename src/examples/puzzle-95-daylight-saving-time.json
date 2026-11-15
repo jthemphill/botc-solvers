@@ -16,13 +16,6 @@
     "Mathematician",
     "Town Crier"
   ],
-  "constraints": [
-    {
-      "source": "An Outsider who becomes the Fang Gu may lie about what they were in the past.",
-      "kind": "assumption",
-      "expression": "all p: {Jasmine, Oscar, Tim, Sarah} | p.initial_role == Sweetheart => role_at(p, `Fang Gu`, night_3)"
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -52,16 +45,7 @@
       "timing": "night_1",
       "distance": 1,
       "knownEvilTwin": "Tim",
-      "possibleActualRoles": [
-        "Clockmaker",
-        "Fang Gu",
-        "Vigormortis",
-        "No Dashii",
-        "Vortox",
-        "Evil Twin",
-        "Mutant",
-        "Sweetheart"
-      ]
+      "possibleActualRoles": ["Clockmaker", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
       "type": "Juggler",
@@ -84,16 +68,7 @@
           "expression": "Oscar.role != Artist"
         }
       ],
-      "possibleActualRoles": [
-        "Artist",
-        "Fang Gu",
-        "Vigormortis",
-        "No Dashii",
-        "Vortox",
-        "Evil Twin",
-        "Mutant",
-        "Sweetheart"
-      ]
+      "possibleActualRoles": ["Artist", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
       "type": "Sweetheart",
@@ -113,16 +88,7 @@
       "timing": "night_1",
       "distance": 2,
       "knownEvilTwin": "Jasmine",
-      "possibleActualRoles": [
-        "Clockmaker",
-        "Fang Gu",
-        "Vigormortis",
-        "No Dashii",
-        "Vortox",
-        "Evil Twin",
-        "Mutant",
-        "Sweetheart"
-      ]
+      "possibleActualRoles": ["Clockmaker", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     },
     {
       "type": "Mathematician",
@@ -153,16 +119,7 @@
           "minionNominated": true
         }
       ],
-      "possibleActualRoles": [
-        "Town Crier",
-        "Fang Gu",
-        "Vigormortis",
-        "No Dashii",
-        "Vortox",
-        "Evil Twin",
-        "Mutant",
-        "Sweetheart"
-      ]
+      "possibleActualRoles": ["Town Crier", "Fang Gu", "Vigormortis", "No Dashii", "Vortox", "Evil Twin", "Mutant"]
     }
   ]
 }

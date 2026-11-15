@@ -13,18 +13,6 @@
     "Chef",
     "Juggler"
   ],
-  "constraints": [
-    {
-      "source": "Players good on day 4 truthfully report their role.",
-      "kind": "assumption",
-      "expression": "all p: {Matthew, Sula, Tim, Oscar, You, Dan, Anna} | p.initial_role == Goon => alignment_at(p, Evil, day_4)"
-    },
-    {
-      "source": "Hannah: I turned evil on night 1, then good on night 3.",
-      "kind": "assumption",
-      "expression": "alignment_at(Hannah, Good, day_4) => alignment_at(Hannah, Evil, night_1) && alignment_at(Hannah, Evil, night_2) && alignment_at(Hannah, Good, night_3) && alignment_at(Hannah, Good, night_4)"
-    }
-  ],
   "timeline": [
     {
       "timing": "day_1",
@@ -118,7 +106,25 @@
     },
     {
       "type": "Goon",
-      "name": "Hannah"
+      "name": "Hannah",
+      "alignments": [
+        {
+          "timing": "night_1",
+          "alignment": "evil"
+        },
+        {
+          "timing": "night_2",
+          "alignment": "evil"
+        },
+        {
+          "timing": "night_3",
+          "alignment": "good"
+        },
+        {
+          "timing": "night_4",
+          "alignment": "good"
+        }
+      ]
     },
     {
       "type": "Juggler",

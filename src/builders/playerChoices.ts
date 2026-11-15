@@ -16,79 +16,43 @@ interface ReportedChoice {
   readonly players: readonly string[];
 }
 
-/** Returns the night choices of players that a claim reports. */
+const CLAIM_ROLE_NAMES: Readonly<Record<string, string>> = {
+  FortuneTeller: "Fortune Teller",
+  VillageIdiot: "Village Idiot",
+};
+const PLAYER_FIELDS = ["player", "players", "left", "right", "among", "target"] as const;
+
+function playersIn(entry: Readonly<Record<string, unknown>>): readonly string[] {
+  return PLAYER_FIELDS.flatMap((field) => entry[field] ?? []).filter(
+    (value): value is string => typeof value === "string",
+  );
+}
+
+/**
+ * Returns the players that a claim names, with the night of each report.
+ * A claim names players in its own fields and in its lists of checks, choices, and guesses.
+ * The caller uses a report only when the character has a night choice rule.
+ */
 function reportedChoices(claim: Claim): readonly ReportedChoice[] {
-  const nightly = (index: number, timing: string | undefined) => timing ?? `night_${index + 1}`;
-  switch (claim.type) {
-    case "Acrobat":
-      return (claim.choices ?? []).map((choice) => ({
-        role: "Acrobat",
-        timing: choice.timing,
-        players: [choice.player],
-      }));
-    case "Chambermaid":
-      return (claim.checks ?? []).map((check, index) => ({
-        role: "Chambermaid",
-        timing: nightly(index, check.timing),
-        players: [check.left, check.right],
-      }));
-    case "Dreamer":
-      return claim.player === undefined
-        ? []
-        : [{ role: "Dreamer", timing: nightly(0, claim.timing), players: [claim.player] }];
-    case "Exorcist":
-      return (claim.choices ?? []).map((choice) => ({
-        role: "Exorcist",
-        timing: choice.timing,
-        players: [choice.player],
-      }));
-    case "FortuneTeller":
-      return claim.checks.map((check, index) => ({
-        role: "Fortune Teller",
-        timing: nightly(index, check.timing),
-        players: [check.left, check.right],
-      }));
-    case "Gambler":
-      return (claim.guesses ?? []).map((guess) => ({ role: "Gambler", timing: guess.timing, players: [guess.player] }));
-    case "Innkeeper":
-      return (claim.choices ?? []).map((choice) => ({
-        role: "Innkeeper",
-        timing: choice.timing,
-        players: choice.players,
-      }));
-    case "Philosopher":
-      return claim.seamstress === undefined
-        ? []
-        : [
-            {
-              role: "Seamstress",
-              timing: claim.seamstress.timing ?? claim.timing,
-              players: claim.seamstress.among,
-            },
-          ];
-    case "Professor":
-      return claim.target === undefined ? [] : [{ role: "Professor", timing: claim.timing, players: [claim.target] }];
-    case "Ravenkeeper":
-      return claim.player === undefined ? [] : [{ role: "Ravenkeeper", timing: claim.timing, players: [claim.player] }];
-    case "Sailor":
-      return (claim.choices ?? []).map((choice) => ({
-        role: "Sailor",
-        timing: choice.timing,
-        players: [choice.player],
-      }));
-    case "Seamstress":
-      return [{ role: "Seamstress", timing: claim.timing, players: claim.among }];
-    case "Snake Charmer":
-      return claim.checks.map((check) => ({ role: "Snake Charmer", timing: check.timing, players: [check.player] }));
-    case "VillageIdiot":
-      return claim.checks.map((check, index) => ({
-        role: "Village Idiot",
-        timing: nightly(index, check.timing),
-        players: [check.player],
-      }));
-    default:
-      return [];
-  }
+  const fields = claim as unknown as Readonly<Record<string, unknown>>;
+  const role = CLAIM_ROLE_NAMES[claim.type] ?? claim.type;
+  const lists = ["checks", "choices", "guesses"].flatMap((field) =>
+    Array.isArray(fields[field]) ? [fields[field]] : [],
+  );
+  const seamstress = claim.type === "Philosopher" ? claim.seamstress : undefined;
+  return [
+    { role, timing: claim.timing, players: playersIn(fields) },
+    ...lists.flatMap((list: readonly Readonly<Record<string, unknown>>[]) =>
+      list.map((entry, index) => ({
+        role,
+        timing: (entry["timing"] as string | undefined) ?? `night_${index + 1}`,
+        players: playersIn(entry),
+      })),
+    ),
+    ...(seamstress === undefined
+      ? []
+      : [{ role: "Seamstress", timing: seamstress.timing ?? claim.timing, players: seamstress.among }]),
+  ];
 }
 
 /**

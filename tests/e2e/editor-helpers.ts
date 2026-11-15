@@ -191,6 +191,13 @@ async function fillClaim(block: Locator, claim: Claim) {
         await checkPlayers(block, "Protected players", choice.players, index);
       }
       break;
+    case "Goon":
+      for (const [index, entry] of (claim.alignments ?? []).entries()) {
+        await block.getByRole("button", { name: "+ Add alignment" }).click();
+        await selectField(block, "Alignment timing", entry.timing, index);
+        await selectField(block, "Reported alignment", entry.alignment, index);
+      }
+      break;
     case "Devil's Advocate":
       for (const [index, choice] of (claim.choices ?? []).entries()) {
         await block.getByRole("button", { name: "+ Add choice" }).click();

@@ -32,7 +32,7 @@ The engine kept the Xaan poison for the full night when the Demon killed the Xaa
 
 Sarah is the No Dashii and Tim is the Evil Twin. Everyone else has their claimed character.
 
-Jasmine, Oscar, Tim, and Sarah are alive at the end. Each of them can be evil, the Mutant, or an Outsider that became the Fang Gu. One constraint records the image's rule that only an Outsider that became the Fang Gu may hide a starting Sweetheart. Aoife's guesses are scored on night 2. Oscar asks his question on day 3.
+Jasmine, Oscar, Tim, and Sarah are alive at the end. Each of them can be evil or the Mutant; a Mutant that became the Fang Gu is in the same list. No custom constraint is used. The image also lets a Sweetheart that became the Fang Gu hide its past. The document does not model that case, because it cannot occur: Charlotte's Sweetheart claim would then be false, and Charlotte can be neither the Demon, whose execution ends the game, nor the Evil Twin, who is Jasmine or Tim. Aoife's guesses are scored on night 2. Oscar asks his question on day 3.
 
 Check of the assignment:
 
@@ -51,7 +51,7 @@ No engine change was needed.
 
 Hannah is the Imp, Anna is the Poisoner, and Matthew is the Goon. Everyone else has their claimed character.
 
-The image ties honesty to the alignment on day 4. Two constraints record this: a Goon that claims another character is evil on day 4, and Hannah's alignment history holds if she is good on day 4. The empty night-2 death report is explicit.
+The image ties honesty to the alignment on day 4, which is the last phase of the timeline. The shared claim convention covers this: a Goon that claims another character is evil at the last phase. Hannah's Goon claim reports her alignment on each of the four nights. No custom constraint is used. The empty night-2 death report is explicit.
 
 Check of the assignment:
 
@@ -81,7 +81,8 @@ Rule changes that result:
 - A player that the Demon kills does not make a later choice that night.
 - The Assassin choice was registered after the Goon rule ran and had no effect. The Goon rule now runs last.
 - Demon kills used a default position after the Godfather. They now use their own positions.
-- The DSL function `alignment_at(player, Good | Evil, timing)` reads the alignment at a given time.
+- The shared claim convention now covers the Goon. A Goon that claims another character is evil at the last phase of the timeline. A Goon claim can report alignments at given times, and a Goon that is good at the last phase reports them correctly. The editor has controls for these reports.
+- A good Goon could claim a Townsfolk character before this change. One existing test relied on that; its Goon now claims the Goon.
 
 One existing test changed. It expected a Shabaloth kill of the Goon to be illegal when a Sailor made no report. A Sailor without a report has an unknown choice, so that history is legal. The test now uses a Sailor report of another player for the illegal case.
 

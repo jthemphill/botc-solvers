@@ -39,6 +39,8 @@ import type {
   LibrarianClaim,
   MathematicianClaim,
   MoonchildClaim,
+  GoonAlignmentDoc,
+  GoonClaim,
   NightlyPlayerChoiceDoc,
   NightwatchmanClaim,
   NobleClaim,
@@ -373,6 +375,8 @@ export function ClaimBody({ doc, claim, onChange }: BodyProps) {
         return <EmpathBody doc={doc} claim={claim} onChange={onChange} />;
       case "Exorcist":
         return <ExorcistBody doc={doc} claim={claim} onChange={onChange} />;
+      case "Goon":
+        return <GoonBody claim={claim} onChange={onChange} />;
       case "Devil's Advocate":
         return <NightlyPlayerChoicesBody doc={doc} claim={claim} onChange={onChange} label="Protected player" />;
       case "Godfather":
@@ -1074,6 +1078,55 @@ function InnkeeperBody({
       ))}
       <button type="button" onClick={addChoice}>
         + Add choice
+      </button>
+    </div>
+  );
+}
+
+function GoonBody({ claim, onChange }: { claim: GoonClaim; onChange: (c: Claim) => void }) {
+  const alignments = claim.alignments ?? [];
+  const setEntry = (index: number, entry: GoonAlignmentDoc) =>
+    onChange({ ...claim, alignments: alignments.map((old, entryIndex) => (entryIndex === index ? entry : old)) });
+  return (
+    <div>
+      {alignments.map((entry, index) => (
+        <div key={index} className="field-grid">
+          <span>Alignment timing</span>
+          <TimingField
+            ariaLabel="Alignment timing"
+            value={entry.timing}
+            onChange={(timing) => setEntry(index, { ...entry, timing: timing ?? entry.timing })}
+          />
+          <span>Reported alignment</span>
+          <select
+            aria-label="Reported alignment"
+            value={entry.alignment}
+            onChange={(e) => setEntry(index, { ...entry, alignment: e.target.value as GoonAlignmentDoc["alignment"] })}
+          >
+            <option value="good">good</option>
+            <option value="evil">evil</option>
+          </select>
+          <span />
+          <button
+            type="button"
+            onClick={() =>
+              onChange({ ...claim, alignments: alignments.filter((_, entryIndex) => entryIndex !== index) })
+            }
+          >
+            Remove alignment
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() =>
+          onChange({
+            ...claim,
+            alignments: [...alignments, { timing: `night_${alignments.length + 1}`, alignment: "evil" }],
+          })
+        }
+      >
+        + Add alignment
       </button>
     </div>
   );

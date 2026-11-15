@@ -17,6 +17,8 @@ interface Options {
   readonly names?: readonly string[];
   readonly claims?: (names: readonly string[]) => readonly Record<string, unknown>[];
   readonly constraints?: readonly string[];
+  /** The alignments of the player in the second seat, such as "Evil night_1". */
+  readonly goon?: readonly string[];
   readonly timeline?: (names: readonly string[]) => readonly Record<string, unknown>[];
 }
 
@@ -39,6 +41,7 @@ function scenario(roles: readonly string[], options: Options = {}) {
     setup: "none",
     timeline: options.timeline?.(names) ?? [],
     constraints: (options.constraints ?? []).map((expression) => ({ kind: "fact", expression })),
+    goon: (options.goon ?? []).map((entry) => [names[1] as string, ...entry.split(" ")] as const),
     claims: [
       ...roles.flatMap((role, index) =>
         described.has(names[index]) ? [] : [{ ...bareClaim(role), name: names[index], possibleActualRoles: [role] }],
@@ -48,8 +51,19 @@ function scenario(roles: readonly string[], options: Options = {}) {
   };
 }
 
-async function worldCount(doc: unknown): Promise<number> {
-  return (await buildFromDoc(validatePuzzleDoc(doc), backend).solveAll()).length;
+type Scenario = ReturnType<typeof scenario>;
+
+function build({ goon, ...doc }: Scenario) {
+  const game = buildFromDoc(validatePuzzleDoc(doc), backend);
+  for (const [player, alignment, timing] of goon) {
+    const good = game.isGoodAt(player, timing as "night_1");
+    game.addTruth(alignment === "Good" ? good : game.not(good));
+  }
+  return game;
+}
+
+async function worldCount(doc: Scenario): Promise<number> {
+  return (await build(doc).solveAll()).length;
 }
 
 const POISONER_TABLE = ["Poisoner", "Goon", "Imp", "Chef", "Empath"];
@@ -62,26 +76,22 @@ function empathClaim(count: number) {
 
 test("a Poisoner that chooses the Goon first makes the Goon evil and poisons no player", async () => {
   // The neighbors of the Empath are the Chef and the Poisoner. The correct number is 1.
-  const evilGoon = ["alignment_at(B, Evil, night_1)"];
-  expect(await worldCount(scenario(POISONER_TABLE, { claims: empathClaim(1), constraints: evilGoon }))).toBe(1);
-  expect(await worldCount(scenario(POISONER_TABLE, { claims: empathClaim(0), constraints: evilGoon }))).toBe(0);
+  const evilGoon = ["Evil night_1"];
+  expect(await worldCount(scenario(POISONER_TABLE, { claims: empathClaim(1), goon: evilGoon }))).toBe(1);
+  expect(await worldCount(scenario(POISONER_TABLE, { claims: empathClaim(0), goon: evilGoon }))).toBe(0);
   // A Poisoner that chooses the Empath can give the Empath a false number. The Goon stays good.
   expect(await worldCount(scenario(POISONER_TABLE, { claims: empathClaim(0) }))).toBe(1);
-  expect(
-    await worldCount(
-      scenario(POISONER_TABLE, { claims: empathClaim(0), constraints: ["alignment_at(B, Good, night_1)"] }),
-    ),
-  ).toBe(1);
+  expect(await worldCount(scenario(POISONER_TABLE, { claims: empathClaim(0), goon: ["Good night_1"] }))).toBe(1);
 });
 
 test("a Chef counts a Goon that the Poisoner made evil", async () => {
   const chefClaim = (count: number) => (names: readonly string[]) => [
     { type: "Chef", name: names[3], possibleActualRoles: ["Chef"], count },
   ];
-  const evilGoon = ["alignment_at(B, Evil, night_1)"];
+  const evilGoon = ["Evil night_1"];
   // The evil pairs are Poisoner and Goon, and Goon and Imp.
-  expect(await worldCount(scenario(POISONER_TABLE, { claims: chefClaim(2), constraints: evilGoon }))).toBe(1);
-  expect(await worldCount(scenario(POISONER_TABLE, { claims: chefClaim(0), constraints: evilGoon }))).toBe(0);
+  expect(await worldCount(scenario(POISONER_TABLE, { claims: chefClaim(2), goon: evilGoon }))).toBe(1);
+  expect(await worldCount(scenario(POISONER_TABLE, { claims: chefClaim(0), goon: evilGoon }))).toBe(0);
 });
 
 const IMP_TABLE = ["Imp", "Goon", "Chef", "Empath"];
@@ -92,19 +102,13 @@ test("a Demon that chooses the Goon first is drunk and kills no player", async (
   // All players are alive. An Imp must kill unless it chooses the Goon.
   expect(await worldCount(scenario(["Imp", "Saint", "Chef", "Empath"], { timeline: noDeathOnNight2 }))).toBe(0);
   // The Demon is evil, so the Goon becomes evil.
-  expect(
-    await worldCount(
-      scenario(IMP_TABLE, { timeline: noDeathOnNight2, constraints: ["alignment_at(B, Good, night_2)"] }),
-    ),
-  ).toBe(0);
+  expect(await worldCount(scenario(IMP_TABLE, { timeline: noDeathOnNight2, goon: ["Good night_2"] }))).toBe(0);
 });
 
 test("a Demon cannot choose the Goon first and also kill another player", async () => {
   const chefDies = (names: readonly string[]) => [{ type: "nightDeath", timing: "night_2", players: [names[2]] }];
   expect(await worldCount(scenario(IMP_TABLE, { timeline: chefDies }))).toBe(1);
-  expect(
-    await worldCount(scenario(IMP_TABLE, { timeline: chefDies, constraints: ["alignment_at(B, Evil, night_2)"] })),
-  ).toBe(0);
+  expect(await worldCount(scenario(IMP_TABLE, { timeline: chefDies, goon: ["Evil night_2"] }))).toBe(0);
 });
 
 const IDIOT_TABLE = ["Imp", "Goon", "Village Idiot", "Chef"];
@@ -136,7 +140,7 @@ test("a good Village Idiot makes an evil Goon good again", async () => {
       { type: "nightDeath", timing: "night_2", players: [] },
       { type: "nightDeath", timing: "night_3", players: [names[4]] },
     ],
-    constraints: [`alignment_at(B, Evil, night_2) && alignment_at(B, ${finalAlignment}, night_3)`],
+    goon: ["Evil night_2", `${finalAlignment} night_3`],
   });
   expect(await worldCount(scenario(table, options("Good")))).toBe(1);
   expect(await worldCount(scenario(table, options("Evil")))).toBe(0);
@@ -144,9 +148,9 @@ test("a good Village Idiot makes an evil Goon good again", async () => {
 
 test("a Village Idiot is not drunk when the Poisoner chose the Goon first", async () => {
   const table = ["Poisoner", "Goon", "Village Idiot", "Chef", "Imp"];
-  const evilGoon = ["alignment_at(B, Evil, night_1)"];
-  expect(await worldCount(scenario(table, { claims: idiotClaim(1, false), constraints: evilGoon }))).toBe(1);
-  expect(await worldCount(scenario(table, { claims: idiotClaim(1, true), constraints: evilGoon }))).toBe(0);
+  const evilGoon = ["Evil night_1"];
+  expect(await worldCount(scenario(table, { claims: idiotClaim(1, false), goon: evilGoon }))).toBe(1);
+  expect(await worldCount(scenario(table, { claims: idiotClaim(1, true), goon: evilGoon }))).toBe(0);
 });
 
 function seamstressClaim(left: number, right: number, aligned: boolean) {
@@ -172,9 +176,9 @@ test("a Seamstress that chooses the Goon first is drunk", async () => {
 
 test("Goon results do not change with new names, duplicate reports, or redundant facts", async () => {
   const names = ["Uma", "Vic", "Wes", "Xena", "Yan"];
-  const evilGoon = ["alignment_at(Vic, Evil, night_1)"];
-  expect(await worldCount(scenario(POISONER_TABLE, { names, claims: empathClaim(1), constraints: evilGoon }))).toBe(1);
-  expect(await worldCount(scenario(POISONER_TABLE, { names, claims: empathClaim(0), constraints: evilGoon }))).toBe(0);
+  const evilGoon = ["Evil night_1"];
+  expect(await worldCount(scenario(POISONER_TABLE, { names, claims: empathClaim(1), goon: evilGoon }))).toBe(1);
+  expect(await worldCount(scenario(POISONER_TABLE, { names, claims: empathClaim(0), goon: evilGoon }))).toBe(0);
 
   const twice = (names: readonly string[]) => [...idiotClaim(3, false)(names), ...idiotClaim(3, false)(names)];
   expect(await worldCount(scenario(IDIOT_TABLE, { claims: twice }))).toBe(0);
@@ -196,8 +200,8 @@ function chooserTable(role: string, outsider = "Goon"): Options & { readonly rol
   };
 }
 
-async function worldCountWithDrunk(doc: unknown, player: string, timing: "night_1" | "night_2"): Promise<number> {
-  const game = buildFromDoc(validatePuzzleDoc(doc), backend);
+async function worldCountWithDrunk(doc: Scenario, player: string, timing: "night_1" | "night_2"): Promise<number> {
+  const game = build(doc);
   game.addTruth(game.drunk(player, timing));
   return (await game.solveAll()).length;
 }
@@ -293,8 +297,8 @@ test("the Butler acts before the Dreamer on the first night only", () => {
   expect(() => nightActionOrder("Chef")).toThrow();
 });
 
-async function activeActions(doc: unknown) {
-  const worlds = await buildFromDoc(validatePuzzleDoc(doc), backend).solveAll();
+async function activeActions(doc: Scenario) {
+  const worlds = await build(doc).solveAll();
   expect(worlds).toHaveLength(1);
   return worlds[0]!.actions
     .filter((action) => action.active && action.selected.length > 0)
@@ -312,4 +316,20 @@ test("a witness shows the choice actions that the Goon rule reads", async () => 
   const actions = await activeActions(doc);
   expect(actions).toContain("night_1 C Village Idiot:players D");
   expect(actions).toContain("night_2 A Imp:targets D");
+});
+
+test("a Goon that is good at the last phase reports its character and its alignments correctly", async () => {
+  const table = ["Poisoner", "Goon", "Imp", "Chef", "Empath"];
+  const claims = (claim: Record<string, unknown>) => (names: readonly string[]) => [
+    { ...claim, name: names[1], possibleActualRoles: ["Goon"] },
+  ];
+  // The Poisoner makes the Goon evil on night 1, and the Goon stays evil. An evil Goon can claim the Mayor.
+  const mayor = { roles: [...table, "Mayor"], claims: claims({ type: "Mayor" }) };
+  expect(await worldCount(scenario(mayor.roles, { ...mayor, goon: ["Evil night_1"] }))).toBe(1);
+  expect(await worldCount(scenario(mayor.roles, { ...mayor, goon: ["Good night_1"] }))).toBe(0);
+  // A good Goon reports its alignment correctly. An evil Goon can report a false alignment.
+  const report = (alignment: string) => claims({ type: "Goon", alignments: [{ timing: "night_1", alignment }] });
+  expect(await worldCount(scenario(table, { claims: report("good"), goon: ["Good night_1"] }))).toBe(1);
+  expect(await worldCount(scenario(table, { claims: report("evil"), goon: ["Good night_1"] }))).toBe(0);
+  expect(await worldCount(scenario(table, { claims: report("good"), goon: ["Evil night_1"] }))).toBe(1);
 });

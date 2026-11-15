@@ -118,8 +118,26 @@ export const CLAIM_EDITOR_CASES: readonly {
   },
   {
     name: "nightly targets, protected pairs, and known Outsiders",
-    script: ["Acrobat", "Exorcist", "Innkeeper", "Sailor", "Devil's Advocate", "Godfather", "Moonchild", "Tinker"],
+    script: [
+      "Acrobat",
+      "Exorcist",
+      "Innkeeper",
+      "Sailor",
+      "Devil's Advocate",
+      "Godfather",
+      "Moonchild",
+      "Tinker",
+      "Goon",
+    ],
     claims: [
+      {
+        type: "Goon",
+        name: "Ada",
+        alignments: [
+          { timing: "night_1", alignment: "evil" },
+          { timing: "night_3", alignment: "good" },
+        ],
+      },
       {
         type: "Acrobat",
         name: "Ada",

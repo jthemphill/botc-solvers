@@ -812,26 +812,6 @@ class Compiler {
         span: node.span,
       };
     }
-    if (node.name === "alignment_at") {
-      if (node.args.length !== 3) throw new DslError(`alignment_at() takes (player, alignment, timing)`, node.span);
-      const playerArg = node.args[0] as AstCall["args"][number];
-      const alignmentArg = node.args[1] as AstCall["args"][number];
-      const timingArg = node.args[2] as AstCall["args"][number];
-      if (playerArg.name !== undefined || alignmentArg.name !== undefined || timingArg.name !== undefined)
-        throw new DslError(`alignment_at arguments are positional`, node.span);
-      const player = this.evalNode(playerArg.value, env);
-      const alignment = this.evalNode(alignmentArg.value, env);
-      const timing = this.expectTimingArg(timingArg);
-      if (player.kind !== "player") throw new DslError(`alignment_at expected a player first`, player.span);
-      if (alignment.kind !== "alignment")
-        throw new DslError(`alignment_at expected an alignment second`, alignment.span);
-      const good = this.game.isGoodAt(player.name, timing);
-      return {
-        kind: "bool",
-        value: alignment.value === "Good" ? good : this.game.not(good),
-        span: node.span,
-      };
-    }
     if (node.name === "fortune_teller_red_herring") {
       if (node.args.length !== 2)
         throw new DslError(`fortune_teller_red_herring() takes (fortuneTeller, player)`, node.span);
