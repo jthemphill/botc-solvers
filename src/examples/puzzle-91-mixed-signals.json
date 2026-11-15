@@ -51,7 +51,8 @@
       "name": "Sarah",
       "timing": "night_1",
       "role": "Nightwatchman",
-      "nightwatchman": {
+      "gained": {
+        "type": "Nightwatchman",
         "chosen": "Hannah"
       }
     },

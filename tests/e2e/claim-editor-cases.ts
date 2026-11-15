@@ -244,7 +244,7 @@ export const CLAIM_EDITOR_CASES: readonly {
         name: "Ada",
         role: "Seamstress",
         timing: "night_1",
-        seamstress: { among: ["Cara", "Ben"], aligned: false, timing: "night_2" },
+        gained: { type: "Seamstress", among: ["Cara", "Ben"], aligned: false, timing: "night_2" },
       },
     ],
   },

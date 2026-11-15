@@ -2,7 +2,7 @@ import { select } from "../model/actions";
 import { roleNightChoice } from "../model/core";
 import type { BoolLike, BOTCModel, Timing } from "../model/model";
 import { nightActionOrder } from "../model/nightOrder";
-import type { Claim, PuzzleDoc } from "../schema/puzzleDoc";
+import { type Claim, claimRoleName, type PuzzleDoc } from "../schema/puzzleDoc";
 import { resolveRoleRef } from "./roleRef";
 import type { TimelineFacts } from "./timeline";
 
@@ -16,10 +16,6 @@ interface ReportedChoice {
   readonly players: readonly string[];
 }
 
-const CLAIM_ROLE_NAMES: Readonly<Record<string, string>> = {
-  FortuneTeller: "Fortune Teller",
-  VillageIdiot: "Village Idiot",
-};
 const PLAYER_FIELDS = ["player", "players", "left", "right", "among", "target"] as const;
 
 function playersIn(entry: Readonly<Record<string, unknown>>): readonly string[] {
@@ -35,11 +31,10 @@ function playersIn(entry: Readonly<Record<string, unknown>>): readonly string[] 
  */
 function reportedChoices(claim: Claim): readonly ReportedChoice[] {
   const fields = claim as unknown as Readonly<Record<string, unknown>>;
-  const role = CLAIM_ROLE_NAMES[claim.type] ?? claim.type;
+  const role = claimRoleName(claim.type);
   const lists = ["checks", "choices", "guesses"].flatMap((field) =>
     Array.isArray(fields[field]) ? [fields[field]] : [],
   );
-  const seamstress = claim.type === "Philosopher" ? claim.seamstress : undefined;
   return [
     { role, timing: claim.timing, players: playersIn(fields) },
     ...lists.flatMap((list: readonly Readonly<Record<string, unknown>>[]) =>
@@ -49,9 +44,6 @@ function reportedChoices(claim: Claim): readonly ReportedChoice[] {
         players: playersIn(entry),
       })),
     ),
-    ...(seamstress === undefined
-      ? []
-      : [{ role: "Seamstress", timing: seamstress.timing ?? claim.timing, players: seamstress.among }]),
   ];
 }
 

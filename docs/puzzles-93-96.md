@@ -100,9 +100,27 @@ Twenty-two catalog documents had lists that the convention makes redundant. Thos
 
 Puzzle 07 let only one living claimant be the Mutant, and it had the Drunk on its script. Its [image](../puzzle-images/puzzle-07-the-savant-strikes-back.webp) says that the Mutant is the only Outsider and that it claims a Townsfolk character. The document now has no Drunk and no lists except the given about You. Each Townsfolk claimant can be the Mutant, and the answer is unchanged.
 
-Puzzle 11 had a list on Matthew's claims that let him be a starting Artist. Its [image](../puzzle-images/puzzle-11-false-is-the-new-black.webp) has Matthew claim a starting Seamstress, so a good Matthew cannot be a starting Artist. That list is removed, with the redundant `uniqueCharacters` setting, and the answer is unchanged. One list stays: Sula's Snake Charmer check is a second claim by a Philosopher, and its list names the characters that her Philosopher claim allows.
+Puzzle 11 had a list on Matthew's claims that let him be a starting Artist. Its [image](../puzzle-images/puzzle-11-false-is-the-new-black.webp) has Matthew claim a starting Seamstress, so a good Matthew cannot be a starting Artist. That list is removed, with the redundant `uniqueCharacters` setting, and the answer is unchanged. Sula's Snake Charmer check was a second claim with its own list; it is now part of her Philosopher claim.
 
 A list on You is a given about one player.
+
+## Philosopher claims
+
+A Philosopher claim now has a `gained` field: a claim about the ability of the chosen character, without a name of its own. It replaces the Seamstress and Nightwatchman fields, and it works for every character that has a claim type. The builder reads the reports of this claim and does not read it as a claim of a starting character. Puzzles 11, 39, 42, and 91 use it. In puzzles 11 and 42 it replaces a second claim that needed a list of possible characters.
+
+The editor shows the controls of the chosen character inside the Philosopher claim, after the user adds a report. Renaming or removing a player now also updates the chosen player of a Nightwatchman claim; a direct Nightwatchman claim did not get that update before.
+
+## Lists in other puzzles
+
+Puzzles 41, 58, and 67 had lists on each claimant that let a Lunatic or a Politician claim a different character. Those lists are removed at the request of the repository owner. Their answers are unchanged.
+
+These lists stay, because each one changes its answer and its image was not available to check:
+
+- Puzzles 12a and 12b let one Empath claimant be the Lunatic.
+- Puzzle 23 lets the Goblin claimant be the Imp or the Lunatic only.
+- Puzzle 30 fixes each character in its Atheist game, and makes the Atheist claimant of the other game evil or the Drunk.
+- Puzzle 60 fixes its Poppy Grower.
+- Puzzle 76 uses a custom setup with three characters for each player.
 
 ## Support limits
 

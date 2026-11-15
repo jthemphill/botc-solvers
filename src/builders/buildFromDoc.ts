@@ -5,6 +5,7 @@ import { TimelineFacts, deathEventOrder } from "./timeline";
 import { applyBarberSwaps } from "./barber";
 import { applyNightwatchmanActions } from "./nightwatchman";
 import { GoonRule } from "./goon";
+import { type BuildClaim, expandPhilosopherClaims } from "./philosopher";
 import { generateNightChoices } from "./playerChoices";
 import { nightActionOrder } from "../model/nightOrder";
 import {
@@ -26,12 +27,13 @@ import { buildClaim, type ClaimWithTimelineContext } from "./claim";
 import { resolveRoleRef } from "./roleRef";
 
 interface BuildDoc extends PuzzleDoc {
+  readonly claims: readonly BuildClaim[];
   readonly facts: TimelineFacts;
 }
 
 export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
   input = { ...input, claims: [...new Map(input.claims.map((claim) => [JSON.stringify(claim), claim])).values()] };
-  const doc: BuildDoc = { ...input, facts: new TimelineFacts(input) };
+  const doc: BuildDoc = { ...input, claims: expandPhilosopherClaims(input.claims), facts: new TimelineFacts(input) };
   const spec: PuzzleSpec = {
     players: doc.players,
     characters: doc.script.map(resolveRoleRef),
@@ -110,6 +112,7 @@ export function buildFromDoc(input: PuzzleDoc, backend: SatBackend): BOTCModel {
       applyClaims(game, [claim], {
         ...claimOptions,
         mutantBluff: doc.facts.finalLiving.includes(doc.claims[index]?.name ?? ""),
+        infoOnly: doc.claims[index]?.gainedByPhilosopher !== undefined,
       }),
     );
   game.withProvenance({ kind: "rule", id: "applyLleechHostPoisoning" }, () => applyLleechHostPoisoning(game, doc));

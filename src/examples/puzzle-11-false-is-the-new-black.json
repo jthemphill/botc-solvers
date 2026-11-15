@@ -117,19 +117,17 @@
       "type": "Philosopher",
       "name": "Sula",
       "timing": "night_2",
-      "role": "Snake Charmer"
-    },
-    {
-      "type": "Snake Charmer",
-      "name": "Sula",
-      "checks": [
-        {
-          "player": "Sarah",
-          "demon": false,
-          "timing": "night_2"
-        }
-      ],
-      "possibleActualRoles": ["Philosopher", "Vortox", "Cerenovus", "Pit-Hag"]
+      "role": "Snake Charmer",
+      "gained": {
+        "type": "Snake Charmer",
+        "checks": [
+          {
+            "player": "Sarah",
+            "demon": false,
+            "timing": "night_2"
+          }
+        ]
+      }
     },
     {
       "type": "Dreamer",

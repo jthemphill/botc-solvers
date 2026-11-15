@@ -81,18 +81,16 @@
       "name": "Sula"
     },
     {
-      "type": "Empath",
-      "name": "You",
-      "timing": "night_1",
-      "count": 0,
-      "possibleActualRoles": ["Philosopher", "Drunk"]
-    },
-    {
       "type": "Philosopher",
       "name": "You",
       "timing": "night_1",
       "role": "Empath",
-      "possibleActualRoles": ["Philosopher", "Drunk"]
+      "possibleActualRoles": ["Philosopher", "Drunk"],
+      "gained": {
+        "type": "Empath",
+        "timing": "night_1",
+        "count": 0
+      }
     },
     {
       "type": "Artist",

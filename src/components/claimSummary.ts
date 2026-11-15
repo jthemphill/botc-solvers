@@ -1,4 +1,4 @@
-import type { Claim } from "../schema/puzzleDoc";
+import { type Claim, gainedAbilityClaim } from "../schema/puzzleDoc";
 import type { AstNode } from "../dsl/ast";
 import { lex } from "../dsl/lex";
 import { parse } from "../dsl/parse";
@@ -494,14 +494,8 @@ function gossipSummary(claim: Extract<Claim, { readonly type: "Gossip" }>): stri
 
 function philosopherSummary(claim: Extract<Claim, { readonly type: "Philosopher" }>): string {
   if (claim.role === undefined) return "No Philosopher choice";
-  if (claim.role === "Nightwatchman" && claim.nightwatchman?.chosen) {
-    return `Chose Nightwatchman; ${compactTimingLabel(claim.nightwatchman.timing ?? claim.timing ?? "night_1")}: chose ${claim.nightwatchman.chosen}.`;
-  }
-  const seamstress = claim.seamstress;
-  if (claim.role !== "Seamstress" || seamstress === undefined) return `Chose ${claim.role}.`;
-  const [left, right] = seamstress.among;
-  const alignment = seamstress.aligned === undefined ? "unknown alignment" : seamstress.aligned ? "same" : "different";
-  return `Chose Seamstress; ${left}/${right} ${alignment}.`;
+  const gained = gainedAbilityClaim(claim);
+  return gained === undefined ? `Chose ${claim.role}.` : `Chose ${claim.role}; ${claimSummary(gained)}`;
 }
 
 function puzzlemasterSummary(claim: Extract<Claim, { readonly type: "Puzzlemaster" }>): string {

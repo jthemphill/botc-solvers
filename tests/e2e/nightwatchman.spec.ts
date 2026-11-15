@@ -24,8 +24,10 @@ test("enters, solves, edits, exports, and imports a Philosopher Nightwatchman si
     .getByText("Satisfying worlds:")
     .locator("strong");
   await selectPlayerClaims(page, "Ada");
-  await block.getByLabel("Nightwatchman chosen player", { exact: true }).selectOption("Ben");
-  await block.getByLabel("Nightwatchman choice timing", { exact: true }).selectOption("night_1");
+  const gained = block.getByRole("group", { name: "Gained ability" });
+  await block.getByRole("button", { name: "+ Add gained ability report" }).click();
+  await gained.getByLabel("Chosen player", { exact: true }).selectOption("Ben");
+  await gained.getByLabel("Timing", { exact: true }).selectOption("night_1");
   await selectPlayerClaims(page, "Ben");
   await block.getByRole("button", { name: "+ Add received Nightwatchman signal", exact: true }).click();
   await block.getByLabel("Learned Nightwatchman", { exact: true }).selectOption("Cara");
@@ -38,7 +40,7 @@ test("enters, solves, edits, exports, and imports a Philosopher Nightwatchman si
   await block.getByLabel("Signal timing", { exact: true }).selectOption("night_1");
   await expect(count).toHaveText("1");
   const exported = await exportPuzzleDoc(page);
-  expect(exported.claims[0]).toMatchObject({ nightwatchman: { chosen: "Ben", timing: "night_1" } });
+  expect(exported.claims[0]).toMatchObject({ gained: { type: "Nightwatchman", chosen: "Ben", timing: "night_1" } });
   expect(exported.claims[1]?.nightwatchmanPings).toEqual([{ player: "Cara", timing: "night_1" }]);
   await page.getByRole("button", { name: "New Puzzle", exact: true }).click();
   await page.locator('input[type="file"]').setInputFiles({
@@ -53,6 +55,6 @@ test("enters, solves, edits, exports, and imports a Philosopher Nightwatchman si
   expect((await exportPuzzleDoc(page)).claims[1]?.nightwatchmanPings).toBeUndefined();
   await selectPlayerClaims(page, "Ada");
   await fillRoleField(block, "Chosen role", "Chef");
-  await expect(block.getByLabel("Nightwatchman chosen player", { exact: true })).toHaveCount(0);
-  expect((await exportPuzzleDoc(page)).claims[0]).not.toHaveProperty("nightwatchman");
+  await expect(gained).toHaveCount(0);
+  expect((await exportPuzzleDoc(page)).claims[0]).not.toHaveProperty("gained");
 });

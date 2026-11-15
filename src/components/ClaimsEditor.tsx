@@ -69,7 +69,12 @@ import type {
   VillageIdiotClaim,
   WasherwomanClaim,
 } from "../schema/puzzleDoc";
-import { SUPPORTED_CLAIM_TYPES } from "../schema/puzzleDoc";
+import {
+  SUPPORTED_CLAIM_TYPES,
+  gainedAbilityClaim,
+  structuredClaimTypeForRole,
+  withoutName,
+} from "../schema/puzzleDoc";
 import { RoleListEditor, RoleTypeahead, sortedRoleNames } from "./RolePicker";
 
 export const CLAIM_TYPES = [...SUPPORTED_CLAIM_TYPES];
@@ -1415,86 +1420,43 @@ function PhilosopherBody({
   claim: PhilosopherClaim;
   onChange: (c: Claim) => void;
 }) {
-  const seamstress = claim.seamstress ?? { among: [doc.players[0] ?? "", doc.players[1] ?? ""], aligned: true };
-  const setRole = (role: string) => {
-    onChange({
-      ...claim,
-      role: role || undefined,
-      seamstress: role === "Seamstress" ? seamstress : undefined,
-      nightwatchman: role === "Nightwatchman" ? claim.nightwatchman : undefined,
-    });
-  };
-  const setSeamstress = (next: NonNullable<PhilosopherClaim["seamstress"]>) => {
-    onChange({ ...claim, seamstress: next });
-  };
+  const gained = gainedAbilityClaim(claim);
+  const gainedType = claim.role === undefined ? undefined : structuredClaimTypeForRole(claim.role);
+  const setRole = (role: string) => onChange({ ...claim, role: role || undefined, gained: undefined });
 
   return (
-    <div className="field-grid">
-      <span>Chosen role</span>
-      <RoleSelect
-        script={doc.script}
-        value={claim.role}
-        onChange={setRole}
-        allowEmpty
-        ariaLabel="Philosopher chosen role"
-      />
-      <span>Choice timing</span>
-      <TimingField
-        ariaLabel="Choice timing"
-        value={claim.timing}
-        onChange={(timing) => onChange({ ...claim, timing })}
-      />
-      {claim.role === "Seamstress" && (
-        <>
-          <span>Seamstress left</span>
-          <PlayerSelect
-            ariaLabel="Seamstress left"
-            players={doc.players}
-            value={seamstress.among[0]}
-            onChange={(left) => setSeamstress({ ...seamstress, among: [left, seamstress.among[1] ?? ""] })}
-          />
-          <span>Seamstress right</span>
-          <PlayerSelect
-            ariaLabel="Seamstress right"
-            players={doc.players}
-            value={seamstress.among[1]}
-            onChange={(right) => setSeamstress({ ...seamstress, among: [seamstress.among[0] ?? "", right] })}
-          />
-          <span>Aligned</span>
-          <input
-            aria-label="Aligned"
-            type="checkbox"
-            checked={seamstress.aligned ?? false}
-            onChange={(event) => setSeamstress({ ...seamstress, aligned: event.target.checked })}
-          />
-          <span>Info timing</span>
-          <TimingField
-            ariaLabel="Info timing"
-            value={seamstress.timing ?? claim.timing}
-            onChange={(timing) => setSeamstress({ ...seamstress, timing })}
-          />
-        </>
+    <div>
+      <div className="field-grid">
+        <span>Chosen role</span>
+        <RoleSelect
+          script={doc.script}
+          value={claim.role}
+          onChange={setRole}
+          allowEmpty
+          ariaLabel="Philosopher chosen role"
+        />
+        <span>Choice timing</span>
+        <TimingField
+          ariaLabel="Choice timing"
+          value={claim.timing}
+          onChange={(timing) => onChange({ ...claim, timing })}
+        />
+      </div>
+      {gained === undefined && gainedType !== undefined && gainedType !== "Philosopher" && (
+        <button
+          type="button"
+          onClick={() => onChange({ ...claim, gained: withoutName(makeEmptyClaim(gainedType, claim.name)) })}
+        >
+          + Add gained ability report
+        </button>
       )}
-      {claim.role === "Nightwatchman" && (
-        <>
-          <span>Nightwatchman chosen player</span>
-          <PlayerSelect
-            ariaLabel="Nightwatchman chosen player"
-            players={doc.players}
-            value={claim.nightwatchman?.chosen}
-            onChange={(chosen) =>
-              onChange({ ...claim, nightwatchman: chosen ? { ...claim.nightwatchman, chosen } : undefined })
-            }
-          />
-          <span>Nightwatchman choice timing</span>
-          <TimingField
-            ariaLabel="Nightwatchman choice timing"
-            value={claim.nightwatchman?.timing ?? claim.timing}
-            onChange={(timing) =>
-              onChange({ ...claim, nightwatchman: { chosen: claim.nightwatchman?.chosen ?? "", timing } })
-            }
-          />
-        </>
+      {gained !== undefined && (
+        <div className="gained-ability" role="group" aria-label="Gained ability">
+          <ClaimBody doc={doc} claim={gained} onChange={(next) => onChange({ ...claim, gained: withoutName(next) })} />
+          <button type="button" onClick={() => onChange({ ...claim, gained: undefined })}>
+            Remove gained ability report
+          </button>
+        </div>
       )}
     </div>
   );

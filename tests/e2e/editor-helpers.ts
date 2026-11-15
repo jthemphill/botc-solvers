@@ -416,13 +416,12 @@ async function fillClaim(block: Locator, claim: Claim) {
     case "Philosopher":
       if (claim.role !== undefined) await fillRoleField(block, "Chosen role", claim.role);
       if (claim.timing !== undefined) await selectField(block, "Choice timing", claim.timing);
-      if (claim.seamstress !== undefined) {
-        await selectField(block, "Seamstress left", claim.seamstress.among[0] ?? "");
-        await selectField(block, "Seamstress right", claim.seamstress.among[1] ?? "");
-        if (claim.seamstress.aligned !== undefined && !claim.seamstress.aligned) {
-          await checkboxField(block, "Aligned").uncheck();
-        }
-        if (claim.seamstress.timing !== undefined) await selectField(block, "Info timing", claim.seamstress.timing);
+      if (claim.gained !== undefined) {
+        await block.getByRole("button", { name: "+ Add gained ability report" }).click();
+        await fillClaim(block.getByRole("group", { name: "Gained ability" }), {
+          ...claim.gained,
+          name: claim.name,
+        } as Claim);
       }
       break;
     case "Legionary":

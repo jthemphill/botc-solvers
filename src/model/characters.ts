@@ -56,6 +56,8 @@ export interface ApplyClaimsOptions extends TimedOptions {
   readonly drunkRole?: RoleRef;
   readonly evilRoles?: readonly RoleRef[];
   readonly possibleActualRoles?: readonly RoleRef[];
+  /** The claim gives reports only. It is not a claim of a starting character. */
+  readonly infoOnly?: boolean;
   /** The claimant can be a Mutant that claims a Townsfolk character. */
   readonly mutantBluff?: boolean;
   readonly info?: ApplyInfoClaim;
@@ -222,6 +224,7 @@ export abstract class Role {
   }
 
   protected applyRoleClaim(game: BOTCModel, role: RoleRef, options: ApplyClaimsOptions = {}): void {
+    if (options.infoOnly === true) return;
     const drunkRole = options.drunkRole ?? "Drunk";
     game.addRoleClaim(
       { player: this.name, apparentRole: role, alignment: this.claimAlignment },
