@@ -5,7 +5,6 @@
     "Leviathan",
     "Goblin",
     "Mutant",
-    "Drunk",
     "Dreamer",
     "Fortune Teller",
     "Investigator",
@@ -23,38 +22,33 @@
         "You": "Savant",
         "Tim": "Village Idiot"
       },
-      "correctCount": 1,
-      "possibleActualRoles": ["Juggler", "Leviathan", "Goblin"]
+      "correctCount": 1
     },
     {
       "type": "Shugenja",
       "name": "Aoife",
-      "evilDirection": "anticlockwise",
-      "possibleActualRoles": ["Shugenja", "Leviathan", "Goblin"]
+      "evilDirection": "anticlockwise"
     },
     {
       "type": "Dreamer",
       "name": "Steph",
       "timing": "night_1",
       "player": "Sarah",
-      "roles": ["Fortune Teller", "Leviathan"],
-      "possibleActualRoles": ["Dreamer", "Leviathan", "Goblin", "Mutant"]
+      "roles": ["Fortune Teller", "Leviathan"]
     },
     {
       "type": "Dreamer",
       "name": "Steph",
       "timing": "night_2",
       "player": "You",
-      "roles": ["Savant", "Goblin"],
-      "possibleActualRoles": ["Dreamer", "Leviathan", "Goblin", "Mutant"]
+      "roles": ["Savant", "Goblin"]
     },
     {
       "type": "Dreamer",
       "name": "Steph",
       "timing": "night_3",
       "player": "Fraser",
-      "roles": ["Mutant", "Goblin"],
-      "possibleActualRoles": ["Dreamer", "Leviathan", "Goblin", "Mutant"]
+      "roles": ["Mutant", "Goblin"]
     },
     {
       "type": "VillageIdiot",
@@ -72,8 +66,7 @@
           "player": "You",
           "good": true
         }
-      ],
-      "possibleActualRoles": ["Village Idiot", "Leviathan", "Goblin"]
+      ]
     },
     {
       "type": "Savant",
@@ -130,8 +123,7 @@
           "player": "You",
           "good": true
         }
-      ],
-      "possibleActualRoles": ["Village Idiot", "Leviathan", "Goblin"]
+      ]
     },
     {
       "type": "FortuneTeller",
@@ -155,15 +147,13 @@
           "yes": false,
           "timing": "night_3"
         }
-      ],
-      "possibleActualRoles": ["Fortune Teller", "Leviathan", "Goblin"]
+      ]
     },
     {
       "type": "Investigator",
       "name": "Oscar",
       "role": "Goblin",
-      "among": ["Fraser", "Steph"],
-      "possibleActualRoles": ["Investigator", "Leviathan", "Goblin"]
+      "among": ["Fraser", "Steph"]
     }
   ]
 }

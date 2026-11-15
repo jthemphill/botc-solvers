@@ -92,16 +92,15 @@ One existing test changed. It expected a Shabaloth kill of the Goon to be illega
 
 The images of puzzles 91, 93, and 95 state the same rule: a living Mutant claims a Townsfolk character with any information, and a dead Mutant reveals itself. The engine now applies this as the default for each claim without a list of possible characters. `src/builders/mutant.test.ts` covers legal and illegal claims, a list that replaces the default, renamed players, and a duplicate death report.
 
-Twenty catalog documents had lists that the convention makes redundant. Those lists are removed, and every answer is unchanged.
+Twenty-one catalog documents had lists that the convention makes redundant. Those lists are removed, and every answer is unchanged.
 
 - Most lists were equal to the engine default.
 - Puzzles 53, 61, 65, 75, 79, and 82 let dead Townsfolk claimants be the Mutant. The repository owner confirmed that a dead Mutant always reveals itself, so those lists are removed also.
 - The living Townsfolk claimants without a list in puzzles 11, 39, and 71 can now be the Mutant.
 
-Two Mutant puzzles keep lists that say something different from the default. Their images were not available to check.
+Puzzle 07 let only one living claimant be the Mutant, and it had the Drunk on its script. Its [image](../puzzle-images/puzzle-07-the-savant-strikes-back.webp) says that the Mutant is the only Outsider and that it claims a Townsfolk character. The document now has no Drunk and no lists except the given about You. Each Townsfolk claimant can be the Mutant, and the answer is unchanged.
 
-- Puzzle 07 lets only one of its living claimants be the Mutant, and that list changes the answer.
-- Puzzle 11 keeps the lists for its Philosopher and for one Seamstress claimant.
+Puzzle 11 keeps the lists for its Philosopher and for one Seamstress claimant. Its image was not available to check.
 
 A list on You is a given about one player.
 
