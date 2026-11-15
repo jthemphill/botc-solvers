@@ -1,4 +1,4 @@
-import type { Claim } from "../../src/schema/puzzleDoc";
+import type { Claim } from "../schema/puzzleDoc";
 
 export const CLAIM_EDITOR_CASES: readonly {
   name: string;
@@ -69,10 +69,22 @@ export const CLAIM_EDITOR_CASES: readonly {
     name: "single-night reports, repeated checks, and radio choices",
     script: ["Fortune Teller", "Snake Charmer", "Village Idiot", "Chambermaid", "Balloonist"],
     claims: [
-      { type: "FortuneTeller", name: "Ada", checks: [{ left: "Ben", right: "Cara", yes: true, timing: "night_1" }] },
-      { type: "FortuneTeller", name: "Ada", checks: [{ left: "Cara", right: "Ada", yes: false, timing: "night_2" }] },
-      { type: "Snake Charmer", name: "Ada", checks: [{ player: "Ben", demon: false, timing: "night_1" }] },
-      { type: "Snake Charmer", name: "Ada", checks: [{ player: "Cara", demon: true, timing: "night_2" }] },
+      {
+        type: "FortuneTeller",
+        name: "Ada",
+        checks: [
+          { left: "Ben", right: "Cara", yes: true, timing: "night_1" },
+          { left: "Cara", right: "Ada", yes: false, timing: "night_2" },
+        ],
+      },
+      {
+        type: "Snake Charmer",
+        name: "Ada",
+        checks: [
+          { player: "Ben", demon: false, timing: "night_1" },
+          { player: "Cara", demon: true, timing: "night_2" },
+        ],
+      },
       {
         type: "VillageIdiot",
         name: "Ada",
@@ -146,7 +158,14 @@ export const CLAIM_EDITOR_CASES: readonly {
           { player: "Cara", died: true, timing: "night_3" },
         ],
       },
-      { type: "Exorcist", name: "Ada", choices: [{ player: "Cara", timing: "night_2" }] },
+      {
+        type: "Exorcist",
+        name: "Ada",
+        choices: [
+          { player: "Cara", timing: "night_2" },
+          { player: "Ben", timing: "night_3" },
+        ],
+      },
       {
         type: "Innkeeper",
         name: "Ada",
@@ -155,7 +174,14 @@ export const CLAIM_EDITOR_CASES: readonly {
           { players: ["Ben", "Cara"], timing: "night_3" },
         ],
       },
-      { type: "Sailor", name: "Ada", choices: [{ player: "Ben", timing: "night_2" }] },
+      {
+        type: "Sailor",
+        name: "Ada",
+        choices: [
+          { player: "Ben", timing: "night_2" },
+          { player: "Cara", timing: "night_3" },
+        ],
+      },
       { type: "Devil's Advocate", name: "Ada", choices: [{ player: "Cara", timing: "night_2" }] },
       {
         type: "Godfather",
@@ -181,7 +207,7 @@ export const CLAIM_EDITOR_CASES: readonly {
         type: "Town Crier",
         name: "Ada",
         checks: [
-          { timing: "night_2", nominators: ["Cara"], minionNominated: true },
+          { timing: "night_2", nominators: ["Ben", "Cara"], minionNominated: true },
           { timing: "night_3", nominators: [], minionNominated: false },
         ],
       },
@@ -250,7 +276,7 @@ export const CLAIM_EDITOR_CASES: readonly {
   },
   {
     name: "expression fields and advanced claim details",
-    script: ["Artist", "Savant", "Gossip", "Soldier", "Drunk", "Evil Twin", "Imp", "Widow"],
+    script: ["Artist", "Savant", "Gossip", "Soldier", "Drunk", "Evil Twin", "Imp", "Widow", "Nightwatchman"],
     claims: [
       {
         type: "Artist",
@@ -280,6 +306,8 @@ export const CLAIM_EDITOR_CASES: readonly {
         possibleActualRoles: ["Drunk", "Soldier"],
         heardWidowCall: true,
         knownEvilTwin: "Cara",
+        source: "The claimant said this on day 2.",
+        nightwatchmanPings: [{ player: "Ben", timing: "night_1" }],
       },
     ],
   },

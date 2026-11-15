@@ -138,6 +138,8 @@ Puzzle 76 keeps its lists and constraints. Its [image](../puzzle-images/puzzle-7
 CATALOG_ENTRY=1 bun run test:e2e -- tests/e2e/catalog-entry.spec.ts
 ```
 
+`src/examples/editorCoverage.test.ts` is the fast check that runs always: each claim shape of the catalog must be in the editor cases that the browser suite enters. It found claims with several checks, received Nightwatchman signals, and claim sources without a case; those cases are added.
+
 The first run built 45 of 100 documents. All 100 build now. The run found these gaps:
 
 - The editor changed only the first check of a Fortune Teller or Snake Charmer claim, and the state layer split a claim with several checks into one claim for each check. The split also lost the night of a check without a time. Both editors now show the checks as a list, and a load keeps them in one claim.

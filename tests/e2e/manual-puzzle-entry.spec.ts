@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { PuzzleDoc, TimelineEventDoc } from "../../src/schema/puzzleDoc";
-import { CLAIM_EDITOR_CASES } from "./claim-editor-cases";
+import { CLAIM_EDITOR_CASES } from "../../src/examples/editorCases";
 import {
   addAndFillClaims,
   addRoleToList,

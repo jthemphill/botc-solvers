@@ -9,6 +9,7 @@
   "include": [
     "tests/e2e/**/*.ts",
     "src/dsl/**/*.ts",
+    "src/examples/editorCases.ts",
     "src/model/**/*.ts",
     "src/schema/**/*.ts",
     "src/state/**/*.ts",
