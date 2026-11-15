@@ -58,13 +58,14 @@ test("the Mutant convention does not change with new names or a duplicate death 
 });
 
 // A Lunatic believes that it is the Demon. It claims a different character with any information.
-test("a Lunatic can claim a different character with false information, alive or dead", async () => {
+// A Politician can claim a different character with any information.
+test.each(["Lunatic", "Politician"])("a %s can claim a different character, alive or dead", async (liar) => {
   for (const dead of [false, true]) {
     const doc = scenario(1, { dead });
-    doc.script[2] = "Lunatic";
-    expect(await chefClaimantRoles(doc)).toEqual(["Lunatic"]);
+    doc.script[2] = liar;
+    expect(await chefClaimantRoles(doc)).toEqual([liar]);
     const listed = scenario(1, { dead, roles: ["Chef", "Imp"] });
-    listed.script[2] = "Lunatic";
+    listed.script[2] = liar;
     expect(await chefClaimantRoles(listed)).toEqual([]);
   }
 });

@@ -295,8 +295,10 @@ export class BOTCModel extends BooleanConstraints {
       if (options.mutantBluff === true && this.characters.has("Mutant")) possibleRoles.push("Mutant");
     }
     // A Lunatic believes that it is the Demon, so it claims a different character as an evil player does.
-    if (options.possibleActualRoles === undefined && this.characters.has("Lunatic") && apparentRole !== "Lunatic")
-      possibleRoles.push("Lunatic");
+    // A Politician wants its team to lose, so it can claim a different character also.
+    if (options.possibleActualRoles === undefined)
+      for (const liar of ["Lunatic", "Politician"])
+        if (this.characters.has(liar) && apparentRole !== liar) possibleRoles.push(liar);
     this.setPossibleActualRoles(claim.player, possibleRoles);
     if (claimedTownsfolk)
       for (const hiddenRole of thinksRoleIsOutOfPlayRoles)

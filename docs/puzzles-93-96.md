@@ -120,7 +120,7 @@ The Lunatic rule makes the lists in puzzles 23 and 41 redundant. Puzzle 23's lis
 
 Puzzle 60 had a list that made Olivia the Poppy Grower. Its [image](../puzzle-images/puzzle-60-whats-a-mind-goblin.webp) does not say that. It says that You are the Goblin and asks who your Demon is, so You do not know the Demon, and a healthy Poppy Grower is in play on night 1. The document now gives that as a fact with its source, and the solver finds that Olivia is the Poppy Grower. Without the fact, Olivia can be a No Dashii that claims the Poppy Grower.
 
-Puzzles 58 and 67 had lists that let a Politician claim a different character. Those lists are removed at the request of the repository owner. Their answers are unchanged.
+Puzzles 58 and 67 had lists that let a Politician claim a different character. Their images ([58](../puzzle-images/puzzle-58-minus-one-thats-three.webp), [67](../puzzle-images/puzzle-67-minus-one-thats-three-times-two.webp)) say that the Politician might claim a different character and lie with its information. The shared claim convention now has this rule, so the documents need no lists. Both documents match their images, and their answers are unchanged.
 
 These lists stay, because each one changes its answer and its image was not available to check:
 
