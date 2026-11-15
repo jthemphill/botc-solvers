@@ -30,8 +30,7 @@
     },
     {
       "type": "Goblin",
-      "name": "Fraser",
-      "possibleActualRoles": ["Imp", "Lunatic"]
+      "name": "Fraser"
     },
     {
       "type": "Librarian",

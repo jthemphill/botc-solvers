@@ -61,8 +61,7 @@
     {
       "type": "Empath",
       "name": "Fraser",
-      "count": 0,
-      "possibleActualRoles": ["Empath", "Vortox", "Spy", "Scarlet Woman", "Lunatic"]
+      "count": 0
     }
   ]
 }

@@ -112,12 +112,16 @@ The editor shows the controls of the chosen character inside the Philosopher cla
 
 ## Lists in other puzzles
 
-Puzzles 41, 58, and 67 had lists on each claimant that let a Lunatic or a Politician claim a different character. Those lists are removed at the request of the repository owner. Their answers are unchanged.
+Puzzles 12a and 12b let only one claimant be the Lunatic, and that claimant was the Lunatic of the answer. The [image of 12a](../puzzle-images/puzzle-12a-thunderstruck.png) says that the Lunatic lies about its character and gives any information. The shared claim convention now has this rule, and both documents have no lists except the given about You.
+
+Without its list, puzzle 12b had a second answer with Steph as the Spy. A Dreamer report of "Lunatic or Spy" was accepted for a real Spy with a Vortox in play, because the Spy could register as both characters. With a Vortox, a Dreamer learns two characters that the player does not have ([Vortox, revision 3017](https://wiki.bloodontheclocktower.com/index.php?title=Vortox&oldid=3017), not fetched again in this session). The engine now uses that rule, and puzzle 12b has its one answer again. `src/builders/vortoxDreamer.test.ts` covers legal and illegal reports, the Spy without a Vortox, renamed players, and a duplicate report. The image of 12b was not available; its document follows the same rules text as 12a.
+
+The Lunatic rule makes the lists in puzzles 23 and 41 redundant. Puzzle 23's list is removed. Puzzle 41's lists were removed earlier, and the convention restores what they allowed.
+
+Puzzles 58 and 67 had lists that let a Politician claim a different character. Those lists are removed at the request of the repository owner. Their answers are unchanged.
 
 These lists stay, because each one changes its answer and its image was not available to check:
 
-- Puzzles 12a and 12b let one Empath claimant be the Lunatic.
-- Puzzle 23 lets the Goblin claimant be the Imp or the Lunatic only.
 - Puzzle 30 fixes each character in its Atheist game, and makes the Atheist claimant of the other game evil or the Drunk.
 - Puzzle 60 fixes its Poppy Grower.
 - Puzzle 76 uses a custom setup with three characters for each player.

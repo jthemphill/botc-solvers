@@ -56,3 +56,15 @@ test("the Mutant convention does not change with new names or a duplicate death 
   dead.timeline.push({ ...dead.timeline[0]! });
   expect(await chefClaimantRoles(dead)).toEqual([]);
 });
+
+// A Lunatic believes that it is the Demon. It claims a different character with any information.
+test("a Lunatic can claim a different character with false information, alive or dead", async () => {
+  for (const dead of [false, true]) {
+    const doc = scenario(1, { dead });
+    doc.script[2] = "Lunatic";
+    expect(await chefClaimantRoles(doc)).toEqual(["Lunatic"]);
+    const listed = scenario(1, { dead, roles: ["Chef", "Imp"] });
+    listed.script[2] = "Lunatic";
+    expect(await chefClaimantRoles(listed)).toEqual([]);
+  }
+});

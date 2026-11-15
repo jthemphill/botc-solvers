@@ -27,6 +27,7 @@ export interface InfoClaim {
   readonly role?: RoleRef;
   readonly learned: BoolLike | ClaimPredicate;
   readonly malfunctionLearned?: BoolLike | ClaimPredicate;
+  readonly vortoxFalse?: BoolLike | ClaimPredicate;
   readonly timing?: Timing;
   readonly vortoxAffected?: boolean;
 }
@@ -45,6 +46,7 @@ export interface AppliedInfoClaim {
   readonly role: RoleRef;
   readonly learned: BoolLike;
   readonly malfunctionLearned?: BoolLike;
+  readonly vortoxFalse?: BoolLike;
   readonly timing: Timing;
   readonly vortoxAffected?: boolean;
   readonly context?: unknown;
@@ -104,6 +106,7 @@ function addDefaultInfoClaim(game: BOTCModel, claim: AppliedInfoClaim): void {
     role: claim.role,
     learned: claim.learned,
     malfunctionLearned: claim.malfunctionLearned,
+    vortoxFalse: claim.vortoxFalse,
     timing: claim.timing,
     vortoxAffected: claim.vortoxAffected,
   });
@@ -258,6 +261,12 @@ export abstract class Role {
             : resolveInfoClaim(game, options.context, {
                 learned: resolvedClaim.malfunctionLearned,
               }),
+        vortoxFalse:
+          resolvedClaim.vortoxFalse === undefined
+            ? undefined
+            : game.withTiming(timing, () =>
+                resolveInfoClaim(game, options.context, { learned: resolvedClaim.vortoxFalse as BoolLike }),
+              ),
         timing,
         vortoxAffected: resolvedClaim.vortoxAffected,
         context: options.context,
@@ -1411,10 +1420,21 @@ export class Dreamer extends TownsfolkRole {
       1,
     );
   }
-  override learnedInfo(game: BOTCModel): BoolLike | undefined {
-    return this.player === undefined || this.roles.length === 0
-      ? undefined
-      : Dreamer.learnsOneOf(game, this.player, this.roles);
+  override apply(game: BOTCModel, options: ApplyClaimsOptions = {}): void {
+    this.applyRoleClaim(game, Dreamer, options);
+    const { player, roles } = this;
+    const report: InfoClaim[] =
+      player === undefined || roles.length === 0
+        ? []
+        : [
+            {
+              learned: (model) => Dreamer.learnsOneOf(model, player, roles),
+              // A Vortox shows two characters that the player does not have.
+              vortoxFalse: (model) =>
+                model.allOf(roles.map((role) => model.isCharacterWhenObserved(player, role).not())),
+            },
+          ];
+    this.applyInfoClaimBuilders(game, Dreamer, [...report, ...this.infoClaims], options);
   }
 }
 

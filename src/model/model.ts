@@ -37,6 +37,8 @@ export interface InfoClaimConstraint {
   readonly role: RoleRef;
   readonly learned: BoolLike;
   readonly malfunctionLearned?: BoolLike;
+  /** Is true when the report is false information for a Vortox. The default is the negation of `learned`. */
+  readonly vortoxFalse?: BoolLike;
   readonly timing: Timing;
   readonly vortoxAffected?: boolean;
 }
@@ -292,6 +294,9 @@ export class BOTCModel extends BooleanConstraints {
       if (this.characters.has("Goon")) possibleRoles.push("Goon");
       if (options.mutantBluff === true && this.characters.has("Mutant")) possibleRoles.push("Mutant");
     }
+    // A Lunatic believes that it is the Demon, so it claims a different character as an evil player does.
+    if (options.possibleActualRoles === undefined && this.characters.has("Lunatic") && apparentRole !== "Lunatic")
+      possibleRoles.push("Lunatic");
     this.setPossibleActualRoles(claim.player, possibleRoles);
     if (claimedTownsfolk)
       for (const hiddenRole of thinksRoleIsOutOfPlayRoles)
@@ -1037,6 +1042,11 @@ export class BOTCModel extends BooleanConstraints {
     return this.registersAsRoleAt(player, role, timing);
   }
 
+  /** Is true when the player has the character at the time of the current observation. */
+  isCharacterWhenObserved(player: string, role: RoleRef): BoolVar {
+    return this.characterAt(player, roleName(role), this.observationTiming ?? night(1));
+  }
+
   registersAsRoleAt(player: string, role: RoleRef, timing: Timing): BoolVar {
     this.assertBuilding();
     const observed = roleName(role);
@@ -1152,7 +1162,7 @@ export class BOTCModel extends BooleanConstraints {
     this.addImplication(this.allOf([activeHealthy, activeVortox.not()]), claim.learned);
     this.addImplication(
       this.allOf(honest === undefined ? [activeRole, activeVortox] : [activeRole, honest, activeVortox]),
-      this.not(claim.learned),
+      claim.vortoxFalse ?? this.not(claim.learned),
     );
   }
 
